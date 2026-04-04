@@ -26,8 +26,8 @@ function getDailyImage() {
 const SECTIONS = [
   {
     icon: '🍳',
-    title: 'MyRecipes',
-    subtitle: '— Browse & Cook',
+    title: 'Browse Recipes',
+    subtitle: '— Search & Discover',
     desc: '598 recipes across 14 categories — filter by cuisine, dietary needs, and skill level.',
     href: '/recipes',
   },
