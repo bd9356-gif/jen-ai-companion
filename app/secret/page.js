@@ -9,11 +9,65 @@ const supabase = createClient(
 
 const SUGGESTED_TAGS = ['chicken', 'fish', 'pasta', 'dessert', 'family', 'holiday', 'quick', 'vegetarian', 'beef', 'breakfast', 'soup', 'salad']
 
+function EditForm({ initial, initialIngredients, onSave, onCancel }) {
+  const [title, setTitle] = useState(initial.title || '')
+  const [description, setDescription] = useState(initial.description || '')
+  const [category, setCategory] = useState(initial.category || '')
+  const [ingredients, setIngredients] = useState(initialIngredients || '')
+  const [instructions, setInstructions] = useState(initial.instructions || '')
+  const [familyNotes, setFamilyNotes] = useState(initial.family_notes || '')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    const parsedIngredients = ingredients.split('\n').filter(Boolean).map(line => {
+      const parts = line.split(' - ')
+      return { name: parts[0]?.trim(), measure: parts[1]?.trim() || '' }
+    })
+    await onSave({
+      title, description, category,
+      ingredients: parsedIngredients,
+      instructions, family_notes: familyNotes
+    })
+    setSaving(false)
+  }
+
+  return (
+    <div className="space-y-4">
+      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Recipe title *"
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+      <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Short description"
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+      <input value={category} onChange={e => setCategory(e.target.value)} placeholder="Category"
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+      <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
+        placeholder="Ingredients — one per line, e.g. Flour - 2 cups" rows={5}
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
+      <textarea value={instructions} onChange={e => setInstructions(e.target.value)}
+        placeholder="Instructions — one step per line" rows={6}
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
+      <textarea value={familyNotes} onChange={e => setFamilyNotes(e.target.value)}
+        placeholder="Family notes (optional)" rows={2}
+        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
+      <div className="flex gap-3">
+        <button onClick={handleSave} disabled={!title.trim() || saving}
+          className="flex-1 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm">
+          {saving ? 'Saving...' : '💾 Save Changes'}
+        </button>
+        <button onClick={onCancel}
+          className="px-6 py-3 border border-gray-200 text-gray-500 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function MyRecipesPage() {
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState('list') // 'list' | 'add' | 'import' | 'detail' | 'enhance'
+  const [view, setView] = useState('list') // 'list' | 'add' | 'import' | 'detail' | 'enhance' | 'edit'
   const [viewing, setViewing] = useState(null)
   const [searchTag, setSearchTag] = useState('')
   const [searchText, setSearchText] = useState('')
@@ -168,8 +222,18 @@ export default function MyRecipesPage() {
     const updates = {}
     if (enhanceResult.ingredients) updates.ingredients = enhanceResult.ingredients
     if (enhanceResult.instructions) updates.instructions = enhanceResult.instructions
-    await updateRecipe(viewing.id, updates)
+    const { data } = await supabase
+      .from('personal_recipes')
+      .update(updates)
+      .eq('id', viewing.id)
+      .select()
+      .single()
+    if (data) {
+      setRecipes(prev => prev.map(r => r.id === viewing.id ? data : r))
+      setViewing(data)
+    }
     setEnhanceResult(null)
+    setGeneratedInfo(null)
     setView('detail')
   }
 
@@ -184,7 +248,8 @@ export default function MyRecipesPage() {
     if (generatedInfo.nutrition_estimate) updates.nutrition = generatedInfo.nutrition_estimate
     await updateRecipe(viewing.id, updates)
     setGeneratedInfo(null)
-    alert('✓ Recipe info saved!')
+    setEnhanceResult(null)
+    setView('detail')
   }
 
   async function handleImport() {
@@ -245,7 +310,8 @@ export default function MyRecipesPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <div className="flex gap-2">
-              <button onClick={() => setView('enhance')} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI Enhance</button>
+              <button onClick={() => setView('edit')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
+              <button onClick={() => setView('enhance')} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI</button>
               <button onClick={() => deleteRecipe(viewing.id)} className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
             </div>
           </div>
@@ -336,6 +402,32 @@ export default function MyRecipesPage() {
               </div>
             </div>
           )}
+        </main>
+      </div>
+    )
+  }
+
+  // ── EDIT VIEW ──
+  if (view === 'edit' && viewing) {
+    const editIngredients = (viewing.ingredients || []).map(i => `${i.name} - ${i.measure}`).join('\n')
+    return (
+      <div className="min-h-screen bg-white">
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
+            <button onClick={() => setView('detail')} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <h1 className="text-lg font-bold text-gray-900">✏️ Edit Recipe</h1>
+          </div>
+        </header>
+        <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
+          <EditForm
+            initial={viewing}
+            initialIngredients={editIngredients}
+            onSave={async (updates) => {
+              await updateRecipe(viewing.id, updates)
+              setView('detail')
+            }}
+            onCancel={() => setView('detail')}
+          />
         </main>
       </div>
     )
