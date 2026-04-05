@@ -25,6 +25,7 @@ export default function MyRecipesPage() {
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [tagInput, setTagInput] = useState('')
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
@@ -66,11 +67,11 @@ export default function MyRecipesPage() {
     return data.publicUrl
   }
 
-  async function saveRecipe(photoFile) {
+  async function saveRecipe() {
     if (!form.title.trim()) return
-    let photo_url = form.photo_url
-    if (photoFile) {
-      photo_url = await uploadPhoto(photoFile, user.id) || ''
+    let photo_url = ''
+    if (selectedPhoto) {
+      photo_url = await uploadPhoto(selectedPhoto, user.id) || ''
     }
     const ingredients = form.ingredients.split('\n').filter(Boolean).map(line => {
       const parts = line.split(' - ')
@@ -141,9 +142,14 @@ export default function MyRecipesPage() {
     if (!generatedInfo) return
     const updates = {}
     if (generatedInfo.cooking_time) updates.cooking_time = generatedInfo.cooking_time
+    if (generatedInfo.prep_time) updates.prep_time = generatedInfo.prep_time
     if (generatedInfo.difficulty) updates.difficulty = generatedInfo.difficulty
+    if (generatedInfo.servings) updates.servings = generatedInfo.servings
+    if (generatedInfo.equipment) updates.equipment = generatedInfo.equipment
+    if (generatedInfo.nutrition_estimate) updates.nutrition = generatedInfo.nutrition_estimate
     await updateRecipe(viewing.id, updates)
     setGeneratedInfo(null)
+    alert('✓ Recipe info saved!')
   }
 
   async function handleImport() {
@@ -221,12 +227,19 @@ export default function MyRecipesPage() {
               <span className="text-3xl mb-2">📷</span>
               <p className="text-sm text-orange-600 font-semibold">Add a photo</p>
               <p className="text-xs text-gray-400">Tap to upload from your device</p>
-              <input ref={photoInputRef} type="file" accept="image/*" className="hidden"
+              <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
                 onChange={async e => {
                   const file = e.target.files?.[0]
                   if (!file) return
+                  setUploadingPhoto(true)
                   const url = await uploadPhoto(file, user.id)
-                  if (url) await updateRecipe(viewing.id, { photo_url: url })
+                  if (url) {
+                    await updateRecipe(viewing.id, { photo_url: url })
+                    alert('✓ Photo saved!')
+                  } else {
+                    alert('Photo upload failed — please try again')
+                  }
+                  setUploadingPhoto(false)
                 }} />
             </div>
           )}
@@ -329,10 +342,14 @@ export default function MyRecipesPage() {
             <p className="font-semibold text-gray-900 mb-1">⚖️ Resize Servings</p>
             <p className="text-xs text-gray-500 mb-3">Recalculate ingredient amounts for any serving size</p>
             <div className="flex gap-3 mb-3 items-center">
-              <label className="text-sm text-gray-600">Servings:</label>
+              <label className="text-sm text-gray-600">Currently makes:</label>
+              <input type="number" min="1" max="50" value={viewing.servings || 4}
+                onChange={e => updateRecipe(viewing.id, { servings: parseInt(e.target.value) })}
+                className="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+              <label className="text-sm text-gray-600">→ resize to:</label>
               <input type="number" min="1" max="50" value={servings}
                 onChange={e => setServings(parseInt(e.target.value))}
-                className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+                className="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
             </div>
             <button onClick={() => handleEnhance('resize')} disabled={enhancing}
               className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 disabled:opacity-50 transition-colors">
@@ -446,7 +463,6 @@ export default function MyRecipesPage() {
 
   // ── ADD VIEW ──
   if (view === 'add') {
-    let photoFile = null
     return (
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
@@ -478,9 +494,9 @@ export default function MyRecipesPage() {
                   onChange={e => {
                     const file = e.target.files?.[0]
                     if (!file) return
-                    photoFile = file
+                    setSelectedPhoto(file)
                     const url = URL.createObjectURL(file)
-                    setForm(f => ({ ...f, _photoFile: file, photo_url: url }))
+                    setForm(f => ({ ...f, photo_url: url }))
                   }} />
               </div>
             </div>
