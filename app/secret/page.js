@@ -474,17 +474,27 @@ export default function MyRecipesPage() {
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">⚖️ Resize Servings</p>
             <p className="text-xs text-gray-500 mb-3">Recalculate ingredient amounts for any serving size</p>
-            <div className="flex gap-3 mb-3 items-center flex-wrap">
-              <label className="text-sm text-gray-600">Currently makes:</label>
-              <input type="text" inputMode="numeric" pattern="[0-9]*" min="1" max="50"
-                defaultValue={viewing.servings || 4}
-                onBlur={e => updateRecipe(viewing.id, { servings: parseInt(e.target.value) || 4 })}
-                className="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-              <label className="text-sm text-gray-600">→ resize to:</label>
-              <input type="text" inputMode="numeric" pattern="[0-9]*" min="1" max="50"
-                value={servings}
-                onChange={e => setServings(parseInt(e.target.value) || 1)}
-                className="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+            <div className="mb-3 space-y-3">
+              <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
+                <label className="text-sm text-gray-600">Currently makes</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => updateRecipe(viewing.id, { servings: Math.max(1, (viewing.servings || 4) - 1) })}
+                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center">−</button>
+                  <span className="text-base font-semibold text-gray-900 w-6 text-center">{viewing.servings || 4}</span>
+                  <button onClick={() => updateRecipe(viewing.id, { servings: (viewing.servings || 4) + 1 })}
+                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center">+</button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
+                <label className="text-sm text-gray-600">Resize to</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setServings(s => Math.max(1, s - 1))}
+                    className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-lg flex items-center justify-center">−</button>
+                  <span className="text-base font-semibold text-orange-700 w-6 text-center">{servings}</span>
+                  <button onClick={() => setServings(s => s + 1)}
+                    className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-lg flex items-center justify-center">+</button>
+                </div>
+              </div>
             </div>
             <button onClick={() => handleEnhance('resize')} disabled={enhancing}
               className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 disabled:opacity-50 transition-colors">
