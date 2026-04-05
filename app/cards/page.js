@@ -7,168 +7,187 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const CATEGORIES = ['All', 'Beef', 'Chicken', 'Dessert', 'Lamb', 'Pasta', 'Pork', 'Seafood', 'Vegan', 'Vegetarian', 'Breakfast', 'Starter', 'Side']
-
 export default function CardsPage() {
   const [recipes, setRecipes] = useState([])
-  const [metadata, setMetadata] = useState({})
   const [loading, setLoading] = useState(true)
-  const [category, setCategory] = useState('All')
-  const [search, setSearch] = useState('')
   const [viewing, setViewing] = useState(null)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
-    loadRecipes()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { window.location.href = '/login'; return }
+      loadRecipes(session.user.id)
+    })
   }, [])
 
-  async function loadRecipes() {
+  async function loadRecipes(userId) {
     const { data } = await supabase
-      .from('recipes')
-      .select('id, title, category, cuisine, thumbnail_url, ingredients, instructions, youtube_url')
+      .from('personal_recipes')
+      .select('id, title, category, ingredients, photo_url, servings, tags, description')
+      .eq('user_id', userId)
       .order('title')
     setRecipes(data || [])
-
-    const { data: meta } = await supabase
-      .from('recipe_metadata')
-      .select('recipe_id, ai_summary, difficulty_level')
-    const metaMap = {}
-    ;(meta || []).forEach(m => { metaMap[m.recipe_id] = m })
-    setMetadata(metaMap)
     setLoading(false)
   }
 
-  const filtered = recipes.filter(r => {
-    const matchCat = category === 'All' || r.category === category
-    const matchSearch = search === '' || r.title.toLowerCase().includes(search.toLowerCase())
-    return matchCat && matchSearch
-  })
+  const filtered = recipes.filter(r =>
+    search === '' || r.title.toLowerCase().includes(search.toLowerCase())
+  )
 
-  const diffLabel = { beginner: '🟢', intermediate: '🟡', advanced: '🔴' }
-
+  // ── CARD DETAIL VIEW ──
   if (viewing) {
     const ingredients = viewing.ingredients || []
-    const instructions = (viewing.instructions || '').split(/\r?\n/).filter(Boolean)
     return (
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-            <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <span className="text-xs text-gray-400">🃏 Recipe Card</span>
+            <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Cards</button>
+            <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">
+              Full Recipe →
+            </a>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          {viewing.thumbnail_url && (
-            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'200px'}}>
-              <img src={viewing.thumbnail_url} alt={viewing.title} className="w-full h-full object-cover" />
+
+        <main className="max-w-lg mx-auto px-4 py-6 pb-16">
+          {/* Card */}
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+
+            {/* Card header */}
+            <div className="bg-orange-700 px-5 py-3 flex items-center justify-between">
+              <span style={{fontSize:'11px'}} className="text-orange-200 font-semibold tracking-wider uppercase">My Recipe Cards</span>
+              <span style={{fontSize:'16px'}}>🃏</span>
             </div>
-          )}
-          <div className="flex flex-wrap gap-2 mb-3">
-            {viewing.cuisine && <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-xs font-semibold">🌍 {viewing.cuisine}</span>}
-            {viewing.category && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">{viewing.category}</span>}
-            {metadata[viewing.id]?.difficulty_level && <span className="text-xs text-gray-500">{diffLabel[metadata[viewing.id].difficulty_level]}</span>}
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-3">{viewing.title}</h1>
-          {metadata[viewing.id]?.ai_summary && (
-            <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-5">
-              <p className="text-sm text-orange-900 leading-relaxed">🤖 {metadata[viewing.id].ai_summary}</p>
-            </div>
-          )}
-          {ingredients.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-3">Ingredients</h2>
-              <div className="bg-gray-50 rounded-2xl p-4">
-                <ul className="space-y-2">
-                  {ingredients.map((ing, i) => (
-                    <li key={i} className="flex gap-3 text-sm">
-                      <span className="text-orange-400">•</span>
-                      <span className="text-gray-600">
-                        {ing.measure && <span className="font-semibold text-gray-800">{ing.measure} </span>}
-                        {ing.name}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+
+            {/* Photo if available */}
+            {viewing.photo_url && (
+              <div style={{height:'160px'}} className="overflow-hidden">
+                <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
               </div>
-            </div>
-          )}
-          {instructions.length > 0 && (
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">Instructions</h2>
-              <div className="space-y-4">
-                {instructions.map((step, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
-                    <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
-                  </div>
+            )}
+
+            {/* Title and meta */}
+            <div className="px-5 pt-5 pb-3">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">{viewing.title}</h1>
+              <div className="flex gap-2 flex-wrap">
+                {viewing.category && (
+                  <span className="text-xs text-gray-400">{viewing.category}</span>
+                )}
+                {viewing.servings && (
+                  <span className="text-xs text-gray-400">· {viewing.servings} servings</span>
+                )}
+                {(viewing.tags || []).slice(0, 3).map(tag => (
+                  <span key={tag} className="text-xs text-orange-500">#{tag}</span>
                 ))}
               </div>
             </div>
-          )}
+
+            {/* Ingredients */}
+            <div className="px-5 pb-5">
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Ingredients</p>
+                {ingredients.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No ingredients listed</p>
+                ) : (
+                  <ul className="space-y-0">
+                    {ingredients.map((ing, i) => (
+                      <li key={i} className="flex gap-3 py-2.5 border-b border-gray-50 last:border-0">
+                        <span className="text-orange-400 shrink-0 mt-0.5" style={{fontSize:'12px'}}>•</span>
+                        <span className="text-sm text-gray-700">
+                          {ing.measure && (
+                            <span className="font-semibold text-gray-900">{ing.measure} </span>
+                          )}
+                          {ing.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <span className="text-xs text-gray-400">From MyRecipes</span>
+              <a href="/secret" className="text-xs font-semibold text-orange-600">
+                View full recipe →
+              </a>
+            </div>
+          </div>
         </main>
       </div>
     )
   }
 
+  // ── LIST VIEW ──
   return (
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center gap-2 mb-3">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">🃏 Recipe Cards</h1>
+            <h1 className="text-lg font-bold text-gray-900">🃏 My Recipe Cards</h1>
           </div>
-          <p className="text-xs text-gray-400 mb-3">Clean, organized recipe cards you can trust.</p>
+          <p className="text-xs text-gray-400 mb-3">Your recipes, beautifully carded — just the title and ingredients.</p>
           <input
             type="text"
-            placeholder="Search recipe cards..."
+            placeholder="Search your cards..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
           />
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  category === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-4">
-        <p className="text-sm text-gray-400 mb-4">{filtered.length} recipe cards</p>
+      <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading recipe cards...</div>
-        ) : (
-          <div className="space-y-2">
-            {filtered.map(recipe => (
-              <button
-                key={recipe.id}
-                onClick={() => setViewing(recipe)}
-                className="w-full text-left bg-white border border-gray-200 rounded-2xl p-4 hover:border-orange-200 hover:bg-orange-50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  {recipe.thumbnail_url && (
-                    <img src={recipe.thumbnail_url} alt={recipe.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 truncate">{recipe.title}</p>
-                    <p className="text-xs text-gray-400">{recipe.cuisine || recipe.category}</p>
-                    {metadata[recipe.id]?.ai_summary && (
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{metadata[recipe.id].ai_summary}</p>
-                    )}
-                  </div>
-                  <span className="text-gray-300 shrink-0">→</span>
-                </div>
-              </button>
-            ))}
+          <div className="text-center py-20 text-gray-400">Loading your cards...</div>
+        ) : recipes.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-4xl mb-4">🃏</p>
+            <p className="text-gray-700 font-semibold mb-2">No recipe cards yet</p>
+            <p className="text-gray-400 text-sm mb-6">Add recipes to MyRecipes and they'll appear here as cards</p>
+            <a href="/secret" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+              Go to MyRecipes
+            </a>
           </div>
+        ) : (
+          <>
+            <p className="text-sm text-gray-400 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
+            <div className="space-y-3">
+              {filtered.map(recipe => (
+                <button
+                  key={recipe.id}
+                  onClick={() => setViewing(recipe)}
+                  className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors"
+                >
+                  <div className="bg-orange-700 px-4 py-2 flex items-center justify-between">
+                    <span style={{fontSize:'10px'}} className="text-orange-200 font-semibold tracking-wider uppercase">Recipe Card</span>
+                    <span style={{fontSize:'14px'}}>🃏</span>
+                  </div>
+                  <div className="flex gap-3 p-4">
+                    {recipe.photo_url ? (
+                      <img src={recipe.photo_url} alt={recipe.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
+                        <span style={{fontSize:'22px'}}>🍽️</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{recipe.title}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {recipe.category || 'Recipe'}
+                        {recipe.servings ? ` · ${recipe.servings} servings` : ''}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {(recipe.ingredients || []).length} ingredients
+                      </p>
+                    </div>
+                    <span className="text-gray-300 text-xl self-center">→</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </main>
     </div>
