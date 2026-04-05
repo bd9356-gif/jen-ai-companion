@@ -73,7 +73,7 @@ export default function MyRecipesPage() {
       const formData = new FormData()
       formData.append('', file)
 
-      const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/recipe-photos/${path}`
+      const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/personal_recipes/${path}`
       const response = await fetch(uploadUrl, {
         method: 'POST',
         headers: {
@@ -91,7 +91,7 @@ export default function MyRecipesPage() {
         return null
       }
 
-      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/recipe-photos/${path}`
+      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/personal_recipes/${path}`
       setUploadingPhoto(false)
       return publicUrl
     } catch (err) {
