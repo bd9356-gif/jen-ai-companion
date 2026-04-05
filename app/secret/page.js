@@ -56,15 +56,28 @@ export default function MyRecipesPage() {
   async function uploadPhoto(file, userId) {
     if (!file) return null
     setUploadingPhoto(true)
-    const ext = file.name.split('.').pop()
-    const path = `${userId}/${Date.now()}.${ext}`
-    const { error } = await supabase.storage
-      .from('recipe-photos')
-      .upload(path, file, { contentType: file.type, upsert: true })
-    if (error) { setUploadingPhoto(false); return null }
-    const { data } = supabase.storage.from('recipe-photos').getPublicUrl(path)
-    setUploadingPhoto(false)
-    return data.publicUrl
+    try {
+      const ext = file.name.split('.').pop().toLowerCase()
+      const safeName = ext === 'heic' ? 'jpg' : ext
+      const path = `${userId}/${Date.now()}.${safeName}`
+      const { data: uploadData, error } = await supabase.storage
+        .from('recipe-photos')
+        .upload(path, file, { contentType: file.type, upsert: true, cacheControl: '3600' })
+      if (error) {
+        console.error('Upload error:', error.message, error)
+        alert('Photo upload failed: ' + error.message)
+        setUploadingPhoto(false)
+        return null
+      }
+      const { data } = supabase.storage.from('recipe-photos').getPublicUrl(path)
+      setUploadingPhoto(false)
+      return data.publicUrl
+    } catch (err) {
+      console.error('Upload exception:', err)
+      alert('Photo upload error: ' + err.message)
+      setUploadingPhoto(false)
+      return null
+    }
   }
 
   async function saveRecipe() {
