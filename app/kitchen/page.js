@@ -36,7 +36,7 @@ const SECTIONS = [
     title: 'Explore Recipes',
     subtitle: '— Search & Discover',
     desc: 'Fresh ideas ready whenever inspiration strikes.',
-    href: '/recipes',
+    href: '/explore',
   },
   {
     icon: '❤️',
