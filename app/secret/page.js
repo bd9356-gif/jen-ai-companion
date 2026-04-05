@@ -187,10 +187,15 @@ export default function MyRecipesPage() {
   async function updateRecipe(id, updates) {
     const { data, error } = await supabase
       .from('personal_recipes').update(updates).eq('id', id).select().single()
-    if (!error && data) {
-      setRecipes(prev => prev.map(r => r.id === id ? data : r))
-      setViewing(data)
+    if (error) {
+      console.error('Update error:', error.message)
+      return null
     }
+    if (data) {
+      setRecipes(prev => prev.map(r => r.id === id ? {...r, ...data} : r))
+      setViewing({...data})
+    }
+    return data
   }
 
   async function deleteRecipe(id) {
@@ -246,7 +251,8 @@ export default function MyRecipesPage() {
     if (generatedInfo.servings) updates.servings = generatedInfo.servings
     if (generatedInfo.equipment) updates.equipment = generatedInfo.equipment
     if (generatedInfo.nutrition_estimate) updates.nutrition = generatedInfo.nutrition_estimate
-    await updateRecipe(viewing.id, updates)
+    const updated = await updateRecipe(viewing.id, updates)
+    if (updated) setViewing(updated)
     setGeneratedInfo(null)
     setEnhanceResult(null)
     setView('detail')
@@ -468,14 +474,16 @@ export default function MyRecipesPage() {
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">⚖️ Resize Servings</p>
             <p className="text-xs text-gray-500 mb-3">Recalculate ingredient amounts for any serving size</p>
-            <div className="flex gap-3 mb-3 items-center">
+            <div className="flex gap-3 mb-3 items-center flex-wrap">
               <label className="text-sm text-gray-600">Currently makes:</label>
-              <input type="number" min="1" max="50" value={viewing.servings || 4}
-                onChange={e => updateRecipe(viewing.id, { servings: parseInt(e.target.value) })}
+              <input type="text" inputMode="numeric" pattern="[0-9]*" min="1" max="50"
+                defaultValue={viewing.servings || 4}
+                onBlur={e => updateRecipe(viewing.id, { servings: parseInt(e.target.value) || 4 })}
                 className="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
               <label className="text-sm text-gray-600">→ resize to:</label>
-              <input type="number" min="1" max="50" value={servings}
-                onChange={e => setServings(parseInt(e.target.value))}
+              <input type="text" inputMode="numeric" pattern="[0-9]*" min="1" max="50"
+                value={servings}
+                onChange={e => setServings(parseInt(e.target.value) || 1)}
                 className="w-16 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
             </div>
             <button onClick={() => handleEnhance('resize')} disabled={enhancing}
