@@ -57,21 +57,43 @@ export default function MyRecipesPage() {
     if (!file) return null
     setUploadingPhoto(true)
     try {
-      const ext = file.name.split('.').pop().toLowerCase()
-      const safeName = ext === 'heic' ? 'jpg' : ext
-      const path = `${userId}/${Date.now()}.${safeName}`
-      const { data: uploadData, error } = await supabase.storage
-        .from('recipe-photos')
-        .upload(path, file, { contentType: file.type, upsert: true, cacheControl: '3600' })
-      if (error) {
-        console.error('Upload error:', error.message, error)
-        alert('Photo upload failed: ' + error.message)
+      // Get fresh session to ensure auth token is current
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert('Please sign in again to upload photos')
         setUploadingPhoto(false)
         return null
       }
-      const { data } = supabase.storage.from('recipe-photos').getPublicUrl(path)
+
+      const ext = file.name.split('.').pop().toLowerCase()
+      const safeName = ext === 'heic' ? 'jpg' : ext
+      const path = `${userId}/${Date.now()}.${safeName}`
+
+      // Use fetch directly to upload with auth header
+      const formData = new FormData()
+      formData.append('', file)
+
+      const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/recipe-photos/${path}`
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'x-upsert': 'true',
+        },
+        body: file,
+      })
+
+      if (!response.ok) {
+        const errText = await response.text()
+        console.error('Upload error:', errText)
+        alert('Photo upload failed: ' + errText)
+        setUploadingPhoto(false)
+        return null
+      }
+
+      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/recipe-photos/${path}`
       setUploadingPhoto(false)
-      return data.publicUrl
+      return publicUrl
     } catch (err) {
       console.error('Upload exception:', err)
       alert('Photo upload error: ' + err.message)
