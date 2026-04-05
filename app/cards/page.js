@@ -7,18 +7,34 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+const PINNED_KEY = 'recipe_cards_pinned'
+
 export default function CardsPage() {
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewing, setViewing] = useState(null)
   const [search, setSearch] = useState('')
+  const [selectMode, setSelectMode] = useState(false)
+  const [pinned, setPinned] = useState([]) // array of recipe ids
 
   useEffect(() => {
+    // Load pinned ids from localStorage
+    const saved = localStorage.getItem(PINNED_KEY)
+    if (saved) setPinned(JSON.parse(saved))
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       loadRecipes(session.user.id)
     })
   }, [])
+
+  function togglePin(id) {
+    setPinned(prev => {
+      const next = prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+      localStorage.setItem(PINNED_KEY, JSON.stringify(next))
+      return next
+    })
+  }
 
   async function loadRecipes(userId) {
     const { data } = await supabase
@@ -30,7 +46,12 @@ export default function CardsPage() {
     setLoading(false)
   }
 
-  const filtered = recipes.filter(r =>
+  // When not in select mode: show pinned first, then rest; when pinned is empty show all
+  const pinnedRecipes = recipes.filter(r => pinned.includes(r.id))
+  const unpinnedRecipes = recipes.filter(r => !pinned.includes(r.id))
+  const displayRecipes = pinned.length > 0 && !selectMode ? pinnedRecipes : recipes
+
+  const filtered = displayRecipes.filter(r =>
     search === '' || r.title.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -123,11 +144,25 @@ export default function CardsPage() {
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
-          <div className="flex items-center gap-2 mb-3">
-            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">🃏 My Recipe Cards</h1>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+              <h1 className="text-lg font-bold text-gray-900">🃏 My Recipe Cards</h1>
+            </div>
+            <button
+              onClick={() => setSelectMode(s => !s)}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${selectMode ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}
+            >
+              {selectMode ? 'Done' : 'Select'}
+            </button>
           </div>
-          <p className="text-xs text-gray-400 mb-3">Your recipes, beautifully carded — just the title and ingredients.</p>
+          {selectMode ? (
+            <p className="text-xs text-orange-600 mb-3">Tap recipes to pin them to your card view. Pinned: {pinned.length}</p>
+          ) : (
+            <p className="text-xs text-gray-400 mb-3">
+              {pinned.length > 0 ? `Showing ${pinnedRecipes.length} pinned cards — tap Select to change` : 'Your recipes, beautifully carded — just the title and ingredients.'}
+            </p>
+          )}
           <input
             type="text"
             placeholder="Search your cards..."
@@ -152,17 +187,25 @@ export default function CardsPage() {
           </div>
         ) : (
           <>
-            <p className="text-sm text-gray-400 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
+            <p className="text-sm text-gray-400 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}{selectMode ? ' — tap to select' : pinned.length > 0 ? ' pinned' : ''}</p>
             <div className="space-y-3">
               {filtered.map(recipe => (
                 <button
                   key={recipe.id}
-                  onClick={() => setViewing(recipe)}
-                  className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors"
+                  onClick={() => selectMode ? togglePin(recipe.id) : setViewing(recipe)}
+                  className={`w-full text-left bg-white rounded-2xl overflow-hidden transition-colors border-2 ${
+                    selectMode && pinned.includes(recipe.id)
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-gray-200 hover:border-orange-200'
+                  }`}
                 >
                   <div className="bg-orange-700 px-4 py-2 flex items-center justify-between">
                     <span style={{fontSize:'10px'}} className="text-orange-200 font-semibold tracking-wider uppercase">Recipe Card</span>
-                    <span style={{fontSize:'14px'}}>🃏</span>
+                    {selectMode ? (
+                      <span style={{fontSize:'16px'}}>{pinned.includes(recipe.id) ? '✅' : '⬜'}</span>
+                    ) : (
+                      <span style={{fontSize:'14px'}}>🃏</span>
+                    )}
                   </div>
                   <div className="flex gap-3 p-4">
                     {recipe.photo_url ? (
@@ -182,7 +225,7 @@ export default function CardsPage() {
                         {(recipe.ingredients || []).length} ingredients
                       </p>
                     </div>
-                    <span className="text-gray-300 text-xl self-center">→</span>
+                    {!selectMode && <span className="text-gray-300 text-xl self-center">→</span>}
                   </div>
                 </button>
               ))}
