@@ -81,6 +81,21 @@ export default function MyRecipesPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [tagInput, setTagInput] = useState('')
+  const [pinnedCards, setPinnedCards] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('recipe_cards_pinned')
+      return saved ? JSON.parse(saved) : []
+    }
+    return []
+  })
+
+  function toggleCardPin(id) {
+    setPinnedCards(prev => {
+      const next = prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+      localStorage.setItem('recipe_cards_pinned', JSON.stringify(next))
+      return next
+    })
+  }
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
 
@@ -316,8 +331,19 @@ export default function MyRecipesPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <div className="flex gap-2">
+              <button onClick={() => {
+                const pinned = JSON.parse(localStorage.getItem('recipe_cards_pinned') || '[]')
+                const isPin = pinned.includes(viewing.id)
+                const next = isPin ? pinned.filter(p => p !== viewing.id) : [...pinned, viewing.id]
+                localStorage.setItem('recipe_cards_pinned', JSON.stringify(next))
+                alert(isPin ? '✓ Removed from My Cards' : '🃏 Added to My Cards!')
+              }}
+              className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">🃏 Cards</button>
               <button onClick={() => setView('edit')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
               <button onClick={() => setView('enhance')} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI</button>
+              <button onClick={() => toggleCardPin(viewing.id)} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200 hover:border-orange-200'}`}>
+                {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Add to Cards'}
+              </button>
               <button onClick={() => deleteRecipe(viewing.id)} className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
             </div>
           </div>
