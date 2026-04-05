@@ -552,7 +552,7 @@ export default function MyRecipesPage() {
               onChange={e => setForm(f => ({...f, family_notes: e.target.value}))} rows={2}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
 
-            <button onClick={() => saveRecipe(form._photoFile)} disabled={!form.title.trim() || uploadingPhoto}
+            <button onClick={() => saveRecipe()} disabled={!form.title.trim() || uploadingPhoto}
               className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors">
               {uploadingPhoto ? '📷 Uploading photo...' : '💾 Save Recipe'}
             </button>
