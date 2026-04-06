@@ -8,7 +8,7 @@ const supabase = createClient(
 )
 
 const CHANNELS = [
-  'All','Chef Jean-Pierre','Binging with Babish','Joshua Weissman',
+  'All','Jamie Oliver','Binging with Babish','Joshua Weissman',
   'Gordon Ramsay','Ethan Chlebowski','Brian Lagerstrom','Adam Ragusea',
   'Pro Home Cooks','Internet Shaquille','Italia Squisita',
 ]
@@ -158,10 +158,10 @@ export default function VideosPage() {
                   {/* Thumbnail */}
                   <div className="relative overflow-hidden" style={{
                     height:'110px',
-                    backgroundImage: `url(${video.thumbnail_url || ''})`,
-                    backgroundSize: '120%',
-                    backgroundPosition: 'center 35%',
-                    backgroundColor: '#1a1a1a'
+                    backgroundImage: 'url(' + (video.thumbnail_url || '') + ')',
+                    backgroundSize: '140%',
+                    backgroundPosition: 'center center',
+                    backgroundColor: '#222'
                   }}>
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 hover:bg-opacity-20 transition-colors">
                       <div className="w-9 h-9 bg-red-600 bg-opacity-90 rounded-full flex items-center justify-center">
