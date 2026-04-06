@@ -25,6 +25,15 @@ export default function CardsPage() {
     })
   }, [])
 
+  function removeFromCards(id) {
+    setPinned(prev => {
+      const next = prev.filter(p => p !== id)
+      localStorage.setItem(PINNED_KEY, JSON.stringify(next))
+      return next
+    })
+    setViewing(null)
+  }
+
   async function loadRecipes(userId) {
     const { data } = await supabase
       .from('personal_recipes')
@@ -48,7 +57,15 @@ export default function CardsPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Cards</button>
-            <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
+            <div className="flex gap-2">
+              <button
+                onClick={() => removeFromCards(viewing.id)}
+                className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50"
+              >
+                Remove Card
+              </button>
+              <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
+            </div>
           </div>
         </header>
         <main className="max-w-lg mx-auto px-4 py-6 pb-16">
@@ -117,12 +134,16 @@ export default function CardsPage() {
           </div>
           <p className="text-xs text-gray-400 mb-3">
             {pinned.length > 0
-              ? `${pinnedRecipes.length} cards — open a recipe in MyRecipes to add or remove`
+              ? `${pinnedRecipes.length} cards — tap a card then Remove to delete it`
               : 'Open any recipe in MyRecipes and tap 🃏 Add to Cards'}
           </p>
-          <input type="text" placeholder="Search your cards..." value={search}
+          <input
+            type="text"
+            placeholder="Search your cards..."
+            value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+          />
         </div>
       </header>
 
@@ -143,8 +164,11 @@ export default function CardsPage() {
             <p className="text-sm text-gray-400 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
             <div className="space-y-3">
               {filtered.map(recipe => (
-                <button key={recipe.id} onClick={() => setViewing(recipe)}
-                  className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
+                <button
+                  key={recipe.id}
+                  onClick={() => setViewing(recipe)}
+                  className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors"
+                >
                   <div className="bg-orange-700 px-4 py-2 flex items-center justify-between">
                     <span style={{fontSize:'10px'}} className="text-orange-200 font-semibold tracking-wider uppercase">Recipe Card</span>
                     <span style={{fontSize:'14px'}}>🃏</span>
