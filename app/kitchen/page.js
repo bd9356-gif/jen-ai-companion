@@ -32,11 +32,18 @@ const SECTIONS = [
     href: '/secret',
   },
   {
-    icon: '🍳',
-    title: 'Explore Recipes',
-    subtitle: '— Search & Discover',
-    desc: 'Fresh ideas ready whenever inspiration strikes.',
+    icon: '🎴',
+    title: 'MyRecipe Deck',
+    subtitle: '— Swipe & Discover',
+    desc: 'A simple, swipe-friendly way to browse recipes.',
     href: '/explore',
+  },
+  {
+    icon: '🔍',
+    title: 'Browse Recipes',
+    subtitle: '— Search & Find',
+    desc: 'A classic, easy-to-scan list for finding exactly what you need.',
+    href: '/recipes',
   },
   {
     icon: '❤️',
@@ -154,19 +161,20 @@ export default function KitchenPage() {
             <a
               key={title}
               href={href}
-              className="block bg-white border border-gray-200 rounded-2xl p-5 hover:border-orange-200 hover:bg-orange-50 transition-colors"
+              className="block bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-300 transition-colors shadow-sm"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{icon}</span>
-                  <div>
-                    <p className="font-bold text-gray-900">
-                      {title} <span className="text-gray-400 font-normal text-sm">{subtitle}</span>
-                    </p>
-                    <p className="text-sm text-gray-500 mt-0.5">{desc}</p>
-                  </div>
+              {/* Drawer header stripe */}
+              <div className="bg-orange-700 px-4 py-2 flex items-center justify-between">
+                <span className="text-orange-200 font-semibold text-xs tracking-wider uppercase">{title}</span>
+                <span className="text-orange-300 text-lg">{icon}</span>
+              </div>
+              {/* Drawer body */}
+              <div className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">{subtitle}</p>
+                  <p className="text-sm text-gray-600 mt-0.5">{desc}</p>
                 </div>
-                <span className="text-gray-300 text-xl">→</span>
+                <span className="text-gray-300 text-xl ml-3 shrink-0">→</span>
               </div>
             </a>
           ))}
