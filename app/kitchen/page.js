@@ -164,9 +164,9 @@ export default function KitchenPage() {
               className="block bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-300 transition-colors shadow-sm"
             >
               {/* Drawer header stripe */}
-              <div className="bg-orange-700 px-4 py-2 flex items-center justify-between">
-                <span className="text-orange-200 font-semibold text-xs tracking-wider uppercase">{title}</span>
-                <span className="text-orange-300 text-lg">{icon}</span>
+              <div className="bg-orange-100 px-4 py-2 flex items-center justify-between border-b border-orange-200">
+                <span className="text-gray-800 font-semibold text-xs tracking-wider uppercase">{title}</span>
+                <span className="text-orange-500 text-lg">{icon}</span>
               </div>
               {/* Drawer body */}
               <div className="flex items-center justify-between px-4 py-3">
