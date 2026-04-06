@@ -15,10 +15,14 @@ export default function CardsPage() {
   const [viewing, setViewing] = useState(null)
   const [search, setSearch] = useState('')
   const [pinned, setPinned] = useState([])
+  const [hasSetPins, setHasSetPins] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem(PINNED_KEY)
-    if (saved) setPinned(JSON.parse(saved))
+    if (saved !== null) {
+      setHasSetPins(true)
+      setPinned(JSON.parse(saved))
+    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       loadRecipes(session.user.id)
@@ -29,6 +33,7 @@ export default function CardsPage() {
     const next = pinned.filter(p => p !== id)
     localStorage.setItem(PINNED_KEY, JSON.stringify(next))
     setPinned(next)
+    setHasSetPins(true)
     setViewing(null)
   }
 
@@ -43,7 +48,9 @@ export default function CardsPage() {
   }
 
   const pinnedRecipes = recipes.filter(r => pinned.includes(r.id))
-  const displayRecipes = pinned.length > 0 ? pinnedRecipes : recipes
+  // hasSetPins tracks if user has ever interacted with pins
+  // so empty pinned = show nothing (not show everything)
+  const displayRecipes = hasSetPins ? pinnedRecipes : recipes
   const filtered = displayRecipes.filter(r =>
     search === '' || r.title.toLowerCase().includes(search.toLowerCase())
   )
