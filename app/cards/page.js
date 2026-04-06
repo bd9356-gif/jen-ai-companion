@@ -26,11 +26,9 @@ export default function CardsPage() {
   }, [])
 
   function removeFromCards(id) {
-    setPinned(prev => {
-      const next = prev.filter(p => p !== id)
-      localStorage.setItem(PINNED_KEY, JSON.stringify(next))
-      return next
-    })
+    const next = pinned.filter(p => p !== id)
+    localStorage.setItem(PINNED_KEY, JSON.stringify(next))
+    setPinned(next)
     setViewing(null)
   }
 
