@@ -60,6 +60,13 @@ const SECTIONS = [
     href: '/cards',
   },
   {
+    icon: '🎬',
+    title: 'Cooking Videos',
+    subtitle: '— Watch & Learn',
+    desc: '400+ cooking videos from top YouTube chefs — browse, save, and watch.',
+    href: '/videos',
+  },
+  {
     icon: '👨‍🍳',
     title: 'AI Chef Creations',
     subtitle: '— Smart & Elevated',
