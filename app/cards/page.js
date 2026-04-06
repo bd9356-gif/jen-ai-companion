@@ -7,51 +7,44 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const PINNED_KEY = 'recipe_cards_pinned'
-
 export default function CardsPage() {
+  const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewing, setViewing] = useState(null)
   const [search, setSearch] = useState('')
-  const [pinned, setPinned] = useState([])
-  const [hasSetPins, setHasSetPins] = useState(false)
 
   useEffect(() => {
-    const saved = localStorage.getItem(PINNED_KEY)
-    if (saved !== null) {
-      setHasSetPins(true)
-      setPinned(JSON.parse(saved))
-    }
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
-      loadRecipes(session.user.id)
+      setUser(session.user)
+      loadCards(session.user.id)
     })
   }, [])
 
-  function removeFromCards(id) {
-    const next = pinned.filter(p => p !== id)
-    localStorage.setItem(PINNED_KEY, JSON.stringify(next))
-    setPinned(next)
-    setHasSetPins(true)
-    setViewing(null)
-  }
-
-  async function loadRecipes(userId) {
+  async function loadCards(userId) {
     const { data } = await supabase
-      .from('personal_recipes')
-      .select('id, title, category, ingredients, photo_url, servings, tags, description')
+      .from('recipe_cards')
+      .select('recipe_id, personal_recipes(id, title, category, ingredients, photo_url, servings, tags, description)')
       .eq('user_id', userId)
-      .order('title')
-    setRecipes(data || [])
+      .order('created_at', { ascending: false })
+    setRecipes((data || []).map(d => d.personal_recipes).filter(Boolean))
     setLoading(false)
   }
 
-  const pinnedRecipes = recipes.filter(r => pinned.includes(r.id))
-  // hasSetPins tracks if user has ever interacted with pins
-  // so empty pinned = show nothing (not show everything)
-  const displayRecipes = hasSetPins ? pinnedRecipes : recipes
-  const filtered = displayRecipes.filter(r =>
+  async function removeCard(recipeId) {
+    await supabase.from('recipe_cards').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
+    setRecipes(prev => prev.filter(r => r.id !== recipeId))
+    setViewing(null)
+  }
+
+  async function clearAll() {
+    await supabase.from('recipe_cards').delete().eq('user_id', user.id)
+    setRecipes([])
+    setViewing(null)
+  }
+
+  const filtered = recipes.filter(r =>
     search === '' || r.title.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -63,13 +56,13 @@ export default function CardsPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Cards</button>
             <div className="flex gap-2">
-              <button
-                onClick={() => removeFromCards(viewing.id)}
-                className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50"
-              >
+              <button onClick={() => removeCard(viewing.id)}
+                className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">
                 Remove Card
               </button>
-              <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
+              <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">
+                Full Recipe →
+              </a>
             </div>
           </div>
         </header>
@@ -134,15 +127,9 @@ export default function CardsPage() {
               <h1 className="text-lg font-bold text-gray-900">🃏 My Recipe Cards</h1>
             </div>
             <div className="flex gap-2">
-              {pinned.length > 0 && (
-                <button
-                  onClick={() => {
-                    localStorage.removeItem(PINNED_KEY)
-                    setPinned([])
-                    setHasSetPins(false)
-                  }}
-                  className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50"
-                >
+              {recipes.length > 0 && (
+                <button onClick={clearAll}
+                  className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">
                   Clear All
                 </button>
               )}
@@ -152,17 +139,13 @@ export default function CardsPage() {
             </div>
           </div>
           <p className="text-xs text-gray-400 mb-3">
-            {pinned.length > 0
-              ? `${pinnedRecipes.length} cards — tap a card then Remove to delete it`
+            {recipes.length > 0
+              ? `${recipes.length} cards — tap a card then Remove to delete it`
               : 'Open any recipe in MyRecipes and tap 🃏 Add to Cards'}
           </p>
-          <input
-            type="text"
-            placeholder="Search your cards..."
-            value={search}
+          <input type="text" placeholder="Search your cards..." value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
-          />
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
         </div>
       </header>
 
@@ -183,11 +166,8 @@ export default function CardsPage() {
             <p className="text-sm text-gray-400 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
             <div className="space-y-3">
               {filtered.map(recipe => (
-                <button
-                  key={recipe.id}
-                  onClick={() => setViewing(recipe)}
-                  className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors"
-                >
+                <button key={recipe.id} onClick={() => setViewing(recipe)}
+                  className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
                   <div className="bg-orange-700 px-4 py-2 flex items-center justify-between">
                     <span style={{fontSize:'10px'}} className="text-orange-200 font-semibold tracking-wider uppercase">Recipe Card</span>
                     <span style={{fontSize:'14px'}}>🃏</span>

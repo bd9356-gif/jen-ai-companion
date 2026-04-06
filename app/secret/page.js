@@ -81,20 +81,25 @@ export default function MyRecipesPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [tagInput, setTagInput] = useState('')
-  const [pinnedCards, setPinnedCards] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recipe_cards_pinned')
-      return saved ? JSON.parse(saved) : []
-    }
-    return []
-  })
+  const [pinnedCards, setPinnedCards] = useState([])
 
-  function toggleCardPin(id) {
-    setPinnedCards(prev => {
-      const next = prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-      localStorage.setItem('recipe_cards_pinned', JSON.stringify(next))
-      return next
-    })
+  async function loadPinnedCards(userId) {
+    const { data } = await supabase
+      .from('recipe_cards')
+      .select('recipe_id')
+      .eq('user_id', userId)
+    setPinnedCards((data || []).map(d => d.recipe_id))
+  }
+
+  async function toggleCardPin(id) {
+    if (!user) return
+    if (pinnedCards.includes(id)) {
+      await supabase.from('recipe_cards').delete().eq('user_id', user.id).eq('recipe_id', id)
+      setPinnedCards(prev => prev.filter(p => p !== id))
+    } else {
+      await supabase.from('recipe_cards').insert({ user_id: user.id, recipe_id: id })
+      setPinnedCards(prev => [...prev, id])
+    }
   }
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
@@ -109,6 +114,7 @@ export default function MyRecipesPage() {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
       loadRecipes(session.user.id)
+      loadPinnedCards(session.user.id)
     })
   }, [])
 
