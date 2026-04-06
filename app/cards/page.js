@@ -133,9 +133,23 @@ export default function CardsPage() {
               <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
               <h1 className="text-lg font-bold text-gray-900">🃏 My Recipe Cards</h1>
             </div>
-            <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">
-              + Add from MyRecipes
-            </a>
+            <div className="flex gap-2">
+              {pinned.length > 0 && (
+                <button
+                  onClick={() => {
+                    localStorage.removeItem(PINNED_KEY)
+                    setPinned([])
+                    setHasSetPins(false)
+                  }}
+                  className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50"
+                >
+                  Clear All
+                </button>
+              )}
+              <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">
+                + Add
+              </a>
+            </div>
           </div>
           <p className="text-xs text-gray-400 mb-3">
             {pinned.length > 0
