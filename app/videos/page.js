@@ -69,12 +69,25 @@ export default function VideosPage() {
     }
   }
 
+  function isShort(duration) {
+    if (!duration) return false
+    // Shorts are typically 0:59 or 1:00 or less
+    const parts = duration.split(':')
+    if (parts.length === 2) {
+      const mins = parseInt(parts[0])
+      const secs = parseInt(parts[1])
+      return mins < 2 && secs <= 59
+    }
+    return false
+  }
+
   const filtered = videos.filter(v => {
     const matchChannel = channel === 'All' || v.channel === channel
     const matchSearch = search === '' ||
       v.title.toLowerCase().includes(search.toLowerCase()) ||
       v.channel.toLowerCase().includes(search.toLowerCase())
-    return matchChannel && matchSearch
+    const notShort = !isShort(v.duration)
+    return matchChannel && matchSearch && notShort
   })
 
   if (playing) {
