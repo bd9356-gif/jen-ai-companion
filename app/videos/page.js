@@ -21,7 +21,15 @@ const CHANNELS = [
   'Italia Squisita',
 ]
 
-const CATEGORIES = ['All', 'Classic', 'Creative', 'Homemade', 'Professional', 'Science', 'Everyday']
+function isShort(duration) {
+  if (!duration) return false
+  const parts = duration.split(':')
+  if (parts.length === 2) {
+    const mins = parseInt(parts[0])
+    return mins < 2
+  }
+  return false
+}
 
 export default function VideosPage() {
   const [user, setUser] = useState(null)
@@ -30,7 +38,7 @@ export default function VideosPage() {
   const [savedIds, setSavedIds] = useState(new Set())
   const [channel, setChannel] = useState('All')
   const [search, setSearch] = useState('')
-  const [playing, setPlaying] = useState(null) // youtube_id being played
+  const [playing, setPlaying] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -69,41 +77,37 @@ export default function VideosPage() {
     }
   }
 
-  function isShort(duration) {
-    if (!duration) return false
-    // Shorts are typically 0:59 or 1:00 or less
-    const parts = duration.split(':')
-    if (parts.length === 2) {
-      const mins = parseInt(parts[0])
-      const secs = parseInt(parts[1])
-      return mins < 2 && secs <= 59
-    }
-    return false
-  }
-
   const filtered = videos.filter(v => {
     const matchChannel = channel === 'All' || v.channel === channel
     const matchSearch = search === '' ||
       v.title.toLowerCase().includes(search.toLowerCase()) ||
       v.channel.toLowerCase().includes(search.toLowerCase())
-    const notShort = !isShort(v.duration)
-    return matchChannel && matchSearch && notShort
+    return matchChannel && matchSearch && !isShort(v.duration)
   })
 
+  // ── PLAYER VIEW ──
   if (playing) {
     const video = videos.find(v => v.youtube_id === playing)
     return (
-      <div className="min-h-screen bg-black">
-        <header className="bg-black px-4 py-3 flex items-center justify-between">
-          <button onClick={() => setPlaying(null)} className="text-sm text-gray-400 hover:text-white">← Back</button>
-          <button
-            onClick={() => toggleSave(video?.id)}
-            className={`text-sm font-semibold ${savedIds.has(video?.id) ? 'text-orange-400' : 'text-gray-400 hover:text-orange-400'}`}
-          >
-            {savedIds.has(video?.id) ? '♥ Saved' : '♡ Save'}
-          </button>
+      <div className="min-h-screen bg-white">
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <button onClick={() => setPlaying(null)} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            {video && (
+              <button
+                onClick={() => toggleSave(video.id)}
+                className={`text-sm font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                  savedIds.has(video.id)
+                    ? 'text-orange-600 border-orange-200 bg-orange-50'
+                    : 'text-gray-400 border-gray-200 hover:border-orange-200 hover:text-orange-600'
+                }`}
+              >
+                {savedIds.has(video.id) ? '♥ Saved' : '♡ Save'}
+              </button>
+            )}
+          </div>
         </header>
-        <div className="w-full" style={{aspectRatio:'16/9'}}>
+        <div className="w-full bg-black" style={{aspectRatio:'16/9'}}>
           <iframe
             src={`https://www.youtube.com/embed/${playing}?autoplay=1`}
             className="w-full h-full"
@@ -112,12 +116,17 @@ export default function VideosPage() {
           />
         </div>
         {video && (
-          <div className="px-4 py-4">
-            <p className="text-white font-semibold text-base leading-tight mb-1">{video.title}</p>
+          <div className="px-4 py-4 max-w-4xl mx-auto">
+            <h1 className="text-base font-bold text-gray-900 leading-snug mb-2">{video.title}</h1>
             <div className="flex items-center gap-3 text-sm text-gray-400">
-              <span>{video.channel}</span>
+              <span className="text-orange-600 font-medium">{video.channel}</span>
               {video.duration && <span>· {video.duration}</span>}
-              {video.view_count > 0 && <span>· {(video.view_count / 1000000).toFixed(1)}M views</span>}
+              {video.view_count > 0 && (
+                <span>· {video.view_count >= 1000000
+                  ? `${(video.view_count / 1000000).toFixed(1)}M views`
+                  : `${(video.view_count / 1000).toFixed(0)}K views`}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -125,6 +134,7 @@ export default function VideosPage() {
     )
   }
 
+  // ── LIST VIEW ──
   return (
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
@@ -156,70 +166,72 @@ export default function VideosPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-4">
+      <main className="max-w-4xl mx-auto py-4">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading videos...</div>
         ) : (
           <>
-            <p className="text-sm text-gray-400 mb-4">{filtered.length} videos</p>
-            <div className="space-y-3">
+            <p className="text-sm text-gray-400 mb-4 px-4">{filtered.length} videos</p>
+            <div className="space-y-4">
               {filtered.map(video => (
-                <div key={video.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
-                  <button onClick={() => setPlaying(video.youtube_id)} className="flex gap-3 p-3 w-full text-left">
-                    {/* Thumbnail */}
-                    <div className="relative shrink-0 rounded-xl overflow-hidden" style={{width:'120px', height:'68px'}}>
-                      {video.thumbnail_url ? (
-                        <img
-                          src={video.thumbnail_url.replace('hqdefault', 'mqdefault')}
-                          alt={video.title}
-                          className="w-full h-full object-cover"
-                          onError={e => { e.target.src = video.thumbnail_url }}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                          <span className="text-2xl">🎬</span>
-                        </div>
-                      )}
-                      {/* Play overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 hover:bg-opacity-30 transition-colors">
-                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs ml-0.5">▶</span>
-                        </div>
+                <div key={video.id} className="bg-white">
+                  {/* Large thumbnail */}
+                  <button
+                    onClick={() => setPlaying(video.youtube_id)}
+                    className="relative w-full block"
+                    style={{aspectRatio:'16/9'}}
+                  >
+                    <img
+                      src={video.thumbnail_url
+                        ? video.thumbnail_url.replace('hqdefault', 'maxresdefault')
+                        : ''}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                      onError={e => {
+                        e.target.src = video.thumbnail_url
+                          ? video.thumbnail_url.replace('maxresdefault', 'mqdefault')
+                          : ''
+                      }}
+                    />
+                    {/* Play button */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 hover:bg-opacity-20 transition-colors">
+                      <div className="w-14 h-14 bg-red-600 bg-opacity-90 rounded-full flex items-center justify-center shadow-lg">
+                        <span className="text-white text-xl ml-1">▶</span>
                       </div>
-                      {video.duration && (
-                        <div className="absolute bottom-1 right-1 bg-black bg-opacity-80 text-white text-xs px-1 rounded">
-                          {video.duration}
-                        </div>
-                      )}
                     </div>
+                    {/* Duration badge */}
+                    {video.duration && (
+                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                        {video.duration}
+                      </div>
+                    )}
+                  </button>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 leading-tight line-clamp-2 mb-1">{video.title}</p>
-                      <p className="text-xs text-orange-600 font-medium mb-0.5">{video.channel}</p>
+                  {/* Info row */}
+                  <div className="flex items-start justify-between px-4 pt-3 pb-4">
+                    <button onClick={() => setPlaying(video.youtube_id)} className="flex-1 text-left min-w-0 mr-3">
+                      <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 mb-1">{video.title}</p>
+                      <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
                       {video.view_count > 0 && (
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-400 mt-0.5">
                           {video.view_count >= 1000000
                             ? `${(video.view_count / 1000000).toFixed(1)}M views`
                             : `${(video.view_count / 1000).toFixed(0)}K views`}
                         </p>
                       )}
-                    </div>
-                  </button>
-
-                  {/* Save button */}
-                  <div className="px-3 pb-3 flex justify-end">
+                    </button>
                     <button
                       onClick={() => toggleSave(video.id)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                        savedIds.has(video.id)
-                          ? 'text-orange-600 border-orange-200 bg-orange-50'
-                          : 'text-gray-400 border-gray-200 hover:border-orange-200 hover:text-orange-600'
+                      className={`shrink-0 text-xl mt-0.5 transition-colors ${
+                        savedIds.has(video.id) ? 'text-orange-500' : 'text-gray-300 hover:text-orange-400'
                       }`}
                     >
-                      {savedIds.has(video.id) ? '♥ Saved' : '♡ Save'}
+                      {savedIds.has(video.id) ? '♥' : '♡'}
                     </button>
                   </div>
+
+                  {/* Divider */}
+                  <div className="border-b border-gray-100" />
                 </div>
               ))}
             </div>
