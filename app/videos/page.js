@@ -156,7 +156,12 @@ export default function VideosPage() {
                     {/* Thumbnail */}
                     <div className="relative shrink-0 rounded-xl overflow-hidden" style={{width:'120px', height:'68px'}}>
                       {video.thumbnail_url ? (
-                        <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" />
+                        <img
+                          src={video.thumbnail_url.replace('hqdefault', 'mqdefault')}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                          onError={e => { e.target.src = video.thumbnail_url }}
+                        />
                       ) : (
                         <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                           <span className="text-2xl">🎬</span>
