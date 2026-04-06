@@ -8,7 +8,7 @@ const supabase = createClient(
 )
 
 const CHANNELS = [
-  'All','Jamie Oliver','Binging with Babish','Joshua Weissman',
+  'All','Chef Jean-Pierre','Jamie Oliver','Binging with Babish','Joshua Weissman',
   'Gordon Ramsay','Ethan Chlebowski','Brian Lagerstrom','Adam Ragusea',
   'Pro Home Cooks','Internet Shaquille','Italia Squisita',
 ]
