@@ -1,4 +1,3 @@
-
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
@@ -15,15 +14,20 @@ const CHANNELS = [
 ]
 
 function isShort(duration) {
-  if (!duration) return false
+  if (!duration) return true
   const parts = duration.split(':')
-  if (parts.length === 2) return parseInt(parts[0]) < 2
+  if (parts.length === 2) {
+    const mins = parseInt(parts[0])
+    const secs = parseInt(parts[1])
+    // Filter under 3 mins to catch vertical shorts stored as longer videos
+    return mins < 3
+  }
   return false
 }
 
 function thumbUrl(url) {
   if (!url) return ''
-  return url.replace('hqdefault', 'sddefault')
+  return url
 }
 
 function viewCount(n) {
