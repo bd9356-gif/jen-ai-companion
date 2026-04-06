@@ -156,13 +156,12 @@ export default function VideosPage() {
                 <div key={video.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors cursor-pointer"
                   onClick={() => setPlaying(video.youtube_id)}>
                   {/* Thumbnail */}
-                  <div className="relative overflow-hidden" style={{
-                    height:'110px',
-                    backgroundImage: 'url(' + (video.thumbnail_url || '') + ')',
-                    backgroundSize: '140%',
-                    backgroundPosition: 'center center',
-                    backgroundColor: '#222'
-                  }}>
+                  <div className="relative bg-gray-100" style={{height:'110px', overflow:'hidden'}}>
+                    <img
+                      src={`https://img.youtube.com/vi/${video.youtube_id}/mqdefault.jpg`}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                    />
                     <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10 hover:bg-opacity-20 transition-colors">
                       <div className="w-9 h-9 bg-red-600 bg-opacity-90 rounded-full flex items-center justify-center">
                         <span className="text-white text-sm ml-0.5">▶</span>
