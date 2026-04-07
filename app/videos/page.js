@@ -173,11 +173,11 @@ export default function VideosPage() {
 
           {/* Two dropdowns */}
           <div className="flex gap-2">
-            <select value={category} onChange={e => { setCategory(e.target.value); setShowCount(10) }}
+            <select value={category} onChange={e => { setCategory(e.target.value); setChannel('All Channels'); setShowCount(10) }}
               className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white text-gray-700">
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
-            <select value={channel} onChange={e => { setChannel(e.target.value); setShowCount(10) }}
+            <select value={channel} onChange={e => { setChannel(e.target.value); setCategory('All Categories'); setShowCount(10) }}
               className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white text-gray-700">
               {CHANNELS.map(c => <option key={c}>{c}</option>)}
             </select>
