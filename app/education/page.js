@@ -53,6 +53,20 @@ export default function EducationPage() {
       .from('education_videos').select('*').order('view_count', { ascending: false })
     setVideos(data || [])
     setLoading(false)
+    // Pre-load all metadata so badges show immediately
+    if (data && data.length > 0) {
+      const ids = data.map(v => v.id)
+      const { data: metas } = await supabase
+        .from('education_video_metadata')
+        .select('*')
+        .in('video_id', ids)
+      if (metas) {
+        const map = {}
+        metas.forEach(m => { map[m.video_id] = m })
+        ids.forEach(id => { if (!map[id]) map[id] = null })
+        setMetadata(map)
+      }
+    }
   }
 
   async function loadSaved(userId) {

@@ -53,6 +53,21 @@ export default function VideosPage() {
       .from('cooking_videos').select('*').order('view_count', { ascending: false })
     setVideos(data || [])
     setLoading(false)
+    // Pre-load all metadata so badges show immediately
+    if (data && data.length > 0) {
+      const ids = data.map(v => v.id)
+      const { data: metas } = await supabase
+        .from('video_metadata')
+        .select('*')
+        .in('video_id', ids)
+      if (metas) {
+        const map = {}
+        metas.forEach(m => { map[m.video_id] = m })
+        // Fill nulls for videos with no metadata
+        ids.forEach(id => { if (!map[id]) map[id] = null })
+        setMetadata(map)
+      }
+    }
   }
 
   async function loadSaved(userId) {
