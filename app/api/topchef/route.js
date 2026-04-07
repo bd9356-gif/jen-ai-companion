@@ -10,22 +10,52 @@ const supabase = createClient(
 export async function POST(request) {
   const { cuisine, difficulty } = await request.json()
 
-  const prompt = `You are a world-class chef creating an elevated, gourmet recipe. Create a ${difficulty} level ${cuisine} recipe that would impress dinner guests.
+  // Get existing recipe titles to avoid repeats
+  const { data: existing } = await supabase
+    .from('chef_recipes')
+    .select('title')
+    .eq('cuisine', cuisine)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  const existingTitles = (existing || []).map(r => r.title).join(', ')
+  const avoidClause = existingTitles
+    ? `\n\nIMPORTANT: Do NOT create any of these recipes that already exist: ${existingTitles}. Create something completely different and unique.`
+    : ''
+
+  // Add randomness with a random technique/ingredient hint
+  const techniques = [
+    'braising', 'sous vide', 'confit', 'en papillote', 'searing',
+    'roasting', 'fermenting', 'pickling', 'smoking', 'flambeing',
+    'making a reduction', 'emulsifying', 'caramelizing', 'deglazing'
+  ]
+  const ingredients = [
+    'truffle', 'saffron', 'miso', 'tamarind', 'preserved lemon',
+    'bone marrow', 'burrata', 'sumac', 'pomegranate molasses', 'harissa',
+    'gochujang', 'dashi', 'black garlic', 'yuzu', 'tahini', 'nduja'
+  ]
+  const randomTechnique = techniques[Math.floor(Math.random() * techniques.length)]
+  const randomIngredient = ingredients[Math.floor(Math.random() * ingredients.length)]
+
+  const prompt = `You are a world-class chef creating an elevated, gourmet recipe.
+
+Create a ${difficulty} level ${cuisine} recipe that would impress dinner guests.
+Try to incorporate ${randomTechnique} or ${randomIngredient} if it fits naturally with ${cuisine} cuisine.
+Be creative and unexpected — surprise the cook with something they haven't made before.${avoidClause}
 
 Respond with ONLY a JSON object in this exact format, no other text:
 {
   "title": "Recipe Name",
-  "description": "A 2-sentence description of what makes this dish special and who would love it",
+  "description": "A 2-sentence description of what makes this dish special",
   "cuisine": "${cuisine}",
   "difficulty": "${difficulty}",
   "ingredients": [
-    {"name": "ingredient name", "measure": "amount and unit"},
     {"name": "ingredient name", "measure": "amount and unit"}
   ],
   "instructions": "Step 1 instruction\\nStep 2 instruction\\nStep 3 instruction"
 }
 
-Make it genuinely impressive — use interesting techniques, quality ingredients, and chef-level presentation tips in the instructions.`
+Make it genuinely impressive — interesting techniques, quality ingredients, chef-level presentation tips.`
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -37,7 +67,6 @@ Make it genuinely impressive — use interesting techniques, quality ingredients
   const clean = text.replace(/```json|```/g, '').trim()
   const recipe = JSON.parse(clean)
 
-  // Save to Supabase
   const { data, error } = await supabase
     .from('chef_recipes')
     .insert({
@@ -55,6 +84,5 @@ Make it genuinely impressive — use interesting techniques, quality ingredients
   if (error) {
     return Response.json({ recipe }, { status: 200 })
   }
-
   return Response.json({ recipe: data })
 }
