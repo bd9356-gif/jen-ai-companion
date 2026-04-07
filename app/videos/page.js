@@ -8,9 +8,12 @@ const supabase = createClient(
 )
 
 const CHANNELS = [
-  'All','Chef Jean-Pierre','Jamie Oliver','Binging with Babish','Joshua Weissman',
+  'All',
+  'Chef Jean-Pierre','Jamie Oliver','Binging with Babish','Joshua Weissman',
   'Gordon Ramsay','Ethan Chlebowski','Brian Lagerstrom','Adam Ragusea',
   'Pro Home Cooks','Internet Shaquille','Italia Squisita',
+  "Natasha's Kitchen",'Preppy Kitchen','Inspired Taste',
+  'Tasty',"America's Test Kitchen",'Serious Eats','Food Wishes',
 ]
 
 function isShort(duration) {
@@ -38,6 +41,7 @@ export default function VideosPage() {
   const [expandedId, setExpandedId] = useState(null)
   const [metadata, setMetadata] = useState({})
   const [showCount, setShowCount] = useState(10)
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -49,61 +53,61 @@ export default function VideosPage() {
   }, [])
 
   async function loadVideos() {
-    const { data } = await supabase
-      .from('cooking_videos').select('*').order('view_count', { ascending: false })
-    setVideos(data || [])
+    // Load from both tables
+    const [{ data: cooking }, { data: education }] = await Promise.all([
+      supabase.from('cooking_videos').select('*').order('view_count', { ascending: false }),
+      supabase.from('education_videos').select('*').order('view_count', { ascending: false }),
+    ])
+
+    // Tag each video with its source
+    const allVideos = [
+      ...(cooking || []).map(v => ({ ...v, _source: 'cooking' })),
+      ...(education || []).map(v => ({ ...v, _source: 'education' })),
+    ].sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+
+    setVideos(allVideos)
     setLoading(false)
+
     // Pre-load all metadata so badges show immediately
-    if (data && data.length > 0) {
-      const ids = data.map(v => v.id)
-      const { data: metas } = await supabase
-        .from('video_metadata')
-        .select('*')
-        .in('video_id', ids)
-      if (metas) {
-        const map = {}
-        metas.forEach(m => { map[m.video_id] = m })
-        // Fill nulls for videos with no metadata
-        ids.forEach(id => { if (!map[id]) map[id] = null })
-        setMetadata(map)
-      }
-    }
+    const cookingIds = (cooking || []).map(v => v.id)
+    const educationIds = (education || []).map(v => v.id)
+
+    const [{ data: cookingMeta }, { data: educationMeta }] = await Promise.all([
+      supabase.from('video_metadata').select('*').in('video_id', cookingIds.length ? cookingIds : ['none']),
+      supabase.from('education_video_metadata').select('*').in('video_id', educationIds.length ? educationIds : ['none']),
+    ])
+
+    const map = {}
+    ;(cookingMeta || []).forEach(m => { map[m.video_id] = m })
+    ;(educationMeta || []).forEach(m => { map[m.video_id] = m })
+    // Mark missing as null
+    allVideos.forEach(v => { if (!map[v.id]) map[v.id] = null })
+    setMetadata(map)
   }
 
   async function loadSaved(userId) {
-    const { data } = await supabase.from('saved_videos').select('video_id').eq('user_id', userId)
-    setSavedIds(new Set((data || []).map(s => s.video_id)))
+    const [{ data: s1 }, { data: s2 }] = await Promise.all([
+      supabase.from('saved_videos').select('video_id').eq('user_id', userId),
+      supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
+    ])
+    setSavedIds(new Set([...(s1 || []), ...(s2 || [])].map(s => s.video_id)))
   }
 
-  async function loadMetadata(videoId) {
-    if (metadata[videoId]) return
-    const { data } = await supabase
-      .from('video_metadata')
-      .select('*')
-      .eq('video_id', videoId)
-      .maybeSingle()
-    if (data) setMetadata(prev => ({ ...prev, [videoId]: data }))
-    else setMetadata(prev => ({ ...prev, [videoId]: null }))
-  }
-
-  async function toggleSave(videoId) {
+  async function toggleSave(video) {
     if (!user) return
-    if (savedIds.has(videoId)) {
-      await supabase.from('saved_videos').delete().eq('user_id', user.id).eq('video_id', videoId)
-      setSavedIds(prev => { const n = new Set(prev); n.delete(videoId); return n })
+    const table = video._source === 'education' ? 'saved_education_videos' : 'saved_videos'
+    if (savedIds.has(video.id)) {
+      await supabase.from(table).delete().eq('user_id', user.id).eq('video_id', video.id)
+      setSavedIds(prev => { const n = new Set(prev); n.delete(video.id); return n })
     } else {
-      await supabase.from('saved_videos').insert({ user_id: user.id, video_id: videoId })
-      setSavedIds(prev => new Set([...prev, videoId]))
+      await supabase.from(table).insert({ user_id: user.id, video_id: video.id })
+      setSavedIds(prev => new Set([...prev, video.id]))
     }
   }
 
   function toggleExpand(videoId) {
-    if (expandedId === videoId) {
-      setExpandedId(null)
-    } else {
-      setExpandedId(videoId)
-      loadMetadata(videoId)
-    }
+    if (expandedId === videoId) { setExpandedId(null); return }
+    setExpandedId(videoId)
   }
 
   const filtered = videos.filter(v => {
@@ -111,8 +115,17 @@ export default function VideosPage() {
     const matchSearch = search === '' ||
       v.title.toLowerCase().includes(search.toLowerCase()) ||
       v.channel.toLowerCase().includes(search.toLowerCase())
-    return matchChannel && matchSearch && !isShort(v.duration)
+    const meta = metadata[v.id]
+    const hasRecipe = meta?.ingredients?.length > 0
+    const matchFilter = filter === 'all' ||
+      (filter === 'recipe' && hasRecipe) ||
+      (filter === 'summary' && !hasRecipe)
+    return matchChannel && matchSearch && matchFilter && !isShort(v.duration)
   })
+
+  // Count for filter badges
+  const recipeCount = videos.filter(v => metadata[v.id]?.ingredients?.length > 0 && !isShort(v.duration)).length
+  const summaryCount = videos.filter(v => !metadata[v.id]?.ingredients?.length && !isShort(v.duration)).length
 
   const visible = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
@@ -121,13 +134,33 @@ export default function VideosPage() {
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-1">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">🎬 Cooking Videos</h1>
           </div>
+          <p className="text-xs text-gray-400 mb-3">{videos.filter(v => !isShort(v.duration)).length} videos from top YouTube channels</p>
           <input type="text" placeholder="Search videos or channels..."
             value={search} onChange={e => { setSearch(e.target.value); setShowCount(10) }}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3" />
+          {/* Bucket filter */}
+          <div className="flex gap-2 mb-3">
+            <button onClick={() => { setFilter('all'); setShowCount(10) }}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                filter === 'all' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
+              All ({videos.filter(v => !isShort(v.duration)).length})
+            </button>
+            <button onClick={() => { setFilter('recipe'); setShowCount(10) }}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                filter === 'recipe' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
+              🍳 Has Recipe ({recipeCount})
+            </button>
+            <button onClick={() => { setFilter('summary'); setShowCount(10) }}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                filter === 'summary' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
+              📝 Summary ({summaryCount})
+            </button>
+          </div>
+          {/* Channel filter */}
           <div className="flex gap-2 overflow-x-auto pb-1">
             {CHANNELS.map(ch => (
               <button key={ch} onClick={() => { setChannel(ch); setShowCount(10) }}
@@ -151,36 +184,25 @@ export default function VideosPage() {
                 const meta = metadata[video.id]
                 const isExpanded = expandedId === video.id
                 const hasRecipe = meta?.ingredients?.length > 0
-                const hasSummary = meta?.ai_summary
 
                 return (
                   <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
-
-                    {/* Thumbnail / Player */}
                     {playingId === video.id ? (
                       <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-                        <iframe
-                          src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1`}
+                        <iframe src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1`}
                           className="w-full h-full"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
+                          allowFullScreen />
                         <button onClick={() => setPlayingId(null)}
                           className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
                       </div>
                     ) : (
                       <button onClick={() => setPlayingId(video.id)} className="w-full relative block group">
-                        <img
-                          src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
-                          alt={video.title}
-                          className="w-full object-cover"
-                          style={{height:'192px'}}
-                        />
+                        <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
+                          alt={video.title} className="w-full object-cover" style={{height:'192px'}} />
                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                           <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                            <svg viewBox="0 0 24 24" className="w-6 h-6 ml-0.5" fill="#dc2626">
-                              <path d="M8 5v14l11-7z"/>
-                            </svg>
+                            <svg viewBox="0 0 24 24" className="w-6 h-6 ml-0.5" fill="#dc2626"><path d="M8 5v14l11-7z"/></svg>
                           </div>
                         </div>
                         {video.duration && (
@@ -191,45 +213,40 @@ export default function VideosPage() {
                       </button>
                     )}
 
-                    {/* Info */}
                     <div className="p-4">
                       <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1">{video.title}</h3>
                       <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
                       <p className="text-xs text-gray-400 mt-0.5 mb-3">{viewCount(video.view_count)}</p>
 
-                      {/* Action buttons */}
                       <div className="flex items-center flex-wrap gap-3">
                         <button onClick={() => toggleExpand(video.id)}
                           className="text-sm text-orange-600 font-semibold hover:text-orange-800">
                           {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
                         </button>
-                        {meta && hasRecipe && (
+                        {hasRecipe && (
                           <span className="text-xs font-semibold px-2 py-0.5 bg-green-50 text-green-700 rounded-full border border-green-200">
-                            🍳 Recipe included
+                            🍳 Has Recipe
                           </span>
                         )}
-                        {meta && !hasRecipe && (
+                        {!hasRecipe && meta !== undefined && (
                           <span className="text-xs font-semibold px-2 py-0.5 bg-gray-50 text-gray-400 rounded-full border border-gray-200">
                             📝 Summary only
                           </span>
                         )}
-                        <button onClick={() => toggleSave(video.id)}
+                        <button onClick={() => toggleSave(video)}
                           className={`text-sm font-semibold transition-colors ml-auto ${
                             savedIds.has(video.id) ? 'text-orange-600' : 'text-gray-400 hover:text-orange-600'}`}>
                           {savedIds.has(video.id) ? '♥ Saved' : '♡ Save'}
                         </button>
                       </div>
 
-                      {/* Expanded details */}
                       {isExpanded && (
                         <div className="mt-4 border-t border-gray-100 pt-4">
-                          {meta === undefined ? (
-                            <p className="text-sm text-gray-400">Loading...</p>
-                          ) : !meta ? (
-                            <p className="text-sm text-gray-400 italic">No details available for this video.</p>
+                          {!meta ? (
+                            <p className="text-sm text-gray-400 italic">No details available.</p>
                           ) : (
                             <>
-                              {hasSummary && (
+                              {meta.ai_summary && (
                                 <div className="mb-4">
                                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">About this video</p>
                                   <p className="text-sm text-gray-700 leading-relaxed">{meta.ai_summary}</p>
@@ -268,8 +285,8 @@ export default function VideosPage() {
                                   )}
                                 </>
                               )}
-                              {!hasRecipe && !hasSummary && (
-                                <p className="text-sm text-gray-400 italic">No recipe details available for this video.</p>
+                              {!hasRecipe && !meta.ai_summary && (
+                                <p className="text-sm text-gray-400 italic">No details available.</p>
                               )}
                             </>
                           )}
@@ -280,7 +297,6 @@ export default function VideosPage() {
                 )
               })}
             </div>
-
             {hasMore && (
               <div className="mt-6 text-center">
                 <button onClick={() => setShowCount(c => c + 10)}
