@@ -7,8 +7,17 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+const CATEGORIES = [
+  'All Categories',
+  'Pasta','Chicken','Beef','Pizza','Seafood','Pork',
+  'Vegetables','Bread','Dessert','Breakfast','Sandwich',
+  'Soup','Salad','Appetizer','Sauce','Baking',
+  'Mexican','Italian','French','Asian','American',
+  'Comfort Food','Quick','Technique',
+]
+
 const CHANNELS = [
-  'All',
+  'All Channels',
   'Chef Jean-Pierre','Jamie Oliver','Binging with Babish','Joshua Weissman',
   'Gordon Ramsay','Ethan Chlebowski','Brian Lagerstrom','Adam Ragusea',
   'Pro Home Cooks','Internet Shaquille','Italia Squisita',
@@ -35,7 +44,8 @@ export default function VideosPage() {
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [savedIds, setSavedIds] = useState(new Set())
-  const [channel, setChannel] = useState('All')
+  const [category, setCategory] = useState('All Categories')
+  const [channel, setChannel] = useState('All Channels')
   const [search, setSearch] = useState('')
   const [playingId, setPlayingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
@@ -53,13 +63,11 @@ export default function VideosPage() {
   }, [])
 
   async function loadVideos() {
-    // Load from both tables
     const [{ data: cooking }, { data: education }] = await Promise.all([
       supabase.from('cooking_videos').select('*').order('view_count', { ascending: false }),
       supabase.from('education_videos').select('*').order('view_count', { ascending: false }),
     ])
 
-    // Tag each video with its source
     const allVideos = [
       ...(cooking || []).map(v => ({ ...v, _source: 'cooking' })),
       ...(education || []).map(v => ({ ...v, _source: 'education' })),
@@ -68,7 +76,7 @@ export default function VideosPage() {
     setVideos(allVideos)
     setLoading(false)
 
-    // Pre-load all metadata so badges show immediately
+    // Pre-load all metadata
     const cookingIds = (cooking || []).map(v => v.id)
     const educationIds = (education || []).map(v => v.id)
 
@@ -80,8 +88,7 @@ export default function VideosPage() {
     const map = {}
     ;(cookingMeta || []).forEach(m => { map[m.video_id] = m })
     ;(educationMeta || []).forEach(m => { map[m.video_id] = m })
-    // Mark missing as null
-    allVideos.forEach(v => { if (!map[v.id]) map[v.id] = null })
+    allVideos.forEach(v => { if (map[v.id] === undefined) map[v.id] = null })
     setMetadata(map)
   }
 
@@ -111,21 +118,25 @@ export default function VideosPage() {
   }
 
   const filtered = videos.filter(v => {
-    const matchChannel = channel === 'All' || v.channel === channel
+    const meta = metadata[v.id]
+    const hasRecipe = meta?.ingredients?.length > 0
+    const tags = meta?.dish_tags || []
+
+    const matchCategory = category === 'All Categories' ||
+      tags.some(t => t.toLowerCase() === category.toLowerCase())
+    const matchChannel = channel === 'All Channels' || v.channel === channel
     const matchSearch = search === '' ||
       v.title.toLowerCase().includes(search.toLowerCase()) ||
       v.channel.toLowerCase().includes(search.toLowerCase())
-    const meta = metadata[v.id]
-    const hasRecipe = meta?.ingredients?.length > 0
     const matchFilter = filter === 'all' ||
       (filter === 'recipe' && hasRecipe) ||
       (filter === 'summary' && !hasRecipe)
-    return matchChannel && matchSearch && matchFilter && !isShort(v.duration)
+    return matchCategory && matchChannel && matchSearch && matchFilter && !isShort(v.duration)
   })
 
-  // Count for filter badges
+  const totalNonShort = videos.filter(v => !isShort(v.duration)).length
   const recipeCount = videos.filter(v => metadata[v.id]?.ingredients?.length > 0 && !isShort(v.duration)).length
-  const summaryCount = videos.filter(v => !metadata[v.id]?.ingredients?.length && !isShort(v.duration)).length
+  const summaryCount = totalNonShort - recipeCount
 
   const visible = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
@@ -138,37 +149,38 @@ export default function VideosPage() {
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">🎬 Cooking Videos</h1>
           </div>
-          <p className="text-xs text-gray-400 mb-3">{videos.filter(v => !isShort(v.duration)).length} videos from top YouTube channels</p>
-          <input type="text" placeholder="Search videos or channels..."
+          <p className="text-xs text-gray-400 mb-3">{totalNonShort} videos from top YouTube channels</p>
+
+          {/* Search */}
+          <input type="text" placeholder="Search videos..."
             value={search} onChange={e => { setSearch(e.target.value); setShowCount(10) }}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3" />
+
           {/* Bucket filter */}
           <div className="flex gap-2 mb-3">
-            <button onClick={() => { setFilter('all'); setShowCount(10) }}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                filter === 'all' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-              All ({videos.filter(v => !isShort(v.duration)).length})
-            </button>
-            <button onClick={() => { setFilter('recipe'); setShowCount(10) }}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                filter === 'recipe' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-              🍳 Has Recipe ({recipeCount})
-            </button>
-            <button onClick={() => { setFilter('summary'); setShowCount(10) }}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                filter === 'summary' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-              📝 Summary ({summaryCount})
-            </button>
-          </div>
-          {/* Channel filter */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {CHANNELS.map(ch => (
-              <button key={ch} onClick={() => { setChannel(ch); setShowCount(10) }}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  channel === ch ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-                {ch === 'All' ? 'All Channels' : ch}
+            {[['all',`All (${totalNonShort})`],['recipe',`🍳 Has Recipe (${recipeCount})`],['summary',`📝 Summary (${summaryCount})`]].map(([val, label]) => (
+              <button key={val} onClick={() => { setFilter(val); setShowCount(10) }}
+                className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  filter === val
+                    ? val === 'recipe' ? 'bg-green-600 text-white'
+                    : val === 'summary' ? 'bg-gray-600 text-white'
+                    : 'bg-orange-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
+                {label}
               </button>
             ))}
+          </div>
+
+          {/* Two dropdowns */}
+          <div className="flex gap-2">
+            <select value={category} onChange={e => { setCategory(e.target.value); setShowCount(10) }}
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white text-gray-700">
+              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+            <select value={channel} onChange={e => { setChannel(e.target.value); setShowCount(10) }}
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white text-gray-700">
+              {CHANNELS.map(c => <option key={c}>{c}</option>)}
+            </select>
           </div>
         </div>
       </header>
