@@ -17,16 +17,13 @@ export default function TopChefPage() {
   const [viewing, setViewing] = useState(null)
   const [cuisine, setCuisine] = useState('French')
   const [difficulty, setDifficulty] = useState('Advanced')
+  const [deleting, setDeleting] = useState(null)
 
-  useEffect(() => {
-    loadChefRecipes()
-  }, [])
+  useEffect(() => { loadChefRecipes() }, [])
 
   async function loadChefRecipes() {
     const { data } = await supabase
-      .from('chef_recipes')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .from('chef_recipes').select('*').order('created_at', { ascending: false })
     setRecipes(data || [])
     setLoading(false)
   }
@@ -44,11 +41,17 @@ export default function TopChefPage() {
         setRecipes(prev => [data.recipe, ...prev])
         setViewing(data.recipe)
       }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setGenerating(false)
-    }
+    } catch (err) { console.error(err) }
+    finally { setGenerating(false) }
+  }
+
+  async function deleteRecipe(id, e) {
+    e.stopPropagation()
+    setDeleting(id)
+    await supabase.from('chef_recipes').delete().eq('id', id)
+    setRecipes(prev => prev.filter(r => r.id !== id))
+    if (viewing?.id === id) setViewing(null)
+    setDeleting(null)
   }
 
   if (viewing) {
@@ -59,7 +62,13 @@ export default function TopChefPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <span className="text-xs text-gray-400">👨‍🍳 AI Chef Creation</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400">👨‍🍳 AI Chef Creation</span>
+              <button onClick={e => { deleteRecipe(viewing.id, e); setViewing(null) }}
+                className="text-xs text-red-400 hover:text-red-600 font-semibold px-2 py-1 border border-red-200 rounded-lg">
+                🗑 Delete
+              </button>
+            </div>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
@@ -97,7 +106,7 @@ export default function TopChefPage() {
               <div className="space-y-4">
                 {instructions.map((step, i) => (
                   <div key={i} className="flex gap-3">
-                    <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i + 1}</div>
+                    <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
                     <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
                   </div>
                 ))}
@@ -115,48 +124,35 @@ export default function TopChefPage() {
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center gap-2 mb-1">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">👨‍🍳 Top Chef AI Recipes</h1>
+            <h1 className="text-lg font-bold text-gray-900">👨‍🍳 AI Chef Creations</h1>
           </div>
-          <p className="text-xs text-gray-400 ml-1">Elevated dishes crafted by your AI chef.</p>
+          <p className="text-xs text-gray-400">Elevated dishes crafted by your AI chef.</p>
         </div>
       </header>
-
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Generate new recipe */}
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 mb-6">
           <p className="text-sm font-bold text-gray-900 mb-3">✨ Generate a New Chef Recipe</p>
           <div className="flex gap-2 flex-wrap mb-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-500 mb-1">Cuisine</p>
-              <select
-                value={cuisine}
-                onChange={e => setCuisine(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
-              >
+              <select value={cuisine} onChange={e => setCuisine(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white">
                 {CUISINES.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-500 mb-1">Difficulty</p>
-              <select
-                value={difficulty}
-                onChange={e => setDifficulty(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
-              >
+              <select value={difficulty} onChange={e => setDifficulty(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white">
                 {DIFFICULTIES.map(d => <option key={d}>{d}</option>)}
               </select>
             </div>
           </div>
-          <button
-            onClick={generateRecipe}
-            disabled={generating}
-            className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm"
-          >
+          <button onClick={generateRecipe} disabled={generating}
+            className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm">
             {generating ? '👨‍🍳 Creating your recipe...' : '✨ Generate Chef Recipe'}
           </button>
         </div>
-
-        {/* Recipe list */}
         {loading ? (
           <div className="text-center py-10 text-gray-400">Loading chef recipes...</div>
         ) : recipes.length === 0 ? (
@@ -167,22 +163,25 @@ export default function TopChefPage() {
           <div className="space-y-3">
             <p className="text-sm text-gray-400">{recipes.length} chef {recipes.length === 1 ? 'recipe' : 'recipes'}</p>
             {recipes.map(recipe => (
-              <button
-                key={recipe.id}
-                onClick={() => setViewing(recipe)}
-                className="w-full text-left bg-white border border-gray-200 rounded-2xl p-4 hover:border-orange-200 hover:bg-orange-50 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-gray-900 mb-0.5">{recipe.title}</p>
-                    <div className="flex gap-2">
-                      {recipe.cuisine && <span className="text-xs text-orange-500">{recipe.cuisine}</span>}
-                      {recipe.difficulty && <span className="text-xs text-gray-400">· {recipe.difficulty}</span>}
+              <div key={recipe.id} className="flex items-center gap-2">
+                <button onClick={() => setViewing(recipe)}
+                  className="flex-1 text-left bg-white border border-gray-200 rounded-2xl p-4 hover:border-orange-200 hover:bg-orange-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-0.5">{recipe.title}</p>
+                      <div className="flex gap-2">
+                        {recipe.cuisine && <span className="text-xs text-orange-500">{recipe.cuisine}</span>}
+                        {recipe.difficulty && <span className="text-xs text-gray-400">· {recipe.difficulty}</span>}
+                      </div>
                     </div>
+                    <span className="text-gray-300 text-xl">→</span>
                   </div>
-                  <span className="text-gray-300 text-xl">→</span>
-                </div>
-              </button>
+                </button>
+                <button onClick={e => deleteRecipe(recipe.id, e)} disabled={deleting === recipe.id}
+                  className="shrink-0 w-9 h-9 flex items-center justify-center text-gray-300 hover:text-red-400 border border-gray-200 rounded-xl hover:border-red-200 transition-colors">
+                  {deleting === recipe.id ? '...' : '🗑'}
+                </button>
+              </div>
             ))}
           </div>
         )}
