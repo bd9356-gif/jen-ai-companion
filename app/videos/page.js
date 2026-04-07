@@ -195,6 +195,11 @@ export default function VideosPage() {
                           className="text-sm text-orange-600 font-semibold hover:text-orange-800">
                           {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
                         </button>
+                        {meta && meta.ingredients?.length > 0 && (
+                          <span className="text-xs font-semibold px-2 py-0.5 bg-green-50 text-green-700 rounded-full border border-green-200">
+                            🍳 Recipe included
+                          </span>
+                        )}
                         <button onClick={() => toggleSave(video.id)}
                           className={`text-sm font-semibold transition-colors ${
                             savedIds.has(video.id) ? 'text-orange-600' : 'text-gray-400 hover:text-orange-600'}`}>
