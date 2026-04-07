@@ -51,7 +51,7 @@ export default function KitchenPage() {
           className="w-full h-full object-cover"
         />
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
         {/* Text overlay */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
           <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
@@ -63,7 +63,7 @@ export default function KitchenPage() {
 
       {/* Subtitle */}
       <div className="px-4 pt-4 pb-2">
-        <p className="text-xs text-gray-400 italic">Open a drawer to get started.</p>
+        <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
       </div>
 
       {/* Drawer Cards */}
