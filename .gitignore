@@ -41,3 +41,4 @@ yarn-error.log*
 next-env.d.ts
 ingest_videos.js
 ingest_missing.js
+ingest_education_metadata.js
