@@ -381,6 +381,62 @@ export default function MyRecipeVaultPage() {
             {viewing.prep_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">🔪 {viewing.prep_time}</span>}
           </div>
 
+          {/* Generated Info Box */}
+          {(viewing.cooking_time || viewing.prep_time || viewing.difficulty || viewing.equipment?.length > 0 || viewing.nutrition) && (
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-5">
+              <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-3">📊 Recipe Info</p>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {viewing.prep_time && (
+                  <div className="bg-white rounded-xl p-3 text-center">
+                    <p className="text-base">🔪</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.prep_time}</p>
+                    <p className="text-xs text-gray-400">Prep Time</p>
+                  </div>
+                )}
+                {viewing.cooking_time && (
+                  <div className="bg-white rounded-xl p-3 text-center">
+                    <p className="text-base">⏱</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.cooking_time}</p>
+                    <p className="text-xs text-gray-400">Cook Time</p>
+                  </div>
+                )}
+                {viewing.difficulty && (
+                  <div className="bg-white rounded-xl p-3 text-center">
+                    <p className="text-base">📊</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1 capitalize">{viewing.difficulty}</p>
+                    <p className="text-xs text-gray-400">Difficulty</p>
+                  </div>
+                )}
+                {viewing.servings && (
+                  <div className="bg-white rounded-xl p-3 text-center">
+                    <p className="text-base">👥</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.servings} servings</p>
+                    <p className="text-xs text-gray-400">Serves</p>
+                  </div>
+                )}
+              </div>
+              {viewing.equipment?.length > 0 && (
+                <div className="bg-white rounded-xl p-3 mb-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-1">🍳 Equipment</p>
+                  <p className="text-sm text-gray-700">{viewing.equipment.join(', ')}</p>
+                </div>
+              )}
+              {viewing.nutrition && (
+                <div className="bg-white rounded-xl p-3">
+                  <p className="text-xs font-semibold text-gray-500 mb-2">Nutrition per serving</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['calories','protein','carbs','fat'].map(k => viewing.nutrition[k] && (
+                      <div key={k} className="text-center">
+                        <p className="text-xs font-bold text-orange-600">{viewing.nutrition[k]}</p>
+                        <p className="text-xs text-gray-400 capitalize">{k}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{viewing.title}</h1>
           {viewing.description && <p className="text-gray-500 text-sm mb-4">{viewing.description}</p>}
 
