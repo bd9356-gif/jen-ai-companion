@@ -7,8 +7,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const SUGGESTED_TAGS = ['chicken', 'fish', 'pasta', 'dessert', 'family', 'holiday', 'quick', 'vegetarian', 'beef', 'breakfast', 'soup', 'salad']
+const SUGGESTED_TAGS = [
+  'chicken','beef','pork','fish','seafood','pasta','pizza',
+  'soup','salad','dessert','breakfast','bread','vegetarian',
+  'quick','family','holiday','comfort food','baking','healthy'
+]
 
+// ── EDIT FORM ── larger panels with outside labels
 function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   const [title, setTitle] = useState(initial.title || '')
   const [description, setDescription] = useState(initial.description || '')
@@ -16,7 +21,15 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   const [ingredients, setIngredients] = useState(initialIngredients || '')
   const [instructions, setInstructions] = useState(initial.instructions || '')
   const [familyNotes, setFamilyNotes] = useState(initial.family_notes || '')
+  const [tags, setTags] = useState(initial.tags || [])
+  const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
+
+  function addTag(tag) {
+    const t = tag.trim().toLowerCase()
+    if (t && !tags.includes(t)) setTags(prev => [...prev, t])
+  }
+  function removeTag(tag) { setTags(prev => prev.filter(t => t !== tag)) }
 
   async function handleSave() {
     setSaving(true)
@@ -24,38 +37,97 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
       const parts = line.split(' - ')
       return { name: parts[0]?.trim(), measure: parts[1]?.trim() || '' }
     })
-    await onSave({
-      title, description, category,
-      ingredients: parsedIngredients,
-      instructions, family_notes: familyNotes
-    })
+    await onSave({ title, description, category, ingredients: parsedIngredients, instructions, family_notes: familyNotes, tags })
     setSaving(false)
   }
 
   return (
-    <div className="space-y-4">
-      <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Recipe title *"
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-      <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Short description"
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-      <input value={category} onChange={e => setCategory(e.target.value)} placeholder="Category"
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-      <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
-        placeholder="Ingredients — one per line, e.g. Flour - 2 cups" rows={5}
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
-      <textarea value={instructions} onChange={e => setInstructions(e.target.value)}
-        placeholder="Instructions — one step per line" rows={6}
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
-      <textarea value={familyNotes} onChange={e => setFamilyNotes(e.target.value)}
-        placeholder="Family notes (optional)" rows={2}
-        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
-      <div className="flex gap-3">
+    <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Title *</label>
+        <input value={title} onChange={e => setTitle(e.target.value)}
+          placeholder="e.g. Grandma's Chicken Soup"
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+        <input value={description} onChange={e => setDescription(e.target.value)}
+          placeholder="A short description of this recipe"
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Category</label>
+        <input value={category} onChange={e => setCategory(e.target.value)}
+          placeholder="e.g. Main Dish, Dessert, Side"
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">🏷️ Tags — tap to select</label>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {SUGGESTED_TAGS.map(tag => (
+            <button key={tag} type="button" onClick={() => tags.includes(tag) ? removeTag(tag) : addTag(tag)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                tags.includes(tag) ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
+              #{tag}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input placeholder="Add custom tag..." value={tagInput}
+            onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { addTag(tagInput); setTagInput('') }}}
+            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+          <button type="button" onClick={() => { addTag(tagInput); setTagInput('') }}
+            className="px-4 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Add</button>
+        </div>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {tags.map(tag => (
+              <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                #{tag}
+                <button type="button" onClick={() => removeTag(tag)} className="ml-1 text-orange-400 hover:text-orange-700">×</button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
+        <p className="text-xs text-gray-400 mb-2">One per line — format: Flour - 2 cups</p>
+        <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
+          placeholder="Flour - 2 cups&#10;Sugar - 1 cup&#10;Butter - 1/2 cup"
+          rows={10}
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Instructions</label>
+        <p className="text-xs text-gray-400 mb-2">One step per line</p>
+        <textarea value={instructions} onChange={e => setInstructions(e.target.value)}
+          placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients and stir"
+          rows={12}
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Family Notes</label>
+        <textarea value={familyNotes} onChange={e => setFamilyNotes(e.target.value)}
+          placeholder="The story behind this recipe, tips, memories..."
+          rows={4}
+          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+      </div>
+
+      <div className="flex gap-3 pt-2">
         <button onClick={handleSave} disabled={!title.trim() || saving}
-          className="flex-1 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm">
+          className="flex-1 py-4 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors">
           {saving ? 'Saving...' : '💾 Save Changes'}
         </button>
         <button onClick={onCancel}
-          className="px-6 py-3 border border-gray-200 text-gray-500 rounded-xl text-sm hover:bg-gray-50 transition-colors">
+          className="px-6 py-4 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors">
           Cancel
         </button>
       </div>
@@ -63,11 +135,11 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   )
 }
 
-export default function MyRecipesPage() {
+export default function MyRecipeVaultPage() {
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState('list') // 'list' | 'add' | 'import' | 'detail' | 'enhance' | 'edit'
+  const [view, setView] = useState('list')
   const [viewing, setViewing] = useState(null)
   const [searchTag, setSearchTag] = useState('')
   const [searchText, setSearchText] = useState('')
@@ -83,24 +155,6 @@ export default function MyRecipesPage() {
   const [tagInput, setTagInput] = useState('')
   const [pinnedCards, setPinnedCards] = useState([])
 
-  async function loadPinnedCards(userId) {
-    const { data } = await supabase
-      .from('recipe_cards')
-      .select('recipe_id')
-      .eq('user_id', userId)
-    setPinnedCards((data || []).map(d => d.recipe_id))
-  }
-
-  async function toggleCardPin(id) {
-    if (!user) return
-    if (pinnedCards.includes(id)) {
-      await supabase.from('recipe_cards').delete().eq('user_id', user.id).eq('recipe_id', id)
-      setPinnedCards(prev => prev.filter(p => p !== id))
-    } else {
-      await supabase.from('recipe_cards').insert({ user_id: user.id, recipe_id: id })
-      setPinnedCards(prev => [...prev, id])
-    }
-  }
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
 
@@ -118,12 +172,24 @@ export default function MyRecipesPage() {
     })
   }, [])
 
+  async function loadPinnedCards(userId) {
+    const { data } = await supabase.from('recipe_cards').select('recipe_id').eq('user_id', userId)
+    setPinnedCards((data || []).map(d => d.recipe_id))
+  }
+
+  async function toggleCardPin(id) {
+    if (!user) return
+    if (pinnedCards.includes(id)) {
+      await supabase.from('recipe_cards').delete().eq('user_id', user.id).eq('recipe_id', id)
+      setPinnedCards(prev => prev.filter(p => p !== id))
+    } else {
+      await supabase.from('recipe_cards').insert({ user_id: user.id, recipe_id: id })
+      setPinnedCards(prev => [...prev, id])
+    }
+  }
+
   async function loadRecipes(userId) {
-    const { data } = await supabase
-      .from('personal_recipes')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('personal_recipes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     setRecipes(data || [])
     setLoading(false)
   }
@@ -132,71 +198,36 @@ export default function MyRecipesPage() {
     if (!file) return null
     setUploadingPhoto(true)
     try {
-      // Get fresh session to ensure auth token is current
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        alert('Please sign in again to upload photos')
-        setUploadingPhoto(false)
-        return null
-      }
-
+      if (!session) { alert('Please sign in again'); setUploadingPhoto(false); return null }
       const ext = file.name.split('.').pop().toLowerCase()
       const safeName = ext === 'heic' ? 'jpg' : ext
       const path = `${userId}/${Date.now()}.${safeName}`
-
-      // Use fetch directly to upload with auth header
-      const formData = new FormData()
-      formData.append('', file)
-
       const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/personal_recipes/${path}`
       const response = await fetch(uploadUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'x-upsert': 'true',
-        },
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'x-upsert': 'true' },
         body: file,
       })
-
-      if (!response.ok) {
-        const errText = await response.text()
-        console.error('Upload error:', errText)
-        alert('Photo upload failed: ' + errText)
-        setUploadingPhoto(false)
-        return null
-      }
-
+      if (!response.ok) { const e = await response.text(); alert('Upload failed: ' + e); setUploadingPhoto(false); return null }
       const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/personal_recipes/${path}`
       setUploadingPhoto(false)
       return publicUrl
-    } catch (err) {
-      console.error('Upload exception:', err)
-      alert('Photo upload error: ' + err.message)
-      setUploadingPhoto(false)
-      return null
-    }
+    } catch (err) { alert('Upload error: ' + err.message); setUploadingPhoto(false); return null }
   }
 
   async function saveRecipe() {
     if (!form.title.trim()) return
     let photo_url = ''
-    if (selectedPhoto) {
-      photo_url = await uploadPhoto(selectedPhoto, user.id) || ''
-    }
+    if (selectedPhoto) photo_url = await uploadPhoto(selectedPhoto, user.id) || ''
     const ingredients = form.ingredients.split('\n').filter(Boolean).map(line => {
       const parts = line.split(' - ')
       return { name: parts[0]?.trim(), measure: parts[1]?.trim() || '' }
     })
     const { data, error } = await supabase.from('personal_recipes').insert({
-      user_id: user.id,
-      title: form.title,
-      description: form.description,
-      ingredients,
-      instructions: form.instructions,
-      category: form.category,
-      tags: form.tags,
-      family_notes: form.family_notes,
-      photo_url,
+      user_id: user.id, title: form.title, description: form.description,
+      ingredients, instructions: form.instructions, category: form.category,
+      tags: form.tags, family_notes: form.family_notes, photo_url,
     }).select().single()
     if (!error && data) {
       setRecipes(prev => [data, ...prev])
@@ -206,12 +237,8 @@ export default function MyRecipesPage() {
   }
 
   async function updateRecipe(id, updates) {
-    const { data, error } = await supabase
-      .from('personal_recipes').update(updates).eq('id', id).select().single()
-    if (error) {
-      console.error('Update error:', error.message)
-      return null
-    }
+    const { data, error } = await supabase.from('personal_recipes').update(updates).eq('id', id).select().single()
+    if (error) { console.error('Update error:', error.message); return null }
     if (data) {
       setRecipes(prev => prev.map(r => r.id === id ? {...r, ...data} : r))
       setViewing({...data})
@@ -222,18 +249,14 @@ export default function MyRecipesPage() {
   async function deleteRecipe(id) {
     await supabase.from('personal_recipes').delete().eq('id', id)
     setRecipes(prev => prev.filter(r => r.id !== id))
-    setView('list')
-    setViewing(null)
+    setView('list'); setViewing(null)
   }
 
   async function handleEnhance(action) {
-    setEnhancing(true)
-    setEnhanceResult(null)
-    setGeneratedInfo(null)
+    setEnhancing(true); setEnhanceResult(null); setGeneratedInfo(null)
     try {
       const res = await fetch('/api/enhance-recipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipe: viewing, action, servings })
       })
       const data = await res.json()
@@ -248,19 +271,8 @@ export default function MyRecipesPage() {
     const updates = {}
     if (enhanceResult.ingredients) updates.ingredients = enhanceResult.ingredients
     if (enhanceResult.instructions) updates.instructions = enhanceResult.instructions
-    const { data } = await supabase
-      .from('personal_recipes')
-      .update(updates)
-      .eq('id', viewing.id)
-      .select()
-      .single()
-    if (data) {
-      setRecipes(prev => prev.map(r => r.id === viewing.id ? data : r))
-      setViewing(data)
-    }
-    setEnhanceResult(null)
-    setGeneratedInfo(null)
-    setView('detail')
+    await updateRecipe(viewing.id, updates)
+    setEnhanceResult(null); setGeneratedInfo(null); setView('detail')
   }
 
   async function applyInfo() {
@@ -273,10 +285,7 @@ export default function MyRecipesPage() {
     if (generatedInfo.equipment) updates.equipment = generatedInfo.equipment
     if (generatedInfo.nutrition_estimate) updates.nutrition = generatedInfo.nutrition_estimate
     const updated = await updateRecipe(viewing.id, updates)
-    if (updated) setViewing(updated)
-    setGeneratedInfo(null)
-    setEnhanceResult(null)
-    setView('detail')
+    setGeneratedInfo(null); setEnhanceResult(null); setView('detail')
   }
 
   async function handleImport() {
@@ -284,39 +293,25 @@ export default function MyRecipesPage() {
     setImporting(true)
     try {
       const res = await fetch('/api/import-recipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: importText, url: importUrl })
       })
       const data = await res.json()
       if (data.error) { alert(data.error); setImporting(false); return }
-      // Pre-fill the add form with imported data
       const ingredientsText = (data.ingredients || []).map(i => `${i.name} - ${i.measure}`).join('\n')
-      setForm({
-        title: data.title || '',
-        description: data.description || '',
-        ingredients: ingredientsText,
-        instructions: data.instructions || '',
-        category: data.category || '',
-        tags: data.tags || [],
-        family_notes: data.family_notes || '',
-        photo_url: ''
-      })
-      setImportText('')
-      setImportUrl('')
-      setView('add')
+      setForm({ title: data.title || '', description: data.description || '', ingredients: ingredientsText,
+        instructions: data.instructions || '', category: data.category || '', tags: data.tags || [],
+        family_notes: data.family_notes || '', photo_url: '' })
+      setImportText(''); setImportUrl(''); setView('add')
     } catch (err) { console.error(err) }
     setImporting(false)
   }
 
-  function addTag(tag) {
+  function addFormTag(tag) {
     const t = tag.trim().toLowerCase()
     if (t && !form.tags.includes(t)) setForm(f => ({ ...f, tags: [...f.tags, t] }))
   }
-
-  function removeTag(tag) {
-    setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))
-  }
+  function removeFormTag(tag) { setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) })) }
 
   const filtered = recipes.filter(r => {
     const matchSearch = searchText === '' || r.title.toLowerCase().includes(searchText.toLowerCase())
@@ -324,7 +319,6 @@ export default function MyRecipesPage() {
     return matchSearch && matchTag
   })
 
-  // All tags used across recipes
   const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
 
   // ── DETAIL VIEW ──
@@ -335,27 +329,24 @@ export default function MyRecipesPage() {
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-            <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }}
+              className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <div className="flex gap-2">
-              <button onClick={() => {
-                const pinned = JSON.parse(localStorage.getItem('recipe_cards_pinned') || '[]')
-                const isPin = pinned.includes(viewing.id)
-                const next = isPin ? pinned.filter(p => p !== viewing.id) : [...pinned, viewing.id]
-                localStorage.setItem('recipe_cards_pinned', JSON.stringify(next))
-                alert(isPin ? '✓ Removed from My Cards' : '🃏 Added to My Cards!')
-              }}
-              className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">🃏 Cards</button>
-              <button onClick={() => setView('edit')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
-              <button onClick={() => setView('enhance')} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI</button>
-              <button onClick={() => toggleCardPin(viewing.id)} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200 hover:border-orange-200'}`}>
-                {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Add to Cards'}
+              <button onClick={() => setView('edit')}
+                className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
+              <button onClick={() => setView('enhance')}
+                className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI</button>
+              <button onClick={() => toggleCardPin(viewing.id)}
+                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
+                  pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200'}`}>
+                {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
               </button>
-              <button onClick={() => deleteRecipe(viewing.id)} className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
+              <button onClick={() => deleteRecipe(viewing.id)}
+                className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
             </div>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          {/* Photo */}
           {viewing.photo_url ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
@@ -365,25 +356,16 @@ export default function MyRecipesPage() {
               onClick={() => photoInputRef.current?.click()}>
               <span className="text-3xl mb-2">📷</span>
               <p className="text-sm text-orange-600 font-semibold">Add a photo</p>
-              <p className="text-xs text-gray-400">Tap to upload from your device</p>
+              <p className="text-xs text-gray-400">Tap to upload</p>
               <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
                 onChange={async e => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  setUploadingPhoto(true)
+                  const file = e.target.files?.[0]; if (!file) return
                   const url = await uploadPhoto(file, user.id)
-                  if (url) {
-                    await updateRecipe(viewing.id, { photo_url: url })
-                    alert('✓ Photo saved!')
-                  } else {
-                    alert('Photo upload failed — please try again')
-                  }
-                  setUploadingPhoto(false)
+                  if (url) await updateRecipe(viewing.id, { photo_url: url })
                 }} />
             </div>
           )}
 
-          {/* Tags */}
           {(viewing.tags || []).length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
               {viewing.tags.map(tag => (
@@ -392,10 +374,11 @@ export default function MyRecipesPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             {viewing.category && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">{viewing.category}</span>}
             {viewing.difficulty && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">{viewing.difficulty}</span>}
             {viewing.cooking_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">⏱ {viewing.cooking_time}</span>}
+            {viewing.prep_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">🔪 {viewing.prep_time}</span>}
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{viewing.title}</h1>
@@ -405,6 +388,26 @@ export default function MyRecipesPage() {
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-5">
               <p className="text-xs font-semibold text-amber-800 mb-1">📖 Family Notes</p>
               <p className="text-sm text-amber-900">{viewing.family_notes}</p>
+            </div>
+          )}
+
+          {/* Show generated info if saved */}
+          {(viewing.nutrition || viewing.equipment?.length > 0) && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5">
+              <p className="text-xs font-semibold text-blue-800 mb-2">📊 Recipe Info</p>
+              {viewing.equipment?.length > 0 && (
+                <p className="text-xs text-blue-700 mb-1">🍳 Equipment: {viewing.equipment.join(', ')}</p>
+              )}
+              {viewing.nutrition && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {['calories','protein','carbs','fat'].map(k => viewing.nutrition[k] && (
+                    <div key={k} className="text-center bg-white rounded-lg p-2">
+                      <p className="text-xs font-bold text-blue-700">{viewing.nutrition[k]}</p>
+                      <p className="text-xs text-gray-400 capitalize">{k}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -433,7 +436,7 @@ export default function MyRecipesPage() {
               <div className="space-y-4">
                 {instructions.map((step, i) => (
                   <div key={i} className="flex gap-3">
-                    <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i + 1}</div>
+                    <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
                     <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
                   </div>
                 ))}
@@ -457,15 +460,9 @@ export default function MyRecipesPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          <EditForm
-            initial={viewing}
-            initialIngredients={editIngredients}
-            onSave={async (updates) => {
-              await updateRecipe(viewing.id, updates)
-              setView('detail')
-            }}
-            onCancel={() => setView('detail')}
-          />
+          <EditForm initial={viewing} initialIngredients={editIngredients}
+            onSave={async (updates) => { await updateRecipe(viewing.id, updates); setView('detail') }}
+            onCancel={() => setView('detail')} />
         </main>
       </div>
     )
@@ -477,42 +474,42 @@ export default function MyRecipesPage() {
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
-            <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null) }} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">✨ AI Enhance — {viewing.title}</h1>
+            <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null) }}
+              className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <h1 className="text-lg font-bold text-gray-900">✨ AI Enhance</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16 space-y-4">
+          <p className="text-sm text-gray-500 font-semibold">{viewing.title}</p>
 
-          {/* Polish recipe */}
+          {/* Polish */}
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">🧹 Polish Recipe</p>
             <p className="text-xs text-gray-500 mb-3">AI rewrites steps for clarity and fixes formatting</p>
             <button onClick={() => handleEnhance('enhance')} disabled={enhancing}
-              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 disabled:opacity-50 transition-colors">
+              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
               {enhancing ? 'Polishing...' : 'Polish My Recipe'}
             </button>
             {enhanceResult?.instructions && (
               <div className="mt-3 bg-white rounded-xl p-4 border border-orange-200">
                 <p className="text-xs font-semibold text-orange-700 mb-2">Preview — tap Apply to save</p>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{enhanceResult.instructions}</p>
-                <button onClick={applyEnhancement} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
-                  ✓ Apply Changes
-                </button>
+                <button onClick={applyEnhancement} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold">✓ Apply Changes</button>
               </div>
             )}
           </div>
 
-          {/* Resize servings */}
+          {/* Resize */}
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">⚖️ Resize Servings</p>
-            <p className="text-xs text-gray-500 mb-3">Recalculate ingredient amounts for any serving size</p>
+            <p className="text-xs text-gray-500 mb-3">Recalculate ingredient amounts</p>
             <div className="mb-3 space-y-3">
               <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
                 <label className="text-sm text-gray-600">Currently makes</label>
                 <div className="flex items-center gap-3">
                   <button onClick={() => updateRecipe(viewing.id, { servings: Math.max(1, (viewing.servings || 4) - 1) })}
                     className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center">−</button>
-                  <span className="text-base font-semibold text-gray-900 w-6 text-center">{viewing.servings || 4}</span>
+                  <span className="text-base font-semibold w-6 text-center">{viewing.servings || 4}</span>
                   <button onClick={() => updateRecipe(viewing.id, { servings: (viewing.servings || 4) + 1 })}
                     className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center">+</button>
                 </div>
@@ -529,35 +526,33 @@ export default function MyRecipesPage() {
               </div>
             </div>
             <button onClick={() => handleEnhance('resize')} disabled={enhancing}
-              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 disabled:opacity-50 transition-colors">
+              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
               {enhancing ? 'Calculating...' : `Resize to ${servings} Servings`}
             </button>
             {enhanceResult?.ingredients && !enhanceResult?.instructions && (
               <div className="mt-3 bg-white rounded-xl p-4 border border-orange-200">
-                <p className="text-xs font-semibold text-orange-700 mb-2">Resized ingredients — tap Apply to save</p>
+                <p className="text-xs font-semibold text-orange-700 mb-2">Resized — tap Apply to save</p>
                 <ul className="space-y-1">
                   {enhanceResult.ingredients.map((ing, i) => (
                     <li key={i} className="text-sm text-gray-700">• <span className="font-semibold">{ing.measure}</span> {ing.name}</li>
                   ))}
                 </ul>
-                <button onClick={applyEnhancement} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
-                  ✓ Apply Changes
-                </button>
+                <button onClick={applyEnhancement} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold">✓ Apply Changes</button>
               </div>
             )}
           </div>
 
-          {/* Generate info */}
+          {/* Generate Info */}
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">📊 Generate Recipe Info</p>
-            <p className="text-xs text-gray-500 mb-3">AI generates cooking time, difficulty, equipment list, and nutrition estimate</p>
+            <p className="text-xs text-gray-500 mb-3">AI generates cook time, difficulty, equipment & nutrition</p>
             <button onClick={() => handleEnhance('generate_info')} disabled={enhancing}
-              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm hover:bg-orange-700 disabled:opacity-50 transition-colors">
+              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
               {enhancing ? 'Analyzing...' : 'Generate Info'}
             </button>
             {generatedInfo && (
               <div className="mt-3 bg-white rounded-xl p-4 border border-orange-200 space-y-2">
-                <p className="text-xs font-semibold text-orange-700 mb-2">Generated Info</p>
+                <p className="text-xs font-semibold text-orange-700 mb-2">Generated — tap Save to add to recipe</p>
                 {generatedInfo.cooking_time && <p className="text-sm text-gray-700">⏱ Cook time: <span className="font-semibold">{generatedInfo.cooking_time}</span></p>}
                 {generatedInfo.prep_time && <p className="text-sm text-gray-700">🔪 Prep time: <span className="font-semibold">{generatedInfo.prep_time}</span></p>}
                 {generatedInfo.difficulty && <p className="text-sm text-gray-700">📊 Difficulty: <span className="font-semibold capitalize">{generatedInfo.difficulty}</span></p>}
@@ -566,16 +561,18 @@ export default function MyRecipesPage() {
                 )}
                 {generatedInfo.nutrition_estimate && (
                   <div className="bg-gray-50 rounded-xl p-3 mt-2">
-                    <p className="text-xs font-semibold text-gray-600 mb-1">Nutrition (per serving estimate)</p>
-                    <p className="text-xs text-gray-600">Calories: {generatedInfo.nutrition_estimate.calories}</p>
-                    <p className="text-xs text-gray-600">Protein: {generatedInfo.nutrition_estimate.protein}</p>
-                    <p className="text-xs text-gray-600">Carbs: {generatedInfo.nutrition_estimate.carbs}</p>
-                    <p className="text-xs text-gray-600">Fat: {generatedInfo.nutrition_estimate.fat}</p>
+                    <p className="text-xs font-semibold text-gray-600 mb-2">Nutrition (per serving estimate)</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {['calories','protein','carbs','fat'].map(k => generatedInfo.nutrition_estimate[k] && (
+                        <div key={k} className="text-center bg-white rounded-lg p-2">
+                          <p className="text-xs font-bold text-orange-700">{generatedInfo.nutrition_estimate[k]}</p>
+                          <p className="text-xs text-gray-400 capitalize">{k}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <button onClick={applyInfo} className="mt-2 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors">
-                  ✓ Save to Recipe
-                </button>
+                <button onClick={applyInfo} className="mt-2 w-full py-3 bg-green-600 text-white rounded-xl text-sm font-semibold">✓ Save to Recipe</button>
               </div>
             )}
           </div>
@@ -595,44 +592,24 @@ export default function MyRecipesPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          <p className="text-sm text-gray-500">Paste a recipe URL, or paste the recipe text directly. AI will extract and clean it up.</p>
-
+          <p className="text-sm text-gray-500">Paste a recipe URL or recipe text. AI will extract and clean it up.</p>
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Recipe URL</label>
-            <input
-              placeholder="https://www.example.com/recipe..."
-              value={importUrl}
-              onChange={e => setImportUrl(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
-            />
+            <label className="text-sm font-bold text-gray-700 mb-2 block">Recipe URL</label>
+            <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
           </div>
-
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400">or paste text below</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400">or paste text below</span><div className="flex-1 h-px bg-gray-200" />
           </div>
-
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Recipe Text</label>
-            <textarea
-              placeholder="Paste your recipe here — ingredients, steps, notes..."
-              value={importText}
-              onChange={e => setImportText(e.target.value)}
-              rows={8}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
-            />
+            <label className="text-sm font-bold text-gray-700 mb-2 block">Recipe Text</label>
+            <textarea placeholder="Paste your recipe here..." value={importText} onChange={e => setImportText(e.target.value)}
+              rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
           </div>
-
-          <button
-            onClick={handleImport}
-            disabled={importing || (!importText.trim() && !importUrl.trim())}
-            className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors"
-          >
+          <button onClick={handleImport} disabled={importing || (!importText.trim() && !importUrl.trim())}
+            className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold disabled:opacity-50">
             {importing ? '🤖 Extracting recipe...' : '📥 Import & Clean with AI'}
           </button>
-
-          <p className="text-xs text-gray-400 text-center">AI will extract ingredients, steps, and notes, then open the Add Recipe form pre-filled.</p>
         </main>
       </div>
     )
@@ -649,88 +626,104 @@ export default function MyRecipesPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          <div className="space-y-4">
+          <div className="space-y-6">
 
-            {/* Photo upload */}
             <div>
-              <label className="text-xs font-semibold text-gray-600 mb-2 block">📷 Photo</label>
-              <div
-                className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
-              >
+              <label className="block text-sm font-bold text-gray-700 mb-2">📷 Photo</label>
+              <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
+                onClick={() => fileInputRef.current?.click()}>
                 {form.photo_url ? (
                   <img src={form.photo_url} alt="Preview" className="h-32 object-cover rounded-xl" />
                 ) : (
-                  <>
-                    <span className="text-3xl mb-2">📷</span>
-                    <p className="text-sm text-orange-600 font-semibold">Browse & Upload Photo</p>
-                    <p className="text-xs text-gray-400">JPG, PNG, HEIC supported</p>
-                  </>
+                  <><span className="text-3xl mb-2">📷</span>
+                  <p className="text-sm text-orange-600 font-semibold">Browse & Upload Photo</p>
+                  <p className="text-xs text-gray-400">JPG, PNG, HEIC supported</p></>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*,.heic" className="hidden"
                   onChange={e => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
+                    const file = e.target.files?.[0]; if (!file) return
                     setSelectedPhoto(file)
-                    const url = URL.createObjectURL(file)
-                    setForm(f => ({ ...f, photo_url: url }))
+                    setForm(f => ({ ...f, photo_url: URL.createObjectURL(file) }))
                   }} />
               </div>
             </div>
 
-            <input placeholder="Recipe title *" value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-
-            <input placeholder="Short description (optional)" value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-
-            <input placeholder="Category (e.g. Dessert, Main, Side)" value={form.category} onChange={e => setForm(f => ({...f, category: e.target.value}))}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-
-            {/* Tags */}
             <div>
-              <label className="text-xs font-semibold text-gray-600 mb-2 block">🏷️ Tags</label>
-              <div className="flex flex-wrap gap-2 mb-2">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Title *</label>
+              <input placeholder="e.g. Grandma's Chicken Soup" value={form.title}
+                onChange={e => setForm(f => ({...f, title: e.target.value}))}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+              <input placeholder="A short description" value={form.description}
+                onChange={e => setForm(f => ({...f, description: e.target.value}))}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Category</label>
+              <input placeholder="e.g. Main Dish, Dessert, Side" value={form.category}
+                onChange={e => setForm(f => ({...f, category: e.target.value}))}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">🏷️ Tags — tap to select</label>
+              <div className="flex flex-wrap gap-2 mb-3">
                 {SUGGESTED_TAGS.map(tag => (
-                  <button key={tag} onClick={() => addTag(tag)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${form.tags.includes(tag) ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
+                  <button key={tag} type="button" onClick={() => form.tags.includes(tag) ? removeFormTag(tag) : addFormTag(tag)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      form.tags.includes(tag) ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
                     #{tag}
                   </button>
                 ))}
               </div>
               <div className="flex gap-2">
-                <input placeholder="Custom tag..." value={tagInput} onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { addTag(tagInput); setTagInput('') }}}
+                <input placeholder="Custom tag..." value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { addFormTag(tagInput); setTagInput('') }}}
                   className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-                <button onClick={() => { addTag(tagInput); setTagInput('') }}
-                  className="px-4 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-700">Add</button>
+                <button type="button" onClick={() => { addFormTag(tagInput); setTagInput('') }}
+                  className="px-4 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Add</button>
               </div>
               {form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {form.tags.map(tag => (
                     <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                      #{tag}
-                      <button onClick={() => removeTag(tag)} className="ml-1 text-orange-400 hover:text-orange-700">×</button>
+                      #{tag}<button type="button" onClick={() => removeFormTag(tag)} className="ml-1 text-orange-400">×</button>
                     </span>
                   ))}
                 </div>
               )}
             </div>
 
-            <textarea placeholder="Ingredients — one per line, e.g. Flour - 2 cups" value={form.ingredients}
-              onChange={e => setForm(f => ({...f, ingredients: e.target.value}))} rows={5}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
+              <p className="text-xs text-gray-400 mb-2">One per line — format: Flour - 2 cups</p>
+              <textarea placeholder="Flour - 2 cups&#10;Sugar - 1 cup&#10;Butter - 1/2 cup"
+                value={form.ingredients} onChange={e => setForm(f => ({...f, ingredients: e.target.value}))}
+                rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+            </div>
 
-            <textarea placeholder="Instructions — one step per line" value={form.instructions}
-              onChange={e => setForm(f => ({...f, instructions: e.target.value}))} rows={6}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Instructions</label>
+              <p className="text-xs text-gray-400 mb-2">One step per line</p>
+              <textarea placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Combine wet and dry"
+                value={form.instructions} onChange={e => setForm(f => ({...f, instructions: e.target.value}))}
+                rows={12} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+            </div>
 
-            <textarea placeholder="Family notes — the story behind this recipe (optional)" value={form.family_notes}
-              onChange={e => setForm(f => ({...f, family_notes: e.target.value}))} rows={2}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none" />
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Family Notes</label>
+              <textarea placeholder="The story behind this recipe, tips, memories..."
+                value={form.family_notes} onChange={e => setForm(f => ({...f, family_notes: e.target.value}))}
+                rows={4} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+            </div>
 
-            <button onClick={() => saveRecipe()} disabled={!form.title.trim() || uploadingPhoto}
-              className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors">
+            <button onClick={saveRecipe} disabled={!form.title.trim() || uploadingPhoto}
+              className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50">
               {uploadingPhoto ? '📷 Uploading photo...' : '💾 Save Recipe'}
             </button>
           </div>
@@ -747,25 +740,26 @@ export default function MyRecipesPage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900">🔒 MyRecipes</h1>
+              <h1 className="text-lg font-bold text-gray-900">🔐 MyRecipeVault</h1>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setView('import')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50">📥 Import</button>
-              <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5 hover:bg-orange-700">+ Add</button>
+              <button onClick={() => setView('import')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">📥 Import</button>
+              <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mb-3">The heart of your recipe library, all in one trusted place.</p>
-          <input type="text" placeholder="Search recipes..." value={searchText} onChange={e => setSearchText(e.target.value)}
+          <p className="text-xs text-gray-400 mb-3">Your personal cooking library — private and only visible to you.</p>
+          <input type="text" placeholder="Search recipes..." value={searchText}
+            onChange={e => setSearchText(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
           {allTags.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
               <button onClick={() => setSearchTag('')}
-                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${searchTag === '' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${searchTag === '' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
                 All
               </button>
               {allTags.map(tag => (
                 <button key={tag} onClick={() => setSearchTag(tag === searchTag ? '' : tag)}
-                  className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${searchTag === tag ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${searchTag === tag ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
                   #{tag}
                 </button>
               ))}
@@ -776,19 +770,15 @@ export default function MyRecipesPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading your recipes...</div>
+          <div className="text-center py-20 text-gray-400">Loading your vault...</div>
         ) : recipes.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-5xl mb-4">🔒</p>
-            <p className="text-gray-700 font-semibold mb-2">Your recipe library is empty</p>
+            <p className="text-5xl mb-4">🔐</p>
+            <p className="text-gray-700 font-semibold mb-2">Your vault is empty</p>
             <p className="text-gray-400 text-sm mb-6">Add your personal and family recipes — private and only visible to you</p>
             <div className="flex flex-col gap-3 items-center">
-              <button onClick={() => setView('add')} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors w-48">
-                + Add a Recipe
-              </button>
-              <button onClick={() => setView('import')} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold hover:bg-gray-50 transition-colors w-48">
-                📥 Import a Recipe
-              </button>
+              <button onClick={() => setView('add')} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold w-48">+ Add a Recipe</button>
+              <button onClick={() => setView('import')} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import a Recipe</button>
             </div>
           </div>
         ) : (
