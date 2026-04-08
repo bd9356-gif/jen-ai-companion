@@ -131,12 +131,16 @@ export default function SavedPage() {
   async function saveRecipeVideoToVault(video) {
     setSavingVideo(video.id)
     const meta = video._meta
+    const ytLine = `Watch video: https://youtube.com/watch?v=${video.youtube_id}`
+    const instructionsWithVideo = meta?.instructions
+      ? `${ytLine}\n${meta.instructions}`
+      : ytLine
     await supabase.from('personal_recipes').insert({
       user_id: user.id,
       title: video.title,
       description: meta?.ai_summary || '',
       ingredients: meta?.ingredients || [],
-      instructions: meta?.instructions || '',
+      instructions: instructionsWithVideo,
       category: 'From Video',
       tags: ['video-recipe'],
       family_notes: `Saved from video by ${video.channel}`,

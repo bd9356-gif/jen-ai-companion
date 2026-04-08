@@ -376,6 +376,12 @@ export default function MyRecipeVaultPage() {
   if (view === 'detail' && viewing) {
     const ingredients = viewing.ingredients || []
     const instructions = (viewing.instructions || '').split('\n').filter(Boolean)
+    const isVideoEntry = viewing.category === 'Video Reference' || viewing.category === 'From Video'
+    // Extract YouTube ID from instructions like "Watch video: https://youtube.com/watch?v=XXXX"
+    const ytMatch = (viewing.instructions || '').match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
+    const youtubeId = ytMatch ? ytMatch[1] : null
+    const nonVideoInstructions = instructions.filter(s => !s.startsWith('Watch video:'))
+
     return (
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
@@ -398,7 +404,17 @@ export default function MyRecipeVaultPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          {viewing.photo_url ? (
+          {/* Video player for video entries */}
+          {youtubeId ? (
+            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{position:'relative', paddingBottom:'56.25%'}}>
+              <iframe
+                src={`https://www.youtube.com/embed/${youtubeId}`}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : viewing.photo_url ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
             </div>
@@ -516,11 +532,11 @@ export default function MyRecipeVaultPage() {
             </div>
           )}
 
-          {instructions.length > 0 && (
+          {nonVideoInstructions.length > 0 && (
             <div>
               <h2 className="text-lg font-bold text-gray-900 mb-3">Instructions</h2>
               <div className="space-y-4">
-                {instructions.map((step, i) => (
+                {nonVideoInstructions.map((step, i) => (
                   <div key={i} className="flex gap-3">
                     <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
                     <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
