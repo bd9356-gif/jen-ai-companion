@@ -14,6 +14,21 @@ const diffLabel = {
   advanced: '🔴 Advanced'
 }
 
+function getVideoType(url) {
+  if (!url) return null
+  if (url.match(/(?:youtube\.com|youtu\.be)/)) return 'youtube'
+  if (url.match(/tiktok\.com/)) return 'tiktok'
+  if (url.match(/\.(mp4|mov|webm|m4v)/i) || url.match(/s3\.amazonaws\.com/)) return 'mp4'
+  if (url.match(/facebook\.com|fb\.watch/)) return 'facebook'
+  return 'link'
+}
+
+function getYouTubeId(url) {
+  if (!url) return null
+  const match = url.match(/(?:v=|youtu\.be\/)([^&]+)/)
+  return match ? match[1] : null
+}
+
 export default function RecipeDetailPage() {
   const { id } = useParams()
   const [recipe, setRecipe] = useState(null)
@@ -71,12 +86,6 @@ export default function RecipeDetailPage() {
     }
   }
 
-  function getYouTubeId(url) {
-    if (!url) return null
-    const match = url.match(/(?:v=|youtu\.be\/)([^&]+)/)
-    return match ? match[1] : null
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -95,11 +104,80 @@ export default function RecipeDetailPage() {
 
   const ingredients = recipe.ingredients || []
   const instructions = (recipe.instructions || '').split(/\r?\n/).filter(Boolean)
-  const youtubeId = getYouTubeId(recipe.youtube_url)
+  const videoType = getVideoType(recipe.youtube_url)
+  const youtubeId = videoType === 'youtube' ? getYouTubeId(recipe.youtube_url) : null
+
+  function renderVideo() {
+    if (!recipe.youtube_url || !videoType) return null
+
+    if (videoType === 'youtube' && youtubeId) {
+      return (
+        <div className="mb-6">
+          {showVideo ? (
+            <div className="relative w-full rounded-2xl overflow-hidden" style={{paddingBottom: '56.25%'}}>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                title="Recipe video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowVideo(true)}
+              className="w-full py-4 bg-red-600 text-white rounded-2xl font-semibold text-base hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <span>▶</span> Watch Cooking Video
+            </button>
+          )}
+        </div>
+      )
+    }
+
+    if (videoType === 'mp4') {
+      return (
+        <div className="mb-6">
+          {showVideo ? (
+            <video
+              src={recipe.youtube_url}
+              controls
+              autoPlay
+              className="w-full rounded-2xl bg-black"
+              style={{maxHeight: '300px'}}
+            />
+          ) : (
+            <button
+              onClick={() => setShowVideo(true)}
+              className="w-full py-4 bg-orange-600 text-white rounded-2xl font-semibold text-base hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <span>▶</span> Watch Cooking Video
+            </button>
+          )}
+        </div>
+      )
+    }
+
+    if (videoType === 'tiktok' || videoType === 'facebook' || videoType === 'link') {
+      return (
+        <div className="mb-6">
+          <a
+            href={recipe.youtube_url}
+            target="_blank"
+            rel="noreferrer"
+            className="w-full py-4 bg-gray-800 text-white rounded-2xl font-semibold text-base flex items-center justify-center gap-2"
+          >
+            <span>▶</span> Watch on {videoType === 'tiktok' ? 'TikTok' : videoType === 'facebook' ? 'Facebook' : 'External Site'}
+          </a>
+        </div>
+      )
+    }
+
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <button onClick={() => window.history.back()} className="text-sm text-gray-400 hover:text-gray-600">
@@ -147,7 +225,6 @@ export default function RecipeDetailPage() {
             )}
           </div>
 
-          {/* AI Summary */}
           {meta?.ai_summary && (
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
               <p className="text-sm text-orange-900 leading-relaxed">🤖 {meta.ai_summary}</p>
@@ -155,29 +232,8 @@ export default function RecipeDetailPage() {
           )}
         </div>
 
-        {/* YouTube Video */}
-        {youtubeId && (
-          <div className="mb-6">
-            {showVideo ? (
-              <div className="relative w-full rounded-2xl overflow-hidden" style={{paddingBottom: '56.25%'}}>
-                <iframe
-                  className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
-                  title="Recipe video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowVideo(true)}
-                className="w-full py-4 bg-red-600 text-white rounded-2xl font-semibold text-base hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <span>▶</span> Watch Cooking Video
-              </button>
-            )}
-          </div>
-        )}
+        {/* Video */}
+        {renderVideo()}
 
         {/* Ingredients */}
         <div className="mb-6">
@@ -212,7 +268,7 @@ export default function RecipeDetailPage() {
           </div>
         </div>
 
-        {/* Save button at bottom */}
+        {/* Save button */}
         <button
           onClick={toggleSave}
           className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
