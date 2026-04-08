@@ -48,7 +48,7 @@ export default function KitchenPage() {
       </div>
 
       {/* Subtitle + Profile */}
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between max-w-4xl mx-auto">
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
         <button onClick={() => window.location.href = '/profile'}
           className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors">
@@ -57,7 +57,7 @@ export default function KitchenPage() {
       </div>
 
       {/* Menu */}
-      <main className="px-4 pb-8 space-y-3 max-w-4xl mx-auto">
+      <main className="px-4 pb-8 space-y-3">
         {MENU_ITEMS.map(item => (
           <button
             key={item.href}
