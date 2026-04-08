@@ -30,52 +30,53 @@ export default function KitchenPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <div className="max-w-2xl mx-auto px-4 pt-4">
 
-      {/* Hero Image — full width, fixed height, same as original */}
-      <div className="relative w-full overflow-hidden" style={{height:'220px'}}>
-        <img
-          src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
-          alt="My Kitchen"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
-          <p className="text-sm text-white/80 mt-0.5 leading-snug">
-            Everything you need — all in one place.
-          </p>
+        {/* Hero Image */}
+        <div className="relative w-full rounded-2xl overflow-hidden mb-4" style={{height:'220px'}}>
+          <img
+            src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
+            alt="My Kitchen"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
+          <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+            <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
+            <p className="text-sm text-white/80 mt-0.5 leading-snug">Everything you need — all in one place.</p>
+          </div>
         </div>
-      </div>
 
-      {/* Subtitle + Profile */}
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-        <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
-        <button onClick={() => window.location.href = '/profile'}
-          className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors">
-          👤 Profile
-        </button>
-      </div>
-
-      {/* Menu */}
-      <main className="px-4 pb-8 space-y-3">
-        {MENU_ITEMS.map(item => (
-          <button
-            key={item.href}
-            onClick={() => window.location.href = item.href}
-            className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${item.accent}` }}
-          >
-            <div className="flex items-center gap-4 px-4 py-3.5">
-              <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 leading-tight">{item.title}</p>
-                <p className="text-xs text-gray-600 mt-0.5 leading-snug">{item.subtitle}</p>
-              </div>
-              <span className="text-gray-300 text-lg font-light">›</span>
-            </div>
+        {/* Subtitle + Profile */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
+          <button onClick={() => window.location.href = '/profile'}
+            className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors">
+            👤 Profile
           </button>
-        ))}
-      </main>
+        </div>
+
+        {/* Menu */}
+        <div className="space-y-3 pb-8">
+          {MENU_ITEMS.map(item => (
+            <button
+              key={item.href}
+              onClick={() => window.location.href = item.href}
+              className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
+              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${item.accent}` }}
+            >
+              <div className="flex items-center gap-4 px-4 py-3.5">
+                <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{item.title}</p>
+                  <p className="text-xs text-gray-600 mt-0.5 leading-snug">{item.subtitle}</p>
+                </div>
+                <span className="text-gray-300 text-lg font-light">›</span>
+              </div>
+            </button>
+          ))}
+        </div>
+
+      </div>
     </div>
   )
 }
