@@ -45,7 +45,7 @@ export default function KitchenPage() {
             <span>👤</span> Profile
           </button>
         </div>
-        <div className="absolute left-0 right-0 px-5" style={{bottom: '20px'}}>
+        <div className="absolute inset-0 flex flex-col justify-center px-5 pt-8">
           <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
           <p className="text-sm text-white/70 mt-0.5">
             Everything you need — all in one place.
