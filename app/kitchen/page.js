@@ -39,17 +39,17 @@ export default function KitchenPage() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/75" />
-        <div className="absolute top-0 right-0 px-4" style={{paddingTop: 'max(1rem, env(safe-area-inset-top))'}}>
-          <button onClick={() => window.location.href = '/profile'}
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-1.5 text-xs font-semibold transition-colors backdrop-blur-sm">
-            <span>👤</span> Profile
-          </button>
-        </div>
-        <div className="absolute inset-0 flex flex-col justify-center px-5 pt-8">
-          <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
-          <p className="text-sm text-white/70 mt-0.5">
-            Everything you need — all in one place.
-          </p>
+        <div className="absolute inset-0 flex flex-col justify-between px-5 py-5" style={{paddingTop: 'max(1.25rem, env(safe-area-inset-top))'}}>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
+              <p className="text-sm text-white/70 mt-0.5">Everything you need — all in one place.</p>
+            </div>
+            <button onClick={() => window.location.href = '/profile'}
+              className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-1.5 text-xs font-semibold transition-colors backdrop-blur-sm">
+              <span>👤</span> Profile
+            </button>
+          </div>
         </div>
       </div>
 
