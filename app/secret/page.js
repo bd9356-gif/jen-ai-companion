@@ -807,18 +807,16 @@ export default function MyRecipeVaultPage() {
             onChange={e => setSearchText(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
           {allTags.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              <button onClick={() => setSearchTag('')}
-                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${searchTag === '' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                All
-              </button>
+            <select
+              value={searchTag}
+              onChange={e => setSearchTag(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-600"
+            >
+              <option value="">All Tags</option>
               {allTags.map(tag => (
-                <button key={tag} onClick={() => setSearchTag(tag === searchTag ? '' : tag)}
-                  className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold ${searchTag === tag ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  #{tag}
-                </button>
+                <option key={tag} value={tag}>#{tag}</option>
               ))}
-            </div>
+            </select>
           )}
         </div>
       </header>
