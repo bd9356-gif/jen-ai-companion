@@ -834,36 +834,81 @@ export default function MyRecipeVaultPage() {
               <button onClick={() => setView('import')} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import a Recipe</button>
             </div>
           </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-400">{filtered.length} of {recipes.length} recipes</p>
-            {filtered.map(recipe => (
-              <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
-                className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
-                <div className="flex gap-3 p-4">
-                  {recipe.photo_url ? (
-                    <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-                      <span className="text-2xl">🍽️</span>
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
-                    {recipe.description && <p className="text-xs text-gray-400 truncate mb-1">{recipe.description}</p>}
-                    <div className="flex flex-wrap gap-1">
-                      {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
-                      {(recipe.tags || []).slice(0, 3).map(tag => (
-                        <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">#{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <span className="text-gray-300 text-xl self-center">→</span>
+        ) : (() => {
+          const videoRefs = filtered.filter(r => r.category === 'Video Reference')
+          const regularRecipes = filtered.filter(r => r.category !== 'Video Reference')
+          return (
+            <div className="space-y-6">
+              {/* Regular Recipes */}
+              <div>
+                <p className="text-sm text-gray-400 mb-3">{regularRecipes.length} of {recipes.filter(r => r.category !== 'Video Reference').length} recipes</p>
+                {regularRecipes.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">No recipes match your search</p>
+                )}
+                <div className="space-y-3">
+                  {regularRecipes.map(recipe => (
+                    <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
+                      className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
+                      <div className="flex gap-3 p-4">
+                        {recipe.photo_url ? (
+                          <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
+                            <span className="text-2xl">🍽️</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
+                          {recipe.description && <p className="text-xs text-gray-400 truncate mb-1">{recipe.description}</p>}
+                          <div className="flex flex-wrap gap-1">
+                            {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
+                            {(recipe.tags || []).slice(0, 3).map(tag => (
+                              <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">#{tag}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <span className="text-gray-300 text-xl self-center">→</span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              </button>
-            ))}
-          </div>
-        )}
+              </div>
+
+              {/* Video References Section */}
+              {videoRefs.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">📺</span>
+                    <h2 className="text-sm font-bold text-gray-700">Video References</h2>
+                    <span className="text-xs text-gray-400">({videoRefs.length})</span>
+                  </div>
+                  <div className="space-y-3">
+                    {videoRefs.map(recipe => (
+                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
+                        className="w-full text-left bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden hover:border-blue-300 transition-colors">
+                        <div className="flex gap-3 p-4">
+                          {recipe.photo_url ? (
+                            <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                              <span className="text-2xl">📺</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
+                            {recipe.description && <p className="text-xs text-gray-400 truncate mb-1">{recipe.description}</p>}
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📺 Video Reference</span>
+                          </div>
+                          <span className="text-gray-300 text-xl self-center">→</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </main>
     </div>
   )
