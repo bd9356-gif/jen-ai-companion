@@ -89,7 +89,7 @@ export default function KitchenPage() {
           emoji="🔍"
           title="Browse Recipes"
           subtitle="Explore the full recipe library at your own pace."
-          href="/recipes"
+          href="/explore"
           color="orange"
         />
 
