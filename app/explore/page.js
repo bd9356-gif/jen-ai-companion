@@ -10,7 +10,7 @@ const supabase = createClient(
 const CATEGORIES = ['All', 'Beef', 'Chicken', 'Dessert', 'Lamb', 'Pasta', 'Pork', 'Seafood', 'Vegan', 'Vegetarian', 'Breakfast', 'Starter', 'Side']
 
 export default function ExplorePage() {
-  const [mode, setMode] = useState('swipe') // 'swipe' or 'browse'
+  const [mode, setMode] = useState('swipe')
   const [recipes, setRecipes] = useState([])
   const [metadata, setMetadata] = useState({})
   const [loading, setLoading] = useState(true)
@@ -26,7 +26,10 @@ export default function ExplorePage() {
   const [dragX, setDragX] = useState(0)
   const [savedThisSession, setSavedThisSession] = useState(0)
   const [skippedThisSession, setSkippedThisSession] = useState(0)
+  const [history, setHistory] = useState([]) // for rewind
   const dragStartX = useRef(0)
+  const dragStartY = useRef(0)
+  const isDragging = useRef(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -43,7 +46,6 @@ export default function ExplorePage() {
       .from('recipes')
       .select('id, title, category, cuisine, thumbnail_url, youtube_url')
       .order('title')
-    // Shuffle for swipe mode
     const shuffled = (data || []).sort(() => Math.random() - 0.5)
     setRecipes(shuffled)
     const { data: meta } = await supabase
@@ -68,26 +70,40 @@ export default function ExplorePage() {
     }
   }
 
-  // Swipe handlers
+  async function unsaveRecipe(recipeId) {
+    if (!user) return
+    await supabase.from('saved_recipes').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
+    setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
+  }
+
+  // Swipe handlers — prevent page scroll during horizontal drag
   function onDragStart(e) {
-    setDragging(true)
+    isDragging.current = false
     dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX
+    dragStartY.current = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY
+    setDragging(true)
   }
 
   function onDragMove(e) {
     if (!dragging) return
     const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX
-    setDragX(clientX - dragStartX.current)
+    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY
+    const dx = clientX - dragStartX.current
+    const dy = clientY - dragStartY.current
+    // Only treat as horizontal drag if moving more horizontally than vertically
+    if (Math.abs(dx) > Math.abs(dy)) {
+      isDragging.current = true
+      if (e.cancelable) e.preventDefault()
+      setDragX(dx)
+    }
   }
 
   async function onDragEnd() {
     if (!dragging) return
     setDragging(false)
     if (dragX > 80) {
-      // Swipe right — save
       await handleSwipe('right')
     } else if (dragX < -80) {
-      // Swipe left — skip
       await handleSwipe('left')
     }
     setDragX(0)
@@ -97,6 +113,8 @@ export default function ExplorePage() {
     const current = swipeRecipes[0]
     if (!current) return
     setSwipeDir(direction)
+    // Record history for rewind
+    setHistory(prev => [...prev, { index: swipeIndex, direction, recipeId: current.id }])
     if (direction === 'right') {
       await saveRecipe(current.id)
       setSavedThisSession(s => s + 1)
@@ -109,10 +127,23 @@ export default function ExplorePage() {
     }, 300)
   }
 
+  async function handleRewind() {
+    if (history.length === 0) return
+    const last = history[history.length - 1]
+    setHistory(prev => prev.slice(0, -1))
+    // Undo save if it was a right swipe
+    if (last.direction === 'right') {
+      await unsaveRecipe(last.recipeId)
+      setSavedThisSession(s => Math.max(0, s - 1))
+    } else {
+      setSkippedThisSession(s => Math.max(0, s - 1))
+    }
+    setSwipeIndex(last.index)
+  }
+
   const swipeRecipes = recipes.slice(swipeIndex)
   const diffLabel = { beginner: '🟢 Beginner', intermediate: '🟡 Intermediate', advanced: '🔴 Advanced' }
 
-  // Filtered for browse mode
   const filtered = recipes.filter(r => {
     const matchCat = category === 'All' || r.category === category
     const matchSearch = search === '' || r.title.toLowerCase().includes(search.toLowerCase()) || r.cuisine?.toLowerCase().includes(search.toLowerCase())
@@ -132,7 +163,6 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
@@ -140,7 +170,6 @@ export default function ExplorePage() {
               <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
               <h1 className="text-lg font-bold text-gray-900">🍳 Explore Recipes</h1>
             </div>
-            {/* Mode toggle */}
             <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
               <button
                 onClick={() => setMode('swipe')}
@@ -163,19 +192,17 @@ export default function ExplorePage() {
                 placeholder="Search recipes or cuisine..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2"
               />
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <select
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-600"
+              >
                 {CATEGORIES.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategory(cat)}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${category === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    {cat}
-                  </button>
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
-              </div>
+              </select>
             </>
           )}
         </div>
@@ -185,7 +212,6 @@ export default function ExplorePage() {
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading recipes...</div>
         ) : mode === 'swipe' ? (
-          // ── SWIPE MODE ──
           <div>
             {/* Stats */}
             <div className="flex justify-center gap-6 mb-6 text-center">
@@ -204,7 +230,7 @@ export default function ExplorePage() {
                 <p className="text-4xl mb-4">🎉</p>
                 <p className="text-gray-700 font-semibold mb-2">You've seen them all!</p>
                 <p className="text-gray-400 text-sm mb-6">Saved {savedThisSession} recipes this session</p>
-                <button onClick={() => { setSwipeIndex(0); setSavedThisSession(0); setSkippedThisSession(0) }}
+                <button onClick={() => { setSwipeIndex(0); setSavedThisSession(0); setSkippedThisSession(0); setHistory([]) }}
                   className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
                   Start Over
                 </button>
@@ -213,7 +239,6 @@ export default function ExplorePage() {
               <div>
                 {/* Card stack */}
                 <div className="relative h-96 mb-6">
-                  {/* Back cards */}
                   {swipeRecipes.slice(1, 3).map((recipe, i) => (
                     <div
                       key={recipe.id}
@@ -225,14 +250,13 @@ export default function ExplorePage() {
                     />
                   ))}
 
-                  {/* Top card */}
                   {swipeRecipes[0] && (
                     <div
                       className="absolute inset-0 bg-white border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing select-none"
                       style={{
                         transform: `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
                         zIndex: 20,
-                        transition: dragging ? 'none' : 'transform 0.3s ease',
+                        transition: dragging && isDragging.current ? 'none' : 'transform 0.3s ease',
                         opacity: swipeDir ? 0 : 1,
                       }}
                       onMouseDown={onDragStart}
@@ -243,7 +267,6 @@ export default function ExplorePage() {
                       onTouchMove={onDragMove}
                       onTouchEnd={onDragEnd}
                     >
-                      {/* Photo */}
                       <div className="relative h-64">
                         {swipeRecipes[0].thumbnail_url ? (
                           <img src={swipeRecipes[0].thumbnail_url} alt={swipeRecipes[0].title} className="w-full h-full object-cover" draggable={false} />
@@ -252,7 +275,6 @@ export default function ExplorePage() {
                             <span className="text-5xl">🍽️</span>
                           </div>
                         )}
-                        {/* Swipe indicators */}
                         {dragX > 40 && (
                           <div className="absolute top-4 left-4 bg-green-500 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-green-600 rotate-[-12deg]">
                             SAVE ♥
@@ -269,8 +291,6 @@ export default function ExplorePage() {
                           </div>
                         )}
                       </div>
-
-                      {/* Info */}
                       <div className="p-4">
                         <h2 className="text-lg font-bold text-gray-900 mb-1">{swipeRecipes[0].title}</h2>
                         <div className="flex gap-2 mb-2">
@@ -288,35 +308,49 @@ export default function ExplorePage() {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center justify-center gap-4">
+                  {/* Skip - Left */}
                   <button
                     onClick={() => handleSwipe('left')}
                     className="w-16 h-16 bg-white border-2 border-red-200 rounded-full flex items-center justify-center text-2xl hover:bg-red-50 transition-colors shadow-sm"
+                    title="Skip"
                   >
                     ✕
                   </button>
+                  {/* Rewind */}
+                  <button
+                    onClick={handleRewind}
+                    disabled={history.length === 0}
+                    className="w-12 h-12 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center text-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-30"
+                    title="Rewind"
+                  >
+                    ↩
+                  </button>
+                  {/* Details */}
                   <a
                     href={`/recipes/${swipeRecipes[0]?.id}`}
                     className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors"
                   >
                     Details
                   </a>
+                  {/* Save - Right */}
                   <button
                     onClick={() => handleSwipe('right')}
                     className="w-16 h-16 bg-white border-2 border-green-200 rounded-full flex items-center justify-center text-2xl hover:bg-green-50 transition-colors shadow-sm"
+                    title="Save"
                   >
                     ♥
                   </button>
                 </div>
 
                 <p className="text-center text-xs text-gray-400 mt-4">
-                  {swipeRecipes.length} recipes left · Swipe ♥ to save, ✕ to skip
+                  {swipeRecipes.length} recipes left · ← Skip &nbsp;|&nbsp; Save → · ↩ Rewind
                 </p>
               </div>
             )}
           </div>
         ) : (
-          // ── BROWSE MODE ──
+          // BROWSE MODE
           <div>
             <p className="text-sm text-gray-400 mb-4">{filtered.length} recipes</p>
             <div className="grid grid-cols-2 gap-3">

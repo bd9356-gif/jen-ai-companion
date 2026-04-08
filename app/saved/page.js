@@ -12,15 +12,15 @@ export default function SavedPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('recipes')
 
-  // Saved recipe library
   const [recipes, setRecipes] = useState([])
   const [copying, setCopying] = useState(null)
   const [copiedIds, setCopiedIds] = useState(new Set())
 
-  // Saved videos
   const [recipeVideos, setRecipeVideos] = useState([])
   const [summaryVideos, setSummaryVideos] = useState([])
   const [playingId, setPlayingId] = useState(null)
+  const [savingVideo, setSavingVideo] = useState(null)
+  const [savedVideoIds, setSavedVideoIds] = useState(new Set())
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -52,7 +52,6 @@ export default function SavedPage() {
   }
 
   async function loadSavedVideos(userId) {
-    // Load saved cooking videos with metadata
     const [{ data: sv1 }, { data: sv2 }] = await Promise.all([
       supabase.from('saved_videos').select('video_id').eq('user_id', userId),
       supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
@@ -61,7 +60,6 @@ export default function SavedPage() {
     const cookingIds = (sv1 || []).map(s => s.video_id)
     const educationIds = (sv2 || []).map(s => s.video_id)
 
-    // Fetch actual video records
     const [{ data: cv }, { data: ev }] = await Promise.all([
       cookingIds.length ? supabase.from('cooking_videos').select('*').in('id', cookingIds) : { data: [] },
       educationIds.length ? supabase.from('education_videos').select('*').in('id', educationIds) : { data: [] },
@@ -72,8 +70,6 @@ export default function SavedPage() {
       ...(ev || []).map(v => ({ ...v, _source: 'education' })),
     ]
 
-    // Fetch metadata
-    const allIds = allVideos.map(v => v.id)
     const cookingVideoIds = (cv || []).map(v => v.id)
     const educationVideoIds = (ev || []).map(v => v.id)
 
@@ -86,12 +82,15 @@ export default function SavedPage() {
     ;(cm || []).forEach(m => { metaMap[m.video_id] = m })
     ;(em || []).forEach(m => { metaMap[m.video_id] = m })
 
-    // Split into recipe vs summary
     const withRecipe = allVideos.filter(v => metaMap[v.id]?.ingredients?.length > 0)
     const withSummary = allVideos.filter(v => !metaMap[v.id]?.ingredients?.length)
 
     setRecipeVideos(withRecipe.map(v => ({ ...v, _meta: metaMap[v.id] })))
     setSummaryVideos(withSummary.map(v => ({ ...v, _meta: metaMap[v.id] })))
+
+    // Track which video titles are already saved to vault
+    const { data: myRecipes } = await supabase.from('personal_recipes').select('title').eq('user_id', userId)
+    setSavedVideoIds(new Set((myRecipes || []).map(r => r.title.toLowerCase())))
   }
 
   async function unsaveVideo(video) {
@@ -129,6 +128,41 @@ export default function SavedPage() {
     setCopying(null)
   }
 
+  async function saveRecipeVideoToVault(video) {
+    setSavingVideo(video.id)
+    const meta = video._meta
+    await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: video.title,
+      description: meta?.ai_summary || '',
+      ingredients: meta?.ingredients || [],
+      instructions: meta?.instructions || '',
+      category: 'From Video',
+      tags: ['video-recipe'],
+      family_notes: `Saved from video by ${video.channel}`,
+      photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+    })
+    setSavedVideoIds(prev => new Set([...prev, video.title.toLowerCase()]))
+    setSavingVideo(null)
+  }
+
+  async function saveSummaryVideoToVault(video) {
+    setSavingVideo(video.id)
+    await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: video.title,
+      description: video._meta?.ai_summary || '',
+      ingredients: [],
+      instructions: `Watch video: https://youtube.com/watch?v=${video.youtube_id}`,
+      category: 'Video Reference',
+      tags: ['video-reference'],
+      family_notes: `Summary video by ${video.channel}. Saved for reference.`,
+      photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+    })
+    setSavedVideoIds(prev => new Set([...prev, video.title.toLowerCase()]))
+    setSavingVideo(null)
+  }
+
   function viewCount(n) {
     if (!n) return ''
     if (n >= 1000000) return `${(n/1000000).toFixed(1)}M views`
@@ -142,10 +176,11 @@ export default function SavedPage() {
     { key: 'summary_videos', label: '📝 Summary Videos', count: summaryVideos.length },
   ]
 
-  function VideoCard({ video, onUnsave }) {
+  function VideoCard({ video, onUnsave, onSaveToVault, isRecipeVideo }) {
     const [expanded, setExpanded] = useState(false)
     const meta = video._meta
     const hasRecipe = meta?.ingredients?.length > 0
+    const alreadySaved = savedVideoIds.has(video.title?.toLowerCase())
 
     return (
       <div className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
@@ -176,6 +211,22 @@ export default function SavedPage() {
           <p className="font-semibold text-gray-900 text-sm leading-snug mb-0.5">{video.title}</p>
           <p className="text-xs text-orange-600 font-medium mb-0.5">{video.channel}</p>
           <p className="text-xs text-gray-400 mb-3">{viewCount(video.view_count)}</p>
+
+          {/* Save to Vault button */}
+          <button
+            onClick={() => onSaveToVault(video)}
+            disabled={savingVideo === video.id || alreadySaved}
+            className={`w-full py-2 rounded-xl text-xs font-semibold mb-2 transition-colors ${
+              alreadySaved
+                ? 'bg-green-50 text-green-600 border border-green-200'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
+            } disabled:opacity-50`}
+          >
+            {savingVideo === video.id ? '⏳ Saving...' : alreadySaved
+              ? '✓ Saved to MyRecipeVault'
+              : isRecipeVideo ? '🔐 Save Recipe to MyRecipeVault' : '🔐 Store in MyRecipeVault'}
+          </button>
+
           <div className="flex items-center gap-3">
             <button onClick={() => setExpanded(!expanded)}
               className="text-sm text-orange-600 font-semibold">
@@ -233,7 +284,7 @@ export default function SavedPage() {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 mb-4">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">❤️ Your Favorites</h1>
+            <h1 className="text-lg font-bold text-gray-900">❤️ MyFavorites</h1>
           </div>
           <div className="flex gap-1">
             {tabs.map(t => (
@@ -253,13 +304,12 @@ export default function SavedPage() {
           <div className="text-center py-20 text-gray-400">Loading your favorites...</div>
         ) : (
           <>
-            {/* RECIPES TAB */}
             {tab === 'recipes' && (
               recipes.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-4xl mb-4">🍽️</p>
                   <p className="text-gray-500 font-semibold mb-2">No saved recipes yet</p>
-                  <a href="/recipes" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Recipes</a>
+                  <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Recipes</a>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -297,39 +347,35 @@ export default function SavedPage() {
               )
             )}
 
-            {/* RECIPE VIDEOS TAB */}
             {tab === 'recipe_videos' && (
               recipeVideos.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-4xl mb-4">🍳</p>
                   <p className="text-gray-500 font-semibold mb-2">No saved recipe videos yet</p>
-                  <p className="text-sm text-gray-400 mb-6">Save videos with 🍳 Has Recipe badge from the Cooking Videos page</p>
                   <a href="/videos" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Videos</a>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm text-gray-400">{recipeVideos.length} saved recipe videos</p>
                   {recipeVideos.map(video => (
-                    <VideoCard key={video.id} video={video} onUnsave={unsaveVideo} />
+                    <VideoCard key={video.id} video={video} onUnsave={unsaveVideo} onSaveToVault={saveRecipeVideoToVault} isRecipeVideo={true} />
                   ))}
                 </div>
               )
             )}
 
-            {/* SUMMARY VIDEOS TAB */}
             {tab === 'summary_videos' && (
               summaryVideos.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-4xl mb-4">📝</p>
                   <p className="text-gray-500 font-semibold mb-2">No saved summary videos yet</p>
-                  <p className="text-sm text-gray-400 mb-6">Save videos with 📝 Summary only badge from the Cooking Videos page</p>
                   <a href="/videos" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Videos</a>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm text-gray-400">{summaryVideos.length} saved summary videos</p>
                   {summaryVideos.map(video => (
-                    <VideoCard key={video.id} video={video} onUnsave={unsaveVideo} />
+                    <VideoCard key={video.id} video={video} onUnsave={unsaveVideo} onSaveToVault={saveSummaryVideoToVault} isRecipeVideo={false} />
                   ))}
                 </div>
               )
