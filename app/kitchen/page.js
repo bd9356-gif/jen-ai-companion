@@ -32,11 +32,11 @@ export default function KitchenPage() {
     <div className="min-h-screen bg-gray-50">
 
       {/* Hero Image */}
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden" style={{aspectRatio:'16/7'}}>
         <img
           src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
           alt="My Kitchen"
-          className="w-full object-cover"
+          className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
