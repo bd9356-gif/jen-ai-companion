@@ -112,12 +112,16 @@ export default function SavedPage() {
     setCopying(recipe.id)
     const { data: full } = await supabase.from('recipes').select('*').eq('id', recipe.id).single()
     if (full) {
+      const ytLine = full.youtube_url ? `Watch video: ${full.youtube_url}` : ''
+      const instructions = ytLine
+        ? `${ytLine}\n${full.instructions || ''}`
+        : (full.instructions || '')
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
         title: full.title,
         description: `Imported from recipe library — ${full.cuisine || full.category || ''}`.trim().replace(/—\s*$/, ''),
         ingredients: full.ingredients || [],
-        instructions: full.instructions || '',
+        instructions,
         category: full.category || '',
         tags: full.tags || [],
         family_notes: '',
