@@ -81,7 +81,7 @@ export default function KitchenPage() {
           emoji="🎴"
           title="MyRecipeDeck"
           subtitle="Swipe through recipes for quick inspiration."
-          href="/explore"
+          href="/browse"
           color="amber"
         />
 
@@ -89,7 +89,7 @@ export default function KitchenPage() {
           emoji="🔍"
           title="Browse Recipes"
           subtitle="Explore the full recipe library at your own pace."
-          href="/explore"
+          href="/browse"
           color="orange"
         />
 
