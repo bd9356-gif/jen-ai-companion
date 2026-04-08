@@ -31,7 +31,7 @@ export default function KitchenPage() {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* Hero Image */}
+      {/* Hero Image — full width, fixed height, same as original */}
       <div className="relative w-full overflow-hidden" style={{height:'220px'}}>
         <img
           src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
@@ -41,12 +41,14 @@ export default function KitchenPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
           <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
-          <p className="text-sm text-white/80 mt-0.5">Everything you need — all in one place.</p>
+          <p className="text-sm text-white/80 mt-0.5 leading-snug">
+            Everything you need — all in one place.
+          </p>
         </div>
       </div>
 
       {/* Subtitle + Profile */}
-      <div className="max-w-2xl mx-auto w-full px-4 pt-3 flex items-center justify-between">
+      <div className="px-4 pt-4 pb-2 flex items-center justify-between max-w-4xl mx-auto">
         <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
         <button onClick={() => window.location.href = '/profile'}
           className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors">
@@ -55,7 +57,7 @@ export default function KitchenPage() {
       </div>
 
       {/* Menu */}
-      <main className="px-4 py-4 max-w-2xl mx-auto space-y-2.5 pb-10">
+      <main className="px-4 pb-8 space-y-3 max-w-4xl mx-auto">
         {MENU_ITEMS.map(item => (
           <button
             key={item.href}
