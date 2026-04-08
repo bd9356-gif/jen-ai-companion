@@ -32,7 +32,7 @@ export default function KitchenPage() {
     <div className="min-h-screen bg-gray-50">
 
       {/* Hero */}
-      <div className="relative w-full overflow-hidden" style={{height:'200px'}}>
+      <div className="relative w-full overflow-hidden" style={{height:'220px'}}>
         <img
           src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
           alt="My Kitchen"
@@ -45,7 +45,7 @@ export default function KitchenPage() {
             <span>👤</span> Profile
           </button>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-8">
+        <div className="absolute left-0 right-0 px-5" style={{bottom: '20px'}}>
           <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
           <p className="text-sm text-white/70 mt-0.5">
             Everything you need — all in one place.
