@@ -328,6 +328,27 @@ export default function MyRecipeVaultPage() {
     const updates = {}
     if (enhanceResult.ingredients) updates.ingredients = enhanceResult.ingredients
     if (enhanceResult.instructions) updates.instructions = enhanceResult.instructions
+
+    // If this was a resize, also regenerate nutrition for the new serving count
+    if (enhanceResult.ingredients && !enhanceResult.instructions) {
+      setEnhancing(true)
+      try {
+        const recipeForInfo = { ...viewing, ingredients: enhanceResult.ingredients, servings }
+        const res = await fetch('/api/enhance-recipe', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipe: recipeForInfo, action: 'generate_info', servings })
+        })
+        const info = await res.json()
+        if (info.cooking_time) updates.cooking_time = info.cooking_time
+        if (info.prep_time) updates.prep_time = info.prep_time
+        if (info.difficulty) updates.difficulty = info.difficulty
+        if (info.equipment) updates.equipment = info.equipment
+        if (info.nutrition_estimate) updates.nutrition = info.nutrition_estimate
+        updates.servings = servings
+      } catch (err) { console.error('Auto generate_info failed:', err) }
+      setEnhancing(false)
+    }
+
     await updateRecipe(viewing.id, updates)
     setEnhanceResult(null); setGeneratedInfo(null); setView('detail')
   }
@@ -631,13 +652,15 @@ export default function MyRecipeVaultPage() {
             </button>
             {enhanceResult?.ingredients && !enhanceResult?.instructions && (
               <div className="mt-3 bg-white rounded-xl p-4 border border-orange-200">
-                <p className="text-xs font-semibold text-orange-700 mb-2">Resized — tap Apply to save</p>
+                <p className="text-xs font-semibold text-orange-700 mb-2">Resized — tap Apply to save & update nutrition</p>
                 <ul className="space-y-1">
                   {enhanceResult.ingredients.map((ing, i) => (
                     <li key={i} className="text-sm text-gray-700">• <span className="font-semibold">{ing.measure}</span> {ing.name}</li>
                   ))}
                 </ul>
-                <button onClick={applyEnhancement} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold">✓ Apply Changes</button>
+                <button onClick={applyEnhancement} disabled={enhancing} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50">
+                  {enhancing ? '⏳ Updating nutrition...' : '✓ Apply & Update Nutrition'}
+                </button>
               </div>
             )}
           </div>
