@@ -29,7 +29,7 @@ export default function KitchenPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
 
       {/* Hero Image */}
       <div className="relative w-full overflow-hidden" style={{height:'220px'}}>
