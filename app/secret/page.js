@@ -398,9 +398,14 @@ export default function MyRecipeVaultPage() {
     const ingredients = viewing.ingredients || []
     const instructions = (viewing.instructions || '').split('\n').filter(Boolean)
     const isVideoEntry = viewing.category === 'Video Reference' || viewing.category === 'From Video'
-    // Extract YouTube ID from instructions like "Watch video: https://youtube.com/watch?v=XXXX"
-    const ytMatch = (viewing.instructions || '').match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
+    // Extract video URL from instructions "Watch video: <url>"
+    const watchLine = instructions.find(s => s.startsWith('Watch video:'))
+    const watchUrl = watchLine ? watchLine.replace('Watch video:', '').trim() : null
+    // Detect video type
+    const ytMatch = watchUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
     const youtubeId = ytMatch ? ytMatch[1] : null
+    const isMp4 = watchUrl && !youtubeId && (watchUrl.match(/\.(mp4|mov|webm|m4v)/i) || watchUrl.includes('s3.amazonaws.com'))
+    const isTikTok = watchUrl && watchUrl.includes('tiktok.com')
     const nonVideoInstructions = instructions.filter(s => !s.startsWith('Watch video:'))
 
     return (
@@ -435,6 +440,15 @@ export default function MyRecipeVaultPage() {
                 allowFullScreen
               />
             </div>
+          ) : isMp4 ? (
+            <div className="w-full rounded-2xl overflow-hidden mb-5">
+              <video src={watchUrl} controls className="w-full rounded-2xl bg-black" style={{maxHeight:'300px'}} />
+            </div>
+          ) : isTikTok ? (
+            <a href={watchUrl} target="_blank" rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-4 bg-gray-800 text-white rounded-2xl font-semibold text-sm mb-5">
+              ▶ Watch on TikTok
+            </a>
           ) : viewing.photo_url ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
