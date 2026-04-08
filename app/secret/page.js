@@ -13,7 +13,101 @@ const SUGGESTED_TAGS = [
   'quick','family','holiday','comfort food','baking','healthy'
 ]
 
-// ── EDIT FORM ── larger panels with outside labels
+// ── TAG SELECTOR DROPDOWN ──
+function TagSelector({ tags, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [customInput, setCustomInput] = useState('')
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  function toggleTag(tag) {
+    if (tags.includes(tag)) {
+      onChange(tags.filter(t => t !== tag))
+    } else {
+      onChange([...tags, tag])
+    }
+  }
+
+  function addCustom() {
+    const t = customInput.trim().toLowerCase()
+    if (t && !tags.includes(t)) {
+      onChange([...tags, t])
+    }
+    setCustomInput('')
+  }
+
+  return (
+    <div>
+      <label className="block text-sm font-bold text-gray-700 mb-2">🏷️ Tags</label>
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 hover:border-orange-300 transition-colors"
+        >
+          <span className="text-gray-500">{tags.length > 0 ? `${tags.length} tag${tags.length > 1 ? 's' : ''} selected` : 'Select tags...'}</span>
+          <span className="text-gray-400 text-xs ml-2">{open ? '▲' : '▼'}</span>
+        </button>
+
+        {open && (
+          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+            <div className="max-h-52 overflow-y-auto">
+              {SUGGESTED_TAGS.map(tag => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-orange-50 transition-colors ${
+                    tags.includes(tag) ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-gray-700'
+                  }`}
+                >
+                  <span>#{tag}</span>
+                  {tags.includes(tag) && <span className="text-orange-500 text-xs">✓</span>}
+                </button>
+              ))}
+            </div>
+            <div className="border-t border-gray-100 p-2 flex gap-2">
+              <input
+                placeholder="Add custom tag..."
+                value={customInput}
+                onChange={e => setCustomInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() }}}
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+              />
+              <button
+                type="button"
+                onClick={addCustom}
+                className="px-3 py-2 bg-orange-600 text-white rounded-lg text-sm font-semibold"
+              >Add</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {tags.map(tag => (
+            <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+              #{tag}
+              <button type="button" onClick={() => toggleTag(tag)} className="ml-1 text-orange-400 hover:text-orange-700">×</button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── EDIT FORM ──
 function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   const [title, setTitle] = useState(initial.title || '')
   const [description, setDescription] = useState(initial.description || '')
@@ -22,14 +116,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   const [instructions, setInstructions] = useState(initial.instructions || '')
   const [familyNotes, setFamilyNotes] = useState(initial.family_notes || '')
   const [tags, setTags] = useState(initial.tags || [])
-  const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
-
-  function addTag(tag) {
-    const t = tag.trim().toLowerCase()
-    if (t && !tags.includes(t)) setTags(prev => [...prev, t])
-  }
-  function removeTag(tag) { setTags(prev => prev.filter(t => t !== tag)) }
 
   async function handleSave() {
     setSaving(true)
@@ -64,36 +151,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
       </div>
 
-      <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">🏷️ Tags — tap to select</label>
-        <div className="flex flex-wrap gap-2 mb-3">
-          {SUGGESTED_TAGS.map(tag => (
-            <button key={tag} type="button" onClick={() => tags.includes(tag) ? removeTag(tag) : addTag(tag)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                tags.includes(tag) ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-              #{tag}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input placeholder="Add custom tag..." value={tagInput}
-            onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { addTag(tagInput); setTagInput('') }}}
-            className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-          <button type="button" onClick={() => { addTag(tagInput); setTagInput('') }}
-            className="px-4 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Add</button>
-        </div>
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {tags.map(tag => (
-              <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                #{tag}
-                <button type="button" onClick={() => removeTag(tag)} className="ml-1 text-orange-400 hover:text-orange-700">×</button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      <TagSelector tags={tags} onChange={setTags} />
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
@@ -152,7 +210,6 @@ export default function MyRecipeVaultPage() {
   const [importing, setImporting] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
-  const [tagInput, setTagInput] = useState('')
   const [pinnedCards, setPinnedCards] = useState([])
 
   const fileInputRef = useRef(null)
@@ -284,7 +341,7 @@ export default function MyRecipeVaultPage() {
     if (generatedInfo.servings) updates.servings = generatedInfo.servings
     if (generatedInfo.equipment) updates.equipment = generatedInfo.equipment
     if (generatedInfo.nutrition_estimate) updates.nutrition = generatedInfo.nutrition_estimate
-    const updated = await updateRecipe(viewing.id, updates)
+    await updateRecipe(viewing.id, updates)
     setGeneratedInfo(null); setEnhanceResult(null); setView('detail')
   }
 
@@ -306,12 +363,6 @@ export default function MyRecipeVaultPage() {
     } catch (err) { console.error(err) }
     setImporting(false)
   }
-
-  function addFormTag(tag) {
-    const t = tag.trim().toLowerCase()
-    if (t && !form.tags.includes(t)) setForm(f => ({ ...f, tags: [...f.tags, t] }))
-  }
-  function removeFormTag(tag) { setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) })) }
 
   const filtered = recipes.filter(r => {
     const matchSearch = searchText === '' || r.title.toLowerCase().includes(searchText.toLowerCase())
@@ -381,7 +432,6 @@ export default function MyRecipeVaultPage() {
             {viewing.prep_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">🔪 {viewing.prep_time}</span>}
           </div>
 
-          {/* Generated Info Box */}
           {(viewing.cooking_time || viewing.prep_time || viewing.difficulty || viewing.equipment?.length > 0 || viewing.nutrition) && (
             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-5">
               <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-3">📊 Recipe Info</p>
@@ -444,26 +494,6 @@ export default function MyRecipeVaultPage() {
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-5">
               <p className="text-xs font-semibold text-amber-800 mb-1">📖 Family Notes</p>
               <p className="text-sm text-amber-900">{viewing.family_notes}</p>
-            </div>
-          )}
-
-          {/* Show generated info if saved */}
-          {(viewing.nutrition || viewing.equipment?.length > 0) && (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5">
-              <p className="text-xs font-semibold text-blue-800 mb-2">📊 Recipe Info</p>
-              {viewing.equipment?.length > 0 && (
-                <p className="text-xs text-blue-700 mb-1">🍳 Equipment: {viewing.equipment.join(', ')}</p>
-              )}
-              {viewing.nutrition && (
-                <div className="grid grid-cols-4 gap-2 mt-2">
-                  {['calories','protein','carbs','fat'].map(k => viewing.nutrition[k] && (
-                    <div key={k} className="text-center bg-white rounded-lg p-2">
-                      <p className="text-xs font-bold text-blue-700">{viewing.nutrition[k]}</p>
-                      <p className="text-xs text-gray-400 capitalize">{k}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -538,7 +568,6 @@ export default function MyRecipeVaultPage() {
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16 space-y-4">
           <p className="text-sm text-gray-500 font-semibold">{viewing.title}</p>
 
-          {/* Polish */}
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">🧹 Polish Recipe</p>
             <p className="text-xs text-gray-500 mb-3">AI rewrites steps for clarity and fixes formatting</p>
@@ -555,7 +584,6 @@ export default function MyRecipeVaultPage() {
             )}
           </div>
 
-          {/* Resize */}
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">⚖️ Resize Servings</p>
             <p className="text-xs text-gray-500 mb-3">Recalculate ingredient amounts</p>
@@ -598,7 +626,6 @@ export default function MyRecipeVaultPage() {
             )}
           </div>
 
-          {/* Generate Info */}
           <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
             <p className="font-semibold text-gray-900 mb-1">📊 Generate Recipe Info</p>
             <p className="text-xs text-gray-500 mb-3">AI generates cook time, difficulty, equipment & nutrition</p>
@@ -725,35 +752,7 @@ export default function MyRecipeVaultPage() {
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">🏷️ Tags — tap to select</label>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {SUGGESTED_TAGS.map(tag => (
-                  <button key={tag} type="button" onClick={() => form.tags.includes(tag) ? removeFormTag(tag) : addFormTag(tag)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      form.tags.includes(tag) ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input placeholder="Custom tag..." value={tagInput}
-                  onChange={e => setTagInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') { addFormTag(tagInput); setTagInput('') }}}
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-                <button type="button" onClick={() => { addFormTag(tagInput); setTagInput('') }}
-                  className="px-4 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Add</button>
-              </div>
-              {form.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {form.tags.map(tag => (
-                    <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                      #{tag}<button type="button" onClick={() => removeFormTag(tag)} className="ml-1 text-orange-400">×</button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} />
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
