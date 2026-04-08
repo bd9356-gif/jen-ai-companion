@@ -46,11 +46,13 @@ export default function ExplorePage() {
       .from('recipes')
       .select('id, title, category, cuisine, thumbnail_url, youtube_url')
       .order('title')
+      .range(0, 4999)
     const shuffled = (data || []).sort(() => Math.random() - 0.5)
     setRecipes(shuffled)
     const { data: meta } = await supabase
       .from('recipe_metadata')
       .select('recipe_id, difficulty_level, ai_summary')
+      .range(0, 4999)
     const metaMap = {}
     ;(meta || []).forEach(m => { metaMap[m.recipe_id] = m })
     setMetadata(metaMap)

@@ -34,11 +34,13 @@ export default function BrowsePage() {
       .from('recipes')
       .select('id, title, category, cuisine, thumbnail_url, youtube_url')
       .order('title')
+      .range(0, 4999)
     setRecipes(data || [])
 
     const { data: meta } = await supabase
       .from('recipe_metadata')
       .select('recipe_id, difficulty_level, ai_summary')
+      .range(0, 4999)
     const metaMap = {}
     ;(meta || []).forEach(m => { metaMap[m.recipe_id] = m })
     setMetadata(metaMap)
