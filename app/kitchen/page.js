@@ -8,14 +8,14 @@ const supabase = createClient(
 )
 
 const MENU_ITEMS = [
-  { emoji: '🔐', title: 'MyRecipeVault',    subtitle: 'Your personal cooking library',           href: '/secret',   accent: '#f97316' },
-  { emoji: '🍳', title: 'Explore Recipes',  subtitle: 'Browse the full library — swipe or scroll', href: '/explore',  accent: '#f97316' },
-  { emoji: '❤️', title: 'MyFavorites',      subtitle: 'Videos, recipes, and ideas you love',      href: '/saved',    accent: '#e85d8a' },
-  { emoji: '🃏', title: 'My Recipe Cards',  subtitle: 'Quick reference cards for your go-to recipes', href: '/cards', accent: '#f59e0b' },
-  { emoji: '🎬', title: 'Cooking Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',  accent: '#f97316' },
+  { emoji: '🔐', title: 'MyRecipeVault',    subtitle: 'Your personal cooking library',              href: '/secret',    accent: '#f97316' },
+  { emoji: '🍳', title: 'Explore Recipes',  subtitle: 'Browse the full library — swipe or scroll',  href: '/explore',   accent: '#f97316' },
+  { emoji: '❤️', title: 'MyFavorites',      subtitle: 'Videos, recipes, and ideas you love',        href: '/saved',     accent: '#e85d8a' },
+  { emoji: '🃏', title: 'My Recipe Cards',  subtitle: 'Quick reference cards for your go-to recipes', href: '/cards',   accent: '#f59e0b' },
+  { emoji: '🎬', title: 'Cooking Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',    accent: '#f97316' },
   { emoji: '👨‍🍳', title: 'AI Chef Creations', subtitle: 'Gourmet recipes from your personal AI chef', href: '/topchef', accent: '#a855f7' },
-  { emoji: '📅', title: 'Meal Planner',     subtitle: 'Plan your meals for the week ahead',        href: '/weeklyplan', accent: '#14b8a6' },
-  { emoji: '🤖', title: 'MyChef AI',        subtitle: 'Ask your personal AI chef anything',        href: '/chef',     accent: '#3b82f6' },
+  { emoji: '📅', title: 'Meal Planner',     subtitle: 'Plan your meals for the week ahead',          href: '/weeklyplan', accent: '#14b8a6' },
+  { emoji: '🤖', title: 'MyChef AI',        subtitle: 'Ask your personal AI chef anything',          href: '/chef',      accent: '#3b82f6' },
 ]
 
 export default function KitchenPage() {
@@ -31,31 +31,31 @@ export default function KitchenPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Hero */}
-      <div className="relative w-full overflow-hidden" style={{height:'240px'}}>
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">🍳 My Kitchen</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
+          </div>
+          <button onClick={() => window.location.href = '/profile'}
+            className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors">
+            <span>👤</span> Profile
+          </button>
+        </div>
+      </header>
+
+      {/* Hero Image */}
+      <div className="w-full overflow-hidden" style={{height:'160px'}}>
         <img
           src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
           alt="My Kitchen"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/75" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/20 to-black/80" />
-        <div className="absolute top-4 right-4" style={{paddingTop: 'env(safe-area-inset-top)'}}>
-          <button onClick={() => window.location.href = '/profile'}
-            className="flex items-center gap-1.5 bg-black/40 text-white rounded-full px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-            <span>👤</span> Profile
-          </button>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-          <h1 className="text-2xl font-bold text-white leading-tight drop-shadow-lg">🍳 My Kitchen</h1>
-          <p className="text-sm font-medium text-white/90 mt-0.5 drop-shadow-md">
-            Everything you need — all in one place.
-          </p>
-        </div>
       </div>
 
       {/* Menu */}
-      <main className="px-4 py-5 max-w-2xl mx-auto space-y-2.5 pb-10">
+      <main className="px-4 py-4 max-w-2xl mx-auto space-y-2.5 pb-10">
         {MENU_ITEMS.map(item => (
           <button
             key={item.href}
