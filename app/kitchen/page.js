@@ -31,6 +31,15 @@ export default function KitchenPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
+      {/* Header */}
+      <div className="max-w-2xl mx-auto w-full px-4 pt-4 flex items-center justify-between">
+        <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
+        <button onClick={() => window.location.href = '/profile'}
+          className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors">
+          👤 Profile
+        </button>
+      </div>
+
       {/* Hero Image */}
       <div className="max-w-2xl mx-auto w-full px-4 pt-4">
         <div className="relative w-full rounded-2xl overflow-hidden" style={{height:'200px'}}>
