@@ -42,17 +42,13 @@ export default function KitchenPage() {
 
   return (
     <div className="min-h-screen bg-white">
-
-      {/* Hero Image */}
       <div className="relative w-full overflow-hidden" style={{height:'220px'}}>
         <img
           src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
           alt="My Kitchen"
           className="w-full h-full object-cover"
         />
-        {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
-        {/* Text overlay */}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
           <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
           <p className="text-sm text-white/80 mt-0.5 leading-snug">
@@ -61,86 +57,20 @@ export default function KitchenPage() {
         </div>
       </div>
 
-      {/* Subtitle */}
       <div className="px-4 pt-4 pb-2">
         <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
       </div>
 
-      {/* Drawer Cards */}
       <main className="px-4 pb-8 space-y-3 max-w-4xl mx-auto">
-
-        <DrawerCard
-          emoji="🔐"
-          title="MyRecipeVault"
-          subtitle="Your personal cooking library — recipes, videos, and AI creations you choose to keep."
-          href="/secret"
-          color="orange"
-        />
-
-        <DrawerCard
-          emoji="🎴"
-          title="MyRecipeDeck"
-          subtitle="Swipe through recipes for quick inspiration."
-          href="/explore"
-          color="amber"
-        />
-
-        <DrawerCard
-          emoji="🔍"
-          title="Browse Recipes"
-          subtitle="Explore the full recipe library at your own pace."
-          href="/explore"
-          color="orange"
-        />
-
-        <DrawerCard
-          emoji="❤️"
-          title="MyFavorites"
-          subtitle="Everything you've saved — videos, recipes, and ideas you want to revisit."
-          href="/saved"
-          color="rose"
-        />
-
-        <DrawerCard
-          emoji="🃏"
-          title="My Recipe Cards"
-          subtitle="Quick reference cards for your go-to recipes."
-          href="/cards"
-          color="amber"
-        />
-
-        <DrawerCard
-          emoji="🎬"
-          title="Cooking Videos"
-          subtitle="558 videos — filter by category, channel, or recipe type."
-          href="/videos"
-          color="orange"
-        />
-
-        <DrawerCard
-          emoji="👨‍🍳"
-          title="AI Chef Creations"
-          subtitle="Gourmet recipes crafted by your personal AI chef."
-          href="/topchef"
-          color="purple"
-        />
-
-        <DrawerCard
-          emoji="📅"
-          title="Meal Planner"
-          subtitle="Plan your meals for the week ahead."
-          href="/weeklyplan"
-          color="teal"
-        />
-
-        <DrawerCard
-          emoji="🤖"
-          title="MyChef AI"
-          subtitle="Ask your personal AI chef anything about cooking."
-          href="/chef"
-          color="blue"
-        />
-
+        <DrawerCard emoji="🔐" title="MyRecipeVault" subtitle="Your personal cooking library — recipes, videos, and AI creations you choose to keep." href="/secret" color="orange" />
+        <DrawerCard emoji="🎴" title="MyRecipeDeck" subtitle="Swipe through recipes for quick inspiration." href="/explore" color="amber" />
+        <DrawerCard emoji="🔍" title="Browse Recipes" subtitle="Explore the full recipe library at your own pace." href="/browse" color="orange" />
+        <DrawerCard emoji="❤️" title="MyFavorites" subtitle="Everything you've saved — videos, recipes, and ideas you want to revisit." href="/saved" color="rose" />
+        <DrawerCard emoji="🃏" title="My Recipe Cards" subtitle="Quick reference cards for your go-to recipes." href="/cards" color="amber" />
+        <DrawerCard emoji="🎬" title="Cooking Videos" subtitle="558 videos — filter by category, channel, or recipe type." href="/videos" color="orange" />
+        <DrawerCard emoji="👨‍🍳" title="AI Chef Creations" subtitle="Gourmet recipes crafted by your personal AI chef." href="/topchef" color="purple" />
+        <DrawerCard emoji="📅" title="Meal Planner" subtitle="Plan your meals for the week ahead." href="/weeklyplan" color="teal" />
+        <DrawerCard emoji="🤖" title="MyChef AI" subtitle="Ask your personal AI chef anything about cooking." href="/chef" color="blue" />
       </main>
     </div>
   )
