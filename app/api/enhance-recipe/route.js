@@ -6,6 +6,7 @@ export async function POST(request) {
   try {
     const { recipe, action, servings } = await request.json()
 
+    const currentServings = recipe.servings || null
     let prompt = ''
 
     if (action === 'enhance') {
@@ -20,22 +21,36 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
   "ingredients": [{"name": "...", "measure": "..."}],
   "instructions": "Step 1...\\nStep 2...\\nStep 3..."
 }`
-    } else if (action === 'resize') {
-      prompt = `Recalculate this recipe for ${servings} servings. Adjust all ingredient amounts proportionally.
 
-Original recipe (serves ${recipe.servings || 4}):
-Ingredients: ${JSON.stringify(recipe.ingredients)}
+    } else if (action === 'resize') {
+      const fromServings = currentServings
+        ? `${currentServings} servings`
+        : 'an unknown number of servings (use your best judgment based on the ingredient quantities)'
+
+      prompt = `Recalculate this recipe to make exactly ${servings} servings. The original recipe makes ${fromServings}. Adjust ALL ingredient amounts proportionally and precisely.
+
+Original ingredients: ${JSON.stringify(recipe.ingredients)}
+
+Important: Scale every single ingredient amount accurately. Do not round aggressively — keep reasonable precision (e.g. "1.5 cups" not "2 cups" if that's what the math gives).
 
 Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 {
   "ingredients": [{"name": "...", "measure": "..."}]
 }`
+
     } else if (action === 'generate_info') {
-      prompt = `Analyze this recipe and generate helpful cooking information.
+      const servingsNote = currentServings
+        ? `This recipe makes ${currentServings} servings.`
+        : `Estimate the number of servings based on the ingredient quantities.`
+
+      prompt = `Analyze this recipe and generate accurate cooking information.
 
 Recipe: ${recipe.title}
+${servingsNote}
 Ingredients: ${JSON.stringify(recipe.ingredients)}
 Instructions: ${recipe.instructions}
+
+Use the actual ingredients and quantities to estimate nutrition accurately. All nutrition values should be per serving based on the actual serving count.
 
 Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 {
@@ -49,7 +64,7 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
     "carbs": "~30g",
     "fat": "~15g"
   },
-  "servings": 4
+  "servings": ${currentServings || 'null'}
 }`
     }
 
@@ -61,7 +76,6 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 
     const text = message.content[0].text.trim()
 
-    // Strip any markdown fences Claude might add
     const clean = text
       .replace(/^```json\s*/i, '')
       .replace(/^```\s*/i, '')
