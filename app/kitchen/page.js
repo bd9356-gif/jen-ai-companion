@@ -63,7 +63,7 @@ export default function KitchenPage() {
               <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 leading-tight">{item.title}</p>
-                <p className="text-xs text-gray-400 mt-0.5 leading-snug">{item.subtitle}</p>
+                <p className="text-xs text-gray-600 mt-0.5 leading-snug">{item.subtitle}</p>
               </div>
               <span className="text-gray-300 text-lg font-light">›</span>
             </div>
