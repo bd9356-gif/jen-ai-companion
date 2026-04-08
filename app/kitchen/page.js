@@ -64,7 +64,6 @@ export default function KitchenPage() {
       <main className="px-4 pb-8 space-y-3 max-w-4xl mx-auto">
         <DrawerCard emoji="🔐" title="MyRecipeVault" subtitle="Your personal cooking library — recipes, videos, and AI creations you choose to keep." href="/secret" color="orange" />
         <DrawerCard emoji="🎴" title="MyRecipeDeck" subtitle="Swipe through recipes for quick inspiration." href="/explore" color="amber" />
-        <DrawerCard emoji="🔍" title="Browse Recipes" subtitle="Explore the full recipe library at your own pace." href="/browse" color="orange" />
         <DrawerCard emoji="❤️" title="MyFavorites" subtitle="Everything you've saved — videos, recipes, and ideas you want to revisit." href="/saved" color="rose" />
         <DrawerCard emoji="🃏" title="My Recipe Cards" subtitle="Quick reference cards for your go-to recipes." href="/cards" color="amber" />
         <DrawerCard emoji="🎬" title="Cooking Videos" subtitle="558 videos — filter by category, channel, or recipe type." href="/videos" color="orange" />
