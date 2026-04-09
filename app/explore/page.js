@@ -19,6 +19,14 @@ export default function ExplorePage() {
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
 
+  function handleCategoryChange(newCat) {
+    setCategory(newCat)
+    setSwipeIndex(0)
+    setSavedThisSession(0)
+    setSkippedThisSession(0)
+    setHistory([])
+  }
+
   // Swipe state
   const [swipeIndex, setSwipeIndex] = useState(0)
   const [swipeDir, setSwipeDir] = useState(null)
@@ -143,7 +151,8 @@ export default function ExplorePage() {
     setSwipeIndex(last.index)
   }
 
-  const swipeRecipes = recipes.slice(swipeIndex)
+  const swipeFiltered = recipes.filter(r => category === 'All' || r.category === category)
+  const swipeRecipes = swipeFiltered.slice(swipeIndex)
   const diffLabel = { beginner: '🟢 Beginner', intermediate: '🟡 Intermediate', advanced: '🔴 Advanced' }
 
   const filtered = recipes.filter(r => {
@@ -198,7 +207,7 @@ export default function ExplorePage() {
               />
               <select
                 value={category}
-                onChange={e => setCategory(e.target.value)}
+                onChange={e => handleCategoryChange(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-600"
               >
                 {CATEGORIES.map(cat => (
@@ -215,6 +224,19 @@ export default function ExplorePage() {
           <div className="text-center py-20 text-gray-400">Loading recipes...</div>
         ) : mode === 'swipe' ? (
           <div>
+            {/* Category filter for swipe mode */}
+            <div className="mb-4">
+              <select
+                value={category}
+                onChange={e => handleCategoryChange(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-700 font-medium"
+              >
+                {CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Stats */}
             <div className="flex justify-center gap-6 mb-6 text-center">
               <div>
@@ -345,8 +367,8 @@ export default function ExplorePage() {
                   </button>
                 </div>
 
-                <p className="text-center text-xs text-gray-400 mt-4">
-                  {swipeRecipes.length} recipes left · ← Skip &nbsp;|&nbsp; Save → · ↩ Rewind
+                <p className="text-center text-sm font-semibold text-gray-500 mt-4">
+                  {swipeRecipes.length} recipes left &nbsp;·&nbsp; ← Skip &nbsp;|&nbsp; Save → &nbsp;·&nbsp; ↩ Rewind
                 </p>
               </div>
             )}
