@@ -226,6 +226,7 @@ export default function ExplorePage() {
           <div>
             {/* Category filter for swipe mode */}
             <div className="mb-4">
+              <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Filter by Category</label>
               <select
                 value={category}
                 onChange={e => handleCategoryChange(e.target.value)}
