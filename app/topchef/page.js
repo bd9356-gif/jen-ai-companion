@@ -7,15 +7,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const DRAWERS = [
-  {
-    id: 'chefs-menu',
-    emoji: '🍽️',
-    title: "Chef's Menu",
-    subtitle: "Tonight's curated restaurant-style picks.",
-    items: ['Pan-Seared Salmon', 'Chicken Piccata', 'Steak with Herb Butter'],
-    color: 'orange',
-  },
+const STATIC_DRAWERS = [
   {
     id: 'protein-night',
     emoji: '🥩',
@@ -52,10 +44,10 @@ const DRAWERS = [
 
 const COLOR_MAP = {
   orange: { header: 'bg-orange-50 border-orange-200', title: 'text-orange-900', sub: 'text-orange-600', item: 'hover:bg-orange-50 active:bg-orange-100', btn: 'bg-orange-600 hover:bg-orange-700' },
-  red:    { header: 'bg-red-50 border-red-200',    title: 'text-red-900',    sub: 'text-red-500',    item: 'hover:bg-red-50 active:bg-red-100',    btn: 'bg-red-600 hover:bg-red-700' },
-  amber:  { header: 'bg-amber-50 border-amber-200', title: 'text-amber-900',  sub: 'text-amber-600',  item: 'hover:bg-amber-50 active:bg-amber-100',  btn: 'bg-amber-600 hover:bg-amber-700' },
+  red:    { header: 'bg-red-50 border-red-200',       title: 'text-red-900',    sub: 'text-red-500',    item: 'hover:bg-red-50 active:bg-red-100',    btn: 'bg-red-600 hover:bg-red-700' },
+  amber:  { header: 'bg-amber-50 border-amber-200',   title: 'text-amber-900',  sub: 'text-amber-600',  item: 'hover:bg-amber-50 active:bg-amber-100',  btn: 'bg-amber-600 hover:bg-amber-700' },
   purple: { header: 'bg-purple-50 border-purple-200', title: 'text-purple-900', sub: 'text-purple-600', item: 'hover:bg-purple-50 active:bg-purple-100', btn: 'bg-purple-600 hover:bg-purple-700' },
-  teal:   { header: 'bg-teal-50 border-teal-200',  title: 'text-teal-900',   sub: 'text-teal-600',   item: 'hover:bg-teal-50 active:bg-teal-100',   btn: 'bg-teal-600 hover:bg-teal-700' },
+  teal:   { header: 'bg-teal-50 border-teal-200',     title: 'text-teal-900',   sub: 'text-teal-600',   item: 'hover:bg-teal-50 active:bg-teal-100',   btn: 'bg-teal-600 hover:bg-teal-700' },
 }
 
 export default function TopChefPage() {
@@ -63,6 +55,42 @@ export default function TopChefPage() {
   const [generating, setGenerating] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [generatingItem, setGeneratingItem] = useState(null)
+  const [chefMenuItems, setChefMenuItems] = useState(['Pan-Seared Salmon', 'Chicken Piccata', 'Steak with Herb Butter'])
+  const [user, setUser] = useState(null)
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setUser(session.user)
+    })
+    loadRotatingMenu()
+  }, [])
+
+  async function loadRotatingMenu() {
+    // Pull 3 random recipes from DB for Chef's Menu
+    const { data } = await supabase
+      .from('recipes')
+      .select('title')
+      .not('thumbnail_url', 'is', null)
+      .limit(200)
+    if (data && data.length >= 3) {
+      const shuffled = data.sort(() => Math.random() - 0.5)
+      setChefMenuItems(shuffled.slice(0, 3).map(r => r.title))
+    }
+  }
+
+  const DRAWERS = [
+    {
+      id: 'chefs-menu',
+      emoji: '🍽️',
+      title: "Chef's Menu",
+      subtitle: "Tonight's curated picks — refreshes every visit.",
+      items: chefMenuItems,
+      color: 'orange',
+    },
+    ...STATIC_DRAWERS,
+  ]
 
   function toggleDrawer(id) {
     setOpenDrawer(prev => prev === id ? null : id)
@@ -71,6 +99,7 @@ export default function TopChefPage() {
   async function cookThis(drawer, item) {
     setGeneratingItem(item)
     setGenerating(true)
+    setSaved(false)
     try {
       const prompt = buildPrompt(drawer, item)
       const res = await fetch('/api/topchef', {
@@ -95,6 +124,25 @@ export default function TopChefPage() {
     return prompts[drawer.id] || `Create a delicious recipe for "${item}".`
   }
 
+  async function saveToFavorites() {
+    if (!user || !viewing) return
+    setSaving(true)
+    // Save recipe to personal_recipes as a vault entry
+    const { error } = await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: viewing.title,
+      description: viewing.description || '',
+      ingredients: viewing.ingredients || [],
+      instructions: viewing.instructions || '',
+      category: 'AI Chef Creation',
+      tags: ['ai-chef', viewing.cuisine?.toLowerCase() || ''].filter(Boolean),
+      family_notes: `Created by AI Chef — ${viewing.difficulty || ''}`,
+      photo_url: '',
+    })
+    if (!error) setSaved(true)
+    setSaving(false)
+  }
+
   if (viewing) {
     const ingredients = viewing.ingredients || []
     const instructions = (viewing.instructions || '').split('\n').filter(Boolean)
@@ -103,7 +151,20 @@ export default function TopChefPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <span className="text-xs text-gray-400">👨‍🍳 AI Chef Creation</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-400">👨‍🍳 AI Chef Creation</span>
+              <button
+                onClick={saveToFavorites}
+                disabled={saving || saved}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                  saved
+                    ? 'bg-green-50 text-green-600 border-green-200'
+                    : 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100'
+                } disabled:opacity-50`}
+              >
+                {saving ? '⏳' : saved ? '✓ Saved!' : '♥ Save to Vault'}
+              </button>
+            </div>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
@@ -136,7 +197,7 @@ export default function TopChefPage() {
             </div>
           )}
           {instructions.length > 0 && (
-            <div>
+            <div className="mb-8">
               <h2 className="text-lg font-bold text-gray-900 mb-3">Instructions</h2>
               <div className="space-y-4">
                 {instructions.map((step, i) => (
@@ -148,6 +209,18 @@ export default function TopChefPage() {
               </div>
             </div>
           )}
+          {/* Save button at bottom */}
+          <button
+            onClick={saveToFavorites}
+            disabled={saving || saved}
+            className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${
+              saved
+                ? 'bg-green-50 text-green-600 border-2 border-green-200'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
+            } disabled:opacity-50`}
+          >
+            {saving ? '⏳ Saving...' : saved ? '✓ Saved to MyRecipeVault' : '♥ Save to MyRecipeVault'}
+          </button>
         </main>
       </div>
     )
@@ -171,7 +244,6 @@ export default function TopChefPage() {
           const colors = COLOR_MAP[drawer.color]
           return (
             <div key={drawer.id} className={`border rounded-2xl overflow-hidden transition-all ${colors.header}`}>
-              {/* Drawer Header */}
               <button
                 onClick={() => toggleDrawer(drawer.id)}
                 className="w-full flex items-center justify-between px-5 py-4 text-left"
@@ -183,12 +255,9 @@ export default function TopChefPage() {
                     <p className={`text-xs mt-0.5 ${colors.sub}`}>{drawer.subtitle}</p>
                   </div>
                 </div>
-                <span className={`text-lg transition-transform duration-200 ${colors.title} ${isOpen ? 'rotate-180' : ''}`}>
-                  ▾
-                </span>
+                <span className={`text-lg transition-transform duration-200 ${colors.title} ${isOpen ? 'rotate-180' : ''}`}>▾</span>
               </button>
 
-              {/* Drawer Content */}
               {isOpen && (
                 <div className="bg-white border-t border-gray-100 divide-y divide-gray-50">
                   {drawer.items.map(item => (
@@ -198,8 +267,8 @@ export default function TopChefPage() {
                       disabled={generating}
                       className={`w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors disabled:opacity-50 ${colors.item}`}
                     >
-                      <span className="text-sm font-medium text-gray-800">{item}</span>
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full text-white ${colors.btn} ${generatingItem === item ? 'opacity-70' : ''}`}>
+                      <span className="text-sm font-medium text-gray-800 leading-snug">{item}</span>
+                      <span className={`shrink-0 ml-3 text-xs font-semibold px-3 py-1 rounded-full text-white ${colors.btn} ${generatingItem === item ? 'opacity-70' : ''}`}>
                         {generatingItem === item ? '⏳ Cooking...' : 'Cook This →'}
                       </span>
                     </button>
