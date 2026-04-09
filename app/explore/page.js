@@ -229,7 +229,7 @@ export default function ExplorePage() {
               <select
                 value={category}
                 onChange={e => handleCategoryChange(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-700 font-medium"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
               >
                 {CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
