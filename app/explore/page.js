@@ -218,34 +218,21 @@ export default function ExplorePage() {
             </>
           )}
           {mode === 'swipe' && (
-            <div className="relative">
-              <p className="text-xs text-gray-500 mb-1">Category</p>
-              <button
-                onClick={() => setShowCategoryMenu(v => !v)}
-                className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-700"
-              >
-                <span>{category}</span>
-                <span className="text-gray-400 text-xs ml-2">▼</span>
-              </button>
-              {showCategoryMenu && (
-                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="max-h-64 overflow-y-auto">
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-1">
+              <div className="flex gap-2 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 mb-1">Category</p>
+                  <select
+                    value={category}
+                    onChange={e => handleCategoryChange(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+                  >
                     {CATEGORIES.map(cat => (
-                      <button
-                        key={cat}
-                        onPointerDown={() => { handleCategoryChange(cat); setShowCategoryMenu(false) }}
-                        className={`w-full text-left px-4 py-3 text-sm transition-colors active:bg-orange-100 ${
-                          category === cat
-                            ? 'bg-orange-50 text-orange-700 font-semibold'
-                            : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {cat}
-                      </button>
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
