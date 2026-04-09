@@ -8,40 +8,44 @@ const supabase = createClient(
 )
 
 export async function POST(request) {
-  const { cuisine, difficulty } = await request.json()
+  const body = await request.json()
 
-  // Get existing recipe titles to avoid repeats
-  const { data: existing } = await supabase
-    .from('chef_recipes')
-    .select('title')
-    .eq('cuisine', cuisine)
-    .order('created_at', { ascending: false })
-    .limit(20)
+  let prompt
+  let cuisine = body.cuisine || 'International'
+  let difficulty = body.difficulty || 'Intermediate'
 
-  const existingTitles = (existing || []).map(r => r.title).join(', ')
-  const avoidClause = existingTitles
-    ? `\n\nIMPORTANT: Do NOT create any of these recipes that already exist: ${existingTitles}. Create something completely different and unique.`
-    : ''
+  // Handle drawer system requests
+  if (body.prompt) {
+    prompt = body.prompt
+    cuisine = body.drawer || 'Chef Special'
+    difficulty = 'Chef Level'
+  } else {
+    // Original cuisine/difficulty flow
+    const { data: existing } = await supabase
+      .from('chef_recipes')
+      .select('title')
+      .eq('cuisine', cuisine)
+      .order('created_at', { ascending: false })
+      .limit(20)
 
-  // Add randomness with a random technique/ingredient hint
-  const techniques = [
-    'braising', 'sous vide', 'confit', 'en papillote', 'searing',
-    'roasting', 'fermenting', 'pickling', 'smoking', 'flambeing',
-    'making a reduction', 'emulsifying', 'caramelizing', 'deglazing'
-  ]
-  const ingredients = [
-    'truffle', 'saffron', 'miso', 'tamarind', 'preserved lemon',
-    'bone marrow', 'burrata', 'sumac', 'pomegranate molasses', 'harissa',
-    'gochujang', 'dashi', 'black garlic', 'yuzu', 'tahini', 'nduja'
-  ]
-  const randomTechnique = techniques[Math.floor(Math.random() * techniques.length)]
-  const randomIngredient = ingredients[Math.floor(Math.random() * ingredients.length)]
+    const existingTitles = (existing || []).map(r => r.title).join(', ')
+    const avoidClause = existingTitles
+      ? `\n\nIMPORTANT: Do NOT create any of these recipes that already exist: ${existingTitles}. Create something completely different.`
+      : ''
 
-  const prompt = `You are a world-class chef creating an elevated, gourmet recipe.
+    const techniques = ['braising','sous vide','confit','en papillote','searing','roasting','fermenting','pickling','smoking','flambeing','making a reduction','emulsifying','caramelizing','deglazing']
+    const ingredients = ['truffle','saffron','miso','tamarind','preserved lemon','bone marrow','burrata','sumac','pomegranate molasses','harissa','gochujang','dashi','black garlic','yuzu','tahini','nduja']
+    const randomTechnique = techniques[Math.floor(Math.random() * techniques.length)]
+    const randomIngredient = ingredients[Math.floor(Math.random() * ingredients.length)]
+
+    prompt = `You are a world-class chef creating an elevated, gourmet recipe.
 
 Create a ${difficulty} level ${cuisine} recipe that would impress dinner guests.
 Try to incorporate ${randomTechnique} or ${randomIngredient} if it fits naturally with ${cuisine} cuisine.
-Be creative and unexpected — surprise the cook with something they haven't made before.${avoidClause}
+Be creative and unexpected — surprise the cook with something they haven't made before.${avoidClause}`
+  }
+
+  const fullPrompt = `${prompt}
 
 Respond with ONLY a JSON object in this exact format, no other text:
 {
@@ -60,7 +64,7 @@ Make it genuinely impressive — interesting techniques, quality ingredients, ch
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1500,
-    messages: [{ role: 'user', content: prompt }]
+    messages: [{ role: 'user', content: fullPrompt }]
   })
 
   const text = message.content[0].text.trim()
@@ -76,7 +80,7 @@ Make it genuinely impressive — interesting techniques, quality ingredients, ch
       instructions: recipe.instructions,
       difficulty: recipe.difficulty,
       cuisine: recipe.cuisine,
-      ai_prompt: `${cuisine} ${difficulty}`,
+      ai_prompt: body.prompt || `${cuisine} ${difficulty}`,
     })
     .select()
     .single()
