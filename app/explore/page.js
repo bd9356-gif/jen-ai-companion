@@ -224,18 +224,20 @@ export default function ExplorePage() {
           <div className="text-center py-20 text-gray-400">Loading recipes...</div>
         ) : mode === 'swipe' ? (
           <div>
-            {/* Category filter for swipe mode */}
-            <div className="mb-4">
-              <p className="text-xs text-gray-500 mb-1">Category</p>
-              <select
-                value={category}
-                onChange={e => handleCategoryChange(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
-              >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+            {/* Category filter - same style as AI Chef page */}
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Category</p>
+                <select
+                  value={category}
+                  onChange={e => handleCategoryChange(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+                >
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Stats */}
