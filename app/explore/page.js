@@ -216,6 +216,25 @@ export default function ExplorePage() {
               </select>
             </>
           )}
+          {mode === 'swipe' && (
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
+              <div className="flex gap-2 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 mb-1">Category</p>
+                  <select
+                    value={category}
+                    onChange={e => handleCategoryChange(e.target.value)}
+                    onTouchStart={e => e.stopPropagation()}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
