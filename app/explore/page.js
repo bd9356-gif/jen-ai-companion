@@ -226,11 +226,11 @@ export default function ExplorePage() {
           <div>
             {/* Category filter for swipe mode */}
             <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Filter by Category</label>
+              <p className="text-xs text-gray-500 mb-1">Category</p>
               <select
                 value={category}
                 onChange={e => handleCategoryChange(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
               >
                 {CATEGORIES.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
