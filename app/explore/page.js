@@ -38,6 +38,7 @@ export default function ExplorePage() {
   const dragStartX = useRef(0)
   const dragStartY = useRef(0)
   const isDragging = useRef(false)
+  const cardRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -85,6 +86,20 @@ export default function ExplorePage() {
     await supabase.from('saved_recipes').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
     setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
   }
+
+  // Attach touch handlers directly to swipe card to avoid blocking select element
+  useEffect(() => {
+    const card = cardRef.current
+    if (!card) return
+    card.addEventListener('touchstart', onDragStart, { passive: true })
+    card.addEventListener('touchmove', onDragMove, { passive: false })
+    card.addEventListener('touchend', onDragEnd)
+    return () => {
+      card.removeEventListener('touchstart', onDragStart)
+      card.removeEventListener('touchmove', onDragMove)
+      card.removeEventListener('touchend', onDragEnd)
+    }
+  })
 
   // Swipe handlers — prevent page scroll during horizontal drag
   function onDragStart(e) {
@@ -224,7 +239,6 @@ export default function ExplorePage() {
                   <select
                     value={category}
                     onChange={e => handleCategoryChange(e.target.value)}
-                    onTouchStart={e => e.stopPropagation()}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
                   >
                     {CATEGORIES.map(cat => (
@@ -282,6 +296,7 @@ export default function ExplorePage() {
 
                   {swipeRecipes[0] && (
                     <div
+                      ref={cardRef}
                       className="absolute inset-0 bg-white border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing select-none"
                       style={{
                         transform: `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
@@ -293,9 +308,6 @@ export default function ExplorePage() {
                       onMouseMove={onDragMove}
                       onMouseUp={onDragEnd}
                       onMouseLeave={onDragEnd}
-                      onTouchStart={onDragStart}
-                      onTouchMove={onDragMove}
-                      onTouchEnd={onDragEnd}
                     >
                       <div className="relative h-64">
                         {swipeRecipes[0].thumbnail_url ? (
