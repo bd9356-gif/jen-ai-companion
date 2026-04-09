@@ -216,17 +216,9 @@ export default function ExplorePage() {
               </select>
             </>
           )}
-        </div>
-      </header>
-
-      <main className="max-w-lg mx-auto px-4 py-6">
-        {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading recipes...</div>
-        ) : mode === 'swipe' ? (
-          <div>
-            {/* Category filter - same style as AI Chef page */}
-            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-4">
-              <div>
+          {mode === 'swipe' && (
+            <div className="flex gap-2 flex-wrap">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-500 mb-1">Category</p>
                 <select
                   value={category}
@@ -239,7 +231,15 @@ export default function ExplorePage() {
                 </select>
               </div>
             </div>
+          )}
+        </div>
+      </header>
 
+      <main className="max-w-lg mx-auto px-4 py-6">
+        {loading ? (
+          <div className="text-center py-20 text-gray-400">Loading recipes...</div>
+        ) : mode === 'swipe' ? (
+          <div>
             {/* Stats */}
             <div className="flex justify-center gap-6 mb-6 text-center">
               <div>
