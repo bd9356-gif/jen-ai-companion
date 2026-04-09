@@ -327,7 +327,17 @@ export default function MyRecipeVaultPage() {
     if (!enhanceResult) return
     const updates = {}
     if (enhanceResult.ingredients) updates.ingredients = enhanceResult.ingredients
-    if (enhanceResult.instructions) updates.instructions = enhanceResult.instructions
+
+    // Preserve any Watch video: line from original instructions
+    const existingLines = (viewing.instructions || '').split('\n')
+    const watchLine = existingLines.find(s => s.startsWith('Watch video:'))
+
+    if (enhanceResult.instructions) {
+      // Re-attach the video link at the top if it existed
+      updates.instructions = watchLine
+        ? `${watchLine}\n${enhanceResult.instructions}`
+        : enhanceResult.instructions
+    }
 
     // If this was a resize, also regenerate nutrition for the new serving count
     if (enhanceResult.ingredients && !enhanceResult.instructions) {
