@@ -10,6 +10,8 @@ const GROUPS = [
   { key: 'ai_answer',       label: 'AI Answers',        emoji: '💬', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
 ]
 
+const DEFAULT_SHOW = 5
+
 export default function FavoritesPage() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -19,9 +21,11 @@ export default function FavoritesPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [collapsed, setCollapsed] = useState({})
+  const [showMore, setShowMore] = useState({})
   const [batchMode, setBatchMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [toast, setToast] = useState(null)
+  const [playingId, setPlayingId] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -29,6 +33,11 @@ export default function FavoritesPage() {
       setUser(session.user)
       loadFavorites(session.user.id)
     })
+  }, [])
+
+  // Close any playing video when navigating back
+  useEffect(() => {
+    return () => setPlayingId(null)
   }, [])
 
   async function loadFavorites(userId) {
@@ -43,8 +52,8 @@ export default function FavoritesPage() {
   }
 
   async function addToVault(item) {
+    setPlayingId(null)
     await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
-
     if (item.type === 'recipe' || item.type === 'ai_recipe' || item.type === 'video_recipe') {
       const meta = item.metadata || {}
       await supabase.from('personal_recipes').insert({
@@ -59,12 +68,12 @@ export default function FavoritesPage() {
         family_notes: `Added from My Favorites — ${item.source || ''}`,
       })
     }
-
     setItems(prev => prev.filter(i => i.id !== item.id))
     showToast('Added to your Vault ✓')
   }
 
   async function removeItem(id) {
+    setPlayingId(null)
     await supabase.from('favorites').delete().eq('id', id)
     setItems(prev => prev.filter(i => i.id !== id))
     showToast('Removed from Favorites')
@@ -94,7 +103,17 @@ export default function FavoritesPage() {
   }
 
   function toggleCollapse(key) {
+    setPlayingId(null)
     setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  function closeAll() {
+    setPlayingId(null)
+    setCollapsed(prev => {
+      const all = {}
+      GROUPS.forEach(g => { all[g.key] = true })
+      return all
+    })
   }
 
   function showToast(msg) {
@@ -102,7 +121,14 @@ export default function FavoritesPage() {
     setTimeout(() => setToast(null), 2500)
   }
 
+  function getYouTubeId(url) {
+    if (!url) return null
+    const m = url.match(/(?:v=|youtu\.be\/)([^&\s]+)/)
+    return m ? m[1] : null
+  }
+
   const totalCount = items.length
+  const anyOpen = Object.values(collapsed).some(v => v === false) || Object.keys(collapsed).length < GROUPS.filter(g => items.some(i => i.type === g.key)).length
 
   return (
     <div className="min-h-screen bg-white">
@@ -114,19 +140,28 @@ export default function FavoritesPage() {
 
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+              <button onClick={() => { setPlayingId(null); window.location.href='/kitchen' }} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
               <h1 className="text-lg font-bold text-gray-900">❤️ My Favorites</h1>
               {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
             </div>
-            <button
-              onClick={() => { setBatchMode(!batchMode); setSelected(new Set()) }}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${batchMode ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
-              {batchMode ? 'Cancel' : 'Select'}
-            </button>
+            <div className="flex gap-2">
+              <button onClick={closeAll}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors">
+                Close All
+              </button>
+              <button
+                onClick={() => { setBatchMode(!batchMode); setSelected(new Set()) }}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${batchMode ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
+                {batchMode ? 'Cancel' : 'Select'}
+              </button>
+            </div>
           </div>
-          <p className="text-xs text-gray-400">A holding drawer — review before adding to your Vault.</p>
+          {/* Tagline — more prominent */}
+          <div className="bg-orange-50 border border-orange-100 rounded-xl px-3 py-2">
+            <p className="text-xs font-semibold text-orange-700">🗂️ Holding drawer — try before you keep. Review items before adding them to your Vault.</p>
+          </div>
         </div>
       </header>
 
@@ -150,10 +185,12 @@ export default function FavoritesPage() {
               const groupItems = items.filter(i => i.type === group.key)
               if (groupItems.length === 0) return null
               const isCollapsed = collapsed[group.key]
+              const expanded = showMore[group.key]
+              const visible = expanded ? groupItems : groupItems.slice(0, DEFAULT_SHOW)
+              const hasMore = groupItems.length > DEFAULT_SHOW
 
               return (
                 <div key={group.key} className="border border-gray-100 rounded-2xl overflow-hidden">
-                  {/* Group header */}
                   <button
                     onClick={() => toggleCollapse(group.key)}
                     className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
@@ -167,52 +204,94 @@ export default function FavoritesPage() {
                     <span className="text-gray-400 text-sm">{isCollapsed ? '▶' : '▼'}</span>
                   </button>
 
-                  {/* Group items */}
                   {!isCollapsed && (
                     <div className="divide-y divide-gray-50">
-                      {groupItems.map(item => (
-                        <div key={item.id}
-                          className={`flex gap-3 p-3 transition-colors ${selected.has(item.id) ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
+                      {visible.map(item => {
+                        const youtubeId = item.metadata?.youtube_id || getYouTubeId(item.metadata?.url || '')
+                        const isPlaying = playingId === item.id
 
-                          {batchMode && (
-                            <button onClick={() => toggleSelect(item.id)}
-                              className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center self-center transition-colors ${selected.has(item.id) ? 'bg-orange-600 border-orange-600 text-white' : 'border-gray-300'}`}>
-                              {selected.has(item.id) && <span className="text-xs">✓</span>}
-                            </button>
-                          )}
+                        return (
+                          <div key={item.id}
+                            className={`transition-colors ${selected.has(item.id) ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
 
-                          <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-orange-50">
-                            {item.thumbnail_url ? (
-                              <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xl">{group.emoji}</div>
-                            )}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
-                              {!batchMode && (
-                                <button onClick={() => removeItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl leading-none">×</button>
-                              )}
-                            </div>
-                            {!batchMode && (
-                              <div className="flex gap-2 flex-wrap">
-                                {item.type === 'recipe' && item.ref_id && (
-                                  <a href={`/recipes/${item.ref_id}`} className="text-xs text-orange-600 font-semibold">View →</a>
-                                )}
-                                {(item.type === 'video_recipe' || item.type === 'video_education') && item.metadata?.youtube_id && (
-                                  <a href={`https://youtube.com/watch?v=${item.metadata.youtube_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-red-600 font-semibold">Watch →</a>
-                                )}
-                                <button onClick={() => addToVault(item)}
-                                  className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
-                                  Add to Vault
-                                </button>
+                            {/* Inline video player */}
+                            {isPlaying && youtubeId && (
+                              <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
+                                <iframe
+                                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+                                  className="w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                                <button onClick={() => setPlayingId(null)}
+                                  className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
                               </div>
                             )}
+
+                            <div className="flex gap-3 p-3">
+                              {batchMode && (
+                                <button onClick={() => toggleSelect(item.id)}
+                                  className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center self-center transition-colors ${selected.has(item.id) ? 'bg-orange-600 border-orange-600 text-white' : 'border-gray-300'}`}>
+                                  {selected.has(item.id) && <span className="text-xs">✓</span>}
+                                </button>
+                              )}
+
+                              {/* Thumbnail — clickable for videos */}
+                              <div
+                                onClick={() => youtubeId && setPlayingId(isPlaying ? null : item.id)}
+                                className={`shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-orange-50 ${youtubeId ? 'cursor-pointer relative' : ''}`}>
+                                {item.thumbnail_url ? (
+                                  <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-xl">{group.emoji}</div>
+                                )}
+                                {youtubeId && !isPlaying && (
+                                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-xl">
+                                    <span className="text-white text-xs">▶</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
+                                  {!batchMode && (
+                                    <button onClick={() => removeItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl leading-none">×</button>
+                                  )}
+                                </div>
+                                {!batchMode && (
+                                  <div className="flex gap-2 flex-wrap">
+                                    {item.type === 'recipe' && item.ref_id && (
+                                      <a href={`/recipes/${item.ref_id}`} className="text-xs text-orange-600 font-semibold">View →</a>
+                                    )}
+                                    {youtubeId && !isPlaying && (
+                                      <button onClick={() => setPlayingId(item.id)} className="text-xs text-red-600 font-semibold">Watch ▶</button>
+                                    )}
+                                    {youtubeId && isPlaying && (
+                                      <button onClick={() => setPlayingId(null)} className="text-xs text-gray-500 font-semibold">Stop ■</button>
+                                    )}
+                                    <button onClick={() => addToVault(item)}
+                                      className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
+                                      Add to Vault
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
+                        )
+                      })}
+
+                      {/* Show More / Less */}
+                      {hasMore && (
+                        <div className="px-4 py-2 bg-gray-50 text-center">
+                          <button
+                            onClick={() => setShowMore(prev => ({ ...prev, [group.key]: !prev[group.key] }))}
+                            className="text-xs text-orange-600 font-semibold hover:text-orange-700">
+                            {expanded ? `Show Less ▲` : `Show ${groupItems.length - DEFAULT_SHOW} More ▼`}
+                          </button>
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
                 </div>
