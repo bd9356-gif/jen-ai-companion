@@ -2,7 +2,14 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
- {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+const CATEGORIES = ['All', 'Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Lamb', 'Duck', 'Turkey', 'Pasta', 'Pizza', 'Soup', 'Salad', 'Rice', 'Bread', 'Cake', 'Cookie', 'Dinner', 'Breakfast', 'Dessert', 'Appetizers', 'Vegetarian', 'Vegan', 'Sides']
+
+export default function ExplorePage() {
   const [mode, setMode] = useState('swipe')
   const [recipes, setRecipes] = useState([])
   const [metadata, setMetadata] = useState({})
