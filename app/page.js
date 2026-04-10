@@ -46,7 +46,7 @@ export default function HomePage() {
   const image = getDailyImage()
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col max-w-2xl mx-auto">
 
       {/* Header */}
       <header className="bg-orange-700 px-4 py-4">
