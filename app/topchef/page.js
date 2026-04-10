@@ -2,6 +2,11 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
 // ── RESTAURANT CLASSICS — rotates on each tap ──
 const CLASSICS = [
   { dish: 'Pan-Seared Salmon', note: "Tonight's pick: bright, buttery, perfect with veggies." },
@@ -41,8 +46,7 @@ const FLAVORS = ['🌶 Bold & Spicy', '🍋 Light & Citrus', '🧈 Rich & Butter
 const TIMES = ['⚡ Under 20 min', '🕐 30-45 min', '🍲 Slow & Low']
 
 export default function TopChefPage() {
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  
+  const [openDrawer, setOpenDrawer] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [saving, setSaving] = useState(false)

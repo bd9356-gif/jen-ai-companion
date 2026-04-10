@@ -2,7 +2,19 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
- {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+const SUGGESTED_TAGS = [
+  'chicken','beef','pork','fish','seafood','pasta','pizza',
+  'soup','salad','dessert','breakfast','bread','vegetarian',
+  'quick','family','holiday','comfort food','baking','healthy'
+]
+
+// ── TAG SELECTOR DROPDOWN ──
+function TagSelector({ tags, onChange }) {
   const [open, setOpen] = useState(false)
   const [customInput, setCustomInput] = useState('')
   const dropdownRef = useRef(null)
@@ -182,7 +194,6 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 }
 
 export default function MyRecipeVaultPage() {
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -898,7 +909,6 @@ export default function MyRecipeVaultPage() {
                   <p className="text-sm text-gray-400 text-center py-4">No recipes match your search</p>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {regularRecipes.map(recipe => (
                     <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
                       className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
                       <div className="flex gap-3 p-4">
