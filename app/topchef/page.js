@@ -56,6 +56,42 @@ export default function TopChefPage() {
 
   // Classics state
   const [classicIndex, setClassicIndex] = useState(0)
+  const [classics, setClassics] = useState([
+    { dish: 'Pan-Seared Salmon', note: "Tonight's pick: bright, buttery, perfect with veggies." },
+    { dish: 'Lemon Herb Chicken', note: "Golden skin, tender inside — a crowd-pleaser every time." },
+    { dish: 'Tuscan Steak', note: "Bold flavors, herb-crusted — feels like Florence tonight." },
+    { dish: 'Seared Duck Breast', note: "Rich, elegant — restaurant quality at home." },
+    { dish: 'Branzino Piccata', note: "Light, citrusy — feels like the coast of Italy." },
+  ])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setUser(session.user)
+    })
+    loadRotatingClassics()
+  }, [])
+
+  async function loadRotatingClassics() {
+    const { data } = await supabase
+      .from('recipes')
+      .select('title')
+      .not('thumbnail_url', 'is', null)
+      .limit(300)
+    if (data && data.length >= 5) {
+      const shuffled = data.sort(() => Math.random() - 0.5).slice(0, 8)
+      const notes = [
+        "Tonight's pick — fresh, vibrant, impressive.",
+        "Chef recommends — bold flavors, easy to love.",
+        "A crowd-pleaser — always gets compliments.",
+        "Something different — you'll want to make this again.",
+        "Tonight's special — restaurant quality at home.",
+        "Chef's favorite — simple but stunning.",
+        "Perfect for tonight — satisfying and delicious.",
+        "The one to try — trust your chef on this one.",
+      ]
+      setClassics(shuffled.map((r, i) => ({ dish: r.title, note: notes[i % notes.length] })))
+    }
+  }
 
   // Protein Night state
   const [selectedProtein, setSelectedProtein] = useState(null)
@@ -71,12 +107,6 @@ export default function TopChefPage() {
   const [buildProtein, setBuildProtein] = useState(null)
   const [buildFlavor, setBuildFlavor] = useState(null)
   const [buildTime, setBuildTime] = useState(null)
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setUser(session.user)
-    })
-  }, [])
 
   function toggleDrawer(id) {
     setOpenDrawer(prev => prev === id ? null : id)
@@ -247,20 +277,23 @@ export default function TopChefPage() {
                 <p className="text-xs mt-0.5 text-orange-600">Tap to flip through tonight's picks.</p>
               </div>
             </div>
-            <span className={`text-lg text-orange-900 transition-transform duration-200 ${openDrawer === 'classics' ? 'rotate-180' : ''}`}>▾</span>
+            <div className="flex items-center gap-2">
+              <button onClick={e => { e.stopPropagation(); nextClassic() }} className="text-xs text-orange-500 hover:text-orange-700 font-semibold">🔄</button>
+              <span className={`text-lg text-orange-900 transition-transform duration-200 ${openDrawer === 'classics' ? 'rotate-180' : ''}`}>▾</span>
+            </div>
           </button>
           {openDrawer === 'classics' && (
             <div className="bg-white border-t border-gray-100 p-4">
               <div key={fadeKey} className="mb-3 p-4 bg-orange-50 rounded-xl border border-orange-100">
-                <p className="font-bold text-gray-900 text-base mb-1">{CLASSICS[classicIndex].dish}</p>
-                <p className="text-xs text-orange-700 italic">"{CLASSICS[classicIndex].note}"</p>
+                <p className="font-bold text-gray-900 text-base mb-1">{classics[classicIndex].dish}</p>
+                <p className="text-xs text-orange-700 italic">"{classics[classicIndex].note}"</p>
               </div>
               <div className="flex gap-2">
                 <button onClick={nextClassic}
                   className="flex-1 py-2.5 border-2 border-orange-200 text-orange-700 rounded-xl text-sm font-semibold hover:bg-orange-50 transition-colors">
                   ↻ Next Pick
                 </button>
-                <button onClick={() => cookThis(CLASSICS[classicIndex].dish)}
+                <button onClick={() => cookThis(classics[classicIndex].dish)}
                   className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-700 transition-colors">
                   Cook This →
                 </button>
