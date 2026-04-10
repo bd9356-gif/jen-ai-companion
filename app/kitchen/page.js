@@ -15,7 +15,7 @@ const MENU_ITEMS = [
   { emoji: '🎬', title: 'Cooking Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',    accent: '#f97316' },
   { emoji: '👨‍🍳', title: 'AI Chef Creations', subtitle: 'Gourmet recipes from your personal AI chef', href: '/topchef', accent: '#a855f7' },
   { emoji: '📅', title: 'Meal Planner',     subtitle: 'Plan your meals for the week ahead',          href: '/weeklyplan', accent: '#14b8a6' },
-  { emoji: '🤖', title: 'MyChef AI',        subtitle: 'Ask your personal AI chef anything',          href: '/chef',      accent: '#3b82f6' },
+  { emoji: '🤖', title: 'MYchef test',        subtitle: 'Ask your personal AI chef anything',          href: '/chef',      accent: '#3b82f6' },
 ]
 
 export default function KitchenPage() {
@@ -23,30 +23,21 @@ export default function KitchenPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { window.location.href = '/login'; return }
-      setUser(session.user)
+      if (session) setUser(session.user)
     })
   }, [])
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 pt-4">
-
-        {/* Hero Image */}
         <div className="relative w-full rounded-2xl overflow-hidden mb-4" style={{height:'220px'}}>
-          <img
-            src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
-            alt="My Kitchen"
-            className="w-full h-full object-cover"
-          />
+          <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="My Kitchen" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
           <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
             <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
             <p className="text-sm text-white/80 mt-0.5 leading-snug">Everything you need — all in one place.</p>
           </div>
         </div>
-
-        {/* Subtitle + Profile */}
         <div className="flex items-center justify-between mb-3">
           <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
           <button onClick={() => window.location.href = '/profile'}
@@ -54,16 +45,11 @@ export default function KitchenPage() {
             👤 Profile
           </button>
         </div>
-
-        {/* Menu */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8">
           {MENU_ITEMS.map(item => (
-            <button
-              key={item.href}
-              onClick={() => window.location.href = item.href}
+            <button key={item.href} onClick={() => window.location.href = item.href}
               className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
-              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${item.accent}` }}
-            >
+              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${item.accent}` }}>
               <div className="flex items-center gap-4 px-4 py-3.5">
                 <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
                 <div className="flex-1 min-w-0">
@@ -75,7 +61,6 @@ export default function KitchenPage() {
             </button>
           ))}
         </div>
-
       </div>
     </div>
   )
