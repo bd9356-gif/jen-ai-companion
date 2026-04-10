@@ -74,8 +74,9 @@ export default function TopChefPage() {
   async function loadRotatingClassics() {
     const { data } = await supabase
       .from('recipes')
-      .select('title')
+      .select('title, category, tags')
       .not('thumbnail_url', 'is', null)
+      .or('category.ilike.%chicken%,category.ilike.%beef%,category.ilike.%fish%,category.ilike.%seafood%,category.ilike.%lamb%,category.ilike.%pork%,category.ilike.%meat%,category.ilike.%salmon%,category.ilike.%turkey%,category.ilike.%shrimp%')
       .limit(300)
     if (data && data.length >= 5) {
       const shuffled = data.sort(() => Math.random() - 0.5).slice(0, 8)
