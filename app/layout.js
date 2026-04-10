@@ -21,8 +21,13 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.addEventListener('resize', function() {
+            document.body.style.minHeight = window.innerHeight + 'px';
+          });
+        `}} />
       </head>
-      <body>{children}</body>
+      <body style={{overflowX: 'hidden', width: '100%'}}>{children}</body>
     </html>
   );
 }
