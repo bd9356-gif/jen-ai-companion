@@ -53,7 +53,7 @@ export default function ExplorePage() {
   async function loadRecipes() {
     const { data } = await supabase
       .from('recipes')
-      .select('id, title, category, cuisine, thumbnail_url, youtube_url')
+      .select('id, title, category, cuisine, thumbnail_url, youtube_url, tags')
       .order('title')
       .range(0, 4999)
     const shuffled = (data || []).sort(() => Math.random() - 0.5)
@@ -188,8 +188,8 @@ export default function ExplorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shrink-0">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -212,24 +212,22 @@ export default function ExplorePage() {
             </div>
           </div>
           {mode === 'browse' && (
-            <>
-              <input
-                type="text"
-                placeholder="Search recipes or cuisine..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2"
-              />
-              <select
-                value={category}
-                onChange={e => handleCategoryChange(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-600"
-              >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </>
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
+              <div className="flex gap-2 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 mb-1">Category</p>
+                  <select
+                    value={category}
+                    onChange={e => handleCategoryChange(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
           )}
           {mode === 'swipe' && (
             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
@@ -252,7 +250,7 @@ export default function ExplorePage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main className="max-w-lg mx-auto px-4 py-6 flex-1">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading recipes...</div>
         ) : mode === 'swipe' ? (
@@ -384,11 +382,6 @@ export default function ExplorePage() {
                     ♥
                   </button>
                 </div>
-
-                <p className="text-center text-sm font-semibold text-gray-500 mt-4">
-                  {swipeFiltered.length} recipes · ← Skip &nbsp;|&nbsp; Save → &nbsp;·&nbsp; ↩ Rewind
-                </p>
-              </div>
             )}
           </div>
         ) : (
