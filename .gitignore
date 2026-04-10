@@ -43,3 +43,5 @@ ingest_videos.js
 ingest_missing.js
 ingest_education_metadata.js
 ingest_education_metadata.js
+ingest_tasty.js
+app/api/import-recipe/ingest_tasty.js
