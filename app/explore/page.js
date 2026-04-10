@@ -82,21 +82,30 @@ export default function ExplorePage() {
   }
 
   async function loadSaved(userId) {
-    const { data } = await supabase.from('saved_recipes').select('recipe_id').eq('user_id', userId)
-    setSavedIds(new Set((data || []).map(s => s.recipe_id)))
+    const { data } = await supabase.from('favorites').select('ref_id').eq('user_id', userId).eq('is_in_vault', false)
+    setSavedIds(new Set((data || []).map(s => s.ref_id)))
   }
 
   async function saveRecipe(recipeId) {
     if (!user) { window.location.href = '/login'; return }
     if (!savedIds.has(recipeId)) {
-      await supabase.from('saved_recipes').insert({ user_id: user.id, recipe_id: recipeId })
+      const recipe = recipes.find(r => r.id === recipeId)
+      await supabase.from('favorites').insert({
+        user_id: user.id,
+        type: 'recipe',
+        ref_id: String(recipeId),
+        title: recipe?.title || '',
+        thumbnail_url: recipe?.thumbnail_url || '',
+        source: 'explore',
+        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
+      })
       setSavedIds(prev => new Set([...prev, recipeId]))
     }
   }
 
   async function unsaveRecipe(recipeId) {
     if (!user) return
-    await supabase.from('saved_recipes').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
+    await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(recipeId))
     setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
   }
 
@@ -173,10 +182,19 @@ export default function ExplorePage() {
   async function toggleSave(recipeId) {
     if (!user) { window.location.href = '/login'; return }
     if (savedIds.has(recipeId)) {
-      await supabase.from('saved_recipes').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(recipeId))
       setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
     } else {
-      await supabase.from('saved_recipes').insert({ user_id: user.id, recipe_id: recipeId })
+      const recipe = recipes.find(r => r.id === recipeId)
+      await supabase.from('favorites').insert({
+        user_id: user.id,
+        type: 'recipe',
+        ref_id: String(recipeId),
+        title: recipe?.title || '',
+        thumbnail_url: recipe?.thumbnail_url || '',
+        source: 'explore',
+        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
+      })
       setSavedIds(prev => new Set([...prev, recipeId]))
     }
   }
