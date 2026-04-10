@@ -2,18 +2,13 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-const TYPE_LABELS = {
-  recipe: { label: 'Recipe', color: 'bg-orange-50 text-orange-700', emoji: '🍽️' },
-  video_recipe: { label: 'Recipe Video', color: 'bg-green-50 text-green-700', emoji: '🍳' },
-  video_education: { label: 'Education Video', color: 'bg-blue-50 text-blue-700', emoji: '🎬' },
-  ai_recipe: { label: 'AI Recipe', color: 'bg-purple-50 text-purple-700', emoji: '🤖' },
-  ai_answer: { label: 'AI Answer', color: 'bg-indigo-50 text-indigo-700', emoji: '💬' },
-}
+const GROUPS = [
+  { key: 'recipe',          label: 'Recipes',           emoji: '🍽️', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+  { key: 'video_recipe',    label: 'Recipe Videos',     emoji: '🍳', color: 'bg-green-50 text-green-700 border-green-200' },
+  { key: 'video_education', label: 'Education Videos',  emoji: '📚', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { key: 'ai_recipe',       label: 'AI Recipes',        emoji: '🤖', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { key: 'ai_answer',       label: 'AI Answers',        emoji: '💬', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+]
 
 export default function FavoritesPage() {
   const supabase = createClient(
@@ -23,7 +18,7 @@ export default function FavoritesPage() {
   const [user, setUser] = useState(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
+  const [collapsed, setCollapsed] = useState({})
   const [batchMode, setBatchMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [toast, setToast] = useState(null)
@@ -48,12 +43,8 @@ export default function FavoritesPage() {
   }
 
   async function addToVault(item) {
-    await supabase
-      .from('favorites')
-      .update({ is_in_vault: true })
-      .eq('id', item.id)
+    await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
 
-    // Add to personal_recipes if it's a recipe type or recipe video
     if (item.type === 'recipe' || item.type === 'ai_recipe' || item.type === 'video_recipe') {
       const meta = item.metadata || {}
       await supabase.from('personal_recipes').insert({
@@ -68,13 +59,12 @@ export default function FavoritesPage() {
         family_notes: `Added from My Favorites — ${item.source || ''}`,
       })
     }
-    // Education videos go to vault as-is (no personal_recipe entry needed)
 
     setItems(prev => prev.filter(i => i.id !== item.id))
     showToast('Added to your Vault ✓')
   }
 
-  async function removeFromFavorites(id) {
+  async function removeItem(id) {
     await supabase.from('favorites').delete().eq('id', id)
     setItems(prev => prev.filter(i => i.id !== id))
     showToast('Removed from Favorites')
@@ -82,17 +72,13 @@ export default function FavoritesPage() {
 
   async function batchAddToVault() {
     const toAdd = items.filter(i => selected.has(i.id))
-    for (const item of toAdd) {
-      await addToVault(item)
-    }
+    for (const item of toAdd) await addToVault(item)
     setSelected(new Set())
     setBatchMode(false)
   }
 
   async function batchRemove() {
-    for (const id of selected) {
-      await supabase.from('favorites').delete().eq('id', id)
-    }
+    for (const id of selected) await supabase.from('favorites').delete().eq('id', id)
     setItems(prev => prev.filter(i => !selected.has(i.id)))
     setSelected(new Set())
     setBatchMode(false)
@@ -107,17 +93,19 @@ export default function FavoritesPage() {
     })
   }
 
+  function toggleCollapse(key) {
+    setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
   function showToast(msg) {
     setToast(msg)
     setTimeout(() => setToast(null), 2500)
   }
 
-  const filtered = filter === 'all' ? items : items.filter(i => i.type === filter)
-  const types = ['all', ...new Set(items.map(i => i.type))]
+  const totalCount = items.length
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Toast */}
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">
           {toast}
@@ -130,35 +118,22 @@ export default function FavoritesPage() {
             <div className="flex items-center gap-2">
               <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
               <h1 className="text-lg font-bold text-gray-900">❤️ My Favorites</h1>
+              {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
             </div>
             <button
               onClick={() => { setBatchMode(!batchMode); setSelected(new Set()) }}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${batchMode ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-            >
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${batchMode ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}>
               {batchMode ? 'Cancel' : 'Select'}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mb-3">A holding drawer for recipes, videos, and AI creations you want to review before adding them to your Vault.</p>
-
-          {/* Type filter tabs */}
-          {types.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {types.map(t => (
-                <button key={t} onClick={() => setFilter(t)}
-                  className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${filter === t ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  {t === 'all' ? 'All' : TYPE_LABELS[t]?.label || t}
-                  {t === 'all' ? ` (${items.length})` : ` (${items.filter(i => i.type === t).length})`}
-                </button>
-              ))}
-            </div>
-          )}
+          <p className="text-xs text-gray-400">A holding drawer — review before adding to your Vault.</p>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4 pb-32">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading...</div>
-        ) : filtered.length === 0 ? (
+        ) : totalCount === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🗂️</div>
             <p className="text-gray-700 font-semibold mb-2">Nothing saved yet</p>
@@ -170,76 +145,83 @@ export default function FavoritesPage() {
             </a>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filtered.map(item => (
-              <div key={item.id}
-                className={`bg-white border rounded-2xl overflow-hidden transition-colors ${selected.has(item.id) ? 'border-orange-400 bg-orange-50' : 'border-gray-200 hover:border-orange-200'}`}
-              >
-                <div className="flex gap-3 p-3">
-                  {/* Checkbox in batch mode */}
-                  {batchMode && (
-                    <button onClick={() => toggleSelect(item.id)}
-                      className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center self-center transition-colors ${selected.has(item.id) ? 'bg-orange-600 border-orange-600 text-white' : 'border-gray-300'}`}>
-                      {selected.has(item.id) && <span className="text-xs">✓</span>}
-                    </button>
-                  )}
+          <div className="space-y-4">
+            {GROUPS.map(group => {
+              const groupItems = items.filter(i => i.type === group.key)
+              if (groupItems.length === 0) return null
+              const isCollapsed = collapsed[group.key]
 
-                  {/* Thumbnail */}
-                  <div className="shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-orange-50">
-                    {item.thumbnail_url ? (
-                      <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl">
-                        {TYPE_LABELS[item.type]?.emoji || '🍽️'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
-                      {!batchMode && (
-                        <button onClick={() => removeFromFavorites(item.id)}
-                          className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
-                      )}
+              return (
+                <div key={group.key} className="border border-gray-100 rounded-2xl overflow-hidden">
+                  {/* Group header */}
+                  <button
+                    onClick={() => toggleCollapse(group.key)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{group.emoji}</span>
+                      <span className="font-semibold text-sm text-gray-900">{group.label}</span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${group.color}`}>
+                        {groupItems.length}
+                      </span>
                     </div>
+                    <span className="text-gray-400 text-sm">{isCollapsed ? '▶' : '▼'}</span>
+                  </button>
 
-                    {/* Type badge */}
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-2 ${TYPE_LABELS[item.type]?.color || 'bg-gray-100 text-gray-600'}`}>
-                      {TYPE_LABELS[item.type]?.label || item.type}
-                    </span>
+                  {/* Group items */}
+                  {!isCollapsed && (
+                    <div className="divide-y divide-gray-50">
+                      {groupItems.map(item => (
+                        <div key={item.id}
+                          className={`flex gap-3 p-3 transition-colors ${selected.has(item.id) ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
 
-                    {/* Actions */}
-                    {!batchMode && (
-                      <div className="flex gap-2">
-                        {item.ref_id && item.type === 'recipe' && (
-                          <a href={`/recipes/${item.ref_id}`}
-                            className="text-xs text-orange-600 font-semibold hover:text-orange-700">
-                            View →
-                          </a>
-                        )}
-                        {(item.type === 'video_recipe' || item.type === 'video_education') && item.metadata?.youtube_id && (
-                          <a href={`https://youtube.com/watch?v=${item.metadata.youtube_id}`} target="_blank" rel="noopener noreferrer"
-                            className="text-xs text-red-600 font-semibold hover:text-red-700">
-                            Watch →
-                          </a>
-                        )}
-                        <button onClick={() => addToVault(item)}
-                          className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
-                          Add to Vault
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                          {batchMode && (
+                            <button onClick={() => toggleSelect(item.id)}
+                              className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center self-center transition-colors ${selected.has(item.id) ? 'bg-orange-600 border-orange-600 text-white' : 'border-gray-300'}`}>
+                              {selected.has(item.id) && <span className="text-xs">✓</span>}
+                            </button>
+                          )}
+
+                          <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-orange-50">
+                            {item.thumbnail_url ? (
+                              <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xl">{group.emoji}</div>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
+                              {!batchMode && (
+                                <button onClick={() => removeItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl leading-none">×</button>
+                              )}
+                            </div>
+                            {!batchMode && (
+                              <div className="flex gap-2 flex-wrap">
+                                {item.type === 'recipe' && item.ref_id && (
+                                  <a href={`/recipes/${item.ref_id}`} className="text-xs text-orange-600 font-semibold">View →</a>
+                                )}
+                                {(item.type === 'video_recipe' || item.type === 'video_education') && item.metadata?.youtube_id && (
+                                  <a href={`https://youtube.com/watch?v=${item.metadata.youtube_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-red-600 font-semibold">Watch →</a>
+                                )}
+                                <button onClick={() => addToVault(item)}
+                                  className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
+                                  Add to Vault
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </main>
 
-      {/* Batch action bar */}
       {batchMode && selected.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-20">
           <div className="max-w-2xl mx-auto flex gap-3">
