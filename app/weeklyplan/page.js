@@ -3,14 +3,13 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 export default function WeeklyPlanPage() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
   const [user, setUser] = useState(null)
   const [plan, setPlan] = useState([])
   const [loading, setLoading] = useState(true)
@@ -78,7 +77,6 @@ export default function WeeklyPlanPage() {
           <p className="text-xs text-gray-400 ml-1">Fresh ideas for today, plans for your week.</p>
         </div>
       </header>
-
       <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading your week...</div>
@@ -87,7 +85,7 @@ export default function WeeklyPlanPage() {
             <p className="text-4xl mb-4">📅</p>
             <p className="text-gray-700 font-semibold mb-2">Your week is empty</p>
             <p className="text-gray-400 text-sm mb-6">Browse recipes and add them to your weekly plan</p>
-            <a href="/recipes" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+            <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
               Browse Recipes
             </a>
           </div>
@@ -119,11 +117,10 @@ export default function WeeklyPlanPage() {
             ))}
           </div>
         )}
-
         <div className="mt-8 bg-orange-50 border border-orange-100 rounded-2xl p-5">
           <p className="text-sm font-semibold text-orange-900 mb-1">📌 How to add to your plan</p>
           <p className="text-xs text-orange-700 leading-relaxed">Browse any recipe and tap "Add to Weekly Plan" — then choose the day and meal type. Your plan resets each Monday.</p>
-          <a href="/recipes" className="mt-3 inline-block text-sm font-semibold text-orange-700 hover:text-orange-900">
+          <a href="/explore" className="mt-3 inline-block text-sm font-semibold text-orange-700 hover:text-orange-900">
             Browse Recipes →
           </a>
         </div>
