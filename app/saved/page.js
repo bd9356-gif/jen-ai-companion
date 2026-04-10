@@ -7,392 +7,245 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export default function SavedPage() {
+const TYPE_LABELS = {
+  recipe: { label: 'Recipe', color: 'bg-orange-50 text-orange-700' },
+  video: { label: 'Video', color: 'bg-red-50 text-red-700' },
+  ai_recipe: { label: 'AI Recipe', color: 'bg-purple-50 text-purple-700' },
+  ai_answer: { label: 'AI Answer', color: 'bg-blue-50 text-blue-700' },
+}
+
+export default function FavoritesPage() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
   const [user, setUser] = useState(null)
+  const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('recipes')
-
-  const [recipes, setRecipes] = useState([])
-  const [copying, setCopying] = useState(null)
-  const [copiedIds, setCopiedIds] = useState(new Set())
-
-  const [recipeVideos, setRecipeVideos] = useState([])
-  const [summaryVideos, setSummaryVideos] = useState([])
-  const [playingId, setPlayingId] = useState(null)
-  const [savingVideo, setSavingVideo] = useState(null)
-  const [savedVideoIds, setSavedVideoIds] = useState(new Set())
+  const [filter, setFilter] = useState('all')
+  const [batchMode, setBatchMode] = useState(false)
+  const [selected, setSelected] = useState(new Set())
+  const [toast, setToast] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
-      loadAll(session.user.id)
+      loadFavorites(session.user.id)
     })
   }, [])
 
-  async function loadAll(userId) {
-    await Promise.all([
-      loadSavedRecipes(userId),
-      loadSavedVideos(userId),
-    ])
+  async function loadFavorites(userId) {
+    const { data } = await supabase
+      .from('favorites')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_in_vault', false)
+      .order('created_at', { ascending: false })
+    setItems(data || [])
     setLoading(false)
   }
 
-  async function loadSavedRecipes(userId) {
-    const { data } = await supabase
-      .from('saved_recipes')
-      .select('recipe_id, recipes(id, title, category, cuisine, thumbnail_url)')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-    setRecipes((data || []).map(s => s.recipes).filter(Boolean))
+  async function addToVault(item) {
+    await supabase
+      .from('favorites')
+      .update({ is_in_vault: true })
+      .eq('id', item.id)
 
-    const { data: myRecipes } = await supabase
-      .from('personal_recipes').select('title').eq('user_id', userId)
-    setCopiedIds(new Set((myRecipes || []).map(r => r.title.toLowerCase())))
-  }
-
-  async function loadSavedVideos(userId) {
-    const [{ data: sv1 }, { data: sv2 }] = await Promise.all([
-      supabase.from('saved_videos').select('video_id').eq('user_id', userId),
-      supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
-    ])
-
-    const cookingIds = (sv1 || []).map(s => s.video_id)
-    const educationIds = (sv2 || []).map(s => s.video_id)
-
-    const [{ data: cv }, { data: ev }] = await Promise.all([
-      cookingIds.length ? supabase.from('cooking_videos').select('*').in('id', cookingIds) : { data: [] },
-      educationIds.length ? supabase.from('education_videos').select('*').in('id', educationIds) : { data: [] },
-    ])
-
-    const allVideos = [
-      ...(cv || []).map(v => ({ ...v, _source: 'cooking' })),
-      ...(ev || []).map(v => ({ ...v, _source: 'education' })),
-    ]
-
-    const cookingVideoIds = (cv || []).map(v => v.id)
-    const educationVideoIds = (ev || []).map(v => v.id)
-
-    const [{ data: cm }, { data: em }] = await Promise.all([
-      cookingVideoIds.length ? supabase.from('video_metadata').select('*').in('video_id', cookingVideoIds) : { data: [] },
-      educationVideoIds.length ? supabase.from('education_video_metadata').select('*').in('video_id', educationVideoIds) : { data: [] },
-    ])
-
-    const metaMap = {}
-    ;(cm || []).forEach(m => { metaMap[m.video_id] = m })
-    ;(em || []).forEach(m => { metaMap[m.video_id] = m })
-
-    const withRecipe = allVideos.filter(v => metaMap[v.id]?.ingredients?.length > 0)
-    const withSummary = allVideos.filter(v => !metaMap[v.id]?.ingredients?.length)
-
-    setRecipeVideos(withRecipe.map(v => ({ ...v, _meta: metaMap[v.id] })))
-    setSummaryVideos(withSummary.map(v => ({ ...v, _meta: metaMap[v.id] })))
-
-    // Track which video titles are already saved to vault
-    const { data: myRecipes } = await supabase.from('personal_recipes').select('title').eq('user_id', userId)
-    setSavedVideoIds(new Set((myRecipes || []).map(r => r.title.toLowerCase())))
-  }
-
-  async function unsaveVideo(video) {
-    const table = video._source === 'education' ? 'saved_education_videos' : 'saved_videos'
-    await supabase.from(table).delete().eq('user_id', user.id).eq('video_id', video.id)
-    if (video._meta?.ingredients?.length > 0) {
-      setRecipeVideos(prev => prev.filter(v => v.id !== video.id))
-    } else {
-      setSummaryVideos(prev => prev.filter(v => v.id !== video.id))
-    }
-  }
-
-  async function unsaveRecipe(recipeId) {
-    await supabase.from('saved_recipes').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
-    setRecipes(prev => prev.filter(r => r.id !== recipeId))
-  }
-
-  async function copyToMyRecipes(recipe) {
-    setCopying(recipe.id)
-    const { data: full } = await supabase.from('recipes').select('*').eq('id', recipe.id).single()
-    if (full) {
-      const ytLine = full.youtube_url ? `Watch video: ${full.youtube_url}` : ''
-      const instructions = ytLine
-        ? `${ytLine}\n${full.instructions || ''}`
-        : (full.instructions || '')
+    // Also add to personal_recipes if it's a recipe type
+    if (item.type === 'recipe' || item.type === 'ai_recipe') {
+      const meta = item.metadata || {}
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
-        title: full.title,
-        description: `Imported from recipe library — ${full.cuisine || full.category || ''}`.trim().replace(/—\s*$/, ''),
-        ingredients: full.ingredients || [],
-        instructions,
-        category: full.category || '',
-        tags: full.tags || [],
-        family_notes: '',
-        photo_url: full.thumbnail_url || '',
+        title: item.title,
+        description: meta.description || '',
+        ingredients: meta.ingredients || [],
+        instructions: meta.instructions || '',
+        category: meta.category || 'My Recipes',
+        tags: meta.tags || [],
+        photo_url: item.thumbnail_url || '',
+        family_notes: `Added from My Favorites — ${item.source || ''}`,
       })
-      setCopiedIds(prev => new Set([...prev, full.title.toLowerCase()]))
     }
-    setCopying(null)
+
+    setItems(prev => prev.filter(i => i.id !== item.id))
+    showToast('Added to your Vault ✓')
   }
 
-  async function saveRecipeVideoToVault(video) {
-    setSavingVideo(video.id)
-    const meta = video._meta
-    const ytLine = `Watch video: https://youtube.com/watch?v=${video.youtube_id}`
-    const instructionsWithVideo = meta?.instructions
-      ? `${ytLine}\n${meta.instructions}`
-      : ytLine
-    await supabase.from('personal_recipes').insert({
-      user_id: user.id,
-      title: video.title,
-      description: meta?.ai_summary || '',
-      ingredients: meta?.ingredients || [],
-      instructions: instructionsWithVideo,
-      category: 'From Video',
-      tags: ['video-recipe'],
-      family_notes: `Saved from video by ${video.channel}`,
-      photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+  async function removeFromFavorites(id) {
+    await supabase.from('favorites').delete().eq('id', id)
+    setItems(prev => prev.filter(i => i.id !== id))
+    showToast('Removed from Favorites')
+  }
+
+  async function batchAddToVault() {
+    const toAdd = items.filter(i => selected.has(i.id))
+    for (const item of toAdd) {
+      await addToVault(item)
+    }
+    setSelected(new Set())
+    setBatchMode(false)
+  }
+
+  async function batchRemove() {
+    for (const id of selected) {
+      await supabase.from('favorites').delete().eq('id', id)
+    }
+    setItems(prev => prev.filter(i => !selected.has(i.id)))
+    setSelected(new Set())
+    setBatchMode(false)
+    showToast('Removed from Favorites')
+  }
+
+  function toggleSelect(id) {
+    setSelected(prev => {
+      const n = new Set(prev)
+      n.has(id) ? n.delete(id) : n.add(id)
+      return n
     })
-    setSavedVideoIds(prev => new Set([...prev, video.title.toLowerCase()]))
-    setSavingVideo(null)
   }
 
-  async function saveSummaryVideoToVault(video) {
-    setSavingVideo(video.id)
-    await supabase.from('personal_recipes').insert({
-      user_id: user.id,
-      title: video.title,
-      description: video._meta?.ai_summary || '',
-      ingredients: [],
-      instructions: `Watch video: https://youtube.com/watch?v=${video.youtube_id}`,
-      category: 'Video Reference',
-      tags: ['video-reference'],
-      family_notes: `Summary video by ${video.channel}. Saved for reference.`,
-      photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
-    })
-    setSavedVideoIds(prev => new Set([...prev, video.title.toLowerCase()]))
-    setSavingVideo(null)
+  function showToast(msg) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2500)
   }
 
-  function viewCount(n) {
-    if (!n) return ''
-    if (n >= 1000000) return `${(n/1000000).toFixed(1)}M views`
-    if (n >= 1000) return `${(n/1000).toFixed(0)}K views`
-    return `${n} views`
-  }
-
-  const tabs = [
-    { key: 'recipes', label: '🍽️ Recipes', count: recipes.length },
-    { key: 'recipe_videos', label: '🍳 Recipe Videos', count: recipeVideos.length },
-    { key: 'summary_videos', label: '📝 Summary Videos', count: summaryVideos.length },
-  ]
-
-  function VideoCard({ video, onUnsave, onSaveToVault, isRecipeVideo }) {
-    const [expanded, setExpanded] = useState(false)
-    const meta = video._meta
-    const hasRecipe = meta?.ingredients?.length > 0
-    const alreadySaved = savedVideoIds.has(video.title?.toLowerCase())
-
-    return (
-      <div className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
-        {playingId === video.id ? (
-          <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-            <iframe src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1`}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen />
-            <button onClick={() => setPlayingId(null)}
-              className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
-          </div>
-        ) : (
-          <button onClick={() => setPlayingId(video.id)} className="w-full relative block group">
-            <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
-              alt={video.title} className="w-full object-cover" style={{height:'160px'}} />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 flex items-center justify-center">
-              <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 ml-0.5" fill="#dc2626"><path d="M8 5v14l11-7z"/></svg>
-              </div>
-            </div>
-            {video.duration && (
-              <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">{video.duration}</div>
-            )}
-          </button>
-        )}
-        <div className="p-3">
-          <p className="font-semibold text-gray-900 text-sm leading-snug mb-0.5">{video.title}</p>
-          <p className="text-xs text-orange-600 font-medium mb-0.5">{video.channel}</p>
-          <p className="text-xs text-gray-400 mb-3">{viewCount(video.view_count)}</p>
-
-          {/* Save to Vault button */}
-          <button
-            onClick={() => onSaveToVault(video)}
-            disabled={savingVideo === video.id || alreadySaved}
-            className={`w-full py-2 rounded-xl text-xs font-semibold mb-2 transition-colors ${
-              alreadySaved
-                ? 'bg-green-50 text-green-600 border border-green-200'
-                : 'bg-orange-600 text-white hover:bg-orange-700'
-            } disabled:opacity-50`}
-          >
-            {savingVideo === video.id ? '⏳ Saving...' : alreadySaved
-              ? '✓ Saved to MyRecipeVault'
-              : isRecipeVideo ? '🔐 Save Recipe to MyRecipeVault' : '🔐 Store in MyRecipeVault'}
-          </button>
-
-          <div className="flex items-center gap-3">
-            <button onClick={() => setExpanded(!expanded)}
-              className="text-sm text-orange-600 font-semibold">
-              {expanded ? 'Hide ▲' : 'See Details ▼'}
-            </button>
-            <button onClick={() => onUnsave(video)}
-              className="text-red-400 hover:text-red-600 text-sm font-semibold ml-auto">
-              ♥ Remove
-            </button>
-          </div>
-          {expanded && meta && (
-            <div className="mt-3 border-t border-gray-100 pt-3">
-              {meta.ai_summary && <p className="text-sm text-gray-600 mb-3">{meta.ai_summary}</p>}
-              {hasRecipe && (
-                <>
-                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Ingredients</p>
-                  <div className="bg-gray-50 rounded-xl p-3 mb-3">
-                    <ul className="space-y-1">
-                      {meta.ingredients.map((ing, i) => (
-                        <li key={i} className="flex gap-2 text-sm">
-                          <span className="text-orange-400">•</span>
-                          <span className="text-gray-700">
-                            {ing.measure && <span className="font-semibold">{ing.measure} </span>}
-                            {ing.name}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {meta.instructions && (
-                    <>
-                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Instructions</p>
-                      <div className="space-y-2">
-                        {meta.instructions.split('\n').filter(Boolean).map((step, i) => (
-                          <div key={i} className="flex gap-3">
-                            <div className="shrink-0 w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
-                            <p className="text-sm text-gray-700 pt-0.5">{step}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
+  const filtered = filter === 'all' ? items : items.filter(i => i.type === filter)
+  const types = ['all', ...new Set(items.map(i => i.type))]
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">
+          {toast}
+        </div>
+      )}
+
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 mb-4">
-            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">❤️ MyFavorites</h1>
+        <div className="max-w-2xl mx-auto px-4 pt-4 pb-3">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+              <h1 className="text-lg font-bold text-gray-900">❤️ My Favorites</h1>
+            </div>
+            <button
+              onClick={() => { setBatchMode(!batchMode); setSelected(new Set()) }}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${batchMode ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+            >
+              {batchMode ? 'Cancel' : 'Select'}
+            </button>
           </div>
-          <div className="flex gap-1">
-            {tabs.map(t => (
-              <button key={t.key} onClick={() => setTab(t.key)}
-                className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-colors ${
-                  tab === t.key ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-                {t.label}
-                {t.count > 0 && <span className="ml-1 opacity-75">({t.count})</span>}
-              </button>
-            ))}
-          </div>
+          <p className="text-xs text-gray-400 mb-3">A holding drawer for recipes, videos, and AI creations you want to review before adding them to your Vault.</p>
+
+          {/* Type filter tabs */}
+          {types.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {types.map(t => (
+                <button key={t} onClick={() => setFilter(t)}
+                  className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${filter === t ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  {t === 'all' ? 'All' : TYPE_LABELS[t]?.label || t}
+                  {t === 'all' ? ` (${items.length})` : ` (${items.filter(i => i.type === t).length})`}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-4 pb-32">
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading your favorites...</div>
+          <div className="text-center py-20 text-gray-400">Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">🗂️</div>
+            <p className="text-gray-700 font-semibold mb-2">Nothing saved yet</p>
+            <p className="text-gray-400 text-sm mb-6 max-w-xs mx-auto">
+              Recipes, videos, and AI creations you save while exploring will land here for review.
+            </p>
+            <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+              Explore Recipes
+            </a>
+          </div>
         ) : (
-          <>
-            {tab === 'recipes' && (
-              recipes.length === 0 ? (
-                <div className="text-center py-20">
-                  <p className="text-4xl mb-4">🍽️</p>
-                  <p className="text-gray-500 font-semibold mb-2">No saved recipes yet</p>
-                  <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Recipes</a>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-sm text-gray-400 mb-3">{recipes.length} saved recipes</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {recipes.map(recipe => (
-                    <div key={recipe.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
-                      <div className="flex gap-3 p-3">
-                        <a href={`/recipes/${recipe.id}`} className="shrink-0">
-                          <div style={{width:'72px', height:'72px'}} className="rounded-xl overflow-hidden bg-orange-50 flex items-center justify-center">
-                            {recipe.thumbnail_url
-                              ? <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
-                              : <span className="text-2xl">🍽️</span>}
-                          </div>
-                        </a>
-                        <div className="flex-1 min-w-0">
-                          <a href={`/recipes/${recipe.id}`}>
-                            <p className="text-sm font-semibold text-gray-900 leading-tight mb-0.5 line-clamp-2">{recipe.title}</p>
-                          </a>
-                          <p className="text-xs text-gray-400 mb-2">{recipe.cuisine || recipe.category}</p>
-                          <div className="flex items-center gap-2">
-                            <a href={`/recipes/${recipe.id}`} className="text-xs text-orange-600 font-semibold">View →</a>
-                            <span className="text-gray-200">|</span>
-                            <button onClick={() => copyToMyRecipes(recipe)}
-                              disabled={copying === recipe.id || copiedIds.has(recipe.title?.toLowerCase())}
-                              className={`text-xs font-semibold ${copiedIds.has(recipe.title?.toLowerCase()) ? 'text-green-500' : 'text-gray-500 hover:text-orange-600'}`}>
-                              {copying === recipe.id ? '⏳' : copiedIds.has(recipe.title?.toLowerCase()) ? '✓ In MyRecipes' : '🔒 Add to MyRecipes'}
-                            </button>
-                            <button onClick={() => unsaveRecipe(recipe.id)} className="text-red-400 hover:text-red-600 text-lg ml-auto">♥</button>
-                          </div>
-                        </div>
+          <div className="space-y-3">
+            {filtered.map(item => (
+              <div key={item.id}
+                className={`bg-white border rounded-2xl overflow-hidden transition-colors ${selected.has(item.id) ? 'border-orange-400 bg-orange-50' : 'border-gray-200 hover:border-orange-200'}`}
+              >
+                <div className="flex gap-3 p-3">
+                  {/* Checkbox in batch mode */}
+                  {batchMode && (
+                    <button onClick={() => toggleSelect(item.id)}
+                      className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center self-center transition-colors ${selected.has(item.id) ? 'bg-orange-600 border-orange-600 text-white' : 'border-gray-300'}`}>
+                      {selected.has(item.id) && <span className="text-xs">✓</span>}
+                    </button>
+                  )}
+
+                  {/* Thumbnail */}
+                  <div className="shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-orange-50">
+                    {item.thumbnail_url ? (
+                      <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-2xl">
+                        {item.type === 'video' ? '🎬' : item.type?.includes('ai') ? '🤖' : '🍽️'}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
+                      {!batchMode && (
+                        <button onClick={() => removeFromFavorites(item.id)}
+                          className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+                      )}
                     </div>
-                  ))}
+
+                    {/* Type badge */}
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-2 ${TYPE_LABELS[item.type]?.color || 'bg-gray-100 text-gray-600'}`}>
+                      {TYPE_LABELS[item.type]?.label || item.type}
+                    </span>
+
+                    {/* Actions */}
+                    {!batchMode && (
+                      <div className="flex gap-2">
+                        {item.ref_id && item.type === 'recipe' && (
+                          <a href={`/recipes/${item.ref_id}`}
+                            className="text-xs text-orange-600 font-semibold hover:text-orange-700">
+                            View →
+                          </a>
+                        )}
+                        <button onClick={() => addToVault(item)}
+                          className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
+                          Add to Vault
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )
-            )}
-
-            {tab === 'recipe_videos' && (
-              recipeVideos.length === 0 ? (
-                <div className="text-center py-20">
-                  <p className="text-4xl mb-4">🍳</p>
-                  <p className="text-gray-500 font-semibold mb-2">No saved recipe videos yet</p>
-                  <a href="/videos" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Videos</a>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-400">{recipeVideos.length} saved recipe videos</p>
-                  {recipeVideos.map(video => (
-                    <VideoCard key={video.id} video={video} onUnsave={unsaveVideo} onSaveToVault={saveRecipeVideoToVault} isRecipeVideo={true} />
-                  ))}
-                </div>
-              )
-            )}
-
-            {tab === 'summary_videos' && (
-              summaryVideos.length === 0 ? (
-                <div className="text-center py-20">
-                  <p className="text-4xl mb-4">📝</p>
-                  <p className="text-gray-500 font-semibold mb-2">No saved summary videos yet</p>
-                  <a href="/videos" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Videos</a>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-400">{summaryVideos.length} saved summary videos</p>
-                  {summaryVideos.map(video => (
-                    <VideoCard key={video.id} video={video} onUnsave={unsaveVideo} onSaveToVault={saveSummaryVideoToVault} isRecipeVideo={false} />
-                  ))}
-                </div>
-              )
-            )}
-          </>
+              </div>
+            ))}
+          </div>
         )}
       </main>
+
+      {/* Batch action bar */}
+      {batchMode && selected.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-20">
+          <div className="max-w-2xl mx-auto flex gap-3">
+            <button onClick={batchAddToVault}
+              className="flex-1 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+              Add {selected.size} to Vault
+            </button>
+            <button onClick={batchRemove}
+              className="flex-1 py-3 bg-red-50 text-red-500 border border-red-200 rounded-xl font-semibold hover:bg-red-100 transition-colors">
+              Remove {selected.size}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
