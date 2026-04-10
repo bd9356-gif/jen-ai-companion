@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    eslint: {
-    ignoreDuringBuilds: true,
+      eslint: {
+              ignoreDuringBuilds: true,
       },
-        images: {
-    unoptimized: true,
+      images: {
+              unoptimized: true,
+      },
+      experimental: {
+              missingSuspenseWithCSRBailout: false,
       },
 }
 
