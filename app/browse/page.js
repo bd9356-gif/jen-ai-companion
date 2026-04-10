@@ -3,15 +3,15 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const CATEGORIES = ['All', 'Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Lamb', 'Duck', 'Turkey', 'Pasta', 'Pizza', 'Soup', 'Salad', 'Rice', 'Bread', 'Cake', 'Cookie', 'Dinner', 'Breakfast', 'Dessert', 'Appetizers', 'Vegetarian', 'Vegan', 'Sides']
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
+const CATEGORIES = ['All', 'Beef', 'Chicken', 'Dessert', 'Lamb', 'Pasta', 'Pork', 'Seafood', 'Vegan', 'Vegetarian', 'Breakfast', 'Starter', 'Side']
 const diffLabel = { beginner: '🟢 Beginner', intermediate: '🟡 Intermediate', advanced: '🔴 Advanced' }
 
 export default function BrowsePage() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
   const [recipes, setRecipes] = useState([])
   const [metadata, setMetadata] = useState({})
   const [loading, setLoading] = useState(true)
@@ -22,18 +22,26 @@ export default function BrowsePage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) { setUser(session.user); loadSaved(session.user.id) }
+      if (session) {
+        setUser(session.user)
+        loadSaved(session.user.id)
+      }
     })
     loadRecipes()
   }, [])
 
   async function loadRecipes() {
-    const { data } = await supabase.from('recipes')
-      .select('id, title, category, cuisine, thumbnail_url, youtube_url, tags')
-      .order('title').range(0, 4999)
+    const { data } = await supabase
+      .from('recipes')
+      .select('id, title, category, cuisine, thumbnail_url, youtube_url')
+      .order('title')
+      .range(0, 4999)
     setRecipes(data || [])
-    const { data: meta } = await supabase.from('recipe_metadata')
-      .select('recipe_id, difficulty_level, ai_summary').range(0, 4999)
+
+    const { data: meta } = await supabase
+      .from('recipe_metadata')
+      .select('recipe_id, difficulty_level, ai_summary')
+      .range(0, 4999)
     const metaMap = {}
     ;(meta || []).forEach(m => { metaMap[m.recipe_id] = m })
     setMetadata(metaMap)
@@ -57,8 +65,10 @@ export default function BrowsePage() {
   }
 
   const filtered = recipes.filter(r => {
-    const matchCat = category === 'All' || r.category === category || (r.tags || []).some(t => t.toLowerCase() === category.toLowerCase())
-    const matchSearch = search === '' || r.title.toLowerCase().includes(search.toLowerCase()) || r.cuisine?.toLowerCase().includes(search.toLowerCase())
+    const matchCat = category === 'All' || r.category === category
+    const matchSearch = search === '' ||
+      r.title.toLowerCase().includes(search.toLowerCase()) ||
+      r.cuisine?.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
 
@@ -70,19 +80,29 @@ export default function BrowsePage() {
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">🔍 Browse Recipes</h1>
           </div>
-          <input type="text" placeholder="Search recipes or cuisine..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3" />
+          <input
+            type="text"
+            placeholder="Search recipes or cuisine..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
+          />
           <div className="flex gap-2 overflow-x-auto pb-1">
             {CATEGORIES.map(cat => (
-              <button key={cat} onClick={() => setCategory(cat)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${category === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  category === cat ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'
+                }`}
+              >
                 {cat}
               </button>
             ))}
           </div>
         </div>
       </header>
+
       <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading recipes...</div>
@@ -93,7 +113,7 @@ export default function BrowsePage() {
               {filtered.map(recipe => (
                 <div key={recipe.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
                   <a href={`/recipes/${recipe.id}`}>
-                    <div style={{height:'120px'}}>
+                    <div style={{height: '120px'}}>
                       {recipe.thumbnail_url ? (
                         <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
                       ) : (
@@ -112,8 +132,10 @@ export default function BrowsePage() {
                       {metadata[recipe.id]?.difficulty_level && (
                         <span className="text-xs text-gray-400">{diffLabel[metadata[recipe.id].difficulty_level]}</span>
                       )}
-                      <button onClick={() => toggleSave(recipe.id)}
-                        className={`text-lg ml-auto ${savedIds.has(recipe.id) ? 'text-red-500' : 'text-gray-300'}`}>
+                      <button
+                        onClick={() => toggleSave(recipe.id)}
+                        className={`text-lg ml-auto ${savedIds.has(recipe.id) ? 'text-red-500' : 'text-gray-300'}`}
+                      >
                         ♥
                       </button>
                     </div>
