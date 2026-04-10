@@ -53,7 +53,7 @@ export default function ExplorePage() {
   async function loadRecipes() {
     const { data } = await supabase
       .from('recipes')
-      .select('id, title, category, cuisine, thumbnail_url, youtube_url')
+      .select('id, title, category, cuisine, thumbnail_url, youtube_url, tags')
       .order('title')
       .range(0, 4999)
     const shuffled = (data || []).sort(() => Math.random() - 0.5)
