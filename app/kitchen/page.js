@@ -56,7 +56,7 @@ export default function KitchenPage() {
         </div>
 
         {/* Menu */}
-        <div className="space-y-3 pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8">
           {MENU_ITEMS.map(item => (
             <button
               key={item.href}

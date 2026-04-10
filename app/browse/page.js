@@ -108,7 +108,7 @@ export default function BrowsePage() {
         ) : (
           <>
             <p className="text-sm text-gray-400 mb-4">{filtered.length} recipes</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {filtered.map(recipe => (
                 <div key={recipe.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
                   <a href={`/recipes/${recipe.id}`}>

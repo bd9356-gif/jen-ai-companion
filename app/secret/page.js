@@ -908,8 +908,7 @@ export default function MyRecipeVaultPage() {
                 {regularRecipes.length === 0 && (
                   <p className="text-sm text-gray-400 text-center py-4">No recipes match your search</p>
                 )}
-                <div className="space-y-3">
-                  {regularRecipes.map(recipe => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
                       className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
                       <div className="flex gap-3 p-4">

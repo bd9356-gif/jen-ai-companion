@@ -320,8 +320,9 @@ export default function SavedPage() {
                   <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Browse Recipes</a>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-400">{recipes.length} saved recipes</p>
+                <div>
+                  <p className="text-sm text-gray-400 mb-3">{recipes.length} saved recipes</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {recipes.map(recipe => (
                     <div key={recipe.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
                       <div className="flex gap-3 p-3">
@@ -351,6 +352,7 @@ export default function SavedPage() {
                       </div>
                     </div>
                   ))}
+                  </div>
                 </div>
               )
             )}
