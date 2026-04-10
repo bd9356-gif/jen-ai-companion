@@ -3,6 +3,6 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   images: { unoptimized: true },
-  experimental: { missingSuspenseWithCSRBailout: false },
+  staticPageGenerationTimeout: 0,
 }
 module.exports = nextConfig
