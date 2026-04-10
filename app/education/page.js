@@ -2,11 +2,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
 const CHANNELS = [
   'All',"Natasha's Kitchen",'Preppy Kitchen','Inspired Taste',
   'Tasty',"America's Test Kitchen",'Serious Eats','Food Wishes',
@@ -27,6 +22,7 @@ function viewCount(n) {
 }
 
 export default function EducationPage() {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const [user, setUser] = useState(null)
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
