@@ -7,7 +7,7 @@ const diffLabel = { beginner: '🟢 Beginner', intermediate: '🟡 Intermediate'
 
 export default function BrowsePage() {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [recipes, setRecipes] = useState([])
+  
   const [metadata, setMetadata] = useState({})
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(null)

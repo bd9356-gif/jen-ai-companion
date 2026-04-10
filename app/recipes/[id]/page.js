@@ -3,18 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-const diffLabel = {
-  beginner: '🟢 Beginner',
-  intermediate: '🟡 Intermediate',
-  advanced: '🔴 Advanced'
-}
-
-function getVideoType(url) {
+ {
   if (!url) return null
   if (url.match(/(?:youtube\.com|youtu\.be)/)) return 'youtube'
   if (url.match(/tiktok\.com/)) return 'tiktok'
@@ -30,6 +19,7 @@ function getYouTubeId(url) {
 }
 
 export default function RecipeDetailPage() {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const { id } = useParams()
   const [recipe, setRecipe] = useState(null)
   const [meta, setMeta] = useState(null)

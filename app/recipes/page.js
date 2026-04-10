@@ -7,7 +7,7 @@ const DIFFICULTIES = ['All', 'beginner', 'intermediate', 'advanced']
 
 export default function RecipesPage() {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [recipes, setRecipes] = useState([])
+  
   const [metadata, setMetadata] = useState({})
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState('All')

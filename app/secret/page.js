@@ -2,19 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-const SUGGESTED_TAGS = [
-  'chicken','beef','pork','fish','seafood','pasta','pizza',
-  'soup','salad','dessert','breakfast','bread','vegetarian',
-  'quick','family','holiday','comfort food','baking','healthy'
-]
-
-// ── TAG SELECTOR DROPDOWN ──
-function TagSelector({ tags, onChange }) {
+ {
   const [open, setOpen] = useState(false)
   const [customInput, setCustomInput] = useState('')
   const dropdownRef = useRef(null)
@@ -194,6 +182,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 }
 
 export default function MyRecipeVaultPage() {
+  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)

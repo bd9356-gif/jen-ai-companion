@@ -2,23 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-const MENU_ITEMS = [
-  { emoji: '🔐', title: 'MyRecipeVault',    subtitle: 'Your personal cooking library',              href: '/secret',    accent: '#f97316' },
-  { emoji: '🍳', title: 'Explore Recipes',  subtitle: 'Browse the full library — swipe or scroll',  href: '/explore',   accent: '#f97316' },
-  { emoji: '❤️', title: 'MyFavorites',      subtitle: 'Videos, recipes, and ideas you love',        href: '/saved',     accent: '#e85d8a' },
-  { emoji: '🃏', title: 'My Recipe Cards',  subtitle: 'Quick reference cards for your go-to recipes', href: '/cards',   accent: '#f59e0b' },
-  { emoji: '🎬', title: 'Cooking Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',    accent: '#f97316' },
-  { emoji: '👨‍🍳', title: 'AI Chef Creations', subtitle: 'Gourmet recipes from your personal AI chef', href: '/topchef', accent: '#a855f7' },
-  { emoji: '📅', title: 'Meal Planner',     subtitle: 'Plan your meals for the week ahead',          href: '/weeklyplan', accent: '#14b8a6' },
-  { emoji: '🤖', title: 'MyChef AI',        subtitle: 'Ask your personal AI chef anything',          href: '/chef',      accent: '#3b82f6' },
-]
-
-export default function KitchenPage() {
+ {
   const [user, setUser] = useState(null)
 
   useEffect(() => {

@@ -36,7 +36,7 @@ function viewCount(n) {
 
 export default function VideosPage() {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [user, setUser] = useState(null)
+  
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [savedIds, setSavedIds] = useState(new Set())

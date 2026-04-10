@@ -12,7 +12,7 @@ const SUGGESTED = [
 
 export default function ChefPage() {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [messages, setMessages] = useState([])
+  
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef(null)

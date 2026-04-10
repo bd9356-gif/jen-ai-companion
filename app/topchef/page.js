@@ -42,7 +42,7 @@ const TIMES = ['⚡ Under 20 min', '🕐 30-45 min', '🍲 Slow & Low']
 
 export default function TopChefPage() {
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  const [openDrawer, setOpenDrawer] = useState(null)
+  
   const [generating, setGenerating] = useState(false)
   const [viewing, setViewing] = useState(null)
   const [saving, setSaving] = useState(false)
