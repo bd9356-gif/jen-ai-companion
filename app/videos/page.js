@@ -103,7 +103,7 @@ export default function VideosPage() {
       setSavedIds(prev => { const n = new Set(prev); n.delete(video.id); return n })
     } else {
       await supabase.from('favorites').insert({
-        user_id: user.id, type: 'video', ref_id: String(video.id),
+        user_id: user.id, type: metadata[video.id]?.ingredients?.length > 0 ? 'video_recipe' : 'video_education', ref_id: String(video.id),
         title: video.title,
         thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
         source: video._source === 'education' ? 'education' : 'chef',
