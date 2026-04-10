@@ -386,7 +386,7 @@ export default function ExplorePage() {
                 </div>
 
                 <p className="text-center text-sm font-semibold text-gray-500 mt-4">
-                  {swipeRecipes.length} recipes left &nbsp;·&nbsp; ← Skip &nbsp;|&nbsp; Save → &nbsp;·&nbsp; ↩ Rewind
+                  {swipeFiltered.length} recipes · ← Skip &nbsp;|&nbsp; Save → &nbsp;·&nbsp; ↩ Rewind
                 </p>
               </div>
             )}
