@@ -1,13 +1,13 @@
 'use client'
-export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
 export default function CardsPage() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -148,6 +148,7 @@ export default function CardsPage() {
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
         </div>
       </header>
+
       <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading your cards...</div>
@@ -163,7 +164,7 @@ export default function CardsPage() {
         ) : (
           <>
             <p className="text-sm text-gray-400 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-3">
               {filtered.map(recipe => (
                 <button key={recipe.id} onClick={() => setViewing(recipe)}
                   className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">

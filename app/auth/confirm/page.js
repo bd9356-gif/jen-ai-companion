@@ -2,12 +2,13 @@
 import { useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
 export default function AuthConfirmPage() {
   useEffect(() => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    )
     async function handleAuth() {
       const params = new URLSearchParams(window.location.search)
       const code = params.get('code')
