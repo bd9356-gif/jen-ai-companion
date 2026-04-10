@@ -8,10 +8,11 @@ const supabase = createClient(
 )
 
 const TYPE_LABELS = {
-  recipe: { label: 'Recipe', color: 'bg-orange-50 text-orange-700' },
-  video: { label: 'Video', color: 'bg-red-50 text-red-700' },
-  ai_recipe: { label: 'AI Recipe', color: 'bg-purple-50 text-purple-700' },
-  ai_answer: { label: 'AI Answer', color: 'bg-blue-50 text-blue-700' },
+  recipe: { label: 'Recipe', color: 'bg-orange-50 text-orange-700', emoji: '🍽️' },
+  video_recipe: { label: 'Recipe Video', color: 'bg-green-50 text-green-700', emoji: '🍳' },
+  video_education: { label: 'Education Video', color: 'bg-blue-50 text-blue-700', emoji: '🎬' },
+  ai_recipe: { label: 'AI Recipe', color: 'bg-purple-50 text-purple-700', emoji: '🤖' },
+  ai_answer: { label: 'AI Answer', color: 'bg-indigo-50 text-indigo-700', emoji: '💬' },
 }
 
 export default function FavoritesPage() {
@@ -52,8 +53,8 @@ export default function FavoritesPage() {
       .update({ is_in_vault: true })
       .eq('id', item.id)
 
-    // Also add to personal_recipes if it's a recipe type
-    if (item.type === 'recipe' || item.type === 'ai_recipe') {
+    // Add to personal_recipes if it's a recipe type or recipe video
+    if (item.type === 'recipe' || item.type === 'ai_recipe' || item.type === 'video_recipe') {
       const meta = item.metadata || {}
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
@@ -61,12 +62,13 @@ export default function FavoritesPage() {
         description: meta.description || '',
         ingredients: meta.ingredients || [],
         instructions: meta.instructions || '',
-        category: meta.category || 'My Recipes',
+        category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
         tags: meta.tags || [],
         photo_url: item.thumbnail_url || '',
         family_notes: `Added from My Favorites — ${item.source || ''}`,
       })
     }
+    // Education videos go to vault as-is (no personal_recipe entry needed)
 
     setItems(prev => prev.filter(i => i.id !== item.id))
     showToast('Added to your Vault ✓')
@@ -188,7 +190,7 @@ export default function FavoritesPage() {
                       <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-2xl">
-                        {item.type === 'video' ? '🎬' : item.type?.includes('ai') ? '🤖' : '🍽️'}
+                        {TYPE_LABELS[item.type]?.emoji || '🍽️'}
                       </div>
                     )}
                   </div>
@@ -215,6 +217,12 @@ export default function FavoritesPage() {
                           <a href={`/recipes/${item.ref_id}`}
                             className="text-xs text-orange-600 font-semibold hover:text-orange-700">
                             View →
+                          </a>
+                        )}
+                        {(item.type === 'video_recipe' || item.type === 'video_education') && item.metadata?.youtube_id && (
+                          <a href={`https://youtube.com/watch?v=${item.metadata.youtube_id}`} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-red-600 font-semibold hover:text-red-700">
+                            Watch →
                           </a>
                         )}
                         <button onClick={() => addToVault(item)}
