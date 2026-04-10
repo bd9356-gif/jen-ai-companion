@@ -93,21 +93,22 @@ export default function VideosPage() {
   }
 
   async function loadSaved(userId) {
-    const [{ data: s1 }, { data: s2 }] = await Promise.all([
-      supabase.from('saved_videos').select('video_id').eq('user_id', userId),
-      supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
-    ])
-    setSavedIds(new Set([...(s1 || []), ...(s2 || [])].map(s => s.video_id)))
+    const { data } = await supabase.from('favorites').select('ref_id').eq('user_id', userId).eq('is_in_vault', false).eq('type', 'video')
+    setSavedIds(new Set((data || []).map(s => s.ref_id)))
   }
 
   async function toggleSave(video) {
-    if (!user) return
-    const table = video._source === 'education' ? 'saved_education_videos' : 'saved_videos'
     if (savedIds.has(video.id)) {
-      await supabase.from(table).delete().eq('user_id', user.id).eq('video_id', video.id)
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(video.id))
       setSavedIds(prev => { const n = new Set(prev); n.delete(video.id); return n })
     } else {
-      await supabase.from(table).insert({ user_id: user.id, video_id: video.id })
+      await supabase.from('favorites').insert({
+        user_id: user.id, type: 'video', ref_id: String(video.id),
+        title: video.title,
+        thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+        source: video._source === 'education' ? 'education' : 'chef',
+        metadata: { channel: video.channel, duration: video.duration, youtube_id: video.youtube_id }
+      })
       setSavedIds(prev => new Set([...prev, video.id]))
     }
   }
