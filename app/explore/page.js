@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const CATEGORIES = ['All', 'Beef', 'Chicken', 'Dessert', 'Lamb', 'Pasta', 'Pork', 'Seafood', 'Vegan', 'Vegetarian', 'Breakfast', 'Starter', 'Side']
+const CATEGORIES = ['All', 'Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Lamb', 'Duck', 'Turkey', 'Pasta', 'Pizza', 'Soup', 'Salad', 'Rice', 'Bread', 'Cake', 'Cookie', 'Dinner', 'Breakfast', 'Dessert', 'Appetizers', 'Vegetarian', 'Vegan', 'Sides']
 
 export default function ExplorePage() {
   const [mode, setMode] = useState('swipe')
@@ -166,12 +166,12 @@ export default function ExplorePage() {
     setSwipeIndex(last.index)
   }
 
-  const swipeFiltered = recipes.filter(r => category === 'All' || r.category === category)
+  const swipeFiltered = recipes.filter(r => category === 'All' || r.category === category || (r.tags || []).some(t => t.toLowerCase() === category.toLowerCase()))
   const swipeRecipes = swipeFiltered.slice(swipeIndex)
   const diffLabel = { beginner: '🟢 Beginner', intermediate: '🟡 Intermediate', advanced: '🔴 Advanced' }
 
   const filtered = recipes.filter(r => {
-    const matchCat = category === 'All' || r.category === category
+    const matchCat = category === 'All' || r.category === category || (r.tags || []).some(t => t.toLowerCase() === category.toLowerCase())
     const matchSearch = search === '' || r.title.toLowerCase().includes(search.toLowerCase()) || r.cuisine?.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
