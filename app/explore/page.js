@@ -382,7 +382,7 @@ export default function ExplorePage() {
                     ♥
                   </button>
                 </div>
-            )}
+                )}
           </div>
         ) : (
           // BROWSE MODE
