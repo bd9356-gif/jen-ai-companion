@@ -234,8 +234,11 @@ export default function FavoritesPage() {
                                   allowFullScreen
                                 />
                                 <button onClick={() => setPlayingId(null)}
-                                  className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
+                                  className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold">✕</button>
                               </div>
+                              <button onClick={() => setPlayingId(null)} className="w-full py-3 bg-gray-900 text-white text-sm font-semibold text-center">
+                                ✕ Close Video
+                              </button>
                             )}
 
                             <div className="flex gap-3 p-3">
