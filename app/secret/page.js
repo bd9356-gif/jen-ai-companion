@@ -524,15 +524,14 @@ export default function MyRecipeVaultPage() {
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
           {/* Video player for video entries */}
           {resolvedYoutubeId ? (
-            <a href={`https://www.youtube.com/watch?v=${resolvedYoutubeId}`} target="_blank" rel="noopener noreferrer"
-              className="block w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'200px'}}>
-              <img src={`https://img.youtube.com/vi/${resolvedYoutubeId}/hqdefault.jpg`} alt={viewing.title} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="bg-red-600 text-white px-5 py-3 rounded-xl font-semibold flex items-center gap-2">
-                  <span>▶</span> Watch on YouTube
-                </div>
-              </div>
-            </a>
+            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{position:'relative', paddingBottom:'56.25%'}}>
+              <iframe
+                src={`https://www.youtube.com/embed/${resolvedYoutubeId}?rel=0&modestbranding=1&iv_load_policy=3`}
+                className="absolute inset-0 w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
           ) : isMp4 ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5">
               <video src={watchUrl} controls className="w-full rounded-2xl bg-black" style={{maxHeight:'300px'}} />

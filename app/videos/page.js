@@ -201,15 +201,15 @@ export default function VideosPage() {
                 return (
                   <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
                     {playingId === video.id ? (
-                      <a href={`https://www.youtube.com/watch?v=${video.youtube_id}`} target="_blank" rel="noopener noreferrer"
-                        className="block w-full relative">
-                        <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`} alt={video.title} className="w-full object-cover" style={{height:'192px'}} />
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <div className="bg-red-600 text-white px-5 py-3 rounded-xl font-semibold flex items-center gap-2">
-                            <span>▶</span> Watch on YouTube
-                          </div>
-                        </div>
-                      </a>
+                      <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
+                        <iframe
+                          src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0`}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                        <button onClick={() => setPlayingId(null)} className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
+                      </div>
                     ) : (
                       <button onClick={() => setPlayingId(video.id)} className="w-full relative block group">
                         <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`} alt={video.title} className="w-full object-cover" style={{height:'192px'}} />
