@@ -193,10 +193,36 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   )
 }
 
+function NoteCard({ note }) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div className="bg-indigo-50 border border-indigo-100 rounded-2xl overflow-hidden">
+      <button onClick={() => setExpanded(!expanded)} className="w-full text-left p-4">
+        <div className="flex gap-3 items-start">
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+            <span className="text-lg">💬</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 truncate mb-1">{note.title}</p>
+            {note.question && <p className="text-xs text-indigo-600 truncate">Q: {note.question}</p>}
+          </div>
+          <span className="text-gray-400 text-sm shrink-0">{expanded ? '▲' : '▼'}</span>
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-indigo-100">
+          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap mt-3">{note.content}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function MyRecipeVaultPage() {
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [notes, setNotes] = useState([])
+  const [educationVideos, setEducationVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
   const [viewing, setViewing] = useState(null)
@@ -227,6 +253,7 @@ export default function MyRecipeVaultPage() {
       setUser(session.user)
       loadRecipes(session.user.id)
       loadNotes(session.user.id)
+      loadEducationVideos(session.user.id)
       loadPinnedCards(session.user.id)
     })
   }, [])
@@ -250,6 +277,11 @@ export default function MyRecipeVaultPage() {
   async function loadNotes(userId) {
     const { data } = await supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     setNotes(data || [])
+  }
+
+  async function loadEducationVideos(userId) {
+    const { data } = await supabase.from('favorites').select('*').eq('user_id', userId).eq('is_in_vault', true).eq('type', 'video_education').order('created_at', { ascending: false })
+    setEducationVideos(data || [])
   }
 
   async function loadRecipes(userId) {
@@ -414,14 +446,18 @@ export default function MyRecipeVaultPage() {
   if (view === 'detail' && viewing) {
     const ingredients = viewing.ingredients || []
     const instructions = (viewing.instructions || '').split('\n').filter(Boolean)
-    const isVideoEntry = viewing.category === 'Video Reference' || viewing.category === 'From Video'
+    const isVideoEntry = viewing.category === 'Video Reference' || viewing.category === 'From Video' || viewing.category === 'Recipe Videos'
+    const youtubeIdMatch = (viewing.family_notes || '').match(/youtube_id:([^|]+)/)
+    const youtubeId = youtubeIdMatch ? youtubeIdMatch[1] : null
+    const channelMatch = (viewing.family_notes || '').match(/channel:([^|]+)/)
+    const videoChannel = channelMatch ? channelMatch[1] : null
     // Extract video URL from instructions "Watch video: <url>"
     const watchLine = instructions.find(s => s.startsWith('Watch video:'))
     const watchUrl = watchLine ? watchLine.replace('Watch video:', '').trim() : null
-    // Detect video type
+    // Detect video type from watchUrl or from stored youtubeId
     const ytMatch = watchUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
-    const youtubeId = ytMatch ? ytMatch[1] : null
-    const isMp4 = watchUrl && !youtubeId && (watchUrl.match(/\.(mp4|mov|webm|m4v)/i) || watchUrl.includes('s3.amazonaws.com'))
+    const resolvedYoutubeId = youtubeId || (ytMatch ? ytMatch[1] : null)
+    const isMp4 = watchUrl && !resolvedYoutubeId && (watchUrl.match(/\.(mp4|mov|webm|m4v)/i) || watchUrl.includes('s3.amazonaws.com'))
     const isTikTok = watchUrl && watchUrl.includes('tiktok.com')
     const nonVideoInstructions = instructions.filter(s => !s.startsWith('Watch video:'))
 
@@ -448,10 +484,10 @@ export default function MyRecipeVaultPage() {
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
           {/* Video player for video entries */}
-          {youtubeId ? (
+          {resolvedYoutubeId ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5" style={{position:'relative', paddingBottom:'56.25%'}}>
               <iframe
-                src={`https://www.youtube.com/embed/${youtubeId}`}
+                src={`https://www.youtube.com/embed/${resolvedYoutubeId}`}
                 className="absolute inset-0 w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -977,6 +1013,41 @@ export default function MyRecipeVaultPage() {
                 </div>
               )}
 
+              {/* Education Videos Section */}
+              {educationVideos.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">📚</span>
+                    <h2 className="text-sm font-bold text-gray-700">Education Videos</h2>
+                    <span className="text-xs text-gray-400">({educationVideos.length})</span>
+                  </div>
+                  <div className="space-y-3">
+                    {educationVideos.map(item => (
+                      <a key={item.id}
+                        href={item.metadata?.youtube_id ? `https://youtube.com/watch?v=${item.metadata.youtube_id}` : '#'}
+                        target="_blank" rel="noopener noreferrer"
+                        className="w-full text-left bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden hover:border-blue-300 transition-colors block">
+                        <div className="flex gap-3 p-4">
+                          {item.thumbnail_url ? (
+                            <img src={item.thumbnail_url} alt={item.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                              <span className="text-2xl">📚</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate mb-1">{item.title}</p>
+                            {item.metadata?.channel && <p className="text-xs text-blue-600 mb-1">{item.metadata.channel}</p>}
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Education</span>
+                          </div>
+                          <span className="text-gray-300 text-xl self-center">▶</span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* My Notes Section */}
               {notes.length > 0 && (
                 <div>
@@ -987,19 +1058,7 @@ export default function MyRecipeVaultPage() {
                   </div>
                   <div className="space-y-3">
                     {notes.map(note => (
-                      <div key={note.id}
-                        className="w-full text-left bg-indigo-50 border border-indigo-100 rounded-2xl overflow-hidden">
-                        <div className="flex gap-3 p-4">
-                          <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                            <span className="text-xl">💬</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate mb-1">{note.title}</p>
-                            {note.question && <p className="text-xs text-indigo-600 mb-1 truncate">Q: {note.question}</p>}
-                            <p className="text-xs text-gray-500 line-clamp-2">{note.content}</p>
-                          </div>
-                        </div>
-                      </div>
+                      <NoteCard key={note.id} note={note} />
                     ))}
                   </div>
                 </div>
