@@ -154,7 +154,7 @@ export default function MyChefPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">👨‍🍳 MyChef AI</h1>
+            <h1 className="text-lg font-bold text-gray-900">👨‍🍳 MY-AI ChefJen</h1>
           </div>
           {step !== STEPS.MEAL && (
             <button onClick={reset} className="text-xs text-orange-600 font-semibold hover:text-orange-700">
@@ -169,7 +169,18 @@ export default function MyChefPage() {
         {/* STEP 1 — Meal time */}
         {step === STEPS.MEAL && (
           <div className="text-center">
-            <div className="text-5xl mb-4">👨‍🍳</div>
+            <div className="w-full rounded-2xl overflow-hidden mb-6 relative" style={{height:'200px'}}>
+              <img
+                src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=800&q=80"
+                alt="Your personal chef"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 text-left">
+                <p className="text-white font-bold text-lg leading-tight">👨‍🍳 MY-AI ChefJen</p>
+                <p className="text-white/80 text-xs">Your personal chef, ready to cook with you.</p>
+              </div>
+            </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">What are we making?</h2>
             <p className="text-gray-400 text-sm mb-8">Tell your chef what meal you need.</p>
             <div className="grid grid-cols-3 gap-3">
