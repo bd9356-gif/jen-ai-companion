@@ -10,12 +10,12 @@ const supabase = createClient(
 const MENU_ITEMS = [
   { emoji: '🔐', title: 'MyRecipeVault',    subtitle: 'Your personal cooking library',              href: '/secret',    accent: '#f97316' },
   { emoji: '🍳', title: 'Explore Recipes',  subtitle: 'Browse the full library — swipe or scroll',  href: '/explore',   accent: '#f97316' },
-  { emoji: '❤️', title: 'MyFavorites',      subtitle: 'Videos, recipes, and ideas you love',        href: '/saved',     accent: '#e85d8a' },
-  { emoji: '🃏', title: 'My Recipe Cards',  subtitle: 'Quick reference cards for your go-to recipes', href: '/cards',   accent: '#f59e0b' },
+  { emoji: '❤️', title: 'MyFavorites',      subtitle: 'Where your best finds wait for you',         href: '/saved',     accent: '#e85d8a' },
+  { emoji: '🃏', title: 'MyRecipe Cards',   subtitle: 'Quick reference cards for your go-to recipes', href: '/cards',   accent: '#f59e0b' },
   { emoji: '🎬', title: 'Cooking Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',    accent: '#f97316' },
-  { emoji: '👨‍🍳', title: 'AI Chef Creations', subtitle: 'Gourmet recipes from your personal AI chef', href: '/topchef', accent: '#a855f7' },
+  { emoji: '👨‍🍳', title: 'MY-AI ChefJen',   subtitle: 'Your personal chef, ready to cook with you.', href: '/topchef', accent: '#a855f7' },
   { emoji: '📅', title: 'Meal Planner',     subtitle: 'Plan your meals for the week ahead',          href: '/weeklyplan', accent: '#14b8a6' },
-  { emoji: '🤖', title: 'MYchef test',        subtitle: 'Ask your personal AI chef anything',          href: '/chef',      accent: '#3b82f6' },
+  { emoji: '🤖', title: 'Ask-AI Anything',  subtitle: 'Instant answers, clearly explained.',         href: '/chef',      accent: '#3b82f6' },
 ]
 
 export default function KitchenPage() {
@@ -34,7 +34,7 @@ export default function KitchenPage() {
           <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="My Kitchen" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
           <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-            <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
+            <h1 className="text-2xl font-bold text-white leading-tight">🍳 MyKitchen</h1>
             <p className="text-sm text-white/80 mt-0.5 leading-snug">Everything you need — all in one place.</p>
           </div>
         </div>

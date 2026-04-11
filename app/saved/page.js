@@ -160,7 +160,7 @@ export default function FavoritesPage() {
           </div>
           {/* Tagline — more prominent */}
           <div className="bg-orange-50 border border-orange-100 rounded-xl px-3 py-2">
-            <p className="text-xs font-semibold text-orange-700">🗂️ Holding drawer — try before you keep. Review items before adding them to your Vault.</p>
+            <p className="text-xs font-semibold text-orange-700">🗂️ Where your best finds wait for you — review before adding to your Vault.</p>
           </div>
         </div>
       </header>
@@ -173,7 +173,7 @@ export default function FavoritesPage() {
             <div className="text-6xl mb-4">🗂️</div>
             <p className="text-gray-700 font-semibold mb-2">Nothing saved yet</p>
             <p className="text-gray-400 text-sm mb-6 max-w-xs mx-auto">
-              Recipes, videos, and AI creations you save while exploring will land here for review.
+              Anything you save while exploring will land here. Pick what you love, then add it to your Vault.
             </p>
             <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
               Explore Recipes
