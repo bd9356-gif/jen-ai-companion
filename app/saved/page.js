@@ -20,7 +20,7 @@ export default function FavoritesPage() {
   const [user, setUser] = useState(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [collapsed, setCollapsed] = useState({})
+  const [collapsed, setCollapsed] = useState({ recipe: true, video_recipe: true, video_education: true, ai_recipe: true, ai_answer: true })
   const [showMore, setShowMore] = useState({})
   const [batchMode, setBatchMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
@@ -65,7 +65,17 @@ export default function FavoritesPage() {
         category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
         tags: meta.tags || [],
         photo_url: item.thumbnail_url || '',
-        family_notes: `Added from My Favorites — ${item.source || ''}`,
+        family_notes: `Added from MyFavorites — ${item.source || ''}`,
+      })
+    }
+    if (item.type === 'ai_answer') {
+      const meta = item.metadata || {}
+      await supabase.from('notes').insert({
+        user_id: user.id,
+        title: item.title,
+        content: meta.answer || '',
+        question: meta.question || '',
+        source: 'ai',
       })
     }
     setItems(prev => prev.filter(i => i.id !== item.id))
@@ -143,7 +153,7 @@ export default function FavoritesPage() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <button onClick={() => { setPlayingId(null); window.location.href='/kitchen' }} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900">❤️ My Favorites</h1>
+              <h1 className="text-lg font-bold text-gray-900">❤️ MyFavorites</h1>
               {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
             </div>
             <div className="flex gap-2">
