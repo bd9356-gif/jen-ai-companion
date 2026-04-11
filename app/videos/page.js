@@ -96,7 +96,7 @@ export default function VideosPage() {
       .select('ref_id')
       .eq('user_id', userId)
       .eq('is_in_vault', false)
-      .eq('type', 'video')
+      .in('type', ['video_recipe', 'video_education'])
     setSavedIds(new Set((data || []).map(s => s.ref_id)))
   }
 
@@ -104,23 +104,25 @@ export default function VideosPage() {
     if (!user) return
     const videoId = String(video.id)
     if (savedIds.has(videoId)) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', videoId).eq('type', 'video')
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', videoId)
       setSavedIds(prev => { const n = new Set(prev); n.delete(videoId); return n })
     } else {
       const meta = metadata[video.id]
       const hasRecipe = meta?.ingredients?.length > 0
       await supabase.from('favorites').insert({
         user_id: user.id,
-        type: 'video',
+        type: hasRecipe ? 'video_recipe' : 'video_education',
         ref_id: videoId,
         title: video.title,
         thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
-        source: video._source === 'education' ? 'education' : 'cooking',
+        source: hasRecipe ? 'chef' : 'education',
         metadata: {
           channel: video.channel,
           duration: video.duration,
           youtube_id: video.youtube_id,
-          has_recipe: hasRecipe,
+          ingredients: meta?.ingredients || [],
+          instructions: meta?.instructions || '',
+          ai_summary: meta?.ai_summary || '',
         }
       })
       setSavedIds(prev => new Set([...prev, videoId]))
