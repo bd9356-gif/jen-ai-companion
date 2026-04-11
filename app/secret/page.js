@@ -210,27 +210,27 @@ function EducationVideoCard({ item, onDelete }) {
             className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
         </div>
       ) : (
-        <button onClick={() => setPlaying(true)} className="w-full text-left">
-          <div className="flex gap-3 p-4">
-            <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
-              {item.thumbnail_url ? (
-                <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl">📚</div>
-              )}
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                <span className="text-white text-xs">▶</span>
-              </div>
+        <div className="flex gap-3 p-4">
+          <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
+            {item.thumbnail_url ? (
+              <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-2xl">📚</div>
+            )}
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <span className="text-white text-xs">▶</span>
             </div>
-            <div className="flex-1 min-w-0">
+          </button>
+          <div className="flex-1 min-w-0">
+            <button onClick={() => setPlaying(true)} className="text-left w-full">
               <p className="font-semibold text-gray-900 truncate mb-1">{item.title}</p>
               {item.metadata?.channel && <p className="text-xs text-blue-600 mb-1">{item.metadata.channel}</p>}
               <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Videos Only</span>
-            </div>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(item.id) }}
-              className="shrink-0 text-gray-300 hover:text-red-400 text-xl self-start pt-1">×</button>
+            </button>
           </div>
-        </button>
+          <button onClick={() => onDelete(item.id)}
+            className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 text-2xl self-center">×</button>
+        </div>
       )}
     </div>
   )
