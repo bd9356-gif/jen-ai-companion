@@ -46,12 +46,11 @@ const PROTEIN_OPTIONS = [
   { label: 'Surprise me', emoji: '🎲', value: 'chef\'s choice' },
 ]
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
 export default function MyChefPage() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
   const [user, setUser] = useState(null)
   const [step, setStep] = useState(STEPS.MEAL)
   const [meal, setMeal] = useState(null)
