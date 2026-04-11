@@ -224,19 +224,7 @@ export default function FavoritesPage() {
                           <div key={item.id}
                             className={`transition-colors ${selected.has(item.id) ? 'bg-orange-50' : 'bg-white hover:bg-gray-50'}`}>
 
-                            {/* Inline video player */}
-                            {isPlaying && youtubeId && (
-                              <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-                                <iframe
-                                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
-                                  className="w-full h-full"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                />
-                                <button onClick={() => setPlayingId(null)}
-                                  className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
-                              </div>
-                            )}
+                            {/* No inline player - opens YouTube directly */}
 
                             <div className="flex gap-3 p-3">
                               {batchMode && (
@@ -274,11 +262,9 @@ export default function FavoritesPage() {
                                     {item.type === 'recipe' && item.ref_id && (
                                       <a href={`/recipes/${item.ref_id}`} className="text-xs text-orange-600 font-semibold">View →</a>
                                     )}
-                                    {youtubeId && !isPlaying && (
-                                      <button onClick={() => setPlayingId(item.id)} className="text-xs text-red-600 font-semibold">Watch ▶</button>
-                                    )}
-                                    {youtubeId && isPlaying && (
-                                      <button onClick={() => setPlayingId(null)} className="text-xs text-gray-500 font-semibold">Stop ■</button>
+                                    {youtubeId && (
+                                      <a href={`https://www.youtube.com/watch?v=${youtubeId}`} target="_blank" rel="noopener noreferrer"
+                                        className="text-xs text-red-600 font-semibold">Watch ▶</a>
                                     )}
                                     <button onClick={() => addToVault(item)}
                                       className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
