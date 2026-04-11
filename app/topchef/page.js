@@ -171,7 +171,7 @@ export default function MyChefPage() {
           <div className="text-center">
             <div className="w-full rounded-2xl overflow-hidden mb-6 relative" style={{height:'200px'}}>
               <img
-                src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=800&q=80"
+                src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
                 alt="Your personal chef"
                 className="w-full h-full object-cover"
               />
