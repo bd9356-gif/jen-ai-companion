@@ -857,6 +857,56 @@ export default function MyRecipeVaultPage() {
             className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold disabled:opacity-50">
             {importing ? '🤖 Extracting recipe...' : '📥 Import & Clean with AI'}
           </button>
+
+          {/* JSON Import */}
+          <div className="flex items-center gap-3 pt-2">
+            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400">or import a JSON file</span><div className="flex-1 h-px bg-gray-200" />
+          </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">📄</span>
+              <h2 className="text-sm font-bold text-gray-900">Import JSON File</h2>
+            </div>
+            <p className="text-xs text-gray-400 mb-4">Import a recipe exported from this app or any compatible JSON format. Fields: title, description, ingredients, instructions, category, tags.</p>
+            <input type="file" accept=".json,application/json" id="json-import-input" className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                try {
+                  const text = await file.text()
+                  const json = JSON.parse(text)
+                  // Support single recipe or array of recipes
+                  const recipes = Array.isArray(json) ? json : [json]
+                  let count = 0
+                  for (const r of recipes) {
+                    if (!r.title) continue
+                    await supabase.from('personal_recipes').insert({
+                      user_id: user.id,
+                      title: r.title || '',
+                      description: r.description || '',
+                      ingredients: r.ingredients || [],
+                      instructions: r.instructions || '',
+                      category: r.category || 'Imported',
+                      tags: r.tags || ['imported'],
+                      photo_url: r.photo_url || '',
+                      family_notes: r.family_notes || '',
+                    })
+                    count++
+                  }
+                  await loadRecipes(user.id)
+                  setView('list')
+                  alert(`✓ Imported ${count} recipe${count !== 1 ? 's' : ''} successfully!`)
+                } catch (err) {
+                  alert('Invalid JSON file. Please check the format and try again.')
+                }
+                e.target.value = ''
+              }}
+            />
+            <button onClick={() => document.getElementById('json-import-input').click()}
+              className="w-full py-3 bg-gray-800 text-white rounded-xl font-semibold text-sm hover:bg-gray-900 transition-colors">
+              📄 Choose JSON File
+            </button>
+          </div>
         </main>
       </div>
     )
