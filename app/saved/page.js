@@ -235,10 +235,10 @@ export default function FavoritesPage() {
                                 />
                                 <button onClick={() => setPlayingId(null)}
                                   className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold">✕</button>
+                                <button onClick={() => setPlayingId(null)} className="absolute bottom-0 left-0 right-0 py-3 bg-gray-900/90 text-white text-sm font-semibold text-center">
+                                  ✕ Close Video
+                                </button>
                               </div>
-                              <button onClick={() => setPlayingId(null)} className="w-full py-3 bg-gray-900 text-white text-sm font-semibold text-center">
-                                ✕ Close Video
-                              </button>
                             )}
 
                             <div className="flex gap-3 p-3">
