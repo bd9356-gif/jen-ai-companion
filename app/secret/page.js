@@ -502,6 +502,23 @@ export default function MyRecipeVaultPage() {
               className="flex items-center justify-center gap-2 w-full py-4 bg-gray-800 text-white rounded-2xl font-semibold text-sm mb-5">
               ▶ Watch on TikTok
             </a>
+          ) : isVideoEntry ? (
+            <div className="w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'200px'}}>
+              {viewing.photo_url ? (
+                <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <span className="text-5xl">📺</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(viewing.title)}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 px-5 py-3 bg-red-600 text-white rounded-xl font-semibold text-sm">
+                  ▶ Watch on YouTube
+                </a>
+              </div>
+            </div>
           ) : viewing.photo_url ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
