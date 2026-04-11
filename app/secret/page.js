@@ -193,7 +193,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   )
 }
 
-function EducationVideoCard({ item }) {
+function EducationVideoCard({ item, onDelete }) {
   const [playing, setPlaying] = useState(false)
   const youtubeId = item.metadata?.youtube_id
   return (
@@ -227,6 +227,8 @@ function EducationVideoCard({ item }) {
               {item.metadata?.channel && <p className="text-xs text-blue-600 mb-1">{item.metadata.channel}</p>}
               <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Videos Only</span>
             </div>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(item.id) }}
+              className="shrink-0 text-gray-300 hover:text-red-400 text-xl self-start pt-1">×</button>
           </div>
         </button>
       )}
@@ -323,6 +325,11 @@ export default function MyRecipeVaultPage() {
   async function loadEducationVideos(userId) {
     const { data } = await supabase.from('favorites').select('*').eq('user_id', userId).eq('is_in_vault', true).eq('type', 'video_education').order('created_at', { ascending: false })
     setEducationVideos(data || [])
+  }
+
+  async function deleteEducationVideo(id) {
+    await supabase.from('favorites').delete().eq('id', id)
+    setEducationVideos(prev => prev.filter(v => v.id !== id))
   }
 
   async function loadRecipes(userId) {
@@ -875,7 +882,6 @@ export default function MyRecipeVaultPage() {
                 try {
                   const text = await file.text()
                   const json = JSON.parse(text)
-                  // Support single recipe or array of recipes
                   const recipes = Array.isArray(json) ? json : [json]
                   let count = 0
                   for (const r of recipes) {
@@ -884,19 +890,17 @@ export default function MyRecipeVaultPage() {
                       user_id: user.id,
                       title: r.title || '',
                       description: r.description || '',
-                      ingredients: typeof r.ingredients === 'string' ? r.ingredients.split('\n').filter(Boolean).map(line => ({ name: line.trim(), measure: '' })) : Array.isArray(r.ingredients) ? r.ingredients.map(ing => typeof ing === 'string' ? { name: ing, measure: '' } : ing) : [],
+                      ingredients: r.ingredients || [],
                       instructions: r.instructions || '',
-                      category: Array.isArray(r.categories) && r.categories.length > 0 ? r.categories[0] : (r.category || 'Imported'),
+                      category: r.category || 'Imported',
                       tags: r.tags || ['imported'],
-                      photo_url: Array.isArray(r.images) && r.images.length > 0 ? r.images[0] : (r.photo_url || ''),
+                      photo_url: r.photo_url || '',
                       family_notes: r.family_notes || '',
-                      servings: r.servings || r.yield || 4,
                     })
                     count++
                   }
                   await loadRecipes(user.id)
                   setView('list')
-                  alert(`✓ Imported ${count} recipe${count !== 1 ? 's' : ''} successfully!`)
                 } catch (err) {
                   alert('Invalid JSON file. Please check the format and try again.')
                 }
@@ -1132,7 +1136,7 @@ export default function MyRecipeVaultPage() {
                   </div>
                   <div className="space-y-3">
                     {educationVideos.map(item => (
-                      <EducationVideoCard key={item.id} item={item} />
+                      <EducationVideoCard key={item.id} item={item} onDelete={deleteEducationVideo} />
                     ))}
                   </div>
                 </div>
