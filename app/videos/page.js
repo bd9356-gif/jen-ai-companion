@@ -106,7 +106,7 @@ export default function VideosPage() {
         user_id: user.id, type: metadata[video.id]?.ingredients?.length > 0 ? 'video_recipe' : 'video_education', ref_id: String(video.id),
         title: video.title,
         thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
-        source: video._source === 'education' ? 'education' : 'chef',
+        source: metadata[video.id]?.ingredients?.length > 0 ? 'chef' : 'education',
         metadata: { channel: video.channel, duration: video.duration, youtube_id: video.youtube_id, ingredients: metadata[video.id]?.ingredients || [], instructions: metadata[video.id]?.instructions || '', ai_summary: metadata[video.id]?.ai_summary || '' }
       })
       setSavedIds(prev => new Set([...prev, video.id]))
