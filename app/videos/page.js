@@ -107,7 +107,7 @@ export default function VideosPage() {
         title: video.title,
         thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
         source: video._source === 'education' ? 'education' : 'chef',
-        metadata: { channel: video.channel, duration: video.duration, youtube_id: video.youtube_id }
+        metadata: { channel: video.channel, duration: video.duration, youtube_id: video.youtube_id, ingredients: metadata[video.id]?.ingredients || [], instructions: metadata[video.id]?.instructions || '', ai_summary: metadata[video.id]?.ai_summary || '' }
       })
       setSavedIds(prev => new Set([...prev, video.id]))
     }

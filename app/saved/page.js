@@ -59,7 +59,7 @@ export default function FavoritesPage() {
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
         title: item.title,
-        description: meta.description || meta.channel || '',
+        description: meta.description || meta.ai_summary || meta.channel || '',
         ingredients: meta.ingredients || [],
         instructions: meta.instructions || '',
         category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
@@ -68,7 +68,6 @@ export default function FavoritesPage() {
         family_notes: `youtube_id:${meta.youtube_id || ''}|channel:${meta.channel || ''}|Added from MyFavorites`,
       })
     }
-    // Education videos stored in favorites with is_in_vault=true — no personal_recipe entry needed
     if (item.type === 'ai_answer') {
       const meta = item.metadata || {}
       await supabase.from('notes').insert({
