@@ -193,6 +193,47 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   )
 }
 
+function EducationVideoCard({ item }) {
+  const [playing, setPlaying] = useState(false)
+  const youtubeId = item.metadata?.youtube_id
+  return (
+    <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
+      {playing && youtubeId ? (
+        <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
+          <iframe
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+          <button onClick={() => setPlaying(false)}
+            className="absolute top-2 right-2 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm">✕</button>
+        </div>
+      ) : (
+        <button onClick={() => setPlaying(true)} className="w-full text-left">
+          <div className="flex gap-3 p-4">
+            <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
+              {item.thumbnail_url ? (
+                <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-2xl">📚</div>
+              )}
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <span className="text-white text-xs">▶</span>
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-gray-900 truncate mb-1">{item.title}</p>
+              {item.metadata?.channel && <p className="text-xs text-blue-600 mb-1">{item.metadata.channel}</p>}
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Education</span>
+            </div>
+          </div>
+        </button>
+      )}
+    </div>
+  )
+}
+
 function NoteCard({ note }) {
   const [expanded, setExpanded] = useState(false)
   return (
@@ -1040,26 +1081,7 @@ export default function MyRecipeVaultPage() {
                   </div>
                   <div className="space-y-3">
                     {educationVideos.map(item => (
-                      <a key={item.id}
-                        href={item.metadata?.youtube_id ? `https://youtube.com/watch?v=${item.metadata.youtube_id}` : '#'}
-                        target="_blank" rel="noopener noreferrer"
-                        className="w-full text-left bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden hover:border-blue-300 transition-colors block">
-                        <div className="flex gap-3 p-4">
-                          {item.thumbnail_url ? (
-                            <img src={item.thumbnail_url} alt={item.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                          ) : (
-                            <div className="w-16 h-16 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                              <span className="text-2xl">📚</span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate mb-1">{item.title}</p>
-                            {item.metadata?.channel && <p className="text-xs text-blue-600 mb-1">{item.metadata.channel}</p>}
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Education</span>
-                          </div>
-                          <span className="text-gray-300 text-xl self-center">▶</span>
-                        </div>
-                      </a>
+                      <EducationVideoCard key={item.id} item={item} />
                     ))}
                   </div>
                 </div>
