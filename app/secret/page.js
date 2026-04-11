@@ -201,7 +201,7 @@ function EducationVideoCard({ item, onDelete }) {
       {playing && youtubeId ? (
         <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
           <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -535,7 +535,7 @@ export default function MyRecipeVaultPage() {
           {resolvedYoutubeId ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5" style={{position:'relative', paddingBottom:'56.25%'}}>
               <iframe
-                src={`https://www.youtube.com/embed/${resolvedYoutubeId}`}
+                src={`https://www.youtube.com/embed/${resolvedYoutubeId}?rel=0&modestbranding=1`}
                 className="absolute inset-0 w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

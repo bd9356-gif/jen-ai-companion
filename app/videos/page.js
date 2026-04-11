@@ -203,7 +203,7 @@ export default function VideosPage() {
                     {playingId === video.id ? (
                       <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
                         <iframe
-                          src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1`}
+                          src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&rel=0&modestbranding=1`}
                           className="w-full h-full"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
