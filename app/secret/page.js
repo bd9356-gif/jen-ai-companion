@@ -884,12 +884,13 @@ export default function MyRecipeVaultPage() {
                       user_id: user.id,
                       title: r.title || '',
                       description: r.description || '',
-                      ingredients: r.ingredients || [],
+                      ingredients: Array.isArray(r.ingredients) ? r.ingredients.map(ing => typeof ing === 'string' ? { name: ing, measure: '' } : ing) : [],
                       instructions: r.instructions || '',
                       category: r.category || 'Imported',
                       tags: r.tags || ['imported'],
                       photo_url: r.photo_url || '',
                       family_notes: r.family_notes || '',
+                      servings: r.servings || r.yield || 4,
                     })
                     count++
                   }
