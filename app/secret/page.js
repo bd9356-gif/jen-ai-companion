@@ -225,7 +225,7 @@ function EducationVideoCard({ item }) {
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-900 truncate mb-1">{item.title}</p>
               {item.metadata?.channel && <p className="text-xs text-blue-600 mb-1">{item.metadata.channel}</p>}
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Education</span>
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Videos Only</span>
             </div>
           </div>
         </button>
@@ -1043,7 +1043,7 @@ export default function MyRecipeVaultPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">📺</span>
-                    <h2 className="text-sm font-bold text-gray-700">My References</h2>
+                    <h2 className="text-sm font-bold text-gray-700">Recipe Videos</h2>
                     <span className="text-xs text-gray-400">({videoRefs.length})</span>
                   </div>
                   <div className="space-y-3">
@@ -1061,7 +1061,7 @@ export default function MyRecipeVaultPage() {
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
                             {recipe.description && <p className="text-xs text-gray-400 truncate mb-1">{recipe.description}</p>}
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📺 My Reference</span>
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📺 Recipe Video</span>
                           </div>
                           <span className="text-gray-300 text-xl self-center">→</span>
                         </div>
@@ -1076,7 +1076,7 @@ export default function MyRecipeVaultPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">📚</span>
-                    <h2 className="text-sm font-bold text-gray-700">Education Videos</h2>
+                    <h2 className="text-sm font-bold text-gray-700">Videos Only</h2>
                     <span className="text-xs text-gray-400">({educationVideos.length})</span>
                   </div>
                   <div className="space-y-3">

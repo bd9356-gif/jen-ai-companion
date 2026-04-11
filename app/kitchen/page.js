@@ -12,7 +12,7 @@ const MENU_ITEMS = [
   { emoji: '🍳', title: 'Explore Recipes',  subtitle: 'Browse the full library — swipe or scroll',  href: '/explore',   accent: '#f97316' },
   { emoji: '❤️', title: 'MyFavorites',      subtitle: 'Where your best finds wait for you',         href: '/saved',     accent: '#e85d8a' },
   { emoji: '🃏', title: 'MyRecipe Cards',   subtitle: 'Quick reference cards for your go-to recipes', href: '/cards',   accent: '#f59e0b' },
-  { emoji: '🎬', title: 'Cooking Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',    accent: '#f97316' },
+  { emoji: '🎬', title: 'TopChef Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',    accent: '#f97316' },
   { emoji: '👨‍🍳', title: 'MY-AI ChefJen',   subtitle: 'Your personal chef, ready to cook with you.', href: '/topchef', accent: '#a855f7' },
   { emoji: '📅', title: 'Meal Planner',     subtitle: 'Plan your meals for the week ahead',          href: '/weeklyplan', accent: '#14b8a6' },
   { emoji: '🤖', title: 'Ask-AI Anything',  subtitle: 'Instant answers, clearly explained.',         href: '/chef',      accent: '#3b82f6' },

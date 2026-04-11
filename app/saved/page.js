@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 const GROUPS = [
   { key: 'recipe',          label: 'Recipes',           emoji: '🍽️', color: 'bg-orange-50 text-orange-700 border-orange-200' },
   { key: 'video_recipe',    label: 'Recipe Videos',     emoji: '🍳', color: 'bg-green-50 text-green-700 border-green-200' },
-  { key: 'video_education', label: 'Education Videos',  emoji: '📚', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  { key: 'video_education', label: 'Videos Only',      emoji: '📚', color: 'bg-blue-50 text-blue-700 border-blue-200' },
   { key: 'ai_recipe',       label: 'AI Recipes',        emoji: '🤖', color: 'bg-purple-50 text-purple-700 border-purple-200' },
   { key: 'ai_answer',       label: 'AI Answers',        emoji: '💬', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
 ]
