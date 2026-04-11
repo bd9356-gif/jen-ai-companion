@@ -196,6 +196,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 export default function MyRecipeVaultPage() {
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
+  const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
   const [viewing, setViewing] = useState(null)
@@ -225,6 +226,7 @@ export default function MyRecipeVaultPage() {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
       loadRecipes(session.user.id)
+      loadNotes(session.user.id)
       loadPinnedCards(session.user.id)
     })
   }, [])
@@ -243,6 +245,11 @@ export default function MyRecipeVaultPage() {
       await supabase.from('recipe_cards').insert({ user_id: user.id, recipe_id: id })
       setPinnedCards(prev => [...prev, id])
     }
+  }
+
+  async function loadNotes(userId) {
+    const { data } = await supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    setNotes(data || [])
   }
 
   async function loadRecipes(userId) {
@@ -898,8 +905,8 @@ export default function MyRecipeVaultPage() {
             </div>
           </div>
         ) : (() => {
-          const videoRefs = filtered.filter(r => r.category === 'Video Reference')
-          const regularRecipes = filtered.filter(r => r.category !== 'Video Reference')
+          const videoRefs = filtered.filter(r => r.category === 'Video Reference' || r.category === 'Recipe Videos')
+          const regularRecipes = filtered.filter(r => r.category !== 'Video Reference' && r.category !== 'Recipe Videos')
           return (
             <div className="space-y-6">
               {/* Regular Recipes */}
@@ -937,12 +944,12 @@ export default function MyRecipeVaultPage() {
                 </div>
               </div>
 
-              {/* Video References Section */}
+              {/* My References Section */}
               {videoRefs.length > 0 && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">📺</span>
-                    <h2 className="text-sm font-bold text-gray-700">Video References</h2>
+                    <h2 className="text-sm font-bold text-gray-700">My References</h2>
                     <span className="text-xs text-gray-400">({videoRefs.length})</span>
                   </div>
                   <div className="space-y-3">
@@ -960,11 +967,39 @@ export default function MyRecipeVaultPage() {
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
                             {recipe.description && <p className="text-xs text-gray-400 truncate mb-1">{recipe.description}</p>}
-                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📺 Video Reference</span>
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📺 My Reference</span>
                           </div>
                           <span className="text-gray-300 text-xl self-center">→</span>
                         </div>
                       </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* My Notes Section */}
+              {notes.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">💬</span>
+                    <h2 className="text-sm font-bold text-gray-700">My Notes</h2>
+                    <span className="text-xs text-gray-400">({notes.length})</span>
+                  </div>
+                  <div className="space-y-3">
+                    {notes.map(note => (
+                      <div key={note.id}
+                        className="w-full text-left bg-indigo-50 border border-indigo-100 rounded-2xl overflow-hidden">
+                        <div className="flex gap-3 p-4">
+                          <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                            <span className="text-xl">💬</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate mb-1">{note.title}</p>
+                            {note.question && <p className="text-xs text-indigo-600 mb-1 truncate">Q: {note.question}</p>}
+                            <p className="text-xs text-gray-500 line-clamp-2">{note.content}</p>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
