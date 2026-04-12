@@ -160,6 +160,12 @@ export default function CardsPage() {
             <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Cards</button>
             <div className="flex gap-2">
               <button onClick={() => removeCard(viewing.id)} className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Remove Card</button>
+              <button onClick={async () => {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) return
+                await supabase.from('my_picks').upsert({ user_id: session.user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'next' }, { onConflict: 'user_id,recipe_id' })
+                alert('Added to MyPicks! ✓')
+              }} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🎯 MyPicks</button>
               <a href={`/secret?recipe=${viewing.id}`} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
             </div>
           </div>
