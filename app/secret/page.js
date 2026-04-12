@@ -539,7 +539,7 @@ export default function MyRecipeVaultPage() {
             <div className="w-full rounded-2xl overflow-hidden mb-5">
               <div className="relative w-full" style={{position:'relative', paddingBottom:'56.25%'}}>
                 <iframe
-                  src={`https://www.youtube.com/embed/${resolvedYoutubeId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0`}
+                  src={`https://www.youtube.com/embed/${resolvedYoutubeId}`}
                   className="absolute inset-0 w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
