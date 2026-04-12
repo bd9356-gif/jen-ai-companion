@@ -323,14 +323,6 @@ export default function ExplorePage() {
                           </button>
                         )}
                       </div>
-                      {playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
-                        <div className="px-4 pb-2">
-                          <SafeYouTube
-                            videoId={swipeRecipes[0].youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}
-                            onClose={() => setPlayingId(null)}
-                          />
-                        </div>
-                      )}
                       <div className="p-4">
                         <h2 className="text-lg font-bold text-gray-900 mb-1">{swipeRecipes[0].title}</h2>
                         <div className="flex gap-2 mb-2">
@@ -360,6 +352,17 @@ export default function ExplorePage() {
                   <button onClick={() => handleSwipe('right')}
                     className="w-16 h-16 bg-white border-2 border-green-200 rounded-full flex items-center justify-center text-2xl hover:bg-green-50 transition-colors shadow-sm"
                     title="Save">♥</button>
+                </div>
+              </div>
+            )}
+            {/* Video overlay - outside card stack so it doesn't get clipped */}
+            {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
+              <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
+                <div className="w-full max-w-lg">
+                  <SafeYouTube
+                    videoId={swipeRecipes[0].youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}
+                    onClose={() => setPlayingId(null)}
+                  />
                 </div>
               </div>
             )}
