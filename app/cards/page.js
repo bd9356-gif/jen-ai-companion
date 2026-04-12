@@ -160,7 +160,7 @@ export default function CardsPage() {
             <button onClick={() => setViewing(null)} className="text-sm text-gray-400 hover:text-gray-600">← Cards</button>
             <div className="flex gap-2">
               <button onClick={() => removeCard(viewing.id)} className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Remove Card</button>
-              <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
+              <a href={`/secret?recipe=${viewing.id}`} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
             </div>
           </div>
         </header>
@@ -297,7 +297,7 @@ export default function CardsPage() {
 
           {/* Footer */}
           <div className="text-center">
-            <a href="/secret" className="text-sm text-orange-600 font-semibold">View full recipe in MyRecipeVault →</a>
+            <a href={`/secret?recipe=${viewing.id}`} className="text-sm text-orange-600 font-semibold">View full recipe in MyRecipeVault →</a>
           </div>
         </main>
       </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -359,6 +360,8 @@ function NoteCard({ note }) {
 }
 
 export default function MyRecipeVaultPage() {
+  const searchParams = useSearchParams()
+  const recipeParam = searchParams.get('recipe')
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [notes, setNotes] = useState([])
@@ -434,6 +437,11 @@ export default function MyRecipeVaultPage() {
     const { data } = await supabase.from('personal_recipes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     setRecipes(data || [])
     setLoading(false)
+    // Auto-open recipe if ?recipe=ID in URL
+    if (recipeParam && data) {
+      const match = data.find(r => r.id === recipeParam)
+      if (match) { setViewing(match); setView('detail') }
+    }
   }
 
   async function uploadPhoto(file, userId) {
@@ -678,8 +686,18 @@ export default function MyRecipeVaultPage() {
               </div>
             </div>
           ) : viewing.photo_url ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
+            <div className="w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
+              <button onClick={() => photoInputRef.current?.click()}
+                className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg font-semibold">
+                📷 Replace Photo
+              </button>
+              <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
+                onChange={async e => {
+                  const file = e.target.files?.[0]; if (!file) return
+                  const url = await uploadPhoto(file, user.id)
+                  if (url) await updateRecipe(viewing.id, { photo_url: url })
+                }} />
             </div>
           ) : (
             <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 mb-5 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
