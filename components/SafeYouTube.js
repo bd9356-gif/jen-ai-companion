@@ -21,14 +21,8 @@ export default function SafeYouTube({ videoId, onClose }) {
         }}
       />
       {onClose && (
-        <>
-          <button onClick={onClose}
-            className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold z-10">✕</button>
-          <button onClick={onClose}
-            className="absolute bottom-0 left-0 right-0 py-2 bg-gray-900 text-white text-sm font-semibold text-center z-10">
-            ✕ Close Video
-          </button>
-        </>
+        <button onClick={onClose}
+          className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold z-10">✕</button>
       )}
     </div>
   );
