@@ -1,0 +1,92 @@
+// generate-instructions.js
+// Run from project root: node generate-instructions.js
+// DO NOT commit this file to git
+
+require('dotenv').config({ path: '.env.local' })
+const { createClient } = require('@supabase/supabase-js')
+const Anthropic = require('@anthropic-ai/sdk')
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+async function generateInstructions() {
+  console.log('Fetching recipe videos with ingredients but no instructions...')
+
+  const { data: videos, error } = await supabase
+    .from('video_metadata')
+    .select('id, video_id, ingredients, instructions')
+    .not('ingredients', 'is', null)
+
+  if (error) { console.error('Error:', error); return }
+
+  const needsInstructions = videos.filter(v =>
+    Array.isArray(v.ingredients) && v.ingredients.length > 0 &&
+    (!v.instructions || v.instructions.trim() === '')
+  )
+
+  console.log(`Found ${needsInstructions.length} videos needing instructions\n`)
+
+  const videoIds = needsInstructions.map(v => v.video_id)
+  const { data: videoInfo } = await supabase
+    .from('cooking_videos')
+    .select('id, title')
+    .in('id', videoIds)
+
+  const titleMap = {}
+  ;(videoInfo || []).forEach(v => { titleMap[v.id] = v.title })
+
+  let updated = 0
+  let failed = 0
+
+  for (let i = 0; i < needsInstructions.length; i++) {
+    const video = needsInstructions[i]
+    const title = titleMap[video.video_id] || 'Unknown Recipe'
+    const ingredientList = video.ingredients
+      .map(ing => `${ing.measure || ''} ${ing.name}`.trim())
+      .join('\n')
+
+    console.log(`[${i+1}/${needsInstructions.length}] ${title}`)
+
+    try {
+      const message = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: `Write 5-7 step-by-step cooking instructions for "${title}" using these ingredients:\n\n${ingredientList}\n\nWrite each step on its own line. Be concise and practical. No numbering.`
+        }]
+      })
+
+      const instructions = message.content[0].text.trim()
+
+      const { error: updateError } = await supabase
+        .from('video_metadata')
+        .update({ instructions })
+        .eq('id', video.id)
+
+      if (updateError) {
+        console.error(`  ✗ Failed:`, updateError.message)
+        failed++
+      } else {
+        console.log(`  ✓ Done`)
+        updated++
+      }
+
+      await new Promise(r => setTimeout(r, 300))
+
+    } catch (err) {
+      console.error(`  ✗ Error:`, err.message)
+      failed++
+    }
+  }
+
+  console.log(`\n=== Complete ===`)
+  console.log(`Updated: ${updated}`)
+  console.log(`Failed:  ${failed}`)
+}
+
+generateInstructions()
