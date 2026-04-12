@@ -209,7 +209,7 @@ export default function VideosPage() {
                           allowFullScreen
                         />
                         <button onClick={() => setPlayingId(null)} className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold z-10">✕</button>
-                        <button onClick={() => setPlayingId(null)} className="absolute bottom-0 left-0 right-0 py-3 bg-gray-900/90 text-white text-sm font-semibold text-center">
+                        <button onClick={() => setPlayingId(null)} className="absolute bottom-0 left-0 right-0 py-6 bg-gray-900 text-white text-base font-bold text-center">
                           ✕ Close Video
                         </button>
                       </div>
