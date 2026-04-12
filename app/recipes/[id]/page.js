@@ -131,6 +131,14 @@ export default function RecipeDetailPage() {
             </a>
           </div>
         )}
+        {videoType === 'link' && (
+          <div className="mb-6">
+            <a href={recipe.youtube_url} target="_blank" rel="noopener noreferrer"
+              className="block w-full py-3 bg-gray-800 text-white rounded-2xl text-center text-sm font-semibold">
+              ▶ Watch Video ↗
+            </a>
+          </div>
+        )}
         {!videoType && recipe.thumbnail_url && (
           <div className="mb-6 rounded-2xl overflow-hidden" style={{height:'240px'}}>
             <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
