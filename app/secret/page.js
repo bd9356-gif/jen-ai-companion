@@ -610,7 +610,7 @@ export default function MyRecipeVaultPage() {
                 {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
               </button>
               <button onClick={async () => {
-                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'next' }, { onConflict: 'user_id,recipe_id' })
+                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'nice' }, { onConflict: 'user_id,recipe_id' })
                 showToast('Added to MyPicks ✓')
               }} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🎯 MyPicks</button>
               <button onClick={() => deleteRecipe(viewing.id)}
