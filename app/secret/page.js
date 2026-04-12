@@ -996,16 +996,20 @@ export default function MyRecipeVaultPage() {
                   let count = 0
                   for (const r of recipes) {
                     if (!r.title) continue
+                    // Get first valid web image URL from images array or photo_url
+                    const rawImages = Array.isArray(r.images) ? r.images : (r.photo_url ? [r.photo_url] : [])
+                    const photoUrl = rawImages.find(img => typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))) || ''
                     await supabase.from('personal_recipes').insert({
                       user_id: user.id,
                       title: r.title || '',
                       description: r.description || '',
-                      ingredients: r.ingredients || [],
+                      ingredients: typeof r.ingredients === 'string' ? r.ingredients.split('\n').filter(Boolean).map(line => ({ name: line.trim(), measure: '' })) : Array.isArray(r.ingredients) ? r.ingredients.map(ing => typeof ing === 'string' ? { name: ing, measure: '' } : ing) : [],
                       instructions: (r.instructions || '').replace(/^#+\s*/gm, '').replace(/\*\*/g, '').replace(/\*/g, '').replace(/^[-_]{3,}$/gm, '').replace(/\[.*?\]\(.*?\)/g, '').trim(),
-                      category: r.category || 'Imported',
+                      category: Array.isArray(r.categories) && r.categories.length > 0 ? r.categories[0] : (r.category || 'Imported'),
                       tags: r.tags || ['imported'],
-                      photo_url: r.photo_url || '',
+                      photo_url: photoUrl,
                       family_notes: r.family_notes || '',
+                      servings: r.servings || r.yield || 4,
                     })
                     count++
                   }
