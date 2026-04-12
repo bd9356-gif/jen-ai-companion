@@ -1,12 +1,13 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
+
+
 
 const SUGGESTED_TAGS = [
   'chicken','beef','pork','fish','seafood','pasta','pizza',
@@ -360,8 +361,6 @@ function NoteCard({ note }) {
 }
 
 export default function MyRecipeVaultPage() {
-  const searchParams = useSearchParams()
-  const recipeParam = searchParams.get('recipe')
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [notes, setNotes] = useState([])
@@ -438,6 +437,7 @@ export default function MyRecipeVaultPage() {
     setRecipes(data || [])
     setLoading(false)
     // Auto-open recipe if ?recipe=ID in URL
+    const recipeParam = new URLSearchParams(window.location.search).get('recipe')
     if (recipeParam && data) {
       const match = data.find(r => r.id === recipeParam)
       if (match) { setViewing(match); setView('detail') }
