@@ -201,7 +201,7 @@ function EducationVideoCard({ item, onDelete }) {
       {playing && youtubeId ? (
         <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
           <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3`}
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0`}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -231,58 +231,6 @@ function EducationVideoCard({ item, onDelete }) {
           </div>
           <button onClick={() => onDelete(item.id)}
             className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 text-2xl self-center">×</button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function RecipeVideoCard({ recipe, onDelete }) {
-  const [playing, setPlaying] = useState(false)
-  const familyNotes = recipe.family_notes || ''
-  const youtubeIdMatch = familyNotes.match(/youtube_id:([^|]+)/)
-  const youtubeId = youtubeIdMatch ? youtubeIdMatch[1].trim() : null
-  const channelMatch = familyNotes.match(/channel:([^|]+)/)
-  const channel = channelMatch ? channelMatch[1].trim() : null
-  return (
-    <div className="bg-green-50 border border-green-100 rounded-2xl overflow-hidden">
-      {playing && youtubeId ? (
-        <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0`}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-          <button onClick={() => setPlaying(false)}
-            className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold">✕</button>
-          <button onClick={() => setPlaying(false)} className="absolute bottom-0 left-0 right-0 py-3 bg-gray-900/90 text-white text-sm font-semibold text-center">
-            ✕ Close Video
-          </button>
-        </div>
-      ) : (
-        <div className="flex gap-3 p-4">
-          <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-green-100">
-            {recipe.photo_url ? (
-              <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-2xl">🍳</div>
-            )}
-            {youtubeId && (
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                <span className="text-white text-xs">▶</span>
-              </div>
-            )}
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
-            {channel && <p className="text-xs text-green-600 mb-1">{channel}</p>}
-            <span className="px-2 py-0.5 bg-green-100 text-green-600 rounded-full text-xs">🍳 Recipe Video</span>
-          </div>
-          {onDelete && (
-            <button onClick={() => onDelete(recipe.id)}
-              className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 text-2xl self-center">×</button>
-          )}
         </div>
       )}
     </div>
@@ -1169,11 +1117,24 @@ export default function MyRecipeVaultPage() {
                   </div>
                   <div className="space-y-3">
                     {videoRefs.map(recipe => (
-                      <RecipeVideoCard key={recipe.id} recipe={recipe} onDelete={async (id) => {
-                        await supabase.from('personal_recipes').delete().eq('id', id)
-                        const { data } = await supabase.from('personal_recipes').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-                        setRecipes(data || [])
-                      }} />
+                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
+                        className="w-full text-left bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden hover:border-blue-300 transition-colors">
+                        <div className="flex gap-3 p-4">
+                          {recipe.photo_url ? (
+                            <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                              <span className="text-2xl">📺</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
+                            {recipe.description && <p className="text-xs text-gray-400 truncate mb-1">{recipe.description}</p>}
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📺 Recipe Video</span>
+                          </div>
+                          <span className="text-gray-300 text-xl self-center">→</span>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </div>
