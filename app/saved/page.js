@@ -153,7 +153,7 @@ export default function FavoritesPage() {
         <div className="max-w-2xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <button onClick={() => { setPlayingId(null); window.location.href='/kitchen' }} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+              <button onClick={() => { setPlayingId(null); window.location.href='/kitchen' }} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
               <h1 className="text-lg font-bold text-gray-900">❤️ MyFavorites</h1>
               {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
             </div>
@@ -178,12 +178,12 @@ export default function FavoritesPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-4 pb-32">
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading...</div>
+          <div className="text-center py-20 text-gray-500">Loading...</div>
         ) : totalCount === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🗂️</div>
             <p className="text-gray-700 font-semibold mb-2">Nothing saved yet</p>
-            <p className="text-gray-400 text-sm mb-6 max-w-xs mx-auto">
+            <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
               Anything you save while exploring will land here. Pick what you love, then add it to your Vault.
             </p>
             <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
@@ -212,7 +212,7 @@ export default function FavoritesPage() {
                         {groupItems.length}
                       </span>
                     </div>
-                    <span className="text-gray-400 text-sm">{isCollapsed ? '▶' : '▼'}</span>
+                    <span className="text-gray-500 text-sm">{isCollapsed ? '▶' : '▼'}</span>
                   </button>
 
                   {!isCollapsed && (
@@ -258,7 +258,7 @@ export default function FavoritesPage() {
                                 <div className="flex items-start justify-between gap-2 mb-2">
                                   <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
                                   {!batchMode && (
-                                    <button onClick={() => removeItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl leading-none">×</button>
+                                    <button onClick={() => removeItem(item.id)} className="shrink-0 text-gray-400 hover:text-red-400 text-xl leading-none">×</button>
                                   )}
                                 </div>
                                 {!batchMode && (

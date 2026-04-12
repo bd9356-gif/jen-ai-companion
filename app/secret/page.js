@@ -58,7 +58,7 @@ function TagSelector({ tags, onChange }) {
           className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 hover:border-orange-300 transition-colors"
         >
           <span className="text-gray-500">{tags.length > 0 ? `${tags.length} tag${tags.length > 1 ? 's' : ''} selected` : 'Select tags...'}</span>
-          <span className="text-gray-400 text-xs ml-2">{open ? '▲' : '▼'}</span>
+          <span className="text-gray-500 text-xs ml-2">{open ? '▲' : '▼'}</span>
         </button>
 
         {open && (
@@ -158,7 +158,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
-        <p className="text-xs text-gray-400 mb-2">One per line — format: Flour - 2 cups</p>
+        <p className="text-xs text-gray-500 mb-2">One per line — format: Flour - 2 cups</p>
         <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
           placeholder="Flour - 2 cups&#10;Sugar - 1 cup&#10;Butter - 1/2 cup"
           rows={10}
@@ -167,7 +167,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Instructions</label>
-        <p className="text-xs text-gray-400 mb-2">One step per line</p>
+        <p className="text-xs text-gray-500 mb-2">One step per line</p>
         <textarea value={instructions} onChange={e => setInstructions(e.target.value)}
           placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients and stir"
           rows={12}
@@ -221,7 +221,7 @@ function EducationVideoCard({ item, onDelete }) {
             <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📚 Videos Only</span>
           </div>
           <button onClick={() => onDelete(item.id)}
-            className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 text-2xl self-center">×</button>
+            className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-400 text-2xl self-center">×</button>
         </div>
       )}
     </div>
@@ -261,7 +261,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
             <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">📺 Recipe Video</span>
           </div>
           <button onClick={() => onDelete(recipe.id)}
-            className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-400 text-2xl self-center">×</button>
+            className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-400 text-2xl self-center">×</button>
         </div>
       )}
 
@@ -325,7 +325,7 @@ function NoteCard({ note }) {
             <p className="font-semibold text-gray-900 truncate mb-1">{note.title}</p>
             {note.question && <p className="text-xs text-indigo-600 truncate">Q: {note.question}</p>}
           </div>
-          <span className="text-gray-400 text-sm shrink-0">{expanded ? '▲' : '▼'}</span>
+          <span className="text-gray-500 text-sm shrink-0">{expanded ? '▲' : '▼'}</span>
         </div>
       </button>
       {expanded && (
@@ -598,7 +598,7 @@ export default function MyRecipeVaultPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }}
-              className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+              className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <div className="flex gap-2">
               <button onClick={() => setView('edit')}
                 className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
@@ -674,7 +674,7 @@ export default function MyRecipeVaultPage() {
               onClick={() => photoInputRef.current?.click()}>
               <span className="text-3xl mb-2">📷</span>
               <p className="text-sm text-orange-600 font-semibold">Add a photo</p>
-              <p className="text-xs text-gray-400">Tap to upload</p>
+              <p className="text-xs text-gray-500">Tap to upload</p>
               <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
                 onChange={async e => {
                   const file = e.target.files?.[0]; if (!file) return
@@ -707,28 +707,28 @@ export default function MyRecipeVaultPage() {
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">🔪</p>
                     <p className="text-xs font-bold text-gray-900 mt-1">{viewing.prep_time}</p>
-                    <p className="text-xs text-gray-400">Prep Time</p>
+                    <p className="text-xs text-gray-500">Prep Time</p>
                   </div>
                 )}
                 {viewing.cooking_time && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">⏱</p>
                     <p className="text-xs font-bold text-gray-900 mt-1">{viewing.cooking_time}</p>
-                    <p className="text-xs text-gray-400">Cook Time</p>
+                    <p className="text-xs text-gray-500">Cook Time</p>
                   </div>
                 )}
                 {viewing.difficulty && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">📊</p>
                     <p className="text-xs font-bold text-gray-900 mt-1 capitalize">{viewing.difficulty}</p>
-                    <p className="text-xs text-gray-400">Difficulty</p>
+                    <p className="text-xs text-gray-500">Difficulty</p>
                   </div>
                 )}
                 {viewing.servings && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">👥</p>
                     <p className="text-xs font-bold text-gray-900 mt-1">{viewing.servings} servings</p>
-                    <p className="text-xs text-gray-400">Serves</p>
+                    <p className="text-xs text-gray-500">Serves</p>
                   </div>
                 )}
               </div>
@@ -745,7 +745,7 @@ export default function MyRecipeVaultPage() {
                     {['calories','protein','carbs','fat'].map(k => viewing.nutrition[k] && (
                       <div key={k} className="text-center">
                         <p className="text-xs font-bold text-orange-600">{viewing.nutrition[k]}</p>
-                        <p className="text-xs text-gray-400 capitalize">{k}</p>
+                        <p className="text-xs text-gray-500 capitalize">{k}</p>
                       </div>
                     ))}
                   </div>
@@ -808,7 +808,7 @@ export default function MyRecipeVaultPage() {
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
-            <button onClick={() => setView('detail')} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <button onClick={() => setView('detail')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">✏️ Edit Recipe</h1>
           </div>
         </header>
@@ -828,7 +828,7 @@ export default function MyRecipeVaultPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null) }}
-              className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+              className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">✨ AI Enhance</h1>
           </div>
         </header>
@@ -918,7 +918,7 @@ export default function MyRecipeVaultPage() {
                       {['calories','protein','carbs','fat'].map(k => generatedInfo.nutrition_estimate[k] && (
                         <div key={k} className="text-center bg-white rounded-lg p-2">
                           <p className="text-xs font-bold text-orange-700">{generatedInfo.nutrition_estimate[k]}</p>
-                          <p className="text-xs text-gray-400 capitalize">{k}</p>
+                          <p className="text-xs text-gray-500 capitalize">{k}</p>
                         </div>
                       ))}
                     </div>
@@ -939,7 +939,7 @@ export default function MyRecipeVaultPage() {
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
-            <button onClick={() => setView('list')} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">📥 Import Recipe</h1>
           </div>
         </header>
@@ -951,7 +951,7 @@ export default function MyRecipeVaultPage() {
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400">or paste text below</span><div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-500">or paste text below</span><div className="flex-1 h-px bg-gray-200" />
           </div>
           <div>
             <label className="text-sm font-bold text-gray-700 mb-2 block">Recipe Text</label>
@@ -965,14 +965,14 @@ export default function MyRecipeVaultPage() {
 
           {/* JSON Import */}
           <div className="flex items-center gap-3 pt-2">
-            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-400">or import a JSON file</span><div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-500">or import a JSON file</span><div className="flex-1 h-px bg-gray-200" />
           </div>
           <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg">📄</span>
               <h2 className="text-sm font-bold text-gray-900">Import JSON File</h2>
             </div>
-            <p className="text-xs text-gray-400 mb-4">Import a recipe exported from this app or any compatible JSON format. Fields: title, description, ingredients, instructions, category, tags.</p>
+            <p className="text-xs text-gray-500 mb-4">Import a recipe exported from this app or any compatible JSON format. Fields: title, description, ingredients, instructions, category, tags.</p>
             <input type="file" accept=".json,application/json" id="json-import-input" className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0]
@@ -1025,7 +1025,7 @@ export default function MyRecipeVaultPage() {
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
-            <button onClick={() => setView('list')} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">➕ Add Recipe</h1>
           </div>
         </header>
@@ -1041,7 +1041,7 @@ export default function MyRecipeVaultPage() {
                 ) : (
                   <><span className="text-3xl mb-2">📷</span>
                   <p className="text-sm text-orange-600 font-semibold">Browse & Upload Photo</p>
-                  <p className="text-xs text-gray-400">JPG, PNG, HEIC supported</p></>
+                  <p className="text-xs text-gray-500">JPG, PNG, HEIC supported</p></>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*,.heic" className="hidden"
                   onChange={e => {
@@ -1077,7 +1077,7 @@ export default function MyRecipeVaultPage() {
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
-              <p className="text-xs text-gray-400 mb-2">One per line — format: Flour - 2 cups</p>
+              <p className="text-xs text-gray-500 mb-2">One per line — format: Flour - 2 cups</p>
               <textarea placeholder="Flour - 2 cups&#10;Sugar - 1 cup&#10;Butter - 1/2 cup"
                 value={form.ingredients} onChange={e => setForm(f => ({...f, ingredients: e.target.value}))}
                 rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
@@ -1085,7 +1085,7 @@ export default function MyRecipeVaultPage() {
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Instructions</label>
-              <p className="text-xs text-gray-400 mb-2">One step per line</p>
+              <p className="text-xs text-gray-500 mb-2">One step per line</p>
               <textarea placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Combine wet and dry"
                 value={form.instructions} onChange={e => setForm(f => ({...f, instructions: e.target.value}))}
                 rows={12} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
@@ -1115,7 +1115,7 @@ export default function MyRecipeVaultPage() {
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
               <h1 className="text-lg font-bold text-gray-900">🔐 MyRecipeVault</h1>
             </div>
             <div className="flex gap-2">
@@ -1123,7 +1123,7 @@ export default function MyRecipeVaultPage() {
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mb-3">Your personal cooking library — private and only visible to you.</p>
+          <p className="text-xs text-gray-500 mb-3">Your personal cooking library — private and only visible to you.</p>
           <input type="text" placeholder="Search recipes..." value={searchText}
             onChange={e => setSearchText(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
@@ -1144,12 +1144,12 @@ export default function MyRecipeVaultPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading your vault...</div>
+          <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : recipes.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">🔐</p>
             <p className="text-gray-700 font-semibold mb-2">Your vault is empty</p>
-            <p className="text-gray-400 text-sm mb-6">Add your personal and family recipes — private and only visible to you</p>
+            <p className="text-gray-500 text-sm mb-6">Add your personal and family recipes — private and only visible to you</p>
             <div className="flex flex-col gap-3 items-center">
               <button onClick={() => setView('add')} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold w-48">+ Add a Recipe</button>
               <button onClick={() => setView('import')} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import a Recipe</button>
@@ -1162,9 +1162,9 @@ export default function MyRecipeVaultPage() {
             <div className="space-y-6">
               {/* Regular Recipes */}
               <div>
-                <p className="text-sm text-gray-400 mb-3">{regularRecipes.length} of {recipes.filter(r => r.category !== 'Video Reference').length} recipes</p>
+                <p className="text-sm text-gray-500 mb-3">{regularRecipes.length} of {recipes.filter(r => r.category !== 'Video Reference').length} recipes</p>
                 {regularRecipes.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-4">No recipes match your search</p>
+                  <p className="text-sm text-gray-500 text-center py-4">No recipes match your search</p>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {regularRecipes.map(recipe => (
@@ -1180,7 +1180,7 @@ export default function MyRecipeVaultPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
-                          {recipe.description && <p className="text-xs text-gray-400 truncate mb-1">{recipe.description}</p>}
+                          {recipe.description && <p className="text-xs text-gray-500 truncate mb-1">{recipe.description}</p>}
                           <div className="flex flex-wrap gap-1">
                             {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
                             {(recipe.tags || []).slice(0, 3).map(tag => (
@@ -1188,7 +1188,7 @@ export default function MyRecipeVaultPage() {
                             ))}
                           </div>
                         </div>
-                        <span className="text-gray-300 text-xl self-center">→</span>
+                        <span className="text-gray-400 text-xl self-center">→</span>
                       </div>
                     </button>
                   ))}
@@ -1201,7 +1201,7 @@ export default function MyRecipeVaultPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">📺</span>
                     <h2 className="text-sm font-bold text-gray-700">Recipe Videos</h2>
-                    <span className="text-xs text-gray-400">({videoRefs.length})</span>
+                    <span className="text-xs text-gray-500">({videoRefs.length})</span>
                   </div>
                   <div className="space-y-3">
                     {videoRefs.map(recipe => (
@@ -1220,7 +1220,7 @@ export default function MyRecipeVaultPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">📚</span>
                     <h2 className="text-sm font-bold text-gray-700">Videos Only</h2>
-                    <span className="text-xs text-gray-400">({educationVideos.length})</span>
+                    <span className="text-xs text-gray-500">({educationVideos.length})</span>
                   </div>
                   <div className="space-y-3">
                     {educationVideos.map(item => (
@@ -1236,7 +1236,7 @@ export default function MyRecipeVaultPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">💬</span>
                     <h2 className="text-sm font-bold text-gray-700">My Notes</h2>
-                    <span className="text-xs text-gray-400">({notes.length})</span>
+                    <span className="text-xs text-gray-500">({notes.length})</span>
                   </div>
                   <div className="space-y-3">
                     {notes.map(note => (

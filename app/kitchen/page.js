@@ -56,7 +56,7 @@ export default function KitchenPage() {
                   <p className="text-sm font-semibold text-gray-900 leading-tight">{item.title}</p>
                   <p className="text-xs text-gray-600 mt-0.5 leading-snug">{item.subtitle}</p>
                 </div>
-                <span className="text-gray-300 text-lg font-light">›</span>
+                <span className="text-gray-400 text-lg font-light">›</span>
               </div>
             </button>
           ))}

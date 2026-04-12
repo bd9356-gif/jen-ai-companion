@@ -156,10 +156,10 @@ export default function VideosPage() {
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center gap-2 mb-1">
-            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">🎬 TopChef Videos</h1>
           </div>
-          <p className="text-xs text-gray-400 mb-3">{totalNonShort} videos from top YouTube channels</p>
+          <p className="text-xs text-gray-500 mb-3">{totalNonShort} videos from top YouTube channels</p>
           <input type="text" placeholder="Search videos..." value={search}
             onChange={e => { setSearch(e.target.value); setShowCount(10) }}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3" />
@@ -189,10 +189,10 @@ export default function VideosPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-4">
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Loading videos...</div>
+          <div className="text-center py-20 text-gray-500">Loading videos...</div>
         ) : (
           <>
-            <p className="text-sm text-gray-400 mb-4">{filtered.length} videos</p>
+            <p className="text-sm text-gray-500 mb-4">{filtered.length} videos</p>
             <div className="space-y-4">
               {visible.map(video => {
                 const meta = metadata[video.id]
@@ -219,7 +219,7 @@ export default function VideosPage() {
                     <div className="p-4">
                       <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1">{video.title}</h3>
                       <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
-                      <p className="text-xs text-gray-400 mt-0.5 mb-3">{viewCount(video.view_count)}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 mb-3">{viewCount(video.view_count)}</p>
                       <div className="flex items-center flex-wrap gap-3">
                         <button onClick={() => toggleExpand(video.id)} className="text-sm text-orange-600 font-semibold hover:text-orange-800">
                           {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
@@ -228,17 +228,17 @@ export default function VideosPage() {
                           <span className="text-xs font-semibold px-2 py-0.5 bg-green-50 text-green-700 rounded-full border border-green-200">🍳 Recipe Video</span>
                         )}
                         {!hasRecipe && meta !== undefined && (
-                          <span className="text-xs font-semibold px-2 py-0.5 bg-gray-50 text-gray-400 rounded-full border border-gray-200">📝 Video Only</span>
+                          <span className="text-xs font-semibold px-2 py-0.5 bg-gray-50 text-gray-500 rounded-full border border-gray-200">📝 Video Only</span>
                         )}
                         <button onClick={() => toggleSave(video)}
-                          className={`text-sm font-semibold transition-colors ml-auto ${savedIds.has(videoId) ? 'text-orange-600' : 'text-gray-400 hover:text-orange-600'}`}>
+                          className={`text-sm font-semibold transition-colors ml-auto ${savedIds.has(videoId) ? 'text-orange-600' : 'text-gray-500 hover:text-orange-600'}`}>
                           {savedIds.has(videoId) ? '♥ Saved' : '♡ Save'}
                         </button>
                       </div>
                       {isExpanded && (
                         <div className="mt-4 border-t border-gray-100 pt-4">
                           {!meta ? (
-                            <p className="text-sm text-gray-400 italic">No details available.</p>
+                            <p className="text-sm text-gray-500 italic">No details available.</p>
                           ) : (
                             <>
                               {meta.ai_summary && (
@@ -281,7 +281,7 @@ export default function VideosPage() {
                                 </>
                               )}
                               {!hasRecipe && !meta.ai_summary && (
-                                <p className="text-sm text-gray-400 italic">No details available.</p>
+                                <p className="text-sm text-gray-500 italic">No details available.</p>
                               )}
                             </>
                           )}
