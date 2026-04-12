@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -35,7 +34,6 @@ export default function ExplorePage() {
   const [savedThisSession, setSavedThisSession] = useState(0)
   const [skippedThisSession, setSkippedThisSession] = useState(0)
   const [history, setHistory] = useState([])
-  const [playingId, setPlayingId] = useState(null)
   const dragStartX = useRef(0)
   const dragStartY = useRef(0)
   const isDragging = useRef(false)
@@ -101,7 +99,7 @@ export default function ExplorePage() {
         thumbnail_url: recipe?.thumbnail_url || '',
         source: 'explore',
         is_in_vault: false,
-        metadata: { category: recipe?.category, cuisine: recipe?.cuisine, youtube_url: recipe?.youtube_url || '' }
+        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
       })
       setSavedIds(prev => new Set([...prev, id]))
     }
@@ -200,7 +198,7 @@ export default function ExplorePage() {
         thumbnail_url: recipe?.thumbnail_url || '',
         source: 'explore',
         is_in_vault: false,
-        metadata: { category: recipe?.category, cuisine: recipe?.cuisine, youtube_url: recipe?.youtube_url || '' }
+        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
       })
       setSavedIds(prev => new Set([...prev, id]))
     }
@@ -317,10 +315,9 @@ export default function ExplorePage() {
                           <div className="absolute top-4 right-4 bg-red-400 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-red-500 rotate-[12deg]">SKIP ✕</div>
                         )}
                         {swipeRecipes[0].youtube_url && (
-                          <button onClick={() => setPlayingId(swipeRecipes[0].id)}
-                            className="absolute top-3 right-3 bg-red-600 rounded-full w-8 h-8 flex items-center justify-center shadow-md">
+                          <div className="absolute top-3 right-3 bg-red-600 rounded-full w-7 h-7 flex items-center justify-center">
                             <span className="text-white text-xs">▶</span>
-                          </button>
+                          </div>
                         )}
                       </div>
                       <div className="p-4">
@@ -355,30 +352,14 @@ export default function ExplorePage() {
                 </div>
               </div>
             )}
-            {/* Video overlay - outside card stack so it doesn't get clipped */}
-            {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
-              <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
-                <div className="w-full max-w-lg">
-                  <SafeYouTube
-                    videoId={swipeRecipes[0].youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}
-                    onClose={() => setPlayingId(null)}
-                  />
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {filtered.map(recipe => (
                 <div key={recipe.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
-                  {playingId === recipe.id && recipe.youtube_url ? (
-                    <SafeYouTube
-                      videoId={recipe.youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}
-                      onClose={() => setPlayingId(null)}
-                    />
-                  ) : (
-                    <div className="relative" style={{height: '120px'}} onClick={() => recipe.youtube_url && setPlayingId(recipe.id)}>
+                  <a href={`/recipes/${recipe.id}`}>
+                    <div style={{height: '120px'}}>
                       {recipe.thumbnail_url ? (
                         <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
                       ) : (
@@ -386,21 +367,16 @@ export default function ExplorePage() {
                           <span className="text-3xl">🍽️</span>
                         </div>
                       )}
-                      {recipe.youtube_url && (
-                        <div className="absolute top-2 right-2 bg-red-600 rounded-full w-6 h-6 flex items-center justify-center">
-                          <span className="text-white text-xs">▶</span>
-                        </div>
-                      )}
                     </div>
-                  )}
+                  </a>
                   <div className="p-3">
                     <a href={`/recipes/${recipe.id}`}>
                       <p className="text-sm font-semibold text-gray-900 leading-tight mb-1 line-clamp-2">{recipe.title}</p>
                     </a>
-                    <p className="text-xs text-gray-500 mb-2">{recipe.cuisine || recipe.category}</p>
+                    <p className="text-xs text-gray-400 mb-2">{recipe.cuisine || recipe.category}</p>
                     <div className="flex items-center justify-between">
                       {metadata[recipe.id]?.difficulty_level && (
-                        <span className="text-xs text-gray-500">{diffLabel[metadata[recipe.id].difficulty_level]}</span>
+                        <span className="text-xs text-gray-400">{diffLabel[metadata[recipe.id].difficulty_level]}</span>
                       )}
                       <button onClick={() => toggleSave(recipe.id)} className={`text-lg ml-auto ${savedIds.has(recipe.id) ? 'text-red-500' : 'text-gray-300'}`}>
                         ♥
