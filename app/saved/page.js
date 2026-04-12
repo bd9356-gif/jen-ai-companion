@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const GROUPS = [
   { key: 'recipe',          label: 'Recipes',        emoji: '🍽️', color: 'bg-orange-50 text-orange-700 border-orange-200' },
@@ -226,19 +227,7 @@ export default function FavoritesPage() {
 
                             {/* Inline video player */}
                             {isPlaying && youtubeId && (
-                              <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-                                <iframe
-                                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3`}
-                                  className="w-full h-full"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                />
-                                <button onClick={() => setPlayingId(null)}
-                                  className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold">✕</button>
-                                <button onClick={() => setPlayingId(null)} className="absolute bottom-0 left-0 right-0 py-6 bg-gray-900 text-white text-base font-bold text-center">
-                                  ✕ Close Video
-                                </button>
-                              </div>
+                              <SafeYouTube videoId={youtubeId} onClose={() => setPlayingId(null)} />
                             )}
 
                             <div className="flex gap-3 p-3">

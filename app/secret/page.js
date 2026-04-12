@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -201,19 +202,7 @@ function EducationVideoCard({ item, onDelete }) {
   return (
     <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
       {playing && youtubeId ? (
-        <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0`}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-          <button onClick={() => setPlaying(false)}
-            className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold">✕</button>
-          <button onClick={() => setPlaying(false)} className="absolute bottom-0 left-0 right-0 py-6 bg-gray-900 text-white text-base font-bold text-center">
-            ✕ Close Video
-          </button>
-        </div>
+        <SafeYouTube videoId={youtubeId} onClose={() => setPlaying(false)} />
       ) : (
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
@@ -252,19 +241,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
     <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
       {/* Video player */}
       {playing && youtubeId ? (
-        <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-          <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}`}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-          <button onClick={() => setPlaying(false)}
-            className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold">✕</button>
-          <button onClick={() => setPlaying(false)} className="absolute bottom-0 left-0 right-0 py-6 bg-gray-900 text-white text-base font-bold text-center">
-            ✕ Close Video
-          </button>
-        </div>
+        <SafeYouTube videoId={youtubeId} onClose={() => setPlaying(false)} />
       ) : (
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
@@ -641,18 +618,7 @@ export default function MyRecipeVaultPage() {
           {/* Video player for video entries */}
           {resolvedYoutubeId && showVideo ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5">
-              <div className="relative w-full" style={{position:'relative', paddingBottom:'56.25%'}}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${resolvedYoutubeId}`}
-                  className="absolute inset-0 w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <button onClick={() => setShowVideo(false)}
-                className="w-full py-6 bg-gray-900 text-white text-base font-bold text-center">
-                ✕ Close Video
-              </button>
+              <SafeYouTube videoId={resolvedYoutubeId} onClose={() => setShowVideo(false)} />
             </div>
           ) : resolvedYoutubeId && !showVideo ? (
             <button onClick={() => setShowVideo(true)}
