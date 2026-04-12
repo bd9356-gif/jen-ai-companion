@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -201,18 +202,7 @@ export default function VideosPage() {
                 return (
                   <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
                     {playingId === video.id ? (
-                      <div className="relative w-full bg-black" style={{aspectRatio:'16/9'}}>
-                        <iframe
-                          src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&fs=0`}
-                          className="w-full h-full"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                        <button onClick={() => setPlayingId(null)} className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold z-10">✕</button>
-                        <button onClick={() => setPlayingId(null)} className="absolute bottom-0 left-0 right-0 py-6 bg-gray-900 text-white text-base font-bold text-center">
-                          ✕ Close Video
-                        </button>
-                      </div>
+                      <SafeYouTube videoId={video.youtube_id} onClose={() => setPlayingId(null)} />
                     ) : (
                       <button onClick={() => setPlayingId(video.id)} className="w-full relative block group">
                         <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`} alt={video.title} className="w-full object-cover" style={{height:'192px'}} />
