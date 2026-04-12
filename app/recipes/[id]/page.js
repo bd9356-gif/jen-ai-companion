@@ -114,6 +114,7 @@ export default function RecipeDetailPage() {
               src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}`}
               className="w-full h-full"
               allowFullScreen
+              sandbox="allow-scripts allow-same-origin"
             />
           </div>
         )}
