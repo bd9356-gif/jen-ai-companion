@@ -270,6 +270,7 @@ export default function MyRecipeVaultPage() {
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
   const [viewing, setViewing] = useState(null)
+  const [showVideo, setShowVideo] = useState(true)
   const [searchTag, setSearchTag] = useState('')
   const [searchText, setSearchText] = useState('')
   const [enhancing, setEnhancing] = useState(false)
@@ -387,6 +388,7 @@ export default function MyRecipeVaultPage() {
     if (data) {
       setRecipes(prev => prev.map(r => r.id === id ? {...r, ...data} : r))
       setViewing({...data})
+      setShowVideo(true)
     }
     return data
   }
@@ -533,15 +535,26 @@ export default function MyRecipeVaultPage() {
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
           {/* Video player for video entries */}
-          {resolvedYoutubeId ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{position:'relative', paddingBottom:'56.25%'}}>
-              <iframe
-                src={`https://www.youtube.com/embed/${resolvedYoutubeId}?rel=0&modestbranding=1&iv_load_policy=3`}
-                className="absolute inset-0 w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+          {resolvedYoutubeId && showVideo ? (
+            <div className="w-full rounded-2xl overflow-hidden mb-5">
+              <div className="relative w-full" style={{position:'relative', paddingBottom:'56.25%'}}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${resolvedYoutubeId}?rel=0&modestbranding=1&iv_load_policy=3`}
+                  className="absolute inset-0 w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <button onClick={() => setShowVideo(false)}
+                className="w-full py-3 bg-gray-900 text-white text-sm font-semibold text-center">
+                ✕ Close Video
+              </button>
             </div>
+          ) : resolvedYoutubeId && !showVideo ? (
+            <button onClick={() => setShowVideo(true)}
+              className="w-full py-3 bg-gray-800 text-white text-sm font-semibold text-center rounded-2xl mb-5">
+              ▶ Show Video
+            </button>
           ) : isMp4 ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5">
               <video src={watchUrl} controls className="w-full rounded-2xl bg-black" style={{maxHeight:'300px'}} />
