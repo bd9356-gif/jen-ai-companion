@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -34,6 +35,7 @@ export default function ExplorePage() {
   const [savedThisSession, setSavedThisSession] = useState(0)
   const [skippedThisSession, setSkippedThisSession] = useState(0)
   const [history, setHistory] = useState([])
+  const [playingId, setPlayingId] = useState(null)
   const dragStartX = useRef(0)
   const dragStartY = useRef(0)
   const isDragging = useRef(false)
@@ -82,31 +84,34 @@ export default function ExplorePage() {
   }
 
   async function loadSaved(userId) {
-    const { data } = await supabase.from('favorites').select('ref_id').eq('user_id', userId).eq('is_in_vault', false)
-    setSavedIds(new Set((data || []).map(s => s.ref_id)))
+    const { data } = await supabase.from('favorites').select('ref_id').eq('user_id', userId).eq('type', 'recipe').eq('is_in_vault', false)
+    setSavedIds(new Set((data || []).map(s => String(s.ref_id))))
   }
 
   async function saveRecipe(recipeId) {
     if (!user) { window.location.href = '/login'; return }
-    if (!savedIds.has(recipeId)) {
-      const recipe = recipes.find(r => r.id === recipeId)
+    const id = String(recipeId)
+    if (!savedIds.has(id)) {
+      const recipe = recipes.find(r => String(r.id) === id)
       await supabase.from('favorites').insert({
         user_id: user.id,
         type: 'recipe',
-        ref_id: String(recipeId),
+        ref_id: id,
         title: recipe?.title || '',
         thumbnail_url: recipe?.thumbnail_url || '',
         source: 'explore',
-        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
+        is_in_vault: false,
+        metadata: { category: recipe?.category, cuisine: recipe?.cuisine, youtube_url: recipe?.youtube_url || '' }
       })
-      setSavedIds(prev => new Set([...prev, recipeId]))
+      setSavedIds(prev => new Set([...prev, id]))
     }
   }
 
   async function unsaveRecipe(recipeId) {
     if (!user) return
-    await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(recipeId))
-    setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
+    const id = String(recipeId)
+    await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', id).eq('type', 'recipe')
+    setSavedIds(prev => { const n = new Set(prev); n.delete(id); return n })
   }
 
   useEffect(() => {
@@ -181,21 +186,23 @@ export default function ExplorePage() {
 
   async function toggleSave(recipeId) {
     if (!user) { window.location.href = '/login'; return }
-    if (savedIds.has(recipeId)) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(recipeId))
-      setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
+    const id = String(recipeId)
+    if (savedIds.has(id)) {
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', id).eq('type', 'recipe')
+      setSavedIds(prev => { const n = new Set(prev); n.delete(id); return n })
     } else {
-      const recipe = recipes.find(r => r.id === recipeId)
+      const recipe = recipes.find(r => String(r.id) === id)
       await supabase.from('favorites').insert({
         user_id: user.id,
         type: 'recipe',
-        ref_id: String(recipeId),
+        ref_id: id,
         title: recipe?.title || '',
         thumbnail_url: recipe?.thumbnail_url || '',
         source: 'explore',
-        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
+        is_in_vault: false,
+        metadata: { category: recipe?.category, cuisine: recipe?.cuisine, youtube_url: recipe?.youtube_url || '' }
       })
-      setSavedIds(prev => new Set([...prev, recipeId]))
+      setSavedIds(prev => new Set([...prev, id]))
     }
   }
 
@@ -310,11 +317,20 @@ export default function ExplorePage() {
                           <div className="absolute top-4 right-4 bg-red-400 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-red-500 rotate-[12deg]">SKIP ✕</div>
                         )}
                         {swipeRecipes[0].youtube_url && (
-                          <div className="absolute top-3 right-3 bg-red-600 rounded-full w-7 h-7 flex items-center justify-center">
+                          <button onClick={() => setPlayingId(swipeRecipes[0].id)}
+                            className="absolute top-3 right-3 bg-red-600 rounded-full w-8 h-8 flex items-center justify-center shadow-md">
                             <span className="text-white text-xs">▶</span>
-                          </div>
+                          </button>
                         )}
                       </div>
+                      {playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
+                        <div className="px-4 pb-2">
+                          <SafeYouTube
+                            videoId={swipeRecipes[0].youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}
+                            onClose={() => setPlayingId(null)}
+                          />
+                        </div>
+                      )}
                       <div className="p-4">
                         <h2 className="text-lg font-bold text-gray-900 mb-1">{swipeRecipes[0].title}</h2>
                         <div className="flex gap-2 mb-2">
@@ -353,8 +369,13 @@ export default function ExplorePage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {filtered.map(recipe => (
                 <div key={recipe.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
-                  <a href={`/recipes/${recipe.id}`}>
-                    <div style={{height: '120px'}}>
+                  {playingId === recipe.id && recipe.youtube_url ? (
+                    <SafeYouTube
+                      videoId={recipe.youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}
+                      onClose={() => setPlayingId(null)}
+                    />
+                  ) : (
+                    <div className="relative" style={{height: '120px'}} onClick={() => recipe.youtube_url && setPlayingId(recipe.id)}>
                       {recipe.thumbnail_url ? (
                         <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
                       ) : (
@@ -362,16 +383,21 @@ export default function ExplorePage() {
                           <span className="text-3xl">🍽️</span>
                         </div>
                       )}
+                      {recipe.youtube_url && (
+                        <div className="absolute top-2 right-2 bg-red-600 rounded-full w-6 h-6 flex items-center justify-center">
+                          <span className="text-white text-xs">▶</span>
+                        </div>
+                      )}
                     </div>
-                  </a>
+                  )}
                   <div className="p-3">
                     <a href={`/recipes/${recipe.id}`}>
                       <p className="text-sm font-semibold text-gray-900 leading-tight mb-1 line-clamp-2">{recipe.title}</p>
                     </a>
-                    <p className="text-xs text-gray-400 mb-2">{recipe.cuisine || recipe.category}</p>
+                    <p className="text-xs text-gray-500 mb-2">{recipe.cuisine || recipe.category}</p>
                     <div className="flex items-center justify-between">
                       {metadata[recipe.id]?.difficulty_level && (
-                        <span className="text-xs text-gray-400">{diffLabel[metadata[recipe.id].difficulty_level]}</span>
+                        <span className="text-xs text-gray-500">{diffLabel[metadata[recipe.id].difficulty_level]}</span>
                       )}
                       <button onClick={() => toggleSave(recipe.id)} className={`text-lg ml-auto ${savedIds.has(recipe.id) ? 'text-red-500' : 'text-gray-300'}`}>
                         ♥
