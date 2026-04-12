@@ -1001,7 +1001,7 @@ export default function MyRecipeVaultPage() {
                       title: r.title || '',
                       description: r.description || '',
                       ingredients: r.ingredients || [],
-                      instructions: r.instructions || '',
+                      instructions: (r.instructions || '').replace(/^#+\s*/gm, '').replace(/\*\*/g, '').trim(),
                       category: r.category || 'Imported',
                       tags: r.tags || ['imported'],
                       photo_url: r.photo_url || '',
