@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -109,13 +110,8 @@ export default function RecipeDetailPage() {
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
         {/* Video */}
         {videoType === 'youtube' && (
-          <div className="mb-6 rounded-2xl overflow-hidden" style={{aspectRatio:'16/9'}}>
-            <iframe
-              src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}`}
-              className="w-full h-full"
-              allowFullScreen
-              sandbox="allow-scripts allow-same-origin"
-            />
+          <div className="mb-6">
+            <SafeYouTube videoId={getYouTubeId(recipe.youtube_url)} onClose={null} />
           </div>
         )}
         {videoType === 'mp4' && (
