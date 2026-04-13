@@ -86,7 +86,7 @@ export default function FavoritesPage() {
         category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
         tags: meta.tags || [],
         photo_url: item.thumbnail_url || '',
-        family_notes: `youtube_id:${meta.youtube_id || ''}|channel:${meta.channel || ''}|youtube_url:${youtube_url}|Added from MyFavorites`,
+        family_notes: 'Added from MyFavorites',
       })
     }
     if (item.type === 'ai_answer') {
