@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -202,7 +202,7 @@ function EducationVideoCard({ item, onDelete }) {
   return (
     <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
       {playing && youtubeId ? (
-        <UnifiedVideoPlayer url={`https://www.youtube.com/watch?v=${youtubeId}`} onClose={() => setPlaying(false)} />
+        <SafeYouTube videoId={youtubeId} onClose={() => setPlaying(false)} />
       ) : (
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
@@ -241,7 +241,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
     <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
       {/* Video player */}
       {playing && youtubeId ? (
-        <UnifiedVideoPlayer url={`https://www.youtube.com/watch?v=${youtubeId}`} onClose={() => setPlaying(false)} />
+        <SafeYouTube videoId={youtubeId} onClose={() => setPlaying(false)} />
       ) : (
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
@@ -610,7 +610,7 @@ export default function MyRecipeVaultPage() {
                 {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
               </button>
               <button onClick={async () => {
-                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
+                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'next' }, { onConflict: 'user_id,recipe_id' })
                 showToast('Added to MyPicks ✓')
               }} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🎯 MyPicks</button>
               <button onClick={() => deleteRecipe(viewing.id)}
@@ -619,22 +619,55 @@ export default function MyRecipeVaultPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          {/* Video player */}
-          {(resolvedYoutubeId || watchUrl) && showVideo ? (
+          {/* Video player for video entries */}
+          {resolvedYoutubeId && showVideo ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5">
-              <UnifiedVideoPlayer
-                url={resolvedYoutubeId ? `https://www.youtube.com/watch?v=${resolvedYoutubeId}` : watchUrl}
-                onClose={() => setShowVideo(false)}
-              />
+              <SafeYouTube videoId={resolvedYoutubeId} onClose={() => setShowVideo(false)} />
             </div>
-          ) : (resolvedYoutubeId || watchUrl) && !showVideo ? (
+          ) : resolvedYoutubeId && !showVideo ? (
             <button onClick={() => setShowVideo(true)}
               className="w-full py-3 bg-gray-800 text-white text-sm font-semibold text-center rounded-2xl mb-5">
               ▶ Show Video
             </button>
+          ) : isMp4 ? (
+            <div className="w-full rounded-2xl overflow-hidden mb-5">
+              <video src={watchUrl} controls className="w-full rounded-2xl bg-black" style={{maxHeight:'300px'}} />
+            </div>
+          ) : isTikTok ? (
+            <a href={watchUrl} target="_blank" rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-4 bg-gray-800 text-white rounded-2xl font-semibold text-sm mb-5">
+              ▶ Watch on TikTok
+            </a>
+          ) : isVideoEntry ? (
+            <div className="w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'200px'}}>
+              {viewing.photo_url ? (
+                <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <span className="text-5xl">📺</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(viewing.title)}`}
+                  target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 px-5 py-3 bg-red-600 text-white rounded-xl font-semibold text-sm">
+                  ▶ Watch on YouTube
+                </a>
+              </div>
+            </div>
           ) : viewing.photo_url ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
+            <div className="w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
+              <button onClick={() => photoInputRef.current?.click()}
+                className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg font-semibold">
+                📷 Replace Photo
+              </button>
+              <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
+                onChange={async e => {
+                  const file = e.target.files?.[0]; if (!file) return
+                  const url = await uploadPhoto(file, user.id)
+                  if (url) await updateRecipe(viewing.id, { photo_url: url })
+                }} />
             </div>
           ) : (
             <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 mb-5 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"

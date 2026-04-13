@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const GROUPS = [
   { key: 'recipe',          label: 'Recipes',        emoji: '🍽️', color: 'bg-orange-50 text-orange-700 border-orange-200' },
@@ -57,41 +57,16 @@ export default function FavoritesPage() {
     await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
     if (item.type === 'recipe' || item.type === 'ai_recipe' || item.type === 'video_recipe') {
       const meta = item.metadata || {}
-      let ingredients = meta.ingredients || []
-      let instructions = meta.instructions || ''
-      let description = meta.description || meta.ai_summary || meta.channel || ''
-      let youtube_url = meta.youtube_url || ''
-
-      // Always try to look up full recipe data from recipes table
-      let query = supabase.from('recipes').select('ingredients, instructions, youtube_url')
-      if (item.ref_id) {
-        query = query.eq('id', item.ref_id)
-      } else {
-        query = query.ilike('title', item.title)
-      }
-      const { data: fullRecipe } = await query.single()
-      if (fullRecipe) {
-        ingredients = fullRecipe.ingredients || ingredients
-        instructions = fullRecipe.instructions || instructions
-        youtube_url = fullRecipe.youtube_url || youtube_url
-      }
-
-      // Extract youtube_id from youtube_url
-      const youtubeIdMatch = youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
-      const youtube_id = youtubeIdMatch ? youtubeIdMatch[1] : (meta.youtube_id || '')
-      // Store full video URL for non-YouTube videos (S3, MP4 etc)
-      const videoUrl = !youtube_id && youtube_url ? youtube_url : ''
-
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
         title: item.title,
-        description,
-        ingredients,
-        instructions: instructions + (videoUrl ? `\nWatch video: ${videoUrl}` : ''),
+        description: meta.description || meta.ai_summary || meta.channel || '',
+        ingredients: meta.ingredients || [],
+        instructions: meta.instructions || '',
         category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
         tags: meta.tags || [],
         photo_url: item.thumbnail_url || '',
-        family_notes: `youtube_id:${youtube_id}|channel:${meta.channel || ''}|Added from MyFavorites`,
+        family_notes: `youtube_id:${meta.youtube_id || ''}|channel:${meta.channel || ''}|Added from MyFavorites`,
       })
     }
     if (item.type === 'ai_answer') {
@@ -252,7 +227,7 @@ export default function FavoritesPage() {
 
                             {/* Inline video player */}
                             {isPlaying && youtubeId && (
-                              <UnifiedVideoPlayer url={`https://www.youtube.com/watch?v=${youtubeId}`} onClose={() => setPlayingId(null)} />
+                              <SafeYouTube videoId={youtubeId} onClose={() => setPlayingId(null)} />
                             )}
 
                             <div className="flex gap-3 p-3">
