@@ -11,62 +11,69 @@ function UnifiedVideoPlayer({ url, onClose }) {
 
   const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
   const isVimeo = url.includes("vimeo.com");
-  const isMp4 = url.endsWith(".mp4") || url.includes("amazonaws.com");
 
   const getYouTubeEmbed = (u) => {
     try {
       const urlObj = new URL(u);
       if (urlObj.hostname.includes("youtu.be")) {
         const id = urlObj.pathname.slice(1);
-        return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`;
+        return `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
       }
       const v = urlObj.searchParams.get("v");
-      if (v) return `https://www.youtube.com/embed/${v}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`;
+      if (v) return `https://www.youtube.com/embed/${v}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
       const parts = urlObj.pathname.split("/");
       const id = parts.filter(Boolean).pop();
-      return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1`;
+      return `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
     } catch { return ""; }
   };
 
   const getVimeoEmbed = (u) => {
     const match = u.match(/vimeo\.com\/(\d+)/);
     const id = match ? match[1] : "";
-    return `https://player.vimeo.com/video/${id}?autoplay=1&muted=1&playsinline=1`;
+    return `https://player.vimeo.com/video/${id}?autoplay=1&playsinline=1`;
   };
 
   const renderPlayer = () => {
-    if (isYouTube || isVimeo) {
-      const src = isYouTube ? getYouTubeEmbed(url) : getVimeoEmbed(url);
-      if (!src) { setHasError(true); return null; }
+    if (isYouTube) {
+      // No sandbox on YouTube — sandbox breaks playback
       return (
         <iframe
           className="absolute inset-0 w-full h-full rounded-xl"
-          src={src}
-          loading="lazy"
+          src={getYouTubeEmbed(url)}
           allowFullScreen
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin"
           onLoad={() => setIsLoaded(true)}
-        />
-      );
-    }
-    if (isMp4) {
-      return (
-        <video
-          className="absolute inset-0 w-full h-full rounded-xl object-contain"
-          src={url}
-          playsInline
-          autoPlay
-          muted
-          controls
-          preload="metadata"
-          onLoadedData={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
         />
       );
     }
-    setHasError(true);
-    return null;
+
+    if (isVimeo) {
+      return (
+        <iframe
+          className="absolute inset-0 w-full h-full rounded-xl"
+          src={getVimeoEmbed(url)}
+          allowFullScreen
+          allow="autoplay; fullscreen; picture-in-picture"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+        />
+      );
+    }
+
+    // MP4 / S3
+    return (
+      <video
+        src={url}
+        controls
+        playsInline
+        autoPlay
+        preload="auto"
+        className="absolute inset-0 w-full h-full rounded-xl bg-black object-contain"
+        onLoadedData={() => setIsLoaded(true)}
+        onError={() => setHasError(true)}
+      />
+    );
   };
 
   return (
