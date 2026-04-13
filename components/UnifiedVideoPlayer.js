@@ -56,6 +56,8 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
         src={url}
         controls
         playsInline
+        webkit-playsinline="true"
+        x-webkit-airplay="deny"
         preload="metadata"
         className="absolute inset-0 w-full h-full rounded-xl bg-black object-contain"
       />
