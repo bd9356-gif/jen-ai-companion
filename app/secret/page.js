@@ -610,7 +610,7 @@ export default function MyRecipeVaultPage() {
                 {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
               </button>
               <button onClick={async () => {
-                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'next' }, { onConflict: 'user_id,recipe_id' })
+                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
                 showToast('Added to MyPicks ✓')
               }} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🎯 MyPicks</button>
               <button onClick={() => deleteRecipe(viewing.id)}
@@ -656,18 +656,8 @@ export default function MyRecipeVaultPage() {
               </div>
             </div>
           ) : viewing.photo_url ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'220px'}}>
+            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
-              <button onClick={() => photoInputRef.current?.click()}
-                className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg font-semibold">
-                📷 Replace Photo
-              </button>
-              <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
-                onChange={async e => {
-                  const file = e.target.files?.[0]; if (!file) return
-                  const url = await uploadPhoto(file, user.id)
-                  if (url) await updateRecipe(viewing.id, { photo_url: url })
-                }} />
             </div>
           ) : (
             <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 mb-5 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
