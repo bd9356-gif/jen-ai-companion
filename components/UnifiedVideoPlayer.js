@@ -44,7 +44,8 @@ function UnifiedVideoPlayer({ url, onClose }) {
           src={src}
           loading="lazy"
           allowFullScreen
-          allow="autoplay; fullscreen; picture-in-picture"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin"
           onLoad={() => setIsLoaded(true)}
         />
       );
