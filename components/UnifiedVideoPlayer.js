@@ -15,15 +15,16 @@ function UnifiedVideoPlayer({ url, onClose }) {
   const getYouTubeEmbed = (u) => {
     try {
       const urlObj = new URL(u);
+      const params = "?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=0&showinfo=0&autohide=1";
       if (urlObj.hostname.includes("youtu.be")) {
         const id = urlObj.pathname.slice(1);
-        return `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+        return `https://www.youtube.com/embed/${id}${params}`;
       }
       const v = urlObj.searchParams.get("v");
-      if (v) return `https://www.youtube.com/embed/${v}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+      if (v) return `https://www.youtube.com/embed/${v}${params}`;
       const parts = urlObj.pathname.split("/");
       const id = parts.filter(Boolean).pop();
-      return `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+      return `https://www.youtube.com/embed/${id}${params}`;
     } catch { return ""; }
   };
 
