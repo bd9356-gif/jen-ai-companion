@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const GROUPS = [
   { key: 'recipe',          label: 'Recipes',        emoji: '🍽️', color: 'bg-orange-50 text-orange-700 border-orange-200' },
@@ -252,7 +252,7 @@ export default function FavoritesPage() {
 
                             {/* Inline video player */}
                             {isPlaying && youtubeId && (
-                              <UnifiedVideoPlayer key={youtubeId} url={`https://www.youtube.com/watch?v=${youtubeId}`} onClose={() => setPlayingId(null)} />
+                              <SafeYouTube videoId={youtubeId} onClose={() => setPlayingId(null)} />
                             )}
 
                             <div className="flex gap-3 p-3">
