@@ -63,15 +63,13 @@ export default function FavoritesPage() {
       let youtube_url = meta.youtube_url || ''
 
       // Always try to look up full recipe data from recipes table
-      console.log('addToVault item:', item.type, item.ref_id, item.title)
       let query = supabase.from('recipes').select('ingredients, instructions, youtube_url')
       if (item.ref_id) {
         query = query.eq('id', item.ref_id)
       } else {
         query = query.ilike('title', item.title)
       }
-      const { data: fullRecipe, error: lookupError } = await query.single()
-      console.log('fullRecipe:', fullRecipe, 'error:', lookupError)
+      const { data: fullRecipe } = await query.single()
       if (fullRecipe) {
         ingredients = fullRecipe.ingredients || ingredients
         instructions = fullRecipe.instructions || instructions
@@ -81,13 +79,15 @@ export default function FavoritesPage() {
       // Extract youtube_id from youtube_url
       const youtubeIdMatch = youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
       const youtube_id = youtubeIdMatch ? youtubeIdMatch[1] : (meta.youtube_id || '')
+      // Store full video URL for non-YouTube videos (S3, MP4 etc)
+      const videoUrl = !youtube_id && youtube_url ? youtube_url : ''
 
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
         title: item.title,
         description,
         ingredients,
-        instructions,
+        instructions: instructions + (videoUrl ? `\nWatch video: ${videoUrl}` : ''),
         category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
         tags: meta.tags || [],
         photo_url: item.thumbnail_url || '',
