@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
-import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -28,7 +27,6 @@ export default function RecipeDetailPage() {
   const [metadata, setMetadata] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
-  const [showVideo, setShowVideo] = useState(false)
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -111,30 +109,12 @@ export default function RecipeDetailPage() {
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
         {/* Video */}
         {videoType === 'youtube' && (
-          <div className="mb-6">
-            {showVideo ? (
-              <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
-                <iframe
-                  className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}?autoplay=1`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-                <button onClick={() => setShowVideo(false)}
-                  className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-9 h-9 flex items-center justify-center text-sm font-bold z-10">✕</button>
-              </div>
-            ) : (
-              <div className="relative w-full rounded-2xl overflow-hidden bg-black cursor-pointer" style={{paddingBottom:'56.25%'}} onClick={() => setShowVideo(true)}>
-                {recipe.thumbnail_url && (
-                  <img src={recipe.thumbnail_url} alt={recipe.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
-                )}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white text-2xl ml-1">▶</span>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="mb-6 rounded-2xl overflow-hidden" style={{aspectRatio:'16/9'}}>
+            <iframe
+              src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}`}
+              className="w-full h-full"
+              allowFullScreen
+            />
           </div>
         )}
         {videoType === 'mp4' && (
