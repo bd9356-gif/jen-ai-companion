@@ -111,7 +111,7 @@ export default function RecipeDetailPage() {
         {/* Video */}
         {videoType === 'youtube' && (
           <div className="mb-6">
-            <SafeYouTube videoId={getYouTubeId(recipe.youtube_url)} onClose={null} />
+            <SafeYouTube videoId={getYouTubeId(recipe.youtube_url)} onClose={() => {}} />
           </div>
         )}
         {videoType === 'mp4' && (
