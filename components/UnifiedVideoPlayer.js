@@ -16,57 +16,68 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
   const getYouTubeEmbed = (u) => {
     const match = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
     const id = match ? match[1] : "";
-    return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&controls=1&showinfo=0`;
+    return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&controls=1&showinfo=0&autoplay=1`;
   };
 
   const getVimeoEmbed = (u) => {
     const id = u.split("/").pop();
-    return `https://player.vimeo.com/video/${id}?playsinline=1&title=0&byline=0&portrait=0&dnt=1`;
+    return `https://player.vimeo.com/video/${id}?playsinline=1&title=0&byline=0&portrait=0&dnt=1&autoplay=1`;
   };
 
-  const renderIframe = () => {
-    const commonProps = {
-      className: "absolute inset-0 w-full h-full rounded-xl",
-      allow: "autoplay; fullscreen; picture-in-picture",
-      allowFullScreen: true,
-      sandbox: "allow-scripts allow-same-origin",
-      onLoad: () => setIsLoaded(true),
-      onError: () => setHasError(true),
-    };
-
+  const renderPlayer = () => {
     if (isYouTube) {
-      return <iframe {...commonProps} src={getYouTubeEmbed(url)} />;
+      return (
+        <iframe
+          className="absolute inset-0 w-full h-full rounded-xl"
+          src={getYouTubeEmbed(url)}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          sandbox="allow-scripts allow-same-origin"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+        />
+      );
     }
 
     if (isVimeo) {
-      return <iframe {...commonProps} src={getVimeoEmbed(url)} />;
+      return (
+        <iframe
+          className="absolute inset-0 w-full h-full rounded-xl"
+          src={getVimeoEmbed(url)}
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+        />
+      );
     }
 
+    // MP4 / S3 — use video element with all iPhone-required attributes
     return (
       <video
         ref={videoRef}
         src={url}
         controls
+        autoPlay
         playsInline
-        preload="metadata"
+        muted={false}
+        preload="auto"
         className="absolute inset-0 w-full h-full rounded-xl bg-black object-contain"
         onLoadedData={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
+        style={{ WebkitMediaControlsPlayButton: "none" }}
       />
     );
   };
 
-  const isMP4 = !isYouTube && !isVimeo;
-  const aspectRatio = isMP4 ? "50%" : "56.25%";
-
   return (
     <div className="w-full bg-black rounded-2xl overflow-hidden relative">
-      <div className="relative w-full" style={{ paddingBottom: aspectRatio }}>
+      <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
 
         {!isPlaying && !hasError && (
           <button
             onClick={() => setIsPlaying(true)}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm text-white"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm text-white w-full h-full"
           >
             <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="white" style={{ marginLeft: "4px" }}>
@@ -93,7 +104,7 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
           </div>
         )}
 
-        {isPlaying && renderIframe()}
+        {isPlaying && !hasError && renderPlayer()}
 
         {onClose && (
           <button
