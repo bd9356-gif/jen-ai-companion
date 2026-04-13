@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import SafeYouTube from '@/components/SafeYouTube'
+import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -202,7 +202,7 @@ export default function VideosPage() {
                 return (
                   <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
                     {playingId === video.id ? (
-                      <SafeYouTube videoId={video.youtube_id} onClose={() => setPlayingId(null)} />
+                      <UnifiedVideoPlayer key={video.youtube_id} url={`https://www.youtube.com/watch?v=${video.youtube_id}`} onClose={() => setPlayingId(null)} />
                     ) : (
                       <button onClick={() => setPlayingId(video.id)} className="w-full relative block group">
                         <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`} alt={video.title} className="w-full object-cover" style={{height:'192px'}} />
