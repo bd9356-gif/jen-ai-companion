@@ -9,18 +9,10 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
 
   const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
   const isVimeo = url.includes("vimeo.com");
-  const isHLS = url.endsWith(".m3u8");
-  const isMp4 = !isYouTube && !isVimeo && (
-    url.match(/\.(mp4|mov|webm|m4v)/i) ||
-    url.includes("s3.amazonaws.com") ||
-    url.includes("supabase") ||
-    url.includes("firebasestorage")
-  );
 
-  // YouTube embed URL
   const getYouTubeEmbed = (u) => {
     const match = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
-    const id = match ? match[1] : u.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")
+    const id = match ? match[1] : ''
     return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&controls=0&autohide=1&showinfo=0`
   }
 
@@ -49,15 +41,12 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
       )
     }
 
-    // MP4 / MOV / S3 / HLS / everything else
     return (
       <video
         ref={videoRef}
         src={url}
         controls
         playsInline
-        webkit-playsinline="true"
-        x-webkit-airplay="deny"
         preload="metadata"
         className="absolute inset-0 w-full h-full rounded-xl bg-black object-contain"
       />
