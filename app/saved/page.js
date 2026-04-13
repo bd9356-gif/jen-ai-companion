@@ -57,16 +57,36 @@ export default function FavoritesPage() {
     await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
     if (item.type === 'recipe' || item.type === 'ai_recipe' || item.type === 'video_recipe') {
       const meta = item.metadata || {}
+      let ingredients = meta.ingredients || []
+      let instructions = meta.instructions || ''
+      let description = meta.description || meta.ai_summary || meta.channel || ''
+      let youtube_url = meta.youtube_url || ''
+
+      // For explore recipes, look up full data from recipes table
+      if (item.type === 'recipe' && item.ref_id) {
+        const { data: fullRecipe } = await supabase
+          .from('recipes')
+          .select('ingredients, instructions, description, youtube_url')
+          .eq('id', item.ref_id)
+          .single()
+        if (fullRecipe) {
+          ingredients = fullRecipe.ingredients || []
+          instructions = fullRecipe.instructions || ''
+          description = fullRecipe.description || description
+          youtube_url = fullRecipe.youtube_url || youtube_url
+        }
+      }
+
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
         title: item.title,
-        description: meta.description || meta.ai_summary || meta.channel || '',
-        ingredients: meta.ingredients || [],
-        instructions: meta.instructions || '',
+        description,
+        ingredients,
+        instructions,
         category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
         tags: meta.tags || [],
         photo_url: item.thumbnail_url || '',
-        family_notes: `youtube_id:${meta.youtube_id || ''}|channel:${meta.channel || ''}|Added from MyFavorites`,
+        family_notes: `youtube_id:${meta.youtube_id || ''}|channel:${meta.channel || ''}|youtube_url:${youtube_url}|Added from MyFavorites`,
       })
     }
     if (item.type === 'ai_answer') {
