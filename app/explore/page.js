@@ -2,25 +2,25 @@
 import SafeYouTube from '@/components/SafeYouTube'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-const CATEGORIES = [
-  'All','Chicken','Beef','Pork','Fish','Seafood','Lamb','Duck','Turkey',
-  'Pasta','Pizza','Soup','Salad','Rice','Bread','Cake','Cookie',
-  'Dinner','Breakfast','Dessert','Appetizers','Vegetarian','Vegan','Sides'
-]
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+const CATEGORIES = ['All','Chicken','Beef','Pork','Fish','Seafood','Lamb','Duck','Turkey','Pasta','Pizza','Soup','Salad','Rice','Bread','Cake','Cookie','Dinner','Breakfast','Dessert','Appetizers','Vegetarian','Vegan','Sides']
+
 function getYouTubeId(url) {
   if (!url) return ''
   try {
     const u = new URL(url)
-    if (u.hostname.includes('youtu.be')) return u.pathname.replace('/', '')
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1)
     if (u.searchParams.get('v')) return u.searchParams.get('v')
-    const parts = u.pathname.split('/').filter(Boolean)
-    return parts.pop() || ''
+    return ''
   } catch { return '' }
 }
+
+function isYouTubeUrl(url) {
+  if (!url) return false
+  return url.includes('youtube.com') || url.includes('youtu.be')
+}
+
 export default function ExplorePage() {
   const [mode, setMode] = useState('swipe')
   const [recipes, setRecipes] = useState([])
@@ -30,7 +30,7 @@ export default function ExplorePage() {
   const [savedIds, setSavedIds] = useState(new Set())
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
-  const [playingUrl, setPlayingUrl] = useState(null)
+  const [playingVideo, setPlayingVideo] = useState(null) // { type: 'youtube'|'mp4', id: string, url: string }
   const [swipeIndex, setSwipeIndex] = useState(0)
   const [swipeDir, setSwipeDir] = useState(null)
   const [dragging, setDragging] = useState(false)
@@ -46,27 +46,44 @@ export default function ExplorePage() {
   function handleCategoryChange(newCat) {
     setCategory(newCat); setSwipeIndex(0); setSavedThisSession(0); setSkippedThisSession(0); setHistory([])
   }
+
+  function openVideo(e, url) {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!url) return
+    if (isYouTubeUrl(url)) {
+      const id = getYouTubeId(url)
+      if (id) setPlayingVideo({ type: 'youtube', id, url })
+    } else {
+      setPlayingVideo({ type: 'mp4', url })
+    }
+  }
+
   useEffect(() => {
     if (mode === 'swipe') { document.body.style.overflow = 'hidden'; document.body.style.position = 'fixed'; document.body.style.width = '100%' }
     else { document.body.style.overflow = ''; document.body.style.position = ''; document.body.style.width = '' }
     return () => { document.body.style.overflow = ''; document.body.style.position = ''; document.body.style.width = '' }
   }, [mode])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) { setUser(session.user); loadSaved(session.user.id) }
     })
     loadRecipes()
   }, [])
+
   async function loadRecipes() {
     const { data } = await supabase.from('recipes').select('id, title, category, cuisine, thumbnail_url, youtube_url, tags').order('title').range(0, 4999)
     setRecipes((data || []).sort(() => Math.random() - 0.5))
     const { data: meta } = await supabase.from('recipe_metadata').select('recipe_id, difficulty_level, ai_summary')
     const metaMap = {}; (meta || []).forEach(m => { metaMap[m.recipe_id] = m }); setMetadata(metaMap); setLoading(false)
   }
+
   async function loadSaved(userId) {
     const { data } = await supabase.from('favorites').select('ref_id').eq('user_id', userId).eq('is_in_vault', false)
     setSavedIds(new Set((data || []).map(s => s.ref_id)))
   }
+
   async function saveRecipe(recipeId) {
     if (!user) { window.location.href = '/login'; return }
     if (!savedIds.has(recipeId)) {
@@ -75,22 +92,19 @@ export default function ExplorePage() {
       setSavedIds(prev => new Set([...prev, recipeId]))
     }
   }
+
   async function unsaveRecipe(recipeId) {
     if (!user) return
     await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(recipeId))
     setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
   }
+
   async function toggleSave(recipeId) {
     if (!user) { window.location.href = '/login'; return }
-    if (savedIds.has(recipeId)) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(recipeId))
-      setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
-    } else {
-      const recipe = recipes.find(r => r.id === recipeId)
-      await supabase.from('favorites').insert({ user_id: user.id, type: 'recipe', ref_id: String(recipeId), title: recipe?.title || '', thumbnail_url: recipe?.thumbnail_url || '', source: 'explore', metadata: { category: recipe?.category, cuisine: recipe?.cuisine } })
-      setSavedIds(prev => new Set([...prev, recipeId]))
-    }
+    if (savedIds.has(recipeId)) { await unsaveRecipe(recipeId) }
+    else { await saveRecipe(recipeId) }
   }
+
   useEffect(() => {
     const card = cardRef.current; if (!card) return
     card.addEventListener('touchstart', onDragStart, { passive: true })
@@ -98,6 +112,7 @@ export default function ExplorePage() {
     card.addEventListener('touchend', onDragEnd)
     return () => { card.removeEventListener('touchstart', onDragStart); card.removeEventListener('touchmove', onDragMove); card.removeEventListener('touchend', onDragEnd) }
   })
+
   function onDragStart(e) { isDragging.current = false; dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX; dragStartY.current = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY; setDragging(true) }
   function onDragMove(e) {
     if (!dragging) return
@@ -122,12 +137,7 @@ export default function ExplorePage() {
     if (last.direction === 'right') { await unsaveRecipe(last.recipeId); setSavedThisSession(s => Math.max(0, s - 1)) } else { setSkippedThisSession(s => Math.max(0, s - 1)) }
     setSwipeIndex(last.index)
   }
-  function openVideo(e, url) {
-    e.stopPropagation()
-    e.preventDefault()
-    const id = getYouTubeId(url)
-    if (id) setPlayingUrl(id)
-  }
+
   const swipeFiltered = recipes.filter(r => category === 'All' || r.category === category || (r.tags || []).some(t => t.toLowerCase() === category.toLowerCase()))
   const swipeRecipes = swipeFiltered.slice(swipeIndex)
   const filtered = swipeFiltered.filter(r => search === '' || r.title.toLowerCase().includes(search.toLowerCase()) || r.cuisine?.toLowerCase().includes(search.toLowerCase()))
@@ -136,11 +146,24 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
-      {playingUrl && (
+      {/* VIDEO OVERLAY — outside all other JSX */}
+      {playingVideo && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4">
           <div className="w-full max-w-lg">
-            <SafeYouTube videoId={playingUrl} />
-            <button onClick={() => setPlayingUrl(null)} className="w-full py-3 mt-2 bg-gray-900 text-white rounded-lg text-sm font-semibold">
+            {playingVideo.type === 'youtube' ? (
+              <SafeYouTube videoId={playingVideo.id} />
+            ) : (
+              <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
+                <video
+                  src={playingVideo.url}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <button onClick={() => setPlayingVideo(null)} className="w-full py-3 mt-2 bg-gray-900 text-white rounded-xl text-sm font-semibold">
               ✕ Close Video
             </button>
           </div>
@@ -202,11 +225,11 @@ export default function ExplorePage() {
                         )}
                         {dragX > 40 && <div className="absolute top-4 left-4 bg-green-500 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-green-600 rotate-[-12deg]">SAVE ♥</div>}
                         {dragX < -40 && <div className="absolute top-4 right-4 bg-red-400 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-red-500 rotate-[12deg]">SKIP ✕</div>}
-                        {swipeRecipes[0].youtube_url && getYouTubeId(swipeRecipes[0].youtube_url) && (
+                        {swipeRecipes[0].youtube_url && (
                           <button
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                            onClick={(e) => openVideo(e, swipeRecipes[0].youtube_url)}
+                            onMouseDown={e => e.stopPropagation()}
+                            onTouchStart={e => e.stopPropagation()}
+                            onClick={e => openVideo(e, swipeRecipes[0].youtube_url)}
                             className="absolute top-3 right-3 bg-red-600 rounded-full w-9 h-9 flex items-center justify-center z-20">
                             <span className="text-white text-sm">▶</span>
                           </button>
