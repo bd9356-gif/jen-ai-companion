@@ -56,9 +56,12 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
     );
   };
 
+  const isMP4 = !isYouTube && !isVimeo;
+  const aspectRatio = isMP4 ? "50%" : "56.25%";
+
   return (
     <div className="w-full bg-black rounded-2xl overflow-hidden relative">
-      <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+      <div className="relative w-full" style={{ paddingBottom: aspectRatio }}>
 
         {!isPlaying && !hasError && (
           <button
