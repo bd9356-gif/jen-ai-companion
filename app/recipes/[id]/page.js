@@ -116,8 +116,8 @@ export default function RecipeDetailPage() {
               <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
                 <iframe
                   className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}`}
-                  className="w-full h-full"
+                  src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}?autoplay=1`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
                 <button onClick={() => setShowVideo(false)}
