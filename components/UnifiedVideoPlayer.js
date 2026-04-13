@@ -23,9 +23,9 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
     return `https://player.vimeo.com/video/${id}?playsinline=1&title=0&byline=0&portrait=0&dnt=1&autoplay=1`;
   };
 
-  // For MP4/S3 — wrap in iframe using srcdoc to keep inline on iPhone
+  // For MP4/S3 — wrap in iframe using srcdoc, autoplay no controls
   const getMp4Html = (videoUrl) => {
-    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;background:#000}video{width:100%;height:100%;display:block}</style></head><body><video src="${videoUrl}" controls playsinline webkit-playsinline autoplay preload="auto" style="width:100%;height:100%"></video></body></html>`;
+    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><style>*{margin:0;padding:0;background:#000;overflow:hidden}html,body{width:100%;height:100%}video{width:100%;height:100%;object-fit:contain;display:block}</style></head><body><video src="${videoUrl}" playsinline webkit-playsinline x5-playsinline autoplay muted preload="auto" style="width:100%;height:100%" onclick="this.muted=false;this.play()"></video></body></html>`;
   };
 
   const getSrc = () => {
