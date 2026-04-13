@@ -1,83 +1,88 @@
 "use client";
-
-import { useState, memo } from "react";
-
+import { useState, useEffect, memo } from "react";
 function UnifiedVideoPlayer({ url, onClose }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-
   if (!url) return null;
-
-  const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
-  const isVimeo = url.includes("vimeo.com");
-
-  const getYouTubeEmbed = (u) => {
-    try {
-      const urlObj = new URL(u);
-      const params = "?controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1";
-      if (urlObj.hostname.includes("youtu.be")) {
-        const id = urlObj.pathname.slice(1);
-        return `https://www.youtube.com/embed/${id}${params}`;
-      }
-      const v = urlObj.searchParams.get("v");
-      if (v) return `https://www.youtube.com/embed/${v}${params}`;
-      const parts = urlObj.pathname.split("/");
-      const id = parts.filter(Boolean).pop();
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    return null;
+  }
+  const isYouTube =
+    parsedUrl.hostname.includes("youtube.com") ||
+    parsedUrl.hostname.includes("youtu.be");
+  const isVimeo = parsedUrl.hostname.includes("vimeo.com");
+  const getYouTubeEmbed = () => {
+    const params =
+      "?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&modestbranding=1";
+    if (parsedUrl.hostname.includes("youtu.be")) {
+      const id = parsedUrl.pathname.slice(1);
       return `https://www.youtube.com/embed/${id}${params}`;
-    } catch { return ""; }
+    }
+    const v = parsedUrl.searchParams.get("v");
+    if (v) {
+      return `https://www.youtube.com/embed/${v}${params}`;
+    }
+    const parts = parsedUrl.pathname.split("/");
+    const id = parts.filter(Boolean).pop();
+    return `https://www.youtube.com/embed/${id}${params}`;
   };
-
-  const getVimeoEmbed = (u) => {
-    const match = u.match(/vimeo\.com\/(\d+)/);
+  const getVimeoEmbed = () => {
+    const match = url.match(/vimeo\.com\/(\d+)/);
     const id = match ? match[1] : "";
-    return `https://player.vimeo.com/video/${id}?autoplay=1&playsinline=1`;
+    return `https://player.vimeo.com/video/${id}?autoplay=1&muted=1&playsinline=1`;
   };
-
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timeout = setTimeout(() => {
+      if (!isLoaded) setHasError(true);
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, [isPlaying, isLoaded]);
   const renderPlayer = () => {
     if (isYouTube) {
-      // No sandbox on YouTube — sandbox breaks playback
+      const src = getYouTubeEmbed();
+      if (!src) return null;
       return (
         <iframe
           className="absolute inset-0 w-full h-full rounded-xl"
-          src={getYouTubeEmbed(url)}
+          src={src}
+          loading="lazy"
           allowFullScreen
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin"
+          allow="autoplay; encrypted-media; picture-in-picture"
           onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
         />
       );
     }
-
     if (isVimeo) {
       return (
         <iframe
           className="absolute inset-0 w-full h-full rounded-xl"
-          src={getVimeoEmbed(url)}
+          src={getVimeoEmbed()}
+          loading="lazy"
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture"
           onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
         />
       );
     }
-
-    // MP4 / S3
     return (
       <video
         src={url}
         controls
         playsInline
         autoPlay
-        preload="auto"
+        muted
+        preload="metadata"
         className="absolute inset-0 w-full h-full rounded-xl bg-black object-contain"
         onLoadedData={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
       />
     );
   };
-
   return (
     <div className="w-full bg-black rounded-2xl overflow-hidden relative">
       <div className="relative w-full aspect-video">
@@ -123,5 +128,4 @@ function UnifiedVideoPlayer({ url, onClose }) {
     </div>
   );
 }
-
 export default memo(UnifiedVideoPlayer);
