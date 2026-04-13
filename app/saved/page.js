@@ -63,13 +63,15 @@ export default function FavoritesPage() {
       let youtube_url = meta.youtube_url || ''
 
       // Always try to look up full recipe data from recipes table
+      console.log('addToVault item:', item.type, item.ref_id, item.title)
       let query = supabase.from('recipes').select('ingredients, instructions, description, youtube_url')
       if (item.ref_id) {
         query = query.eq('id', item.ref_id)
       } else {
         query = query.ilike('title', item.title)
       }
-      const { data: fullRecipe } = await query.single()
+      const { data: fullRecipe, error: lookupError } = await query.single()
+      console.log('fullRecipe:', fullRecipe, 'error:', lookupError)
       if (fullRecipe) {
         ingredients = fullRecipe.ingredients || ingredients
         instructions = fullRecipe.instructions || instructions
