@@ -64,7 +64,7 @@ export default function FavoritesPage() {
 
       // Always try to look up full recipe data from recipes table
       console.log('addToVault item:', item.type, item.ref_id, item.title)
-      let query = supabase.from('recipes').select('ingredients, instructions, description, youtube_url')
+      let query = supabase.from('recipes').select('ingredients, instructions, youtube_url')
       if (item.ref_id) {
         query = query.eq('id', item.ref_id)
       } else {
@@ -75,7 +75,6 @@ export default function FavoritesPage() {
       if (fullRecipe) {
         ingredients = fullRecipe.ingredients || ingredients
         instructions = fullRecipe.instructions || instructions
-        description = fullRecipe.description || description
         youtube_url = fullRecipe.youtube_url || youtube_url
       }
 
