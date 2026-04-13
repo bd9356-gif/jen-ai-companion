@@ -113,22 +113,27 @@ export default function RecipeDetailPage() {
         {videoType === 'youtube' && (
           <div className="mb-6">
             {showVideo ? (
-              <div className="relative w-full rounded-2xl overflow-hidden" style={{paddingBottom:'56.25%'}}>
+              <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
                 <iframe
                   className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1`}
+                  src={`https://www.youtube.com/embed/${getYouTubeId(recipe.youtube_url)}?autoplay=1&controls=1&modestbranding=1&rel=0`}
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  sandbox="allow-scripts allow-same-origin"
                 />
                 <button onClick={() => setShowVideo(false)}
                   className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-9 h-9 flex items-center justify-center text-sm font-bold z-10">✕</button>
               </div>
             ) : (
-              <button onClick={() => setShowVideo(true)}
-                className="w-full py-4 bg-red-600 text-white rounded-2xl font-semibold text-base flex items-center justify-center gap-2">
-                <span>▶</span> Watch Cooking Video
-              </button>
+              <div className="relative w-full rounded-2xl overflow-hidden bg-black cursor-pointer" style={{paddingBottom:'56.25%'}} onClick={() => setShowVideo(true)}>
+                {recipe.thumbnail_url && (
+                  <img src={recipe.thumbnail_url} alt={recipe.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white text-2xl ml-1">▶</span>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
