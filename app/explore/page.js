@@ -155,7 +155,7 @@ export default function ExplorePage() {
               {playingVideo.type === 'youtube' ? (
                 <iframe
                   className="absolute inset-0 w-full h-full"
-                  src={`https://www.youtube.com/embed/${playingVideo.id}?autoplay=1`}
+                  src={`https://www.youtube.com/embed/${playingVideo.id}?autoplay=1&mute=1&rel=0&modestbranding=1`}
                   title="Recipe video"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
