@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import SafeYouTube from '@/components/SafeYouTube'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -34,6 +35,7 @@ export default function ExplorePage() {
   const [savedThisSession, setSavedThisSession] = useState(0)
   const [skippedThisSession, setSkippedThisSession] = useState(0)
   const [history, setHistory] = useState([])
+  const [playingId, setPlayingId] = useState(null)
   const dragStartX = useRef(0)
   const dragStartY = useRef(0)
   const isDragging = useRef(false)
@@ -315,9 +317,10 @@ export default function ExplorePage() {
                           <div className="absolute top-4 right-4 bg-red-400 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-red-500 rotate-[12deg]">SKIP ✕</div>
                         )}
                         {swipeRecipes[0].youtube_url && (
-                          <div className="absolute top-3 right-3 bg-red-600 rounded-full w-7 h-7 flex items-center justify-center">
-                            <span className="text-white text-xs">▶</span>
-                          </div>
+                          <button onClick={() => setPlayingId(swipeRecipes[0].id)}
+                            className="absolute top-3 right-3 bg-red-600 rounded-full w-9 h-9 flex items-center justify-center z-20">
+                            <span className="text-white text-sm">▶</span>
+                          </button>
                         )}
                       </div>
                       <div className="p-4">
@@ -351,6 +354,17 @@ export default function ExplorePage() {
                     title="Save">♥</button>
                 </div>
               </div>
+              {/* Video overlay */}
+              {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && (
+                <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
+                  <div className="w-full max-w-lg">
+                    <SafeYouTube
+                      videoId={swipeRecipes[0].youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}
+                      onClose={() => setPlayingId(null)}
+                    />
+                  </div>
+                </div>
+              )}
             )}
           </div>
         ) : (
