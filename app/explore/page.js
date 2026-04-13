@@ -151,31 +151,16 @@ export default function ExplorePage() {
       {playingVideo && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4">
           <div className="w-full max-w-lg">
-            {playingVideo.type === 'youtube' ? (
-              videoStarted ? (
-                <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
-                  <iframe
-                    className="absolute inset-0 w-full h-full"
-                    src={`https://www.youtube.com/embed/${playingVideo.id}?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0`}
-                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    sandbox="allow-scripts allow-same-origin"
-                  />
-                </div>
+            <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
+              {playingVideo.type === 'youtube' ? (
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src={`https://www.youtube.com/embed/${playingVideo.id}?autoplay=1`}
+                  title="Recipe video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
               ) : (
-                <div className="relative w-full rounded-2xl overflow-hidden bg-black cursor-pointer" style={{paddingBottom:'56.25%'}} onClick={() => setVideoStarted(true)}>
-                  {playingVideo.thumbnail && (
-                    <img src={playingVideo.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" />
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-white text-2xl ml-1">▶</span>
-                    </div>
-                  </div>
-                </div>
-              )
-            ) : (
-              <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
                 <video
                   src={playingVideo.url}
                   controls
@@ -183,9 +168,9 @@ export default function ExplorePage() {
                   playsInline
                   className="absolute inset-0 w-full h-full object-contain"
                 />
-              </div>
-            )}
-            <button onClick={() => { setPlayingVideo(null); setVideoStarted(false) }} className="w-full py-3 mt-2 bg-gray-900 text-white rounded-xl text-sm font-semibold">
+              )}
+            </div>
+            <button onClick={() => setPlayingVideo(null)} className="w-full py-3 mt-2 bg-gray-900 text-white rounded-xl text-sm font-semibold">
               ✕ Close Video
             </button>
           </div>
