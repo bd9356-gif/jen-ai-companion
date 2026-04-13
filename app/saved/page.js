@@ -67,7 +67,7 @@ export default function FavoritesPage() {
         const { data: fullRecipe } = await supabase
           .from('recipes')
           .select('ingredients, instructions, description, youtube_url')
-          .eq('id', item.ref_id)
+          .eq('id', parseInt(item.ref_id) || item.ref_id)
           .single()
         if (fullRecipe) {
           ingredients = fullRecipe.ingredients || []
