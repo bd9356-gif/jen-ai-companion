@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 export default function UnifiedVideoPlayer({ url, onClose }) {
-  const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -24,14 +23,25 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
     return `https://player.vimeo.com/video/${id}?playsinline=1&title=0&byline=0&portrait=0&dnt=1&autoplay=1`;
   };
 
+  // For MP4/S3 — wrap in iframe using srcdoc to keep inline on iPhone
+  const getMp4Html = (videoUrl) => {
+    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;background:#000}video{width:100%;height:100%;display:block}</style></head><body><video src="${videoUrl}" controls playsinline webkit-playsinline autoplay preload="auto" style="width:100%;height:100%"></video></body></html>`;
+  };
+
+  const getSrc = () => {
+    if (isYouTube) return getYouTubeEmbed(url);
+    if (isVimeo) return getVimeoEmbed(url);
+    return null;
+  };
+
   const renderPlayer = () => {
-    if (isYouTube) {
+    if (isYouTube || isVimeo) {
       return (
         <iframe
           className="absolute inset-0 w-full h-full rounded-xl"
-          src={getYouTubeEmbed(url)}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          src={getSrc()}
           allowFullScreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           sandbox="allow-scripts allow-same-origin"
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
@@ -39,33 +49,16 @@ export default function UnifiedVideoPlayer({ url, onClose }) {
       );
     }
 
-    if (isVimeo) {
-      return (
-        <iframe
-          className="absolute inset-0 w-full h-full rounded-xl"
-          src={getVimeoEmbed(url)}
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-          onLoad={() => setIsLoaded(true)}
-          onError={() => setHasError(true)}
-        />
-      );
-    }
-
-    // MP4 / S3 — use video element with all iPhone-required attributes
+    // MP4/S3 — use iframe with srcdoc to keep inline on iPhone
     return (
-      <video
-        ref={videoRef}
-        src={url}
-        controls
-        autoPlay
-        playsInline
-        muted={false}
-        preload="auto"
-        className="absolute inset-0 w-full h-full rounded-xl bg-black object-contain"
-        onLoadedData={() => setIsLoaded(true)}
+      <iframe
+        className="absolute inset-0 w-full h-full rounded-xl"
+        srcDoc={getMp4Html(url)}
+        allowFullScreen
+        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+        sandbox="allow-scripts allow-same-origin allow-popups"
+        onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
-        style={{ WebkitMediaControlsPlayButton: "none" }}
       />
     );
   };
