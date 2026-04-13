@@ -62,19 +62,19 @@ export default function FavoritesPage() {
       let description = meta.description || meta.ai_summary || meta.channel || ''
       let youtube_url = meta.youtube_url || ''
 
-      // For explore recipes, look up full data from recipes table
-      if (item.type === 'recipe' && item.ref_id) {
-        const { data: fullRecipe } = await supabase
-          .from('recipes')
-          .select('ingredients, instructions, description, youtube_url')
-          .eq('id', item.ref_id)
-          .single()
-        if (fullRecipe) {
-          ingredients = fullRecipe.ingredients || []
-          instructions = fullRecipe.instructions || ''
-          description = fullRecipe.description || description
-          youtube_url = fullRecipe.youtube_url || youtube_url
-        }
+      // Always try to look up full recipe data from recipes table
+      let query = supabase.from('recipes').select('ingredients, instructions, description, youtube_url')
+      if (item.ref_id) {
+        query = query.eq('id', item.ref_id)
+      } else {
+        query = query.ilike('title', item.title)
+      }
+      const { data: fullRecipe } = await query.single()
+      if (fullRecipe) {
+        ingredients = fullRecipe.ingredients || ingredients
+        instructions = fullRecipe.instructions || instructions
+        description = fullRecipe.description || description
+        youtube_url = fullRecipe.youtube_url || youtube_url
       }
 
       await supabase.from('personal_recipes').insert({
