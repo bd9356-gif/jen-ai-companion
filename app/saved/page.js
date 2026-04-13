@@ -77,6 +77,10 @@ export default function FavoritesPage() {
         youtube_url = fullRecipe.youtube_url || youtube_url
       }
 
+      // Extract youtube_id from youtube_url
+      const youtubeIdMatch = youtube_url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
+      const youtube_id = youtubeIdMatch ? youtubeIdMatch[1] : (meta.youtube_id || '')
+
       await supabase.from('personal_recipes').insert({
         user_id: user.id,
         title: item.title,
@@ -86,7 +90,7 @@ export default function FavoritesPage() {
         category: item.type === 'video_recipe' ? 'Recipe Videos' : (meta.category || 'My Recipes'),
         tags: meta.tags || [],
         photo_url: item.thumbnail_url || '',
-        family_notes: 'Added from MyFavorites',
+        family_notes: `youtube_id:${youtube_id}|channel:${meta.channel || ''}|Added from MyFavorites`,
       })
     }
     if (item.type === 'ai_answer') {
