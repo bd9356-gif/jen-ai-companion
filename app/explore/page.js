@@ -19,7 +19,6 @@ export default function ExplorePage() {
   const [savedIds, setSavedIds] = useState(new Set())
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
-  const [playingId, setPlayingId] = useState(null)
 
   function handleCategoryChange(newCat) {
     setCategory(newCat)
@@ -36,6 +35,7 @@ export default function ExplorePage() {
   const [savedThisSession, setSavedThisSession] = useState(0)
   const [skippedThisSession, setSkippedThisSession] = useState(0)
   const [history, setHistory] = useState([])
+  const [playingId, setPlayingId] = useState(null)
   const dragStartX = useRef(0)
   const dragStartY = useRef(0)
   const isDragging = useRef(false)
@@ -228,10 +228,16 @@ export default function ExplorePage() {
               <h1 className="text-lg font-bold text-gray-900">🍳 Explore Recipes</h1>
             </div>
             <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-              <button onClick={() => setMode('swipe')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'swipe' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>
+              <button
+                onClick={() => setMode('swipe')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'swipe' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}
+              >
                 👆 Swipe
               </button>
-              <button onClick={() => setMode('browse')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'browse' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>
+              <button
+                onClick={() => setMode('browse')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'browse' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}
+              >
                 ⊞ Browse
               </button>
             </div>
@@ -342,16 +348,16 @@ export default function ExplorePage() {
                     className="w-16 h-16 bg-white border-2 border-green-200 rounded-full flex items-center justify-center text-2xl hover:bg-green-50 transition-colors shadow-sm"
                     title="Save">♥</button>
                 </div>
-                {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
-                  <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
-                    <div className="w-full max-w-lg">
-                      <UnifiedVideoPlayer key={swipeRecipes[0].id} url={swipeRecipes[0].youtube_url} onClose={() => setPlayingId(null)} />
-                    </div>
-                  </div>
-                )}
               </div>
-            )}
+            </div>
           </div>
+          {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
+              <div className="w-full max-w-lg">
+                <UnifiedVideoPlayer key={swipeRecipes[0].id} url={swipeRecipes[0].youtube_url} onClose={() => setPlayingId(null)} />
+              </div>
+            </div>
+          )}
         ) : (
           <div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
