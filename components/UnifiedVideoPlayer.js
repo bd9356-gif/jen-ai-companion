@@ -15,7 +15,7 @@ function UnifiedVideoPlayer({ url, onClose }) {
   const getYouTubeEmbed = (u) => {
     try {
       const urlObj = new URL(u);
-      const params = "?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=0&showinfo=0&autohide=1";
+      const params = "?controls=0&modestbranding=1&rel=0&showinfo=0&autohide=1";
       if (urlObj.hostname.includes("youtu.be")) {
         const id = urlObj.pathname.slice(1);
         return `https://www.youtube.com/embed/${id}${params}`;
@@ -42,7 +42,8 @@ function UnifiedVideoPlayer({ url, onClose }) {
           className="absolute inset-0 w-full h-full rounded-xl"
           src={getYouTubeEmbed(url)}
           allowFullScreen
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin"
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
         />
