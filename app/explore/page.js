@@ -349,15 +349,15 @@ export default function ExplorePage() {
                     title="Save">♥</button>
                 </div>
               </div>
-              {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
-                <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
-                  <div className="w-full max-w-lg">
-                    <UnifiedVideoPlayer key={swipeRecipes[0].id} url={swipeRecipes[0].youtube_url} onClose={() => setPlayingId(null)} />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
+          {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
+              <div className="w-full max-w-lg">
+                <UnifiedVideoPlayer key={swipeRecipes[0].id} url={swipeRecipes[0].youtube_url} onClose={() => setPlayingId(null)} />
+              </div>
+            </div>
+          )}
         ) : (
           <div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
