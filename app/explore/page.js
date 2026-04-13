@@ -1,15 +1,25 @@
 'use client'
-import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 import SafeYouTube from '@/components/SafeYouTube'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+const CATEGORIES = ['All','Chicken','Beef','Pork','Fish','Seafood','Lamb','Duck','Turkey','Pasta','Pizza','Soup','Salad','Rice','Bread','Cake','Cookie','Dinner','Breakfast','Dessert','Appetizers','Vegetarian','Vegan','Sides']
 
-const CATEGORIES = ['All', 'Chicken', 'Beef', 'Pork', 'Fish', 'Seafood', 'Lamb', 'Duck', 'Turkey', 'Pasta', 'Pizza', 'Soup', 'Salad', 'Rice', 'Bread', 'Cake', 'Cookie', 'Dinner', 'Breakfast', 'Dessert', 'Appetizers', 'Vegetarian', 'Vegan', 'Sides']
+function getYouTubeId(url) {
+  if (!url) return ''
+  try {
+    const u = new URL(url)
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1)
+    if (u.searchParams.get('v')) return u.searchParams.get('v')
+    return ''
+  } catch { return '' }
+}
+
+function isYouTubeUrl(url) {
+  if (!url) return false
+  return url.includes('youtube.com') || url.includes('youtu.be')
+}
 
 export default function ExplorePage() {
   const [mode, setMode] = useState('swipe')
@@ -20,15 +30,8 @@ export default function ExplorePage() {
   const [savedIds, setSavedIds] = useState(new Set())
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
-
-  function handleCategoryChange(newCat) {
-    setCategory(newCat)
-    setSwipeIndex(0)
-    setSavedThisSession(0)
-    setSkippedThisSession(0)
-    setHistory([])
-  }
-
+  const [playingVideo, setPlayingVideo] = useState(null) // { type: 'youtube'|'mp4', id: string, url: string }
+  const [videoStarted, setVideoStarted] = useState(false)
   const [swipeIndex, setSwipeIndex] = useState(0)
   const [swipeDir, setSwipeDir] = useState(null)
   const [dragging, setDragging] = useState(false)
@@ -36,28 +39,31 @@ export default function ExplorePage() {
   const [savedThisSession, setSavedThisSession] = useState(0)
   const [skippedThisSession, setSkippedThisSession] = useState(0)
   const [history, setHistory] = useState([])
-  const [playingId, setPlayingId] = useState(null)
-  const [videoStarted, setVideoStarted] = useState(false)
   const dragStartX = useRef(0)
   const dragStartY = useRef(0)
   const isDragging = useRef(false)
   const cardRef = useRef(null)
 
-  useEffect(() => {
-    if (mode === 'swipe') {
-      document.body.style.overflow = 'hidden'
-      document.body.style.position = 'fixed'
-      document.body.style.width = '100%'
+  function handleCategoryChange(newCat) {
+    setCategory(newCat); setSwipeIndex(0); setSavedThisSession(0); setSkippedThisSession(0); setHistory([])
+  }
+
+  function openVideo(e, url) {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!url) return
+    if (isYouTubeUrl(url)) {
+      const id = getYouTubeId(url)
+      if (id) setPlayingVideo({ type: 'youtube', id, url, thumbnail: recipes.find(r => r.youtube_url === url)?.thumbnail_url || '' })
     } else {
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.width = ''
+      setPlayingVideo({ type: 'mp4', url })
     }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.width = ''
-    }
+  }
+
+  useEffect(() => {
+    if (mode === 'swipe') { document.body.style.overflow = 'hidden'; document.body.style.position = 'fixed'; document.body.style.width = '100%' }
+    else { document.body.style.overflow = ''; document.body.style.position = ''; document.body.style.width = '' }
+    return () => { document.body.style.overflow = ''; document.body.style.position = ''; document.body.style.width = '' }
   }, [mode])
 
   useEffect(() => {
@@ -68,21 +74,10 @@ export default function ExplorePage() {
   }, [])
 
   async function loadRecipes() {
-    const { data } = await supabase
-      .from('recipes')
-      .select('id, title, category, cuisine, thumbnail_url, youtube_url, tags')
-      .order('title')
-      .range(0, 4999)
-    const shuffled = (data || []).sort(() => Math.random() - 0.5)
-    setRecipes(shuffled)
-    const { data: meta } = await supabase
-      .from('recipe_metadata')
-      .select('recipe_id, difficulty_level, ai_summary')
-      .range(0, 4999)
-    const metaMap = {}
-    ;(meta || []).forEach(m => { metaMap[m.recipe_id] = m })
-    setMetadata(metaMap)
-    setLoading(false)
+    const { data } = await supabase.from('recipes').select('id, title, category, cuisine, thumbnail_url, youtube_url, tags').order('title').range(0, 4999)
+    setRecipes((data || []).sort(() => Math.random() - 0.5))
+    const { data: meta } = await supabase.from('recipe_metadata').select('recipe_id, difficulty_level, ai_summary')
+    const metaMap = {}; (meta || []).forEach(m => { metaMap[m.recipe_id] = m }); setMetadata(metaMap); setLoading(false)
   }
 
   async function loadSaved(userId) {
@@ -94,15 +89,7 @@ export default function ExplorePage() {
     if (!user) { window.location.href = '/login'; return }
     if (!savedIds.has(recipeId)) {
       const recipe = recipes.find(r => r.id === recipeId)
-      await supabase.from('favorites').insert({
-        user_id: user.id,
-        type: 'recipe',
-        ref_id: String(recipeId),
-        title: recipe?.title || '',
-        thumbnail_url: recipe?.thumbnail_url || '',
-        source: 'explore',
-        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
-      })
+      await supabase.from('favorites').insert({ user_id: user.id, type: 'recipe', ref_id: String(recipeId), title: recipe?.title || '', thumbnail_url: recipe?.thumbnail_url || '', source: 'explore', metadata: { category: recipe?.category, cuisine: recipe?.cuisine } })
       setSavedIds(prev => new Set([...prev, recipeId]))
     }
   }
@@ -113,115 +100,98 @@ export default function ExplorePage() {
     setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
   }
 
+  async function toggleSave(recipeId) {
+    if (!user) { window.location.href = '/login'; return }
+    if (savedIds.has(recipeId)) { await unsaveRecipe(recipeId) }
+    else { await saveRecipe(recipeId) }
+  }
+
   useEffect(() => {
-    const card = cardRef.current
-    if (!card) return
+    const card = cardRef.current; if (!card) return
     card.addEventListener('touchstart', onDragStart, { passive: true })
     card.addEventListener('touchmove', onDragMove, { passive: false })
     card.addEventListener('touchend', onDragEnd)
-    return () => {
-      card.removeEventListener('touchstart', onDragStart)
-      card.removeEventListener('touchmove', onDragMove)
-      card.removeEventListener('touchend', onDragEnd)
-    }
+    return () => { card.removeEventListener('touchstart', onDragStart); card.removeEventListener('touchmove', onDragMove); card.removeEventListener('touchend', onDragEnd) }
   })
 
-  function onDragStart(e) {
-    isDragging.current = false
-    dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX
-    dragStartY.current = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY
-    setDragging(true)
-  }
-
+  function onDragStart(e) { isDragging.current = false; dragStartX.current = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX; dragStartY.current = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY; setDragging(true) }
   function onDragMove(e) {
     if (!dragging) return
-    const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX
-    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY
-    const dx = clientX - dragStartX.current
-    const dy = clientY - dragStartY.current
-    if (Math.abs(dx) > Math.abs(dy)) {
-      isDragging.current = true
-      if (e.cancelable) e.preventDefault()
-      setDragX(dx)
-    }
+    const dx = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX) - dragStartX.current
+    const dy = (e.type === 'touchmove' ? e.touches[0].clientY : e.clientY) - dragStartY.current
+    if (Math.abs(dx) > Math.abs(dy)) { isDragging.current = true; if (e.cancelable) e.preventDefault(); setDragX(dx) }
   }
-
   async function onDragEnd() {
-    if (!dragging) return
-    setDragging(false)
-    if (dragX > 80) { await handleSwipe('right') }
-    else if (dragX < -80) { await handleSwipe('left') }
+    if (!dragging) return; setDragging(false)
+    if (dragX > 80) await handleSwipe('right'); else if (dragX < -80) await handleSwipe('left')
     setDragX(0)
   }
-
   async function handleSwipe(direction) {
-    const current = swipeRecipes[0]
-    if (!current) return
-    setSwipeDir(direction)
-    setHistory(prev => [...prev, { index: swipeIndex, direction, recipeId: current.id }])
-    if (direction === 'right') { await saveRecipe(current.id); setSavedThisSession(s => s + 1) }
-    else { setSkippedThisSession(s => s + 1) }
+    const current = swipeRecipes[0]; if (!current) return
+    setSwipeDir(direction); setHistory(prev => [...prev, { index: swipeIndex, direction, recipeId: current.id }])
+    if (direction === 'right') { await saveRecipe(current.id); setSavedThisSession(s => s + 1) } else { setSkippedThisSession(s => s + 1) }
     setTimeout(() => { setSwipeIndex(i => i + 1); setSwipeDir(null) }, 300)
   }
-
   async function handleRewind() {
     if (history.length === 0) return
-    const last = history[history.length - 1]
-    setHistory(prev => prev.slice(0, -1))
-    if (last.direction === 'right') { await unsaveRecipe(last.recipeId); setSavedThisSession(s => Math.max(0, s - 1)) }
-    else { setSkippedThisSession(s => Math.max(0, s - 1)) }
+    const last = history[history.length - 1]; setHistory(prev => prev.slice(0, -1))
+    if (last.direction === 'right') { await unsaveRecipe(last.recipeId); setSavedThisSession(s => Math.max(0, s - 1)) } else { setSkippedThisSession(s => Math.max(0, s - 1)) }
     setSwipeIndex(last.index)
   }
 
   const swipeFiltered = recipes.filter(r => category === 'All' || r.category === category || (r.tags || []).some(t => t.toLowerCase() === category.toLowerCase()))
   const swipeRecipes = swipeFiltered.slice(swipeIndex)
+  const filtered = swipeFiltered.filter(r => search === '' || r.title.toLowerCase().includes(search.toLowerCase()) || r.cuisine?.toLowerCase().includes(search.toLowerCase()))
   const diffLabel = { beginner: '🟢 Beginner', intermediate: '🟡 Intermediate', advanced: '🔴 Advanced' }
-
-  const filtered = recipes.filter(r => {
-    const matchCat = category === 'All' || r.category === category || (r.tags || []).some(t => t.toLowerCase() === category.toLowerCase())
-    const matchSearch = search === '' || r.title.toLowerCase().includes(search.toLowerCase()) || r.cuisine?.toLowerCase().includes(search.toLowerCase())
-    return matchCat && matchSearch
-  })
-
-  async function toggleSave(recipeId) {
-    if (!user) { window.location.href = '/login'; return }
-    if (savedIds.has(recipeId)) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(recipeId))
-      setSavedIds(prev => { const n = new Set(prev); n.delete(recipeId); return n })
-    } else {
-      const recipe = recipes.find(r => r.id === recipeId)
-      await supabase.from('favorites').insert({
-        user_id: user.id,
-        type: 'recipe',
-        ref_id: String(recipeId),
-        title: recipe?.title || '',
-        thumbnail_url: recipe?.thumbnail_url || '',
-        source: 'explore',
-        metadata: { category: recipe?.category, cuisine: recipe?.cuisine }
-      })
-      setSavedIds(prev => new Set([...prev, recipeId]))
-    }
-  }
-
-  const filterBox = (
-    <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-500 mb-1">Category</p>
-        <select
-          value={category}
-          onChange={e => handleCategoryChange(e.target.value)}
-          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white"
-        >
-          {CATEGORIES.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-      </div>
-    </div>
-  )
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+
+      {/* VIDEO OVERLAY — outside all other JSX */}
+      {playingVideo && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center px-4">
+          <div className="w-full max-w-lg">
+            {playingVideo.type === 'youtube' ? (
+              videoStarted ? (
+                <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
+                  <iframe
+                    className="absolute inset-0 w-full h-full"
+                    src={`https://www.youtube.com/embed/${playingVideo.id}?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0`}
+                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    sandbox="allow-scripts allow-same-origin"
+                  />
+                </div>
+              ) : (
+                <div className="relative w-full rounded-2xl overflow-hidden bg-black cursor-pointer" style={{paddingBottom:'56.25%'}} onClick={() => setVideoStarted(true)}>
+                  {playingVideo.thumbnail && (
+                    <img src={playingVideo.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-2xl ml-1">▶</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
+                <video
+                  src={playingVideo.url}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <button onClick={() => { setPlayingVideo(null); setVideoStarted(false) }} className="w-full py-3 mt-2 bg-gray-900 text-white rounded-xl text-sm font-semibold">
+              ✕ Close Video
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shrink-0">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
@@ -230,21 +200,16 @@ export default function ExplorePage() {
               <h1 className="text-lg font-bold text-gray-900">🍳 Explore Recipes</h1>
             </div>
             <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-              <button
-                onClick={() => setMode('swipe')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'swipe' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}
-              >
-                👆 Swipe
-              </button>
-              <button
-                onClick={() => setMode('browse')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'browse' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}
-              >
-                ⊞ Browse
-              </button>
+              <button onClick={() => setMode('swipe')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'swipe' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>👆 Swipe</button>
+              <button onClick={() => setMode('browse')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${mode === 'browse' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'}`}>⊞ Browse</button>
             </div>
           </div>
-          {filterBox}
+          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4">
+            <p className="text-xs text-gray-500 mb-1">Category</p>
+            <select value={category} onChange={e => handleCategoryChange(e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 bg-white">
+              {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+          </div>
         </div>
       </header>
 
@@ -254,70 +219,39 @@ export default function ExplorePage() {
         ) : mode === 'swipe' ? (
           <div>
             <div className="flex justify-center gap-6 mb-6 text-center">
-              <div>
-                <p className="text-2xl font-bold text-red-400">{skippedThisSession}</p>
-                <p className="text-xs text-gray-400">Skipped</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-500">{savedThisSession}</p>
-                <p className="text-xs text-gray-400">Saved</p>
-              </div>
+              <div><p className="text-2xl font-bold text-red-400">{skippedThisSession}</p><p className="text-xs text-gray-400">Skipped</p></div>
+              <div><p className="text-2xl font-bold text-green-500">{savedThisSession}</p><p className="text-xs text-gray-400">Saved</p></div>
             </div>
             {swipeRecipes.length === 0 ? (
               <div className="text-center py-16">
                 <p className="text-4xl mb-4">🎉</p>
                 <p className="text-gray-700 font-semibold mb-2">You've seen them all!</p>
                 <p className="text-gray-400 text-sm mb-6">Saved {savedThisSession} recipes this session</p>
-                <button
-                  onClick={() => { setSwipeIndex(0); setSavedThisSession(0); setSkippedThisSession(0); setHistory([]) }}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors"
-                >
-                  Start Over
-                </button>
+                <button onClick={() => { setSwipeIndex(0); setSavedThisSession(0); setSkippedThisSession(0); setHistory([]) }} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold">Start Over</button>
               </div>
             ) : (
               <div>
                 <div className="relative h-96 mb-6">
                   {swipeRecipes.slice(1, 3).map((recipe, i) => (
-                    <div key={recipe.id}
-                      className="absolute inset-0 bg-white border border-gray-200 rounded-3xl overflow-hidden"
-                      style={{ transform: `scale(${0.95 - i * 0.03}) translateY(${(i + 1) * 8}px)`, zIndex: 10 - i }}
-                    />
+                    <div key={recipe.id} className="absolute inset-0 bg-white border border-gray-200 rounded-3xl overflow-hidden" style={{ transform: `scale(${0.95 - i * 0.03}) translateY(${(i + 1) * 8}px)`, zIndex: 10 - i }} />
                   ))}
                   {swipeRecipes[0] && (
-                    <div
-                      ref={cardRef}
-                      className="absolute inset-0 bg-white border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing select-none"
-                      style={{
-                        transform: `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
-                        zIndex: 20,
-                        transition: dragging && isDragging.current ? 'none' : 'transform 0.3s ease',
-                        opacity: swipeDir ? 0 : 1,
-                      }}
-                      onMouseDown={onDragStart}
-                      onMouseMove={onDragMove}
-                      onMouseUp={onDragEnd}
-                      onMouseLeave={onDragEnd}
-                    >
+                    <div ref={cardRef} className="absolute inset-0 bg-white border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing select-none"
+                      style={{ transform: `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`, zIndex: 20, transition: dragging && isDragging.current ? 'none' : 'transform 0.3s ease', opacity: swipeDir ? 0 : 1 }}
+                      onMouseDown={onDragStart} onMouseMove={onDragMove} onMouseUp={onDragEnd} onMouseLeave={onDragEnd}>
                       <div className="relative h-64">
                         {swipeRecipes[0].thumbnail_url ? (
                           <img src={swipeRecipes[0].thumbnail_url} alt={swipeRecipes[0].title} className="w-full h-full object-cover" draggable={false} />
                         ) : (
-                          <div className="w-full h-full bg-orange-50 flex items-center justify-center">
-                            <span className="text-5xl">🍽️</span>
-                          </div>
+                          <div className="w-full h-full bg-orange-50 flex items-center justify-center"><span className="text-5xl">🍽️</span></div>
                         )}
-                        {dragX > 40 && (
-                          <div className="absolute top-4 left-4 bg-green-500 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-green-600 rotate-[-12deg]">SAVE ♥</div>
-                        )}
-                        {dragX < -40 && (
-                          <div className="absolute top-4 right-4 bg-red-400 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-red-500 rotate-[12deg]">SKIP ✕</div>
-                        )}
+                        {dragX > 40 && <div className="absolute top-4 left-4 bg-green-500 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-green-600 rotate-[-12deg]">SAVE ♥</div>}
+                        {dragX < -40 && <div className="absolute top-4 right-4 bg-red-400 text-white font-bold text-lg px-4 py-2 rounded-xl border-2 border-red-500 rotate-[12deg]">SKIP ✕</div>}
                         {swipeRecipes[0].youtube_url && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); setPlayingUrl(getYouTubeId(swipeRecipes[0].youtube_url)) }}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
+                            onMouseDown={e => e.stopPropagation()}
+                            onTouchStart={e => e.stopPropagation()}
+                            onClick={e => openVideo(e, swipeRecipes[0].youtube_url)}
                             className="absolute top-3 right-3 bg-red-600 rounded-full w-9 h-9 flex items-center justify-center z-20">
                             <span className="text-white text-sm">▶</span>
                           </button>
@@ -327,66 +261,22 @@ export default function ExplorePage() {
                         <h2 className="text-lg font-bold text-gray-900 mb-1">{swipeRecipes[0].title}</h2>
                         <div className="flex gap-2 mb-2">
                           {swipeRecipes[0].cuisine && <span className="px-2 py-0.5 bg-orange-50 text-orange-700 rounded-full text-xs font-semibold">{swipeRecipes[0].cuisine}</span>}
-                          {metadata[swipeRecipes[0].id]?.difficulty_level && (
-                            <span className="text-xs text-gray-400">{diffLabel[metadata[swipeRecipes[0].id].difficulty_level]}</span>
-                          )}
+                          {metadata[swipeRecipes[0].id]?.difficulty_level && <span className="text-xs text-gray-400">{diffLabel[metadata[swipeRecipes[0].id].difficulty_level]}</span>}
                         </div>
-                        {metadata[swipeRecipes[0].id]?.ai_summary && (
-                          <p className="text-xs text-gray-500 line-clamp-2">{metadata[swipeRecipes[0].id].ai_summary}</p>
-                        )}
+                        {metadata[swipeRecipes[0].id]?.ai_summary && <p className="text-xs text-gray-500 line-clamp-2">{metadata[swipeRecipes[0].id].ai_summary}</p>}
                       </div>
                     </div>
                   )}
                 </div>
                 <div className="flex items-center justify-center gap-4">
-                  <button onClick={() => handleSwipe('left')}
-                    className="w-16 h-16 bg-white border-2 border-red-200 rounded-full flex items-center justify-center text-2xl hover:bg-red-50 transition-colors shadow-sm"
-                    title="Skip">✕</button>
-                  <button onClick={handleRewind} disabled={history.length === 0}
-                    className="w-12 h-12 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center text-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-30"
-                    title="Rewind">↩</button>
-                  <a href={`/recipes/${swipeRecipes[0]?.id}`}
-                    className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">
-                    Details
-                  </a>
-                  <button onClick={() => handleSwipe('right')}
-                    className="w-16 h-16 bg-white border-2 border-green-200 rounded-full flex items-center justify-center text-2xl hover:bg-green-50 transition-colors shadow-sm"
-                    title="Save">♥</button>
+                  <button onClick={() => handleSwipe('left')} className="w-16 h-16 bg-white border-2 border-red-200 rounded-full flex items-center justify-center text-2xl hover:bg-red-50 transition-colors shadow-sm" title="Skip">✕</button>
+                  <button onClick={handleRewind} disabled={history.length === 0} className="w-12 h-12 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center text-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-30" title="Rewind">↩</button>
+                  <a href={`/recipes/${swipeRecipes[0]?.id}`} className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-xs font-semibold hover:bg-gray-200 transition-colors">Details</a>
+                  <button onClick={() => handleSwipe('right')} className="w-16 h-16 bg-white border-2 border-green-200 rounded-full flex items-center justify-center text-2xl hover:bg-green-50 transition-colors shadow-sm" title="Save">♥</button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-          {playingId && swipeRecipes[0] && playingId === swipeRecipes[0].id && swipeRecipes[0].youtube_url && (
-            <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center px-4">
-              <div className="w-full max-w-lg">
-                {videoStarted ? (
-                  <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{paddingBottom:'56.25%'}}>
-                    <iframe
-                      className="absolute inset-0 w-full h-full"
-                      src={`https://www.youtube.com/embed/${(swipeRecipes[0].youtube_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/) || [])[1] || ""}?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0`}
-                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      sandbox="allow-scripts allow-same-origin"
-                    />
-                  </div>
-                ) : (
-                  <div className="relative w-full rounded-2xl overflow-hidden bg-black cursor-pointer" style={{paddingBottom:'56.25%'}} onClick={() => setVideoStarted(true)}>
-                    {swipeRecipes[0].thumbnail_url && (
-                      <img src={swipeRecipes[0].thumbnail_url} alt={swipeRecipes[0].title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
-                    )}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-                        <span className="text-white text-2xl ml-1">▶</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <button onClick={() => { setPlayingId(null); setVideoStarted(false) }} className="w-full py-3 mt-2 bg-gray-900 text-white rounded-xl text-sm font-semibold">
-                  ✕ Close Video
-                </button>
-              </div>
-            </div>
-          )}
         ) : (
           <div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -394,27 +284,15 @@ export default function ExplorePage() {
                 <div key={recipe.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
                   <a href={`/recipes/${recipe.id}`}>
                     <div style={{height: '120px'}}>
-                      {recipe.thumbnail_url ? (
-                        <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-orange-50 flex items-center justify-center">
-                          <span className="text-3xl">🍽️</span>
-                        </div>
-                      )}
+                      {recipe.thumbnail_url ? <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-orange-50 flex items-center justify-center"><span className="text-3xl">🍽️</span></div>}
                     </div>
                   </a>
                   <div className="p-3">
-                    <a href={`/recipes/${recipe.id}`}>
-                      <p className="text-sm font-semibold text-gray-900 leading-tight mb-1 line-clamp-2">{recipe.title}</p>
-                    </a>
+                    <a href={`/recipes/${recipe.id}`}><p className="text-sm font-semibold text-gray-900 leading-tight mb-1 line-clamp-2">{recipe.title}</p></a>
                     <p className="text-xs text-gray-400 mb-2">{recipe.cuisine || recipe.category}</p>
                     <div className="flex items-center justify-between">
-                      {metadata[recipe.id]?.difficulty_level && (
-                        <span className="text-xs text-gray-400">{diffLabel[metadata[recipe.id].difficulty_level]}</span>
-                      )}
-                      <button onClick={() => toggleSave(recipe.id)} className={`text-lg ml-auto ${savedIds.has(recipe.id) ? 'text-red-500' : 'text-gray-300'}`}>
-                        ♥
-                      </button>
+                      {metadata[recipe.id]?.difficulty_level && <span className="text-xs text-gray-400">{diffLabel[metadata[recipe.id].difficulty_level]}</span>}
+                      <button onClick={() => toggleSave(recipe.id)} className={`text-lg ml-auto ${savedIds.has(recipe.id) ? 'text-red-500' : 'text-gray-300'}`}>♥</button>
                     </div>
                   </div>
                 </div>
