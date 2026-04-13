@@ -87,10 +87,10 @@ export default function ExplorePage() {
 
   async function saveRecipe(recipeId) {
     if (!user) { window.location.href = '/login'; return }
-    if (!savedIds.has(recipeId)) {
+    if (!savedIds.has(String(recipeId))) {
       const recipe = recipes.find(r => r.id === recipeId)
       await supabase.from('favorites').insert({ user_id: user.id, type: 'recipe', ref_id: String(recipeId), title: recipe?.title || '', thumbnail_url: recipe?.thumbnail_url || '', source: 'explore', is_in_vault: false, metadata: { category: recipe?.category, cuisine: recipe?.cuisine } })
-      setSavedIds(prev => new Set([...prev, recipeId]))
+      setSavedIds(prev => new Set([...prev, String(recipeId)]))
     }
   }
 
@@ -102,7 +102,7 @@ export default function ExplorePage() {
 
   async function toggleSave(recipeId) {
     if (!user) { window.location.href = '/login'; return }
-    if (savedIds.has(recipeId)) { await unsaveRecipe(recipeId) }
+    if (savedIds.has(String(recipeId))) { await unsaveRecipe(recipeId) }
     else { await saveRecipe(recipeId) }
   }
 
