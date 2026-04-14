@@ -94,7 +94,7 @@ export default function KitchenPage() {
                   className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
                   style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${section.accent}` }}
                 >
-                  <div className="flex items-center gap-4 px-4 py-3.5">
+                  <div className="flex items-center gap-4 px-4 py-2.5">
                     <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
                     <p className="flex-1 text-sm font-semibold text-gray-900">{item.title}</p>
                     <span className="text-gray-300 text-lg font-light">›</span>
