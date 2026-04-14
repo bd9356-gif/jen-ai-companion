@@ -58,20 +58,14 @@ export default function KitchenPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Hero */}
-      <div className="relative w-full overflow-hidden" style={{height:'140px'}}>
-        <img
-          src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
-          alt="My Kitchen"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
-          <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
-          <p className="text-sm text-white/80 mt-0.5">Everything you need — all in one place.</p>
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">🍳 MyKitchen</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
         </div>
         <button onClick={() => window.location.href='/profile'}
-          className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white rounded-full px-3 py-1.5 text-xs font-semibold">
+          className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold">
           👤 Profile
         </button>
       </div>
