@@ -91,7 +91,7 @@ export default function KitchenPage() {
                 <button
                   key={item.href}
                   onClick={() => window.location.href = item.href}
-                  className="w-full text-left bg-white rounded-xl active:scale-95 transition-transform"
+                  className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
                   style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
                 >
                   <div className="flex items-center gap-3 py-2.5">
