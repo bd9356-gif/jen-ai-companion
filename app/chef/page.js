@@ -61,28 +61,24 @@ export default function ChefPage() {
     setTimeout(() => setToast(null), 2500)
   }
 
-  async function saveToFavorites(msg, type) {
+  async function saveToFavorites(msg) {
     if (!user) { window.location.href = '/login'; return }
-    const key = `${msg.question}-${type}`
-    if (savedIds.has(key)) return
-
-    const title = type === 'recipe'
-      ? `Recipe: ${msg.question}`
-      : `Note: ${msg.question}`
+    if (savedIds.has(msg.question)) return
 
     await supabase.from('favorites').insert({
       user_id: user.id,
-      type: type === 'recipe' ? 'ai_recipe' : 'ai_answer',
-      title: title.substring(0, 120),
+      type: 'ai_answer',
+      title: msg.question.substring(0, 120),
       thumbnail_url: '',
       source: 'ai',
+      is_in_vault: false,
       metadata: {
         question: msg.question,
         answer: msg.content,
       }
     })
 
-    setSavedIds(prev => new Set([...prev, key]))
+    setSavedIds(prev => new Set([...prev, msg.question]))
     showToast(type === 'recipe' ? 'Saved as AI Recipe ✓' : 'Saved as Note ✓')
   }
 
@@ -139,28 +135,18 @@ export default function ChefPage() {
                   {msg.content}
                 </div>
 
-                {/* Save buttons for AI responses */}
+                {/* Save button for AI responses */}
                 {msg.role === 'assistant' && msg.question && (
                   <div className="flex gap-2 mt-2 ml-1">
                     <button
-                      onClick={() => saveToFavorites(msg, 'recipe')}
-                      disabled={savedIds.has(`${msg.question}-recipe`)}
+                      onClick={() => saveToFavorites(msg)}
+                      disabled={savedIds.has(msg.question)}
                       className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                        savedIds.has(`${msg.question}-recipe`)
+                        savedIds.has(msg.question)
                           ? 'bg-gray-100 text-gray-400 border-gray-200'
                           : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50'
                       }`}>
-                      {savedIds.has(`${msg.question}-recipe`) ? '✓ Saved' : '🍽️ Save as Recipe'}
-                    </button>
-                    <button
-                      onClick={() => saveToFavorites(msg, 'note')}
-                      disabled={savedIds.has(`${msg.question}-note`)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                        savedIds.has(`${msg.question}-note`)
-                          ? 'bg-gray-100 text-gray-400 border-gray-200'
-                          : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'
-                      }`}>
-                      {savedIds.has(`${msg.question}-note`) ? '✓ Saved' : '📝 Save as Note'}
+                      {savedIds.has(msg.question) ? '✓ Saved to MyFavorites' : '♥ Save to MyFavorites'}
                     </button>
                   </div>
                 )}
