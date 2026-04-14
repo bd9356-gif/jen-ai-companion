@@ -59,7 +59,8 @@ export default function KitchenPage() {
     <div className="min-h-screen bg-gray-50">
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200">
+      <div className="px-5 py-4 flex items-center justify-between max-w-2xl mx-auto">
         <div>
           <h1 className="text-xl font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
           <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
@@ -68,6 +69,7 @@ export default function KitchenPage() {
           className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold">
           👤 Profile
         </button>
+      </div>
       </div>
 
       {/* Sections */}
