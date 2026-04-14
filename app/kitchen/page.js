@@ -59,7 +59,7 @@ export default function KitchenPage() {
     <div className="min-h-screen bg-gray-50">
 
       {/* Hero */}
-      <div className="relative w-full overflow-hidden" style={{height:'200px'}}>
+      <div className="relative w-full overflow-hidden" style={{height:'140px'}}>
         <img
           src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
           alt="My Kitchen"
@@ -77,16 +77,16 @@ export default function KitchenPage() {
       </div>
 
       {/* Sections */}
-      <main className="px-4 py-5 max-w-2xl mx-auto pb-10 space-y-6">
+      <main className="px-4 py-3 max-w-2xl mx-auto pb-4 space-y-4">
         {SECTIONS.map(section => (
           <div key={section.name}>
             {/* Section header */}
-            <div className="mb-2 px-1">
+            <div className="mb-1.5 px-1">
               <h2 className="text-sm font-bold text-gray-900">{section.name}</h2>
-              {section.subtitle && <p className="text-xs text-gray-500 mt-0.5">{section.subtitle}</p>}
+              {section.subtitle && <p className="text-xs text-gray-700 mt-0.5">{section.subtitle}</p>}
             </div>
             {/* Section items */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {section.items.map(item => (
                 <button
                   key={item.href}
@@ -94,7 +94,7 @@ export default function KitchenPage() {
                   className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
                   style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${section.accent}` }}
                 >
-                  <div className="flex items-center gap-4 px-4 py-3.5">
+                  <div className="flex items-center gap-3 px-4 py-2.5">
                     <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
                     <p className="flex-1 text-sm font-semibold text-gray-900">{item.title}</p>
                     <span className="text-gray-300 text-lg font-light">›</span>
