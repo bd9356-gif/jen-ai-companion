@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import SafeYouTube from '@/components/SafeYouTube'
+import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -202,7 +202,7 @@ function EducationVideoCard({ item, onDelete }) {
   return (
     <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
       {playing && youtubeId ? (
-        <SafeYouTube videoId={youtubeId} onClose={() => setPlaying(false)} />
+        <UnifiedVideoPlayer url={`https://www.youtube.com/watch?v=${youtubeId}`} onClose={() => setPlaying(false)} />
       ) : (
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
@@ -241,7 +241,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
     <div className="bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
       {/* Video player */}
       {playing && youtubeId ? (
-        <SafeYouTube videoId={youtubeId} onClose={() => setPlaying(false)} />
+        <UnifiedVideoPlayer url={`https://www.youtube.com/watch?v=${youtubeId}`} onClose={() => setPlaying(false)} />
       ) : (
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
@@ -358,6 +358,7 @@ export default function MyRecipeVaultPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [pinnedCards, setPinnedCards] = useState([])
+  const [picksIds, setPicksIds] = useState([])
 
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
@@ -375,12 +376,18 @@ export default function MyRecipeVaultPage() {
       loadNotes(session.user.id)
       loadEducationVideos(session.user.id)
       loadPinnedCards(session.user.id)
+      loadPicksIds(session.user.id)
     })
   }, [])
 
   async function loadPinnedCards(userId) {
     const { data } = await supabase.from('recipe_cards').select('recipe_id').eq('user_id', userId)
     setPinnedCards((data || []).map(d => d.recipe_id))
+  }
+
+  async function loadPicksIds(userId) {
+    const { data } = await supabase.from('my_picks').select('recipe_id').eq('user_id', userId)
+    setPicksIds((data || []).map(d => d.recipe_id))
   }
 
   async function toggleCardPin(id) {
@@ -610,64 +617,32 @@ export default function MyRecipeVaultPage() {
                 {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
               </button>
               <button onClick={async () => {
-                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'next' }, { onConflict: 'user_id,recipe_id' })
+                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
+                setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
                 showToast('Added to MyPicks ✓')
-              }} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🎯 MyPicks</button>
+              }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>🎯 {picksIds.includes(viewing.id) ? 'In MyPicks' : 'MyPicks'}</button>
               <button onClick={() => deleteRecipe(viewing.id)}
                 className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
             </div>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          {/* Video player for video entries */}
-          {resolvedYoutubeId && showVideo ? (
+          {/* Video player */}
+          {(resolvedYoutubeId || watchUrl) && showVideo ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5">
-              <SafeYouTube videoId={resolvedYoutubeId} onClose={() => setShowVideo(false)} />
+              <UnifiedVideoPlayer
+                url={resolvedYoutubeId ? `https://www.youtube.com/watch?v=${resolvedYoutubeId}` : watchUrl}
+                onClose={() => setShowVideo(false)}
+              />
             </div>
-          ) : resolvedYoutubeId && !showVideo ? (
+          ) : (resolvedYoutubeId || watchUrl) && !showVideo ? (
             <button onClick={() => setShowVideo(true)}
               className="w-full py-3 bg-gray-800 text-white text-sm font-semibold text-center rounded-2xl mb-5">
               ▶ Show Video
             </button>
-          ) : isMp4 ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5">
-              <video src={watchUrl} controls className="w-full rounded-2xl bg-black" style={{maxHeight:'300px'}} />
-            </div>
-          ) : isTikTok ? (
-            <a href={watchUrl} target="_blank" rel="noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-4 bg-gray-800 text-white rounded-2xl font-semibold text-sm mb-5">
-              ▶ Watch on TikTok
-            </a>
-          ) : isVideoEntry ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'200px'}}>
-              {viewing.photo_url ? (
-                <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-5xl">📺</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(viewing.title)}`}
-                  target="_blank" rel="noreferrer"
-                  className="flex items-center gap-2 px-5 py-3 bg-red-600 text-white rounded-xl font-semibold text-sm">
-                  ▶ Watch on YouTube
-                </a>
-              </div>
-            </div>
           ) : viewing.photo_url ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5 relative" style={{height:'220px'}}>
+            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
-              <button onClick={() => photoInputRef.current?.click()}
-                className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg font-semibold">
-                📷 Replace Photo
-              </button>
-              <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
-                onChange={async e => {
-                  const file = e.target.files?.[0]; if (!file) return
-                  const url = await uploadPhoto(file, user.id)
-                  if (url) await updateRecipe(viewing.id, { photo_url: url })
-                }} />
             </div>
           ) : (
             <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 mb-5 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
