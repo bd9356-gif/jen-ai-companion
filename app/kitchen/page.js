@@ -59,8 +59,8 @@ export default function KitchenPage() {
     <div className="min-h-screen bg-gray-50">
 
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-      <div className="px-5 py-4 flex items-center justify-between max-w-2xl mx-auto">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="px-5 py-4 flex items-center justify-between max-w-lg mx-auto">
         <div>
           <h1 className="text-xl font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
           <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
@@ -73,7 +73,7 @@ export default function KitchenPage() {
       </div>
 
       {/* Sections */}
-      <main className="px-4 py-4 max-w-2xl mx-auto pb-6 space-y-5">
+      <main className="px-4 py-4 max-w-lg mx-auto pb-6 space-y-5">
         {SECTIONS.map(section => (
           <div key={section.name}>
             {/* Section header */}
