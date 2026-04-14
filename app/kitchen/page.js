@@ -81,9 +81,12 @@ export default function KitchenPage() {
         {SECTIONS.map(section => (
           <div key={section.name}>
             {/* Section header */}
-            <div className="mb-1.5 px-1">
-              <h2 className="text-sm font-bold text-gray-900">{section.name}</h2>
-              {section.subtitle && <p className="text-xs text-gray-700 mt-0.5">{section.subtitle}</p>}
+            <div className="mb-2 flex items-center gap-3">
+              <div style={{width:'3px', height:'18px', backgroundColor: section.accent, borderRadius:'2px', flexShrink:0}} />
+              <div>
+                <h2 className="text-sm font-extrabold uppercase tracking-wide" style={{color: section.accent}}>{section.name}</h2>
+                {section.subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
+              </div>
             </div>
             {/* Section items */}
             <div className="space-y-1.5">
@@ -92,12 +95,13 @@ export default function KitchenPage() {
                   key={item.href}
                   onClick={() => window.location.href = item.href}
                   className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
-                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${section.accent}` }}
+                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
                 >
-                  <div className="flex items-center gap-3 px-4 py-2.5">
-                    <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
+                  <div className="flex items-center gap-3 py-3">
+                    <div style={{width:'4px', minHeight:'44px', backgroundColor: section.accent, flexShrink:0}} />
+                    <span style={{fontSize:'22px', lineHeight:1, paddingLeft:'8px'}}>{item.emoji}</span>
                     <p className="flex-1 text-sm font-semibold text-gray-900">{item.title}</p>
-                    <span className="text-gray-300 text-lg font-light">›</span>
+                    <span className="text-gray-300 text-lg font-light pr-4">›</span>
                   </div>
                 </button>
               ))}
