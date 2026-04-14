@@ -27,7 +27,7 @@ const SECTIONS = [
   },
   {
     name: 'Your Cooking Life',
-    subtitle: null,
+    subtitle: 'Your saved recipes, cooking cards, and what you're making next.',
     accent: '#f59e0b',
     items: [
       { emoji: '🔐', title: 'MyRecipeVault',  href: '/secret' },
@@ -37,7 +37,7 @@ const SECTIONS = [
   },
   {
     name: 'AI Helpers',
-    subtitle: null,
+    subtitle: 'Smart support whenever you need ideas, guidance, or answers.',
     accent: '#a855f7',
     items: [
       { emoji: '👨‍🍳', title: 'MY-AI ChefJen',  href: '/topchef' },
