@@ -175,7 +175,7 @@ export default function CardsPage() {
           {/* Card header */}
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-5">
             <div className="bg-orange-700 px-5 py-3 flex items-center justify-between">
-              <span className="text-orange-200 font-semibold tracking-wider uppercase" style={{fontSize:'11px'}}>MyRecipe Cards</span>
+              <span className="text-white font-bold truncate" style={{fontSize:'15px'}}>{viewing.title}</span>
               <span style={{fontSize:'16px'}}>🃏</span>
             </div>
 
@@ -348,31 +348,26 @@ export default function CardsPage() {
         ) : (
           <>
             <p className="text-sm text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               {filtered.map(recipe => (
                 <button key={recipe.id} onClick={() => openCard(recipe)}
-                  className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 transition-colors">
-                  <div className="bg-orange-700 px-4 py-2 flex items-center justify-between">
-                    <span className="text-orange-200 font-semibold tracking-wider uppercase" style={{fontSize:'10px'}}>Recipe Card</span>
-                    <span style={{fontSize:'14px'}}>🃏</span>
+                  className="text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-300 hover:shadow-md transition-all active:scale-95">
+                  <div className="bg-orange-700 px-3 py-2.5">
+                    <p className="text-white font-bold text-xs leading-tight line-clamp-2">{recipe.title}</p>
                   </div>
-                  <div className="flex gap-3 p-4">
+                  <div className="p-3">
                     {recipe.photo_url ? (
-                      <img src={recipe.photo_url} alt={recipe.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+                      <div style={{height:'90px'}} className="rounded-xl overflow-hidden mb-2">
+                        <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                      </div>
                     ) : (
-                      <div className="w-14 h-14 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-                        <span style={{fontSize:'22px'}}>🍽️</span>
+                      <div style={{height:'90px'}} className="rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center mb-2">
+                        <span style={{fontSize:'28px'}}>🍽️</span>
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{recipe.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{recipe.category || 'Recipe'}{recipe.servings ? ` · ${recipe.servings} servings` : ''}</p>
-                      <div className="flex gap-3 mt-1">
-                        <p className="text-xs text-gray-500">{(recipe.ingredients || []).length} ingredients</p>
-                        {recipe.family_notes && <p className="text-xs text-amber-600">📝 Has notes</p>}
-                      </div>
-                    </div>
-                    <span className="text-gray-400 text-xl self-center">→</span>
+                    <p className="text-xs text-gray-500">{recipe.category || 'Recipe'}{recipe.servings ? ` · ${recipe.servings} servings` : ''}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{(recipe.ingredients || []).length} ingredients</p>
+                    {recipe.family_notes && <p className="text-xs text-amber-600 mt-0.5">📝 Notes</p>}
                   </div>
                 </button>
               ))}
