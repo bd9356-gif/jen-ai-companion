@@ -13,8 +13,8 @@ const SECTIONS = [
     subtitle: 'Find ideas, inspiration, and dishes worth considering.',
     accent: '#f97316',
     items: [
-      { emoji: '🍳', title: 'Explore Recipes', subtitle: 'Browse the full library — swipe or scroll', href: '/explore' },
-      { emoji: '🎬', title: 'TopChef Videos',  subtitle: '558 videos — filter by category or channel', href: '/videos' },
+      { emoji: '🍳', title: 'Explore Recipes', href: '/explore' },
+      { emoji: '🎬', title: 'TopChef Videos', href: '/videos' },
     ]
   },
   {
@@ -22,7 +22,7 @@ const SECTIONS = [
     subtitle: 'Your staging drawer — review, compare, and choose what moves into your cooking life.',
     accent: '#e85d8a',
     items: [
-      { emoji: '❤️', title: 'MyFavorites', subtitle: 'Where your best finds wait for you', href: '/saved' },
+      { emoji: '❤️', title: 'MyFavorites', href: '/saved' },
     ]
   },
   {
@@ -30,9 +30,9 @@ const SECTIONS = [
     subtitle: "Your saved recipes, cooking cards, and what you're making next.",
     accent: '#f59e0b',
     items: [
-      { emoji: '🔐', title: 'MyRecipeVault',  subtitle: 'Your personal cooking library', href: '/secret' },
-      { emoji: '🃏', title: 'MyRecipe Cards', subtitle: 'Quick reference cards for your go-to recipes', href: '/cards' },
-      { emoji: '🎯', title: 'MyPicks',        subtitle: 'Your menu, your way — no pressure', href: '/picks' },
+      { emoji: '🔐', title: 'MyRecipeVault', href: '/secret' },
+      { emoji: '🃏', title: 'MyRecipe Cards', href: '/cards' },
+      { emoji: '🎯', title: 'MyPicks', href: '/picks' },
     ]
   },
   {
@@ -40,8 +40,8 @@ const SECTIONS = [
     subtitle: 'Smart support whenever you need ideas, guidance, or answers.',
     accent: '#a855f7',
     items: [
-      { emoji: '👨‍🍳', title: 'MY-AI ChefJen',  subtitle: 'Your personal chef, ready to cook with you', href: '/topchef' },
-      { emoji: '🤖', title: 'Ask-AI Anything', subtitle: 'Instant answers, clearly explained', href: '/chef' },
+      { emoji: '👨‍🍳', title: 'MY-AI ChefJen', href: '/topchef' },
+      { emoji: '🤖', title: 'Ask-AI Anything', href: '/chef' },
     ]
   },
 ]
@@ -66,7 +66,7 @@ export default function KitchenPage() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
-        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-4">
           <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
           <p className="text-sm text-white/80 mt-0.5">Everything you need — all in one place.</p>
         </div>
@@ -77,28 +77,27 @@ export default function KitchenPage() {
       </div>
 
       {/* Sections */}
-      <main className="px-4 py-3 max-w-2xl mx-auto pb-4 space-y-4">
+      <main className="px-4 py-4 max-w-2xl mx-auto pb-6 space-y-5">
         {SECTIONS.map(section => (
           <div key={section.name}>
             {/* Section header */}
-            <div className="mb-1.5 flex items-center gap-2">
-              <div style={{width:'3px', height:'14px', backgroundColor: section.accent, borderRadius:'2px', flexShrink:0}} />
+            <div className="mb-2 px-1">
               <h2 className="text-xs font-extrabold uppercase tracking-wider" style={{color: section.accent}}>{section.name}</h2>
+              {section.subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
             </div>
             {/* Section items */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {section.items.map(item => (
                 <button
                   key={item.href}
                   onClick={() => window.location.href = item.href}
                   className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
-                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)' }}
+                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${section.accent}` }}
                 >
-                  <div className="flex items-center gap-3 py-2.5">
-                    <div style={{width:'4px', alignSelf:'stretch', backgroundColor: section.accent, flexShrink:0}} />
-                    <span style={{fontSize:'18px', lineHeight:1, paddingLeft:'8px'}}>{item.emoji}</span>
+                  <div className="flex items-center gap-4 px-4 py-3.5">
+                    <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
                     <p className="flex-1 text-sm font-semibold text-gray-900">{item.title}</p>
-                    <span className="text-gray-300 text-lg font-light pr-4">›</span>
+                    <span className="text-gray-300 text-lg font-light">›</span>
                   </div>
                 </button>
               ))}
