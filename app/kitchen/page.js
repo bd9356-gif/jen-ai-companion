@@ -13,8 +13,8 @@ const SECTIONS = [
     subtitle: 'Find ideas, inspiration, and dishes worth considering.',
     accent: '#f97316',
     items: [
-      { emoji: '🍳', title: 'Explore Recipes', href: '/explore' },
-      { emoji: '🎬', title: 'TopChef Videos',  href: '/videos' },
+      { emoji: '🍳', title: 'Explore Recipes', subtitle: 'Browse the full library — swipe or scroll', href: '/explore' },
+      { emoji: '🎬', title: 'TopChef Videos',  subtitle: '558 videos — filter by category or channel', href: '/videos' },
     ]
   },
   {
@@ -22,7 +22,7 @@ const SECTIONS = [
     subtitle: 'Your staging drawer — review, compare, and choose what moves into your cooking life.',
     accent: '#e85d8a',
     items: [
-      { emoji: '❤️', title: 'MyFavorites', href: '/saved' },
+      { emoji: '❤️', title: 'MyFavorites', subtitle: 'Where your best finds wait for you', href: '/saved' },
     ]
   },
   {
@@ -30,9 +30,9 @@ const SECTIONS = [
     subtitle: "Your saved recipes, cooking cards, and what you're making next.",
     accent: '#f59e0b',
     items: [
-      { emoji: '🔐', title: 'MyRecipeVault',  href: '/secret' },
-      { emoji: '🃏', title: 'MyRecipe Cards', href: '/cards' },
-      { emoji: '🎯', title: 'MyPicks',        href: '/picks' },
+      { emoji: '🔐', title: 'MyRecipeVault',  subtitle: 'Your personal cooking library', href: '/secret' },
+      { emoji: '🃏', title: 'MyRecipe Cards', subtitle: 'Quick reference cards for your go-to recipes', href: '/cards' },
+      { emoji: '🎯', title: 'MyPicks',        subtitle: 'Your menu, your way — no pressure', href: '/picks' },
     ]
   },
   {
@@ -40,8 +40,8 @@ const SECTIONS = [
     subtitle: 'Smart support whenever you need ideas, guidance, or answers.',
     accent: '#a855f7',
     items: [
-      { emoji: '👨‍🍳', title: 'MY-AI ChefJen',  href: '/topchef' },
-      { emoji: '🤖', title: 'Ask-AI Anything', href: '/chef' },
+      { emoji: '👨‍🍳', title: 'MY-AI ChefJen',  subtitle: 'Your personal chef, ready to cook with you', href: '/topchef' },
+      { emoji: '🤖', title: 'Ask-AI Anything', subtitle: 'Instant answers, clearly explained', href: '/chef' },
     ]
   },
 ]
