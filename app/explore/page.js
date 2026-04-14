@@ -278,7 +278,7 @@ export default function ExplorePage() {
                     <p className="text-xs text-gray-400 mb-2">{recipe.cuisine || recipe.category}</p>
                     <div className="flex items-center justify-between">
                       {metadata[recipe.id]?.difficulty_level && <span className="text-xs text-gray-400">{diffLabel[metadata[recipe.id].difficulty_level]}</span>}
-                      <button onClick={() => toggleSave(recipe.id)} className={`text-lg ml-auto ${savedIds.has(recipe.id) ? 'text-red-500' : 'text-gray-300'}`}>♥</button>
+                      <button onClick={() => toggleSave(recipe.id)} className={`text-lg ml-auto ${savedIds.has(String(recipe.id)) ? 'text-red-500' : 'text-gray-300'}`}>♥</button>
                     </div>
                   </div>
                 </div>
