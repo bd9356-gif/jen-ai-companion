@@ -61,7 +61,7 @@ export default function KitchenPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">🍳 MyKitchen</h1>
+          <h1 className="text-xl font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
           <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
         </div>
         <button onClick={() => window.location.href='/profile'}
