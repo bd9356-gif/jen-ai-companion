@@ -7,15 +7,43 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const MENU_ITEMS = [
-  { emoji: '🔐', title: 'MyRecipeVault',    subtitle: 'Your personal cooking library',              href: '/secret',    accent: '#f97316' },
-  { emoji: '🍳', title: 'Explore Recipes',  subtitle: 'Browse the full library — swipe or scroll',  href: '/explore',   accent: '#f97316' },
-  { emoji: '❤️', title: 'MyFavorites',      subtitle: 'Where your best finds wait for you',         href: '/saved',     accent: '#e85d8a' },
-  { emoji: '🃏', title: 'MyRecipe Cards',   subtitle: 'Quick reference cards for your go-to recipes', href: '/cards',   accent: '#f59e0b' },
-  { emoji: '🎬', title: 'TopChef Videos',   subtitle: '558 videos — filter by category or channel', href: '/videos',    accent: '#f97316' },
-  { emoji: '👨‍🍳', title: 'MY-AI ChefJen',   subtitle: 'Your personal chef, ready to cook with you.', href: '/topchef', accent: '#a855f7' },
-  { emoji: '🎯', title: 'MyPicks',        subtitle: 'Your menu, your way — no pressure.',           href: '/picks',      accent: '#f97316' },
-  { emoji: '🤖', title: 'Ask-AI Anything',  subtitle: 'Instant answers, clearly explained.',         href: '/chef',      accent: '#3b82f6' },
+const SECTIONS = [
+  {
+    name: 'Explore',
+    subtitle: 'Find ideas, inspiration, and dishes worth considering.',
+    accent: '#f97316',
+    items: [
+      { emoji: '🍳', title: 'Explore Recipes', href: '/explore' },
+      { emoji: '🎬', title: 'TopChef Videos',  href: '/videos' },
+    ]
+  },
+  {
+    name: 'Collect & Decide',
+    subtitle: 'Your staging drawer — review, compare, and choose what moves into your cooking life.',
+    accent: '#e85d8a',
+    items: [
+      { emoji: '❤️', title: 'MyFavorites', href: '/saved' },
+    ]
+  },
+  {
+    name: 'Your Cooking Life',
+    subtitle: null,
+    accent: '#f59e0b',
+    items: [
+      { emoji: '🔐', title: 'MyRecipeVault',  href: '/secret' },
+      { emoji: '🃏', title: 'MyRecipe Cards', href: '/cards' },
+      { emoji: '🎯', title: 'MyPicks',        href: '/picks' },
+    ]
+  },
+  {
+    name: 'AI Helpers',
+    subtitle: null,
+    accent: '#a855f7',
+    items: [
+      { emoji: '👨‍🍳', title: 'MY-AI ChefJen',  href: '/topchef' },
+      { emoji: '🤖', title: 'Ask-AI Anything', href: '/chef' },
+    ]
+  },
 ]
 
 export default function KitchenPage() {
@@ -28,40 +56,55 @@ export default function KitchenPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 pt-4">
-        <div className="relative w-full rounded-2xl overflow-hidden mb-4" style={{height:'220px'}}>
-          <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="My Kitchen" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
-          <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-            <h1 className="text-2xl font-bold text-white leading-tight">🍳 MyKitchen</h1>
-            <p className="text-sm text-white/80 mt-0.5 leading-snug">Everything you need — all in one place.</p>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+
+      {/* Hero */}
+      <div className="relative w-full overflow-hidden" style={{height:'200px'}}>
+        <img
+          src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
+          alt="My Kitchen"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/80" />
+        <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+          <h1 className="text-2xl font-bold text-white leading-tight">🍳 My Kitchen</h1>
+          <p className="text-sm text-white/80 mt-0.5">Everything you need — all in one place.</p>
         </div>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-semibold text-orange-500">👇 Open a drawer to get started</p>
-          <button onClick={() => window.location.href = '/profile'}
-            className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors">
-            👤 Profile
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8">
-          {MENU_ITEMS.map(item => (
-            <button key={item.href} onClick={() => window.location.href = item.href}
-              className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
-              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${item.accent}` }}>
-              <div className="flex items-center gap-4 px-4 py-3.5">
-                <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 leading-tight">{item.title}</p>
-                  <p className="text-xs text-gray-600 mt-0.5 leading-snug">{item.subtitle}</p>
-                </div>
-                <span className="text-gray-400 text-lg font-light">›</span>
-              </div>
-            </button>
-          ))}
-        </div>
+        <button onClick={() => window.location.href='/profile'}
+          className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm text-white rounded-full px-3 py-1.5 text-xs font-semibold">
+          👤 Profile
+        </button>
       </div>
+
+      {/* Sections */}
+      <main className="px-4 py-5 max-w-2xl mx-auto pb-10 space-y-6">
+        {SECTIONS.map(section => (
+          <div key={section.name}>
+            {/* Section header */}
+            <div className="mb-2 px-1">
+              <h2 className="text-sm font-bold text-gray-900">{section.name}</h2>
+              {section.subtitle && <p className="text-xs text-gray-500 mt-0.5">{section.subtitle}</p>}
+            </div>
+            {/* Section items */}
+            <div className="space-y-2">
+              {section.items.map(item => (
+                <button
+                  key={item.href}
+                  onClick={() => window.location.href = item.href}
+                  className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
+                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${section.accent}` }}
+                >
+                  <div className="flex items-center gap-4 px-4 py-3.5">
+                    <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
+                    <p className="flex-1 text-sm font-semibold text-gray-900">{item.title}</p>
+                    <span className="text-gray-300 text-lg font-light">›</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </main>
     </div>
   )
 }
