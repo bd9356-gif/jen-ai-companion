@@ -8,8 +8,7 @@ export default function SafeYouTube({ videoId, onClose }) {
       <iframe
         src={src}
         frameBorder="0"
-        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
+        allow="accelerometer; autoplay; encrypted-media; gyroscope"
         sandbox="allow-scripts allow-same-origin"
         style={{
           position: 'absolute',
