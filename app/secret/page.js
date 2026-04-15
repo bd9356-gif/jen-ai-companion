@@ -1,3 +1,4 @@
+
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
@@ -415,31 +416,6 @@ export default function MyRecipeVaultPage() {
     await supabase.from('shopping_list').insert(rows)
     setAddedToList(new Set(ings.map(ing => [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase())))
     showToast(`Added ${ings.length} ingredients to Shopping List`)
-  }
-
-  function showToast(msg) {
-    setToastMsg(msg)
-    setTimeout(() => setToastMsg(null), 2000)
-  }
-
-  async function addToShoppingList(ing) {
-    if (!user) return
-    const ingredient = [ing.measure, ing.name].filter(Boolean).join(' ')
-    const key = ingredient.toLowerCase()
-    if (addedToList.has(key)) return
-    await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing?.title || '' })
-    setAddedToList(prev => new Set([...prev, key]))
-    showToast('Added to Shopping List')
-  }
-
-  async function addAllToShoppingList() {
-    if (!user || !viewing) return
-    const ings = viewing.ingredients || []
-    if (!ings.length) return
-    const rows = ings.map(ing => ({ user_id: user.id, ingredient: [ing.measure, ing.name].filter(Boolean).join(' '), recipe_title: viewing.title || '' }))
-    await supabase.from('shopping_list').insert(rows)
-    setAddedToList(new Set(ings.map(ing => [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase())))
-    showToast(`Added ${ings.length} ingredients`)
   }
 
   async function loadPinnedCards(userId) {
