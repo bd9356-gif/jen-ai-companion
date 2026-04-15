@@ -7,52 +7,109 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const BUCKETS = [
-  { key: 'top',  label: 'To Make',    emoji: '⭐', micro: 'Your main focus for now.', bg: 'bg-amber-50',  border: 'border-amber-200' },
-  { key: 'nice', label: 'Maybe', emoji: '📋', micro: 'If you get to them.',       bg: 'bg-gray-50',   border: 'border-gray-200'  },
-  { key: 'later', label: 'Later',       emoji: '🗂',  micro: 'Still saved, not forgotten.', bg: 'bg-blue-50/50', border: 'border-blue-100' },
+const GROUPS = [
+  { key: 'meal_plan',     label: 'Meal Plan',     emoji: '📅', subtitle: 'Recipes you plan to cook', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  { key: 'shopping_list', label: 'Shopping List',  emoji: '🛒', subtitle: 'Ingredients you need',     color: 'bg-green-50 text-green-700 border-green-200' },
+  { key: 'ai_notes',      label: 'AI Notes',       emoji: '💡', subtitle: 'Saved Ask-AI answers',     color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  { key: 'chefjen',       label: 'ChefJen',        emoji: '👨‍🍳', subtitle: 'Your AI chef recipe plans', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  { key: 'chef_videos',   label: 'Chef Videos',    emoji: '🎬', subtitle: 'Saved cooking videos',     color: 'bg-blue-50 text-blue-700 border-blue-200' },
 ]
 
-export default function MyPicksPage() {
+const DEFAULT_SHOW = 5
+
+export default function MyPlanPage() {
   const [user, setUser] = useState(null)
-  const [picks, setPicks] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
+  const [collapsed, setCollapsed] = useState({})
+  const [showMore, setShowMore] = useState({})
+
+  // Data for each group
+  const [mealPlan, setMealPlan] = useState([])
   const [shoppingList, setShoppingList] = useState([])
+  const [aiNotes, setAiNotes] = useState([])
+  const [chefJen, setChefJen] = useState([])
+  const [chefVideos, setChefVideos] = useState([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
-      loadPicks(session.user.id)
-      loadShoppingList(session.user.id)
+      loadAll(session.user.id)
     })
   }, [])
 
-  async function loadPicks(userId) {
+  async function loadAll(userId) {
+    await Promise.all([
+      loadMealPlan(userId),
+      loadShoppingList(userId),
+      loadFavorites(userId),
+      loadVideos(userId),
+    ])
+    setLoading(false)
+  }
+
+  async function loadMealPlan(userId) {
     const { data } = await supabase
       .from('my_picks')
       .select('*')
       .eq('user_id', userId)
-      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
-    setPicks(data || [])
-    setLoading(false)
+    setMealPlan(data || [])
   }
 
   async function loadShoppingList(userId) {
-    const { data } = await supabase.from('shopping_list').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    const { data } = await supabase
+      .from('shopping_list')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
     setShoppingList(data || [])
   }
 
-  async function removeFromShoppingList(id) {
-    await supabase.from('shopping_list').delete().eq('id', id)
-    setShoppingList(prev => prev.filter(i => i.id !== id))
+  async function loadFavorites(userId) {
+    const { data } = await supabase
+      .from('favorites')
+      .select('*')
+      .eq('user_id', userId)
+      .in('type', ['ai_answer', 'ai_recipe'])
+      .order('created_at', { ascending: false })
+    setAiNotes((data || []).filter(i => i.type === 'ai_answer'))
+    setChefJen((data || []).filter(i => i.type === 'ai_recipe'))
   }
 
+  async function loadVideos(userId) {
+    const [{ data: sv1 }, { data: sv2 }] = await Promise.all([
+      supabase.from('saved_videos').select('video_id').eq('user_id', userId),
+      supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
+    ])
+    const cookingIds = (sv1 || []).map(s => s.video_id)
+    const educationIds = (sv2 || []).map(s => s.video_id)
+    const [{ data: cv }, { data: ev }] = await Promise.all([
+      cookingIds.length ? supabase.from('cooking_videos').select('*').in('id', cookingIds) : { data: [] },
+      educationIds.length ? supabase.from('education_videos').select('*').in('id', educationIds) : { data: [] },
+    ])
+    setChefVideos([...(cv || []), ...(ev || [])])
+  }
+
+  function showToast(msg) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2500)
+  }
+
+  function toggleCollapse(key) {
+    setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  // Shopping list actions
   async function toggleShoppingItem(item) {
     await supabase.from('shopping_list').update({ checked: !item.checked }).eq('id', item.id)
     setShoppingList(prev => prev.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i))
+  }
+
+  async function removeShoppingItem(id) {
+    await supabase.from('shopping_list').delete().eq('id', id)
+    setShoppingList(prev => prev.filter(i => i.id !== id))
   }
 
   async function clearShoppingList() {
@@ -61,26 +118,38 @@ export default function MyPicksPage() {
     showToast('Shopping list cleared')
   }
 
-  async function moveTo(pick, bucket) {
-    await supabase.from('my_picks').update({ bucket }).eq('id', pick.id)
-    setPicks(prev => prev.map(p => p.id === pick.id ? { ...p, bucket } : p))
-    showToast(`Moved to ${BUCKETS.find(b => b.key === bucket)?.label} ✓`)
-  }
-
-  async function remove(id) {
+  // Meal plan actions
+  async function removeMealPlan(id) {
     await supabase.from('my_picks').delete().eq('id', id)
-    setPicks(prev => prev.filter(p => p.id !== id))
-    showToast('Removed from MyPlan')
+    setMealPlan(prev => prev.filter(i => i.id !== id))
+    showToast('Removed from Meal Plan')
   }
 
-  function showToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 2000)
+  // Favorites actions
+  async function removeFavorite(item) {
+    await supabase.from('favorites').delete().eq('id', item.id)
+    if (item.type === 'ai_answer') setAiNotes(prev => prev.filter(i => i.id !== item.id))
+    if (item.type === 'ai_recipe') setChefJen(prev => prev.filter(i => i.id !== item.id))
+    showToast('Removed')
   }
 
-  const topPicks = picks.filter(p => p.bucket === 'top')
-  const nicePicks = picks.filter(p => p.bucket === 'nice')
-  const laterPicks = picks.filter(p => p.bucket === 'later')
+  // Video actions
+  async function removeVideo(video) {
+    const table = video._source === 'education' ? 'saved_education_videos' : 'saved_videos'
+    await supabase.from(table).delete().eq('user_id', user.id).eq('video_id', video.id)
+    setChefVideos(prev => prev.filter(v => v.id !== video.id))
+    showToast('Removed')
+  }
+
+  const totalCount = mealPlan.length + shoppingList.length + aiNotes.length + chefJen.length + chefVideos.length
+
+  const groupData = {
+    meal_plan: mealPlan,
+    shopping_list: shoppingList,
+    ai_notes: aiNotes,
+    chefjen: chefJen,
+    chef_videos: chefVideos,
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -89,181 +158,145 @@ export default function MyPicksPage() {
       )}
 
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">🎯 MyPlan</h1>
-            {picks.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{picks.length}</span>}
+            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
+            <h1 className="text-lg font-bold text-gray-900">📋 MyPlan</h1>
+            {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => window.location.href='/cards'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">MyRecipe Cards</button>
-            <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">MyRecipeVault</button>
-          </div>
+          <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">MyVault</button>
         </div>
-        <p className="text-xs text-orange-500 font-semibold text-center pb-2">Your menu, your way — no pressure.</p>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
+      <main className="max-w-2xl mx-auto px-4 py-4 pb-16 space-y-3">
         {loading ? (
-          <div className="text-center py-20 text-gray-500">Loading your picks...</div>
-        ) : picks.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-4xl mb-4">🎯</p>
-            <p className="text-gray-700 font-semibold mb-2">No picks yet</p>
-            <p className="text-gray-500 text-sm mb-6">Add recipes from MyRecipe Cards or MyRecipeVault</p>
-            <div className="flex gap-3 justify-center">
-              <button onClick={() => window.location.href='/cards'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">MyRecipe Cards</button>
-              <button onClick={() => window.location.href='/secret'} className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold">MyRecipeVault</button>
-            </div>
-          </div>
+          <div className="text-center py-20 text-gray-400">Loading your plan...</div>
         ) : (
-          <div className="space-y-8">
+          GROUPS.map(group => {
+            const items = groupData[group.key] || []
+            const isCollapsed = collapsed[group.key]
+            const expanded = showMore[group.key]
+            const visible = expanded ? items : items.slice(0, DEFAULT_SHOW)
+            const hasMore = items.length > DEFAULT_SHOW
 
-            {/* TOP PICKS */}
-            <Section
-              bucket={BUCKETS[0]}
-              picks={topPicks}
-              maxHighlight={3}
-              onMoveTo={moveTo}
-              onRemove={remove}
-              moveUpLabel={null}
-              moveDownLabel="→ Maybe"
-              moveDownBucket="nice"
-            />
-
-            {/* NICE-TO-HAVE */}
-            <Section
-              bucket={BUCKETS[1]}
-              picks={nicePicks}
-              onMoveTo={moveTo}
-              onRemove={remove}
-              moveUpLabel="↑ To Make"
-              moveUpBucket="top"
-              moveDownLabel="↓ Later"
-              moveDownBucket="later"
-            />
-
-            {/* LATER */}
-            <Section
-              bucket={BUCKETS[2]}
-              picks={laterPicks}
-              onMoveTo={moveTo}
-              onRemove={remove}
-              moveUpLabel="↑ Maybe"
-              moveUpBucket="nice"
-              moveDownLabel={null}
-              compact={true}
-            />
-
-          </div>
-        )}
-
-          {/* Shopping List */}
-          <div className="mt-8 border-t border-gray-100 pt-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-gray-900">🛒 Shopping List</h2>
-                {shoppingList.length > 0 && <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">{shoppingList.length}</span>}
-              </div>
-              {shoppingList.length > 0 && (
-                <button onClick={clearShoppingList} className="text-xs text-red-400 hover:text-red-600 font-semibold">Clear All</button>
-              )}
-            </div>
-            {shoppingList.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">No items yet — add ingredients from any vault recipe</p>
-            ) : (
-              <div className="bg-gray-50 rounded-2xl p-3 space-y-1">
-                {shoppingList.map(item => (
-                  <div key={item.id} className="flex items-center gap-3 py-1.5">
-                    <button onClick={() => toggleShoppingItem(item)}
-                      className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
-                      {item.checked && <span className="text-xs">✓</span>}
-                    </button>
-                    <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.ingredient}</span>
-                    {item.recipe_title && <span className="text-xs text-gray-400 truncate max-w-24">{item.recipe_title}</span>}
-                    <button onClick={() => removeFromShoppingList(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+            return (
+              <div key={group.key} className="border border-gray-100 rounded-2xl overflow-hidden">
+                {/* Section header */}
+                <button
+                  onClick={() => toggleCollapse(group.key)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{group.emoji}</span>
+                    <span className="font-semibold text-sm text-gray-900">{group.label}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${group.color}`}>
+                      {items.length}
+                    </span>
                   </div>
-                ))}
+                  <span className="text-gray-400 text-sm">{isCollapsed ? '▶' : '▼'}</span>
+                </button>
+
+                {!isCollapsed && (
+                  <div className="divide-y divide-gray-50">
+                    {items.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-6">{group.subtitle}</p>
+                    ) : (
+                      <>
+                        {/* MEAL PLAN */}
+                        {group.key === 'meal_plan' && visible.map(item => (
+                          <div key={item.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
+                            {item.photo_url ? (
+                              <img src={item.photo_url} alt={item.title} className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                                <span className="text-xl">🍽️</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <button onClick={() => window.location.href=`/secret?recipe=${item.recipe_id}`}
+                                className="font-semibold text-sm text-orange-600 truncate text-left w-full">{item.title} →</button>
+                              {item.category && <p className="text-xs text-gray-400">{item.category}</p>}
+                            </div>
+                            <button onClick={() => removeMealPlan(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+                          </div>
+                        ))}
+
+                        {/* SHOPPING LIST */}
+                        {group.key === 'shopping_list' && (
+                          <>
+                            {shoppingList.length > 0 && (
+                              <div className="flex justify-end px-3 py-2 bg-white">
+                                <button onClick={clearShoppingList} className="text-xs text-red-400 hover:text-red-600 font-semibold">Clear All</button>
+                              </div>
+                            )}
+                            {visible.map(item => (
+                              <div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-white hover:bg-gray-50">
+                                <button onClick={() => toggleShoppingItem(item)}
+                                  className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
+                                  {item.checked && <span className="text-xs">✓</span>}
+                                </button>
+                                <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.ingredient}</span>
+                                {item.recipe_title && <span className="text-xs text-gray-400 truncate max-w-24">{item.recipe_title}</span>}
+                                <button onClick={() => removeShoppingItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {/* AI NOTES */}
+                        {group.key === 'ai_notes' && visible.map(item => (
+                          <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
+                            <span className="text-xl shrink-0">💡</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
+                              {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
+                            </div>
+                            <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+                          </div>
+                        ))}
+
+                        {/* CHEFJEN */}
+                        {group.key === 'chefjen' && visible.map(item => (
+                          <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
+                            <span className="text-xl shrink-0">👨‍🍳</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
+                              {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
+                            </div>
+                            <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+                          </div>
+                        ))}
+
+                        {/* CHEF VIDEOS */}
+                        {group.key === 'chef_videos' && visible.map(video => (
+                          <div key={video.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
+                            <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
+                              alt={video.title} className="w-16 h-12 rounded-xl object-cover shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{video.title}</p>
+                              <p className="text-xs text-orange-600">{video.channel}</p>
+                            </div>
+                            <button onClick={() => removeVideo(video)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+                          </div>
+                        ))}
+
+                        {/* Show More */}
+                        {hasMore && (
+                          <div className="px-4 py-2 bg-gray-50 text-center">
+                            <button onClick={() => setShowMore(prev => ({ ...prev, [group.key]: !prev[group.key] }))}
+                              className="text-xs text-orange-600 font-semibold hover:text-orange-700">
+                              {expanded ? `Show Less ▲` : `Show ${items.length - DEFAULT_SHOW} More ▼`}
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-      </main>
-    </div>
-  )
-}
-
-function Section({ bucket, picks, onMoveTo, onRemove, moveUpLabel, moveUpBucket, moveDownLabel, moveDownBucket, maxHighlight, compact }) {
-  if (picks.length === 0) return null
-  return (
-    <div>
-      <div className={`rounded-2xl border ${bucket.border} ${bucket.bg} p-4`}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-lg">{bucket.emoji}</span>
-          <h2 className="text-sm font-bold text-gray-900">{bucket.label}</h2>
-          <span className="text-xs text-gray-500">({picks.length})</span>
-        </div>
-        <p className="text-xs text-gray-500 italic mb-4">{bucket.micro}</p>
-        <div className="space-y-3">
-          {picks.map((pick, i) => (
-            <PickCard
-              key={pick.id}
-              pick={pick}
-              highlighted={maxHighlight ? i < maxHighlight : false}
-              compact={compact}
-              onMoveTo={onMoveTo}
-              onRemove={onRemove}
-              moveUpLabel={moveUpLabel}
-              moveUpBucket={moveUpBucket}
-              moveDownLabel={moveDownLabel}
-              moveDownBucket={moveDownBucket}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function PickCard({ pick, highlighted, compact, onMoveTo, onRemove, moveUpLabel, moveUpBucket, moveDownLabel, moveDownBucket }) {
-  return (
-    <div className={`bg-white rounded-2xl border border-gray-100 overflow-hidden ${highlighted ? 'shadow-md' : 'shadow-sm'}`}>
-      <div className={`flex gap-3 ${compact ? 'p-3' : 'p-4'}`}>
-        {pick.photo_url ? (
-          <img src={pick.photo_url} alt={pick.title}
-            className={`rounded-xl object-cover shrink-0 ${compact ? 'w-12 h-12' : 'w-16 h-16'}`} />
-        ) : (
-          <div className={`rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0 ${compact ? 'w-12 h-12' : 'w-16 h-16'}`}>
-            <span className={compact ? 'text-xl' : 'text-2xl'}>🍽️</span>
-          </div>
+            )
+          })
         )}
-        <div className="flex-1 min-w-0">
-          <button onClick={() => window.location.href=`/secret?recipe=${pick.recipe_id}`} className={`font-semibold text-orange-600 truncate text-left w-full ${compact ? 'text-sm mb-1' : 'mb-1'}`}>{pick.title} →</button>
-          {pick.category && <p className="text-xs text-gray-500 mb-2">{pick.category}</p>}
-          <div className="flex gap-2 flex-wrap">
-            {moveUpLabel && (
-              <button onClick={() => onMoveTo(pick, moveUpBucket)}
-                className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
-                {moveUpLabel}
-              </button>
-            )}
-            {moveDownLabel && (
-              <button onClick={() => onMoveTo(pick, moveDownBucket)}
-                className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors">
-                {moveDownLabel}
-              </button>
-            )}
-            {!moveUpLabel && !moveDownLabel && (
-              <button onClick={() => onMoveTo(pick, 'nice')}
-                className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors">
-                ↑ Move to Maybe
-              </button>
-            )}
-          </div>
-        </div>
-        <button onClick={() => onRemove(pick.id)}
-          className="shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-400 text-2xl self-center">×</button>
-      </div>
+      </main>
     </div>
   )
 }
