@@ -37,6 +37,8 @@ export default function RecipeDetailPage() {
   const [saved, setSaved] = useState(false)
   const [user, setUser] = useState(null)
   const [showVideo, setShowVideo] = useState(false)
+  const [toast, setToast] = useState(null)
+  const [addedItems, setAddedItems] = useState(new Set())
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -67,10 +69,10 @@ export default function RecipeDetailPage() {
 
   async function checkSaved(userId) {
     const { data } = await supabase
-      .from('saved_recipes')
+      .from('favorites')
       .select('id')
       .eq('user_id', userId)
-      .eq('recipe_id', id)
+      .eq('ref_id', String(id))
       .single()
     setSaved(!!data)
   }
@@ -78,12 +80,43 @@ export default function RecipeDetailPage() {
   async function toggleSave() {
     if (!user) { window.location.href = '/login'; return }
     if (saved) {
-      await supabase.from('saved_recipes').delete().eq('user_id', user.id).eq('recipe_id', id)
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', String(id))
       setSaved(false)
     } else {
-      await supabase.from('saved_recipes').insert({ user_id: user.id, recipe_id: id })
+      await supabase.from('favorites').insert({ user_id: user.id, type: 'recipe', ref_id: String(id), title: recipe?.title || '', thumbnail_url: recipe?.thumbnail_url || '', source: 'recipe_detail', metadata: { category: recipe?.category, cuisine: recipe?.cuisine } })
       setSaved(true)
     }
+  }
+
+  function showToast(msg) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2000)
+  }
+
+  async function addToShoppingList(ing) {
+    if (!user) return
+    const ingredient = [ing.measure, ing.name].filter(Boolean).join(' ')
+    const key = ingredient.toLowerCase()
+    if (addedItems.has(key)) return
+    await supabase.from('shopping_list').insert({
+      user_id: user.id,
+      ingredient,
+      recipe_title: recipe?.title || ''
+    })
+    setAddedItems(prev => new Set([...prev, key]))
+    showToast('Added to Shopping List')
+  }
+
+  async function addAllToShoppingList() {
+    if (!user || !ingredients.length) return
+    const rows = ingredients.map(ing => ({
+      user_id: user.id,
+      ingredient: [ing.measure, ing.name].filter(Boolean).join(' '),
+      recipe_title: recipe?.title || ''
+    }))
+    await supabase.from('shopping_list').insert(rows)
+    setAddedItems(new Set(ingredients.map(ing => [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase())))
+    showToast(`Added ${ingredients.length} ingredients to Shopping List`)
   }
 
   if (loading) {
@@ -179,6 +212,11 @@ export default function RecipeDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-5 py-3 rounded-2xl shadow-lg animate-bounce">
+          🛒 {toast}
+        </div>
+      )}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <button onClick={() => window.history.back()} className="text-sm text-gray-400 hover:text-gray-600">
@@ -238,18 +276,35 @@ export default function RecipeDetailPage() {
 
         {/* Ingredients */}
         <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">Ingredients</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-gray-900">Ingredients</h2>
+            {user && ingredients.length > 0 && (
+              <button onClick={addAllToShoppingList}
+                className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50 transition-colors">
+                🛒 Add All
+              </button>
+            )}
+          </div>
           <div className="bg-gray-50 rounded-2xl p-4">
             <ul className="space-y-2">
-              {ingredients.map((ing, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm">
-                  <span className="text-orange-400 mt-0.5">•</span>
-                  <span className="text-gray-600">
-                    {ing.measure && <span className="font-semibold text-gray-800">{ing.measure} </span>}
-                    {ing.name}
-                  </span>
-                </li>
-              ))}
+              {ingredients.map((ing, i) => {
+                const key = [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase()
+                return (
+                  <li key={i} className="flex items-center gap-3 text-sm">
+                    <span className="text-orange-400">•</span>
+                    <span className="flex-1 text-gray-600">
+                      {ing.measure && <span className="font-semibold text-gray-800">{ing.measure} </span>}
+                      {ing.name}
+                    </span>
+                    {user && (
+                      <button onClick={() => addToShoppingList(ing)}
+                        className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${addedItems.has(key) ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}>
+                        {addedItems.has(key) ? '✓' : '+'}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         </div>

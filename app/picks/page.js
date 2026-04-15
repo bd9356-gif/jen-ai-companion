@@ -18,12 +18,14 @@ export default function MyPicksPage() {
   const [picks, setPicks] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
+  const [shoppingList, setShoppingList] = useState([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
       loadPicks(session.user.id)
+      loadShoppingList(session.user.id)
     })
   }, [])
 
@@ -36,6 +38,27 @@ export default function MyPicksPage() {
       .order('created_at', { ascending: false })
     setPicks(data || [])
     setLoading(false)
+  }
+
+  async function loadShoppingList(userId) {
+    const { data } = await supabase.from('shopping_list').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    setShoppingList(data || [])
+  }
+
+  async function removeFromShoppingList(id) {
+    await supabase.from('shopping_list').delete().eq('id', id)
+    setShoppingList(prev => prev.filter(i => i.id !== id))
+  }
+
+  async function toggleShoppingItem(item) {
+    await supabase.from('shopping_list').update({ checked: !item.checked }).eq('id', item.id)
+    setShoppingList(prev => prev.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i))
+  }
+
+  async function clearShoppingList() {
+    await supabase.from('shopping_list').delete().eq('user_id', user.id)
+    setShoppingList([])
+    showToast('Shopping list cleared')
   }
 
   async function moveTo(pick, bucket) {
