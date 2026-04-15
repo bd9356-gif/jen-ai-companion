@@ -277,17 +277,27 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
             <div className="bg-white px-4 pb-4">
               {ingredients.length > 0 && (
                 <div className="mb-4 pt-3">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Ingredients</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ingredients</p>
+                    <button onClick={addAllToShoppingList} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2 py-1 hover:bg-orange-50">🛒 Add All</button>
+                  </div>
                   <ul className="space-y-1">
-                    {ingredients.map((ing, i) => (
-                      <li key={i} className="flex gap-2 text-sm">
-                        <span className="text-orange-400">•</span>
-                        <span className="text-gray-700">
-                          {ing.measure && <span className="font-semibold">{ing.measure} </span>}
-                          {ing.name}
-                        </span>
-                      </li>
-                    ))}
+                    {ingredients.map((ing, i) => {
+                      const key = [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase()
+                      return (
+                        <li key={i} className="flex items-center gap-2 text-sm">
+                          <span className="text-orange-400">•</span>
+                          <span className="flex-1 text-gray-700">
+                            {ing.measure && <span className="font-semibold">{ing.measure} </span>}
+                            {ing.name}
+                          </span>
+                          <button onClick={() => addToShoppingList(ing)}
+                            className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${addedToList.has(key) ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}>
+                            {addedToList.has(key) ? '✓' : '+'}
+                          </button>
+                        </li>
+                      )
+                    })}
                   </ul>
                 </div>
               )}
@@ -359,6 +369,8 @@ export default function MyRecipeVaultPage() {
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [pinnedCards, setPinnedCards] = useState([])
   const [picksIds, setPicksIds] = useState([])
+  const [toastMsg, setToastMsg] = useState(null)
+  const [addedToList, setAddedToList] = useState(new Set())
 
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
@@ -379,6 +391,31 @@ export default function MyRecipeVaultPage() {
       loadPicksIds(session.user.id)
     })
   }, [])
+
+  function showToast(msg) {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(null), 2000)
+  }
+
+  async function addToShoppingList(ing) {
+    if (!user) return
+    const ingredient = [ing.measure, ing.name].filter(Boolean).join(' ')
+    const key = ingredient.toLowerCase()
+    if (addedToList.has(key)) return
+    await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing?.title || '' })
+    setAddedToList(prev => new Set([...prev, key]))
+    showToast('Added to Shopping List')
+  }
+
+  async function addAllToShoppingList() {
+    if (!user || !viewing) return
+    const ings = viewing.ingredients || []
+    if (!ings.length) return
+    const rows = ings.map(ing => ({ user_id: user.id, ingredient: [ing.measure, ing.name].filter(Boolean).join(' '), recipe_title: viewing.title || '' }))
+    await supabase.from('shopping_list').insert(rows)
+    setAddedToList(new Set(ings.map(ing => [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase())))
+    showToast(`Added ${ings.length} ingredients to Shopping List`)
+  }
 
   async function loadPinnedCards(userId) {
     const { data } = await supabase.from('recipe_cards').select('recipe_id').eq('user_id', userId)
