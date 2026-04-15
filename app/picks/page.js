@@ -157,6 +157,37 @@ export default function MyPicksPage() {
 
           </div>
         )}
+
+          {/* Shopping List */}
+          <div className="mt-8 border-t border-gray-100 pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-gray-900">🛒 Shopping List</h2>
+                {shoppingList.length > 0 && <span className="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">{shoppingList.length}</span>}
+              </div>
+              {shoppingList.length > 0 && (
+                <button onClick={clearShoppingList} className="text-xs text-red-400 hover:text-red-600 font-semibold">Clear All</button>
+              )}
+            </div>
+            {shoppingList.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">No items yet — add ingredients from any vault recipe</p>
+            ) : (
+              <div className="bg-gray-50 rounded-2xl p-3 space-y-1">
+                {shoppingList.map(item => (
+                  <div key={item.id} className="flex items-center gap-3 py-1.5">
+                    <button onClick={() => toggleShoppingItem(item)}
+                      className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
+                      {item.checked && <span className="text-xs">✓</span>}
+                    </button>
+                    <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.ingredient}</span>
+                    {item.recipe_title && <span className="text-xs text-gray-400 truncate max-w-24">{item.recipe_title}</span>}
+                    <button onClick={() => removeFromShoppingList(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
       </main>
     </div>
   )
