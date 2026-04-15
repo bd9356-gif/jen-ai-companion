@@ -164,7 +164,7 @@ export default function CardsPage() {
                 const { data: { session } } = await supabase.auth.getSession()
                 if (!session) return
                 await supabase.from('my_picks').upsert({ user_id: session.user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
-                alert('Added to MyPicks! ✓')
+                alert('Added to MyPlan! ✓')
               }} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🎯 MyPicks</button>
               <a href={`/secret?recipe=${viewing.id}`} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
             </div>

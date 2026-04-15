@@ -70,7 +70,7 @@ export default function MyPicksPage() {
   async function remove(id) {
     await supabase.from('my_picks').delete().eq('id', id)
     setPicks(prev => prev.filter(p => p.id !== id))
-    showToast('Removed from MyPicks')
+    showToast('Removed from MyPlan')
   }
 
   function showToast(msg) {
@@ -92,7 +92,7 @@ export default function MyPicksPage() {
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">🎯 MyPicks</h1>
+            <h1 className="text-lg font-bold text-gray-900">🎯 MyPlan</h1>
             {picks.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{picks.length}</span>}
           </div>
           <div className="flex gap-2">

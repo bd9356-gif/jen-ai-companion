@@ -661,28 +661,16 @@ export default function MyRecipeVaultPage() {
               <button onClick={async () => {
                 await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
                 setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
-                showToast('Added to MyPicks ✓')
-              }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>🎯 {picksIds.includes(viewing.id) ? 'In MyPicks' : 'MyPicks'}</button>
+                showToast('Added to MyPlan ✓')
+              }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>🎯 {picksIds.includes(viewing.id) ? 'In MyPlan' : 'MyPlan'}</button>
               <button onClick={() => deleteRecipe(viewing.id)}
                 className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
             </div>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          {/* Video player */}
-          {(resolvedYoutubeId || watchUrl) && showVideo ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5">
-              <UnifiedVideoPlayer
-                url={resolvedYoutubeId ? `https://www.youtube.com/watch?v=${resolvedYoutubeId}` : watchUrl}
-                onClose={() => setShowVideo(false)}
-              />
-            </div>
-          ) : (resolvedYoutubeId || watchUrl) && !showVideo ? (
-            <button onClick={() => setShowVideo(true)}
-              className="w-full py-3 bg-gray-800 text-white text-sm font-semibold text-center rounded-2xl mb-5">
-              ▶ Show Video
-            </button>
-          ) : viewing.photo_url ? (
+          {/* Photo only - no video playback in vault */}
+          {viewing.photo_url ? (
             <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
               <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
             </div>

@@ -297,10 +297,12 @@ export default function FavoritesPage() {
                                     {youtubeId && isPlaying && (
                                       <button onClick={() => setPlayingId(null)} className="text-xs text-gray-500 font-semibold">Stop ■</button>
                                     )}
-                                    <button onClick={() => addToVault(item)}
-                                      className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
-                                      Add to Vault
-                                    </button>
+                                    {item.type !== 'video_recipe' && item.type !== 'video_education' && (
+                                      <button onClick={() => addToVault(item)}
+                                        className="text-xs bg-orange-600 text-white font-semibold px-3 py-1 rounded-lg hover:bg-orange-700 transition-colors">
+                                        Add to Vault
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </div>

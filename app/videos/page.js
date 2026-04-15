@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import SafeYouTube from '@/components/SafeYouTube'
+import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -157,7 +157,7 @@ export default function VideosPage() {
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center gap-2 mb-1">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">🎬 TopChef Videos</h1>
+            <h1 className="text-lg font-bold text-gray-900">🎬 MyChef TV</h1>
           </div>
           <p className="text-xs text-gray-500 mb-3">{totalNonShort} videos from top YouTube channels</p>
           <input type="text" placeholder="Search videos..." value={search}
@@ -202,7 +202,7 @@ export default function VideosPage() {
                 return (
                   <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 transition-colors">
                     {playingId === video.id ? (
-                      <SafeYouTube videoId={video.youtube_id} onClose={() => setPlayingId(null)} />
+                      <UnifiedVideoPlayer key={video.youtube_id} url={`https://www.youtube.com/watch?v=${video.youtube_id}`} onClose={() => setPlayingId(null)} />
                     ) : (
                       <button onClick={() => setPlayingId(video.id)} className="w-full relative block group">
                         <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`} alt={video.title} className="w-full object-cover" style={{height:'192px'}} />

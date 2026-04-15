@@ -14,7 +14,7 @@ const SECTIONS = [
     accent: '#f97316',
     items: [
       { emoji: '🍳', title: 'Explore Recipes', href: '/explore' },
-      { emoji: '🎬', title: 'TopChef Videos', href: '/videos' },
+      { emoji: '🎬', title: 'MyChef TV', href: '/videos' },
     ]
   },
   {
@@ -32,7 +32,7 @@ const SECTIONS = [
     items: [
       { emoji: '🔐', title: 'MyRecipeVault', href: '/secret' },
       { emoji: '🃏', title: 'MyRecipe Cards', href: '/cards' },
-      { emoji: '🎯', title: 'MyPicks', href: '/picks' },
+      { emoji: '🎯', title: 'MyPlan', href: '/picks' },
     ]
   },
   {
