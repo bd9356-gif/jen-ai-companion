@@ -371,8 +371,6 @@ export default function MyRecipeVaultPage() {
   const [picksIds, setPicksIds] = useState([])
   const [toastMsg, setToastMsg] = useState(null)
   const [addedToList, setAddedToList] = useState(new Set())
-  const [toastMsg, setToastMsg] = useState(null)
-  const [addedToList, setAddedToList] = useState(new Set())
 
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
