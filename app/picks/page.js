@@ -238,7 +238,7 @@ function PickCard({ pick, highlighted, compact, onMoveTo, onRemove, moveUpLabel,
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className={`font-semibold text-gray-900 truncate ${compact ? 'text-sm mb-1' : 'mb-1'}`}>{pick.title}</p>
+          <button onClick={() => window.location.href=`/secret?recipe=${pick.recipe_id}`} className={`font-semibold text-orange-600 truncate text-left w-full ${compact ? 'text-sm mb-1' : 'mb-1'}`}>{pick.title} →</button>
           {pick.category && <p className="text-xs text-gray-500 mb-2">{pick.category}</p>}
           <div className="flex gap-2 flex-wrap">
             {moveUpLabel && (
