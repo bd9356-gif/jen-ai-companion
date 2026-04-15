@@ -8,8 +8,8 @@ const supabase = createClient(
 )
 
 const BUCKETS = [
-  { key: 'top',  label: 'Top Picks',    emoji: '⭐', micro: 'Your main focus for now.', bg: 'bg-amber-50',  border: 'border-amber-200' },
-  { key: 'nice', label: 'Nice-to-Have', emoji: '📋', micro: 'If you get to them.',       bg: 'bg-gray-50',   border: 'border-gray-200'  },
+  { key: 'top',  label: 'To Make',    emoji: '⭐', micro: 'Your main focus for now.', bg: 'bg-amber-50',  border: 'border-amber-200' },
+  { key: 'nice', label: 'Maybe', emoji: '📋', micro: 'If you get to them.',       bg: 'bg-gray-50',   border: 'border-gray-200'  },
   { key: 'later', label: 'Later',       emoji: '🗂',  micro: 'Still saved, not forgotten.', bg: 'bg-blue-50/50', border: 'border-blue-100' },
 ]
 
@@ -127,7 +127,7 @@ export default function MyPicksPage() {
               onMoveTo={moveTo}
               onRemove={remove}
               moveUpLabel={null}
-              moveDownLabel="→ Nice-to-Have"
+              moveDownLabel="→ Maybe"
               moveDownBucket="nice"
             />
 
@@ -137,7 +137,7 @@ export default function MyPicksPage() {
               picks={nicePicks}
               onMoveTo={moveTo}
               onRemove={remove}
-              moveUpLabel="↑ Top Picks"
+              moveUpLabel="↑ To Make"
               moveUpBucket="top"
               moveDownLabel="↓ Later"
               moveDownBucket="later"
@@ -149,7 +149,7 @@ export default function MyPicksPage() {
               picks={laterPicks}
               onMoveTo={moveTo}
               onRemove={remove}
-              moveUpLabel="↑ Nice-to-Have"
+              moveUpLabel="↑ Maybe"
               moveUpBucket="nice"
               moveDownLabel={null}
               compact={true}
@@ -256,7 +256,7 @@ function PickCard({ pick, highlighted, compact, onMoveTo, onRemove, moveUpLabel,
             {!moveUpLabel && !moveDownLabel && (
               <button onClick={() => onMoveTo(pick, 'nice')}
                 className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors">
-                ↑ Move to Nice-to-Have
+                ↑ Move to Maybe
               </button>
             )}
           </div>
