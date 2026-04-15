@@ -1,4 +1,3 @@
-
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
@@ -402,10 +401,15 @@ export default function MyRecipeVaultPage() {
     if (!user) return
     const ingredient = [ing.measure, ing.name].filter(Boolean).join(' ')
     const key = ingredient.toLowerCase()
-    if (addedToList.has(key)) return
-    await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing?.title || '' })
-    setAddedToList(prev => new Set([...prev, key]))
-    showToast('Added to Shopping List')
+    if (addedToList.has(key)) {
+      await supabase.from('shopping_list').delete().eq('user_id', user.id).eq('ingredient', ingredient)
+      setAddedToList(prev => { const n = new Set(prev); n.delete(key); return n })
+      showToast('Removed from Shopping List')
+    } else {
+      await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing?.title || '' })
+      setAddedToList(prev => new Set([...prev, key]))
+      showToast('Added to Shopping List')
+    }
   }
 
   async function addAllToShoppingList() {
