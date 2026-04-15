@@ -270,14 +270,7 @@ export default function MyPlanPage() {
                       ) : (
                         <div className="divide-y divide-gray-50">
                           {aiNotes.map(item => (
-                            <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
-                              <span className="text-xl shrink-0">💡</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
-                                {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
-                              </div>
-                              <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
-                            </div>
+                            <ExpandableItem key={item.id} item={item} emoji="💡" onRemove={() => removeFavorite(item)} />
                           ))}
                         </div>
                       )
@@ -290,14 +283,7 @@ export default function MyPlanPage() {
                       ) : (
                         <div className="divide-y divide-gray-50">
                           {chefJen.map(item => (
-                            <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
-                              <span className="text-xl shrink-0">👨‍🍳</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
-                                {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
-                              </div>
-                              <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
-                            </div>
+                            <ExpandableItem key={item.id} item={item} emoji="👨‍🍳" onRemove={() => removeFavorite(item)} />
                           ))}
                         </div>
                       )
@@ -310,15 +296,7 @@ export default function MyPlanPage() {
                       ) : (
                         <div className="divide-y divide-gray-50">
                           {chefVideos.map(video => (
-                            <div key={video.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
-                              <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
-                                alt={video.title} className="w-16 h-12 rounded-xl object-cover shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{video.title}</p>
-                                <p className="text-xs text-orange-600">{video.channel}</p>
-                              </div>
-                              <button onClick={() => removeVideo(video)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
-                            </div>
+                            <VideoItem key={video.id} video={video} onRemove={() => removeVideo(video)} />
                           ))}
                         </div>
                       )
@@ -330,6 +308,65 @@ export default function MyPlanPage() {
           })
         )}
       </main>
+    </div>
+  )
+}
+
+function ExpandableItem({ item, emoji, onRemove }) {
+  const [expanded, setExpanded] = useState(false)
+  const answer = item.metadata?.answer || ''
+  return (
+    <div className="bg-white hover:bg-gray-50">
+      <div className="flex items-start gap-3 p-3">
+        <span className="text-xl shrink-0">{emoji}</span>
+        <div className="flex-1 min-w-0">
+          <button onClick={() => setExpanded(!expanded)} className="font-semibold text-sm text-gray-900 leading-tight text-left w-full">
+            {item.title}
+            <span className="text-gray-400 text-xs ml-1">{expanded ? '▲' : '▼'}</span>
+          </button>
+          {expanded && answer && (
+            <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap">{answer}</p>
+          )}
+        </div>
+        <button onClick={onRemove} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+      </div>
+    </div>
+  )
+}
+
+function VideoItem({ video, onRemove }) {
+  const [playing, setPlaying] = useState(false)
+  return (
+    <div className="bg-white">
+      {playing ? (
+        <div className="relative w-full bg-black" style={{paddingBottom:'56.25%'}}>
+          <iframe
+            src={`https://www.youtube.com/embed/${video.youtube_id}?autoplay=1`}
+            className="absolute inset-0 w-full h-full"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope"
+            sandbox="allow-scripts allow-same-origin"
+          />
+          <button onClick={() => setPlaying(false)}
+            className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold z-10">✕</button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 p-3 hover:bg-gray-50">
+          <button onClick={() => setPlaying(true)} className="relative shrink-0">
+            <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
+              alt={video.title} className="w-16 h-12 rounded-xl object-cover" />
+            <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center">
+              <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 ml-0.5" fill="#dc2626"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{video.title}</p>
+            <p className="text-xs text-orange-600">{video.channel}</p>
+          </div>
+          <button onClick={onRemove} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+        </div>
+      )}
     </div>
   )
 }
