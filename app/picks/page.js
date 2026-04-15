@@ -7,12 +7,10 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-const GROUPS = [
-  { key: 'meal_plan',     label: 'Meal Plan',     emoji: '📅', subtitle: 'Recipes you plan to cook', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { key: 'shopping_list', label: 'Shopping List',  emoji: '🛒', subtitle: 'Ingredients you need',     color: 'bg-green-50 text-green-700 border-green-200' },
-  { key: 'ai_notes',      label: 'AI Notes',       emoji: '💡', subtitle: 'Saved Ask-AI answers',     color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  { key: 'chefjen',       label: 'ChefJen',        emoji: '👨‍🍳', subtitle: 'Your AI chef recipe plans', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { key: 'chef_videos',   label: 'Chef Videos',    emoji: '🎬', subtitle: 'Saved cooking videos',     color: 'bg-blue-50 text-blue-700 border-blue-200' },
+const BUCKETS = [
+  { key: 'top',   label: 'To Make', emoji: '⭐', micro: 'Your main focus for now.',      bg: 'bg-amber-50',   border: 'border-amber-200' },
+  { key: 'nice',  label: 'Maybe',   emoji: '📋', micro: 'If you get to them.',            bg: 'bg-gray-50',    border: 'border-gray-200'  },
+  { key: 'later', label: 'Later',   emoji: '🗂',  micro: 'Still saved, not forgotten.',   bg: 'bg-blue-50/50', border: 'border-blue-100'  },
 ]
 
 const DEFAULT_SHOW = 5
@@ -24,11 +22,14 @@ export default function MyPlanPage() {
   const [collapsed, setCollapsed] = useState({})
   const [showMore, setShowMore] = useState({})
 
-  // Data for each group
-  const [mealPlan, setMealPlan] = useState([])
+  // Meal Plan
+  const [picks, setPicks] = useState([])
+  // Shopping List
   const [shoppingList, setShoppingList] = useState([])
+  // AI Notes + ChefJen
   const [aiNotes, setAiNotes] = useState([])
   const [chefJen, setChefJen] = useState([])
+  // Videos
   const [chefVideos, setChefVideos] = useState([])
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function MyPlanPage() {
 
   async function loadAll(userId) {
     await Promise.all([
-      loadMealPlan(userId),
+      loadPicks(userId),
       loadShoppingList(userId),
       loadFavorites(userId),
       loadVideos(userId),
@@ -49,31 +50,23 @@ export default function MyPlanPage() {
     setLoading(false)
   }
 
-  async function loadMealPlan(userId) {
+  async function loadPicks(userId) {
     const { data } = await supabase
       .from('my_picks')
       .select('*')
       .eq('user_id', userId)
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
-    setMealPlan(data || [])
+    setPicks(data || [])
   }
 
   async function loadShoppingList(userId) {
-    const { data } = await supabase
-      .from('shopping_list')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('shopping_list').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     setShoppingList(data || [])
   }
 
   async function loadFavorites(userId) {
-    const { data } = await supabase
-      .from('favorites')
-      .select('*')
-      .eq('user_id', userId)
-      .in('type', ['ai_answer', 'ai_recipe'])
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('favorites').select('*').eq('user_id', userId).in('type', ['ai_answer', 'ai_recipe']).order('created_at', { ascending: false })
     setAiNotes((data || []).filter(i => i.type === 'ai_answer'))
     setChefJen((data || []).filter(i => i.type === 'ai_recipe'))
   }
@@ -89,16 +82,25 @@ export default function MyPlanPage() {
       cookingIds.length ? supabase.from('cooking_videos').select('*').in('id', cookingIds) : { data: [] },
       educationIds.length ? supabase.from('education_videos').select('*').in('id', educationIds) : { data: [] },
     ])
-    setChefVideos([...(cv || []), ...(ev || [])])
+    setChefVideos([
+      ...(cv || []).map(v => ({ ...v, _source: 'cooking' })),
+      ...(ev || []).map(v => ({ ...v, _source: 'education' })),
+    ])
   }
 
-  function showToast(msg) {
-    setToast(msg)
-    setTimeout(() => setToast(null), 2500)
-  }
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
+  function toggleCollapse(key) { setCollapsed(prev => ({ ...prev, [key]: !prev[key] })) }
 
-  function toggleCollapse(key) {
-    setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  // Picks actions
+  async function moveTo(pick, bucket) {
+    await supabase.from('my_picks').update({ bucket }).eq('id', pick.id)
+    setPicks(prev => prev.map(p => p.id === pick.id ? { ...p, bucket } : p))
+    showToast(`Moved to ${BUCKETS.find(b => b.key === bucket)?.label} ✓`)
+  }
+  async function removePick(id) {
+    await supabase.from('my_picks').delete().eq('id', id)
+    setPicks(prev => prev.filter(p => p.id !== id))
+    showToast('Removed')
   }
 
   // Shopping list actions
@@ -106,23 +108,14 @@ export default function MyPlanPage() {
     await supabase.from('shopping_list').update({ checked: !item.checked }).eq('id', item.id)
     setShoppingList(prev => prev.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i))
   }
-
   async function removeShoppingItem(id) {
     await supabase.from('shopping_list').delete().eq('id', id)
     setShoppingList(prev => prev.filter(i => i.id !== id))
   }
-
   async function clearShoppingList() {
     await supabase.from('shopping_list').delete().eq('user_id', user.id)
     setShoppingList([])
     showToast('Shopping list cleared')
-  }
-
-  // Meal plan actions
-  async function removeMealPlan(id) {
-    await supabase.from('my_picks').delete().eq('id', id)
-    setMealPlan(prev => prev.filter(i => i.id !== id))
-    showToast('Removed from Meal Plan')
   }
 
   // Favorites actions
@@ -141,15 +134,18 @@ export default function MyPlanPage() {
     showToast('Removed')
   }
 
-  const totalCount = mealPlan.length + shoppingList.length + aiNotes.length + chefJen.length + chefVideos.length
+  const topPicks   = picks.filter(p => p.bucket === 'top')
+  const nicePicks  = picks.filter(p => p.bucket === 'nice')
+  const laterPicks = picks.filter(p => p.bucket === 'later')
+  const totalCount = picks.length + shoppingList.length + aiNotes.length + chefJen.length + chefVideos.length
 
-  const groupData = {
-    meal_plan: mealPlan,
-    shopping_list: shoppingList,
-    ai_notes: aiNotes,
-    chefjen: chefJen,
-    chef_videos: chefVideos,
-  }
+  const SECTIONS = [
+    { key: 'meal_plan',     label: 'Meal Plan',      emoji: '📅', color: 'bg-amber-50 text-amber-700 border-amber-200',   count: picks.length },
+    { key: 'shopping_list', label: 'Shopping List',   emoji: '🛒', color: 'bg-green-50 text-green-700 border-green-200',   count: shoppingList.length },
+    { key: 'ai_notes',      label: 'AI Notes',        emoji: '💡', color: 'bg-indigo-50 text-indigo-700 border-indigo-200', count: aiNotes.length },
+    { key: 'chefjen',       label: 'ChefJen',         emoji: '👨‍🍳', color: 'bg-purple-50 text-purple-700 border-purple-200', count: chefJen.length },
+    { key: 'chef_videos',   label: 'Chef Videos',     emoji: '🎬', color: 'bg-blue-50 text-blue-700 border-blue-200',      count: chefVideos.length },
+  ]
 
   return (
     <div className="min-h-screen bg-white">
@@ -172,63 +168,86 @@ export default function MyPlanPage() {
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading your plan...</div>
         ) : (
-          GROUPS.map(group => {
-            const items = groupData[group.key] || []
-            const isCollapsed = collapsed[group.key]
-            const expanded = showMore[group.key]
-            const visible = expanded ? items : items.slice(0, DEFAULT_SHOW)
-            const hasMore = items.length > DEFAULT_SHOW
+          SECTIONS.map(section => {
+            const isCollapsed = collapsed[section.key]
 
             return (
-              <div key={group.key} className="border border-gray-100 rounded-2xl overflow-hidden">
-                {/* Section header */}
-                <button
-                  onClick={() => toggleCollapse(group.key)}
+              <div key={section.key} className="border border-gray-100 rounded-2xl overflow-hidden">
+                <button onClick={() => toggleCollapse(section.key)}
                   className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{group.emoji}</span>
-                    <span className="font-semibold text-sm text-gray-900">{group.label}</span>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${group.color}`}>
-                      {items.length}
-                    </span>
+                    <span className="text-lg">{section.emoji}</span>
+                    <span className="font-semibold text-sm text-gray-900">{section.label}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${section.color}`}>{section.count}</span>
                   </div>
                   <span className="text-gray-400 text-sm">{isCollapsed ? '▶' : '▼'}</span>
                 </button>
 
                 {!isCollapsed && (
-                  <div className="divide-y divide-gray-50">
-                    {items.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-6">{group.subtitle}</p>
-                    ) : (
-                      <>
-                        {/* MEAL PLAN */}
-                        {group.key === 'meal_plan' && visible.map(item => (
-                          <div key={item.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
-                            {item.photo_url ? (
-                              <img src={item.photo_url} alt={item.title} className="w-12 h-12 rounded-xl object-cover shrink-0" />
-                            ) : (
-                              <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
-                                <span className="text-xl">🍽️</span>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <button onClick={() => window.location.href=`/secret?recipe=${item.recipe_id}`}
-                                className="font-semibold text-sm text-orange-600 truncate text-left w-full">{item.title} →</button>
-                              {item.category && <p className="text-xs text-gray-400">{item.category}</p>}
-                            </div>
-                            <button onClick={() => removeMealPlan(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+                  <div>
+                    {/* MEAL PLAN — 3 buckets */}
+                    {section.key === 'meal_plan' && (
+                      picks.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-gray-400 text-sm mb-4">No recipes in your meal plan yet</p>
+                          <div className="flex gap-3 justify-center">
+                            <button onClick={() => window.location.href='/cards'} className="px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-semibold">MyRecipe Cards</button>
+                            <button onClick={() => window.location.href='/secret'} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold">MyVault</button>
                           </div>
-                        ))}
-
-                        {/* SHOPPING LIST */}
-                        {group.key === 'shopping_list' && (
-                          <>
-                            {shoppingList.length > 0 && (
-                              <div className="flex justify-end px-3 py-2 bg-white">
-                                <button onClick={clearShoppingList} className="text-xs text-red-400 hover:text-red-600 font-semibold">Clear All</button>
+                        </div>
+                      ) : (
+                        <div className="p-3 space-y-3">
+                          {[
+                            { picks: topPicks,   bucket: BUCKETS[0] },
+                            { picks: nicePicks,  bucket: BUCKETS[1] },
+                            { picks: laterPicks, bucket: BUCKETS[2] },
+                          ].map(({ picks: bPicks, bucket }) => bPicks.length === 0 ? null : (
+                            <div key={bucket.key} className={`rounded-2xl border ${bucket.border} ${bucket.bg} p-3`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span>{bucket.emoji}</span>
+                                <h3 className="text-sm font-bold text-gray-900">{bucket.label}</h3>
+                                <span className="text-xs text-gray-500">({bPicks.length})</span>
                               </div>
-                            )}
-                            {visible.map(item => (
+                              <div className="space-y-2">
+                                {bPicks.map(pick => (
+                                  <div key={pick.id} className="flex items-center gap-3 bg-white rounded-xl p-2">
+                                    {pick.photo_url ? (
+                                      <img src={pick.photo_url} alt={pick.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+                                        <span className="text-lg">🍽️</span>
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <button onClick={() => window.location.href=`/secret?recipe=${pick.recipe_id}`}
+                                        className="font-semibold text-xs text-orange-600 truncate text-left w-full">{pick.title} →</button>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      {bucket.key !== 'top'   && <button onClick={() => moveTo(pick, 'top')}   className="text-xs px-1.5 py-0.5 rounded border border-amber-200 text-amber-600">⭐</button>}
+                                      {bucket.key !== 'nice'  && <button onClick={() => moveTo(pick, 'nice')}  className="text-xs px-1.5 py-0.5 rounded border border-gray-200 text-gray-500">📋</button>}
+                                      {bucket.key !== 'later' && <button onClick={() => moveTo(pick, 'later')} className="text-xs px-1.5 py-0.5 rounded border border-blue-200 text-blue-500">🗂</button>}
+                                      <button onClick={() => removePick(pick.id)} className="text-gray-300 hover:text-red-400 text-lg leading-none ml-1">×</button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    )}
+
+                    {/* SHOPPING LIST */}
+                    {section.key === 'shopping_list' && (
+                      shoppingList.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-6">No items — add from vault recipes</p>
+                      ) : (
+                        <>
+                          <div className="flex justify-end px-3 pt-2">
+                            <button onClick={clearShoppingList} className="text-xs text-red-400 hover:text-red-600 font-semibold">Clear All</button>
+                          </div>
+                          <div className="divide-y divide-gray-50">
+                            {shoppingList.map(item => (
                               <div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-white hover:bg-gray-50">
                                 <button onClick={() => toggleShoppingItem(item)}
                                   className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}>
@@ -239,56 +258,70 @@ export default function MyPlanPage() {
                                 <button onClick={() => removeShoppingItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
                               </div>
                             ))}
-                          </>
-                        )}
+                          </div>
+                        </>
+                      )
+                    )}
 
-                        {/* AI NOTES */}
-                        {group.key === 'ai_notes' && visible.map(item => (
-                          <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
-                            <span className="text-xl shrink-0">💡</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
-                              {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
+                    {/* AI NOTES */}
+                    {section.key === 'ai_notes' && (
+                      aiNotes.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-6">No saved AI notes yet</p>
+                      ) : (
+                        <div className="divide-y divide-gray-50">
+                          {aiNotes.map(item => (
+                            <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
+                              <span className="text-xl shrink-0">💡</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
+                                {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
+                              </div>
+                              <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
                             </div>
-                            <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      )
+                    )}
 
-                        {/* CHEFJEN */}
-                        {group.key === 'chefjen' && visible.map(item => (
-                          <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
-                            <span className="text-xl shrink-0">👨‍🍳</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
-                              {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
+                    {/* CHEFJEN */}
+                    {section.key === 'chefjen' && (
+                      chefJen.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-6">No ChefJen recipes saved yet</p>
+                      ) : (
+                        <div className="divide-y divide-gray-50">
+                          {chefJen.map(item => (
+                            <div key={item.id} className="flex items-start gap-3 p-3 bg-white hover:bg-gray-50">
+                              <span className="text-xl shrink-0">👨‍🍳</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.title}</p>
+                                {item.metadata?.answer && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.metadata.answer}</p>}
+                              </div>
+                              <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
                             </div>
-                            <button onClick={() => removeFavorite(item)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      )
+                    )}
 
-                        {/* CHEF VIDEOS */}
-                        {group.key === 'chef_videos' && visible.map(video => (
-                          <div key={video.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
-                            <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
-                              alt={video.title} className="w-16 h-12 rounded-xl object-cover shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{video.title}</p>
-                              <p className="text-xs text-orange-600">{video.channel}</p>
+                    {/* CHEF VIDEOS */}
+                    {section.key === 'chef_videos' && (
+                      chefVideos.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-6">No saved videos yet</p>
+                      ) : (
+                        <div className="divide-y divide-gray-50">
+                          {chefVideos.map(video => (
+                            <div key={video.id} className="flex items-center gap-3 p-3 bg-white hover:bg-gray-50">
+                              <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
+                                alt={video.title} className="w-16 h-12 rounded-xl object-cover shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{video.title}</p>
+                                <p className="text-xs text-orange-600">{video.channel}</p>
+                              </div>
+                              <button onClick={() => removeVideo(video)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
                             </div>
-                            <button onClick={() => removeVideo(video)} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
-                          </div>
-                        ))}
-
-                        {/* Show More */}
-                        {hasMore && (
-                          <div className="px-4 py-2 bg-gray-50 text-center">
-                            <button onClick={() => setShowMore(prev => ({ ...prev, [group.key]: !prev[group.key] }))}
-                              className="text-xs text-orange-600 font-semibold hover:text-orange-700">
-                              {expanded ? `Show Less ▲` : `Show ${items.length - DEFAULT_SHOW} More ▼`}
-                            </button>
-                          </div>
-                        )}
-                      </>
+                          ))}
+                        </div>
+                      )
                     )}
                   </div>
                 )}
