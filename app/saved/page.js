@@ -4,11 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import SafeYouTube from '@/components/SafeYouTube'
 
 const GROUPS = [
-  { key: 'recipe',          label: 'Recipes',        emoji: '🍽️', color: 'bg-orange-50 text-orange-700 border-orange-200' },
-  { key: 'video_recipe',    label: 'Recipe Videos',  emoji: '🎬', color: 'bg-green-50 text-green-700 border-green-200' },
-  { key: 'video_education', label: 'Videos Only',    emoji: '▶️', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { key: 'ai_recipe',       label: 'AI Recipes',     emoji: '👨‍🍳', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  { key: 'ai_answer',       label: 'AI Answers',     emoji: '💡', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  { key: 'recipe', label: 'Recipes', emoji: '🍽️', color: 'bg-orange-50 text-orange-700 border-orange-200' },
 ]
 
 const DEFAULT_SHOW = 5
@@ -21,7 +17,7 @@ export default function FavoritesPage() {
   const [user, setUser] = useState(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [collapsed, setCollapsed] = useState({ recipe: true, video_recipe: true, video_education: true, ai_recipe: true, ai_answer: true })
+  const [collapsed, setCollapsed] = useState({ recipe: false })
   const [showMore, setShowMore] = useState({})
   const [batchMode, setBatchMode] = useState(false)
   const [selected, setSelected] = useState(new Set())
