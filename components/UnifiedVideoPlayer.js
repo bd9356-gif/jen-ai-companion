@@ -1,131 +1,85 @@
 "use client";
-import { useState, useEffect, memo } from "react";
-function UnifiedVideoPlayer({ url, onClose }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
+
+import { useEffect, useRef } from "react";
+
+export default function UnifiedVideoPlayer({ url, onClose }) {
+  const videoRef = useRef(null);
+
   if (!url) return null;
-  let parsedUrl;
-  try {
-    parsedUrl = new URL(url);
-  } catch {
-    return null;
+
+  const isYouTube = url.includes("youtube.com") || url.includes("youtu.be");
+  const isVimeo = url.includes("vimeo.com");
+  const isHLS = url.endsWith(".m3u8");
+  const isMp4 = !isYouTube && !isVimeo && (
+    url.match(/\.(mp4|mov|webm|m4v)/i) ||
+    url.includes("s3.amazonaws.com") ||
+    url.includes("supabase") ||
+    url.includes("firebasestorage")
+  );
+
+  // YouTube embed URL
+  const getYouTubeEmbed = (u) => {
+    const match = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)
+    const id = match ? match[1] : u.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")
+    return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1&controls=0&autohide=1&showinfo=0`
   }
-  const isYouTube =
-    parsedUrl.hostname.includes("youtube.com") ||
-    parsedUrl.hostname.includes("youtu.be");
-  const isVimeo = parsedUrl.hostname.includes("vimeo.com");
-  const getYouTubeEmbed = () => {
-    const params =
-      "?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&modestbranding=1";
-    if (parsedUrl.hostname.includes("youtu.be")) {
-      const id = parsedUrl.pathname.slice(1);
-      return `https://www.youtube.com/embed/${id}${params}`;
-    }
-    const v = parsedUrl.searchParams.get("v");
-    if (v) {
-      return `https://www.youtube.com/embed/${v}${params}`;
-    }
-    const parts = parsedUrl.pathname.split("/");
-    const id = parts.filter(Boolean).pop();
-    return `https://www.youtube.com/embed/${id}${params}`;
-  };
-  const getVimeoEmbed = () => {
-    const match = url.match(/vimeo\.com\/(\d+)/);
-    const id = match ? match[1] : "";
-    return `https://player.vimeo.com/video/${id}?autoplay=1&muted=1&playsinline=1`;
-  };
-  useEffect(() => {
-    if (!isPlaying) return;
-    const timeout = setTimeout(() => {
-      if (!isLoaded) setHasError(true);
-    }, 5000);
-    return () => clearTimeout(timeout);
-  }, [isPlaying, isLoaded]);
+
   const renderPlayer = () => {
     if (isYouTube) {
-      const src = getYouTubeEmbed();
-      if (!src) return null;
       return (
         <iframe
+          src={getYouTubeEmbed(url)}
           className="absolute inset-0 w-full h-full rounded-xl"
-          src={src}
-          loading="lazy"
-          allowFullScreen
-          allow="autoplay; encrypted-media; picture-in-picture"
-          onLoad={() => setIsLoaded(true)}
+          allow="accelerometer; autoplay; encrypted-media; gyroscope"
+          sandbox="allow-scripts allow-same-origin"
         />
-      );
+      )
     }
+
     if (isVimeo) {
+      const id = url.split("/").pop()
       return (
         <iframe
+          src={`https://player.vimeo.com/video/${id}?playsinline=1`}
           className="absolute inset-0 w-full h-full rounded-xl"
-          src={getVimeoEmbed()}
-          loading="lazy"
-          allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture"
-          onLoad={() => setIsLoaded(true)}
+          allowFullScreen
         />
-      );
+      )
     }
+
+    // MP4 / MOV / S3 / HLS / everything else
     return (
       <video
+        ref={videoRef}
         src={url}
         controls
         playsInline
-        autoPlay
-        muted
         preload="metadata"
         className="absolute inset-0 w-full h-full rounded-xl bg-black object-contain"
-        onLoadedData={() => setIsLoaded(true)}
-        onError={() => setHasError(true)}
       />
-    );
-  };
+    )
+  }
+
   return (
-    <div className="w-full bg-black rounded-2xl overflow-hidden relative">
-      <div className="relative w-full aspect-video">
-        {!isPlaying && !hasError && (
-          <button
-            onClick={() => setIsPlaying(true)}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm text-white w-full h-full"
-          >
-            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="white" style={{ marginLeft: "4px" }}>
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-            <p className="mt-3 text-sm opacity-80">Tap to watch</p>
-          </button>
-        )}
-        {isPlaying && !isLoaded && !hasError && (
-          <div className="absolute inset-0 z-10 animate-pulse bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl" />
-        )}
-        {hasError && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black text-white">
-            <p className="text-sm opacity-80 mb-3">Video unavailable</p>
-            <button
-              onClick={() => { setHasError(false); setIsPlaying(false); setIsLoaded(false); }}
-              className="px-4 py-2 bg-white/10 rounded-lg text-sm"
-            >Retry</button>
-          </div>
-        )}
-        {isPlaying && !hasError && renderPlayer()}
+    <div className="w-full bg-black rounded-2xl overflow-hidden">
+      <div className="relative w-full" style={{paddingBottom: '56.25%'}}>
+        {renderPlayer()}
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold z-30"
-          >✕</button>
+            className="absolute top-2 right-2 bg-black/80 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg font-bold z-10">
+            ✕
+          </button>
         )}
       </div>
       {onClose && (
         <button
           onClick={onClose}
-          className="w-full py-3 bg-gray-900 text-white text-sm font-semibold text-center"
-        >✕ Close Video</button>
+          className="w-full py-3 bg-gray-900 text-white text-sm font-semibold text-center">
+          ✕ Close Video
+        </button>
       )}
     </div>
-  );
+  )
 }
-export default memo(UnifiedVideoPlayer);
