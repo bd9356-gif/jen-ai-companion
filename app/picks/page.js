@@ -147,11 +147,11 @@ export default function MyPlanPage() {
   const totalCount = picks.length + shoppingList.length + aiNotes.length + chefJen.length + chefVideos.length
 
   const SECTIONS = [
-    { key: 'meal_plan',     label: 'Meal Plan',      emoji: '📅', color: 'bg-amber-50 text-amber-700 border-amber-200',   count: picks.length },
-    { key: 'shopping_list', label: 'Shopping List',   emoji: '🛒', color: 'bg-green-50 text-green-700 border-green-200',   count: shoppingList.length },
-    { key: 'ai_notes',      label: 'AI Notes',        emoji: '💡', color: 'bg-indigo-50 text-indigo-700 border-indigo-200', count: aiNotes.length },
-    { key: 'chefjen',       label: 'ChefJen',         emoji: '👨‍🍳', color: 'bg-purple-50 text-purple-700 border-purple-200', count: chefJen.length },
-    { key: 'chef_videos',   label: 'Chef Videos',     emoji: '🎬', color: 'bg-blue-50 text-blue-700 border-blue-200',      count: chefVideos.length },
+    { key: 'meal_plan',     label: 'Meal Plan',     emoji: '📅',   color: 'bg-amber-50 text-amber-700 border-amber-200',   count: picks.length,        subtitle: "What you're cooking soon, organized your way." },
+    { key: 'shopping_list', label: 'Shopping List', emoji: '🛒',   color: 'bg-green-50 text-green-700 border-green-200',   count: shoppingList.length, subtitle: 'Your ingredients, organized and ready to shop.' },
+    { key: 'ai_notes',      label: 'AI Notes',      emoji: '💡',   color: 'bg-indigo-50 text-indigo-700 border-indigo-200', count: aiNotes.length,      subtitle: 'Tips and answers from Chef Jennifer, saved for later.' },
+    { key: 'chefjen',       label: 'Chef Jennifer', emoji: '👨‍🍳', color: 'bg-purple-50 text-purple-700 border-purple-200', count: chefJen.length,      subtitle: 'Your personal AI chef — guiding your cooking and planning.' },
+    { key: 'chef_videos',   label: 'Chef Videos',   emoji: '🎬',   color: 'bg-blue-50 text-blue-700 border-blue-200',       count: chefVideos.length,   subtitle: "Skills you're learning, lessons you've added, and what you're mastering next." },
   ]
 
   return (
@@ -181,13 +181,18 @@ export default function MyPlanPage() {
             return (
               <div key={section.key} className="border-2 border-gray-300 rounded-2xl overflow-hidden shadow-sm">
                 <button onClick={() => toggleCollapse(section.key)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{section.emoji}</span>
-                    <span className="font-semibold text-sm text-gray-900">{section.label}</span>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${section.color}`}>{section.count}</span>
+                  className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-lg">{section.emoji}</span>
+                      <span className="font-semibold text-sm text-gray-900">{section.label}</span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${section.color}`}>{section.count}</span>
+                    </div>
+                    <span className="text-gray-400 text-sm shrink-0">{isCollapsed ? '▶' : '▼'}</span>
                   </div>
-                  <span className="text-gray-400 text-sm">{isCollapsed ? '▶' : '▼'}</span>
+                  {section.subtitle && (
+                    <p className="text-xs text-gray-500 mt-1 leading-snug">{section.subtitle}</p>
+                  )}
                 </button>
 
                 {!isCollapsed && (

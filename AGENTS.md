@@ -64,6 +64,20 @@ MyPlan organizes meal-plan recipes into three buckets and color-codes them consi
 
 Borders on bucket frames, section cards, and move buttons use `border-2` with `-400` shade for emphasis. Section tabs default to **closed** on page load.
 
+## Plan page sections (`/picks`) — labels & subtitles
+
+Each collapsible section on the Plan page has a one-line subtitle below the label. Keep the tone cozy and user-facing. Current copy:
+
+| Section        | Emoji   | Subtitle |
+| -------------- | ------- | -------- |
+| Meal Plan      | 📅      | What you're cooking soon, organized your way. |
+| Shopping List  | 🛒      | Your ingredients, organized and ready to shop. |
+| AI Notes       | 💡      | Tips and answers from Chef Jennifer, saved for later. |
+| Chef Jennifer  | 👨‍🍳   | Your personal AI chef — guiding your cooking and planning. |
+| Chef Videos    | 🎬      | Skills you're learning, lessons you've added, and what you're mastering next. |
+
+The ChefJen section is labeled **Chef Jennifer** on the Plan page to match the Kitchen nav. The underlying data key is still `chefjen` and the table is `favorites` with `type='ai_recipe'`.
+
 ## Supabase schema (inferred from code — verify before migrations)
 
 Tables referenced in the app:
