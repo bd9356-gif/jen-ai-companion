@@ -8,9 +8,9 @@ const supabase = createClient(
 )
 
 const BUCKETS = [
-  { key: 'top',   label: 'To Make', emoji: '⭐', micro: 'Your main focus for now.',      bg: 'bg-amber-50',   border: 'border-amber-200' },
-  { key: 'nice',  label: 'Maybe',   emoji: '📋', micro: 'If you get to them.',            bg: 'bg-gray-50',    border: 'border-gray-200'  },
-  { key: 'later', label: 'Later',   emoji: '🗂',  micro: 'Still saved, not forgotten.',   bg: 'bg-blue-50/50', border: 'border-blue-100'  },
+  { key: 'top',   label: 'To Make', emoji: '⭐', micro: 'Your main focus for now.',      bg: 'bg-amber-100',  border: 'border-2 border-amber-400'  },
+  { key: 'nice',  label: 'Maybe',   emoji: '📋', micro: 'If you get to them.',            bg: 'bg-violet-100', border: 'border-2 border-violet-400' },
+  { key: 'later', label: 'Later',   emoji: '🗂',  micro: 'Still saved, not forgotten.',   bg: 'bg-sky-100',    border: 'border-2 border-sky-400'    },
 ]
 
 const DEFAULT_SHOW = 5
@@ -19,7 +19,14 @@ export default function MyPlanPage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
-  const [collapsed, setCollapsed] = useState({})
+  // Default: every tab collapsed (closed) on open
+  const [collapsed, setCollapsed] = useState({
+    meal_plan: true,
+    shopping_list: true,
+    ai_notes: true,
+    chefjen: true,
+    chef_videos: true,
+  })
   const [showMore, setShowMore] = useState({})
 
   // Meal Plan
@@ -153,7 +160,7 @@ export default function MyPlanPage() {
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">{toast}</div>
       )}
 
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <header className="bg-white border-b-2 border-gray-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
@@ -172,7 +179,7 @@ export default function MyPlanPage() {
             const isCollapsed = collapsed[section.key]
 
             return (
-              <div key={section.key} className="border border-gray-100 rounded-2xl overflow-hidden">
+              <div key={section.key} className="border-2 border-gray-300 rounded-2xl overflow-hidden shadow-sm">
                 <button onClick={() => toggleCollapse(section.key)}
                   className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-2">
@@ -202,7 +209,7 @@ export default function MyPlanPage() {
                             { picks: nicePicks,  bucket: BUCKETS[1] },
                             { picks: laterPicks, bucket: BUCKETS[2] },
                           ].map(({ picks: bPicks, bucket }) => bPicks.length === 0 ? null : (
-                            <div key={bucket.key} className={`rounded-2xl border ${bucket.border} ${bucket.bg} p-3`}>
+                            <div key={bucket.key} className={`rounded-2xl ${bucket.border} ${bucket.bg} p-3 shadow-sm`}>
                               <div className="flex items-center gap-2 mb-2">
                                 <span>{bucket.emoji}</span>
                                 <h3 className="text-sm font-bold text-gray-900">{bucket.label}</h3>
@@ -223,9 +230,9 @@ export default function MyPlanPage() {
                                         className="font-semibold text-xs text-orange-600 truncate text-left w-full">{pick.title} →</button>
                                     </div>
                                     <div className="flex gap-1">
-                                      {bucket.key !== 'top'   && <button onClick={() => moveTo(pick, 'top')}   className="text-xs px-1.5 py-0.5 rounded border border-amber-200 text-amber-600">⭐</button>}
-                                      {bucket.key !== 'nice'  && <button onClick={() => moveTo(pick, 'nice')}  className="text-xs px-1.5 py-0.5 rounded border border-gray-200 text-gray-500">📋</button>}
-                                      {bucket.key !== 'later' && <button onClick={() => moveTo(pick, 'later')} className="text-xs px-1.5 py-0.5 rounded border border-blue-200 text-blue-500">🗂</button>}
+                                      {bucket.key !== 'top'   && <button onClick={() => moveTo(pick, 'top')}   className="text-xs px-1.5 py-0.5 rounded border-2 border-amber-400 text-amber-700 font-semibold">⭐</button>}
+                                      {bucket.key !== 'nice'  && <button onClick={() => moveTo(pick, 'nice')}  className="text-xs px-1.5 py-0.5 rounded border-2 border-violet-400 text-violet-700 font-semibold">📋</button>}
+                                      {bucket.key !== 'later' && <button onClick={() => moveTo(pick, 'later')} className="text-xs px-1.5 py-0.5 rounded border-2 border-sky-400 text-sky-700 font-semibold">🗂</button>}
                                       <button onClick={() => removePick(pick.id)} className="text-gray-300 hover:text-red-400 text-lg leading-none ml-1">×</button>
                                     </div>
                                   </div>
@@ -283,7 +290,7 @@ export default function MyPlanPage() {
                       ) : (
                         <div className="divide-y divide-gray-50">
                           {chefJen.map(item => (
-                            <ExpandableItem key={item.id} item={item} emoji="👨‍🍳" onRemove={() => removeFavorite(item)} />
+                            <ChefJenItem key={item.id} item={item} onRemove={() => removeFavorite(item)} />
                           ))}
                         </div>
                       )
@@ -326,6 +333,78 @@ function ExpandableItem({ item, emoji, onRemove }) {
           </button>
           {expanded && answer && (
             <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap">{answer}</p>
+          )}
+        </div>
+        <button onClick={onRemove} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+      </div>
+    </div>
+  )
+}
+
+function ChefJenItem({ item, onRemove }) {
+  const [expanded, setExpanded] = useState(false)
+  const meta = item.metadata || {}
+  const description  = meta.description || ''
+  const ingredients  = Array.isArray(meta.ingredients) ? meta.ingredients : []
+  const instructions = meta.instructions || ''
+  const difficulty   = meta.difficulty || ''
+  const cuisine      = meta.cuisine || ''
+  // Fallback: some older saves may have used metadata.answer
+  const answer       = meta.answer || ''
+  const hasContent   = description || ingredients.length > 0 || instructions || answer
+
+  return (
+    <div className="bg-white hover:bg-gray-50">
+      <div className="flex items-start gap-3 p-3">
+        <span className="text-xl shrink-0">👨‍🍳</span>
+        <div className="flex-1 min-w-0">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="font-semibold text-sm text-gray-900 leading-tight text-left w-full"
+          >
+            {item.title}
+            <span className="text-gray-400 text-xs ml-1">{expanded ? '▲' : '▼'}</span>
+          </button>
+
+          {expanded && (
+            <div className="mt-2 space-y-3 text-sm text-gray-700">
+              {(cuisine || difficulty) && (
+                <div className="flex gap-2 flex-wrap">
+                  {cuisine && <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full">{cuisine}</span>}
+                  {difficulty && <span className="text-xs bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 rounded-full">{difficulty}</span>}
+                </div>
+              )}
+
+              {description && (
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{description}</p>
+              )}
+
+              {ingredients.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Ingredients</h4>
+                  <ul className="list-disc pl-5 space-y-0.5 text-gray-700">
+                    {ingredients.map((ing, i) => (
+                      <li key={i}>{typeof ing === 'string' ? ing : (ing?.name || JSON.stringify(ing))}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {instructions && (
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Instructions</h4>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{instructions}</p>
+                </div>
+              )}
+
+              {answer && !description && !instructions && (
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{answer}</p>
+              )}
+
+              {!hasContent && (
+                <p className="text-gray-400 italic">No details saved for this recipe.</p>
+              )}
+            </div>
           )}
         </div>
         <button onClick={onRemove} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
