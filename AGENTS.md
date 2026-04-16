@@ -25,19 +25,21 @@ Mobile-first (`max-w-lg` / `max-w-2xl` container widths throughout).
 
 ## Brand & Naming
 
-The product has deliberate capitalized names — keep them exact when writing copy or UI labels:
+Brand voice is **cozy, modern, confidence-building**. User is **home cooks** who want a simple, cozy way to save recipes, learn skills, and get AI help.
+
+The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labels were simplified — use them exactly:
 
 | Name            | Route        | What it is                                                           |
 | --------------- | ------------ | -------------------------------------------------------------------- |
 | MyKitchen       | `/kitchen`   | The hub page. Everything routes from here.                            |
 | Explore Recipes | `/explore`   | Discovery feed of new recipe ideas.                                   |
-| MyChef TV       | `/videos`    | Cooking videos (YouTube-backed).                                      |
-| MyFavorites     | `/saved`     | Staging drawer — recipes you've hearted but not committed to.         |
-| MyRecipeVault   | `/secret`    | Your permanent, organized recipe collection.                          |
-| MyRecipe Cards  | `/cards`     | Card-style recipe browser (swipe / pick).                             |
-| MyPlan          | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
-| MY-AI ChefJen   | `/topchef`   | AI chef who generates recipes tailored to mood/meal/protein/cuisine.  |
-| Ask-AI Anything | `/chef`      | Free-form AI Q&A (saves answers as AI Notes).                         |
+| Chef TV         | `/videos`    | Cooking videos (YouTube-backed). (Renamed from MyChef TV.)            |
+| Favorites       | `/saved`     | Staging drawer — recipes you've hearted but not committed to.         |
+| Recipe Vault    | `/secret`    | Your permanent, organized recipe collection.                          |
+| Recipe Cards    | `/cards`     | Card-style recipe browser (swipe / pick).                             |
+| Plan            | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
+| Chef Jennifer   | `/topchef`   | AI chef who generates recipes tailored to mood/meal/protein, **and** hosts the "Ask anything" entry. |
+| Ask anything    | `/chef`      | Free-form AI Q&A (saves answers as AI Notes). **Not in the Kitchen nav** — reached via Chef Jennifer's first screen. |
 
 Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/browse`, `/about`, `/profile`, `/login`, `/auth`, `/not-found`.
 
@@ -45,10 +47,10 @@ Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/brows
 
 These live in `app/kitchen/page.js` and drive MyKitchen's grouped layout. Copy them exactly if referenced elsewhere:
 
-- **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering."
-- **Collect & Decide** (`#e85d8a` pink) — "Your staging drawer — review, compare, and choose what moves into your cooking life."
-- **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next."
-- **AI Helpers** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers."
+- **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Explore Recipes, Chef TV
+- **Collect & Decide** (`#e85d8a` pink) — "Your staging drawer — review, compare, and choose what moves into your cooking life." → Favorites
+- **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, Plan
+- **AI Kitchen** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers." → Chef Jennifer (which also contains the Ask-anything entry)
 
 ## MyPlan buckets (`/picks`)
 
@@ -123,6 +125,18 @@ Tables referenced in the app:
 - Two `<img>` warnings — should migrate to `next/image`.
 
 Not breaking, but worth cleaning up in a focused pass.
+
+## Pending naming cleanup (in-page titles still use old names)
+
+The Kitchen nav now uses the simplified names (Chef TV, Favorites, Recipe Vault, Recipe Cards, Plan, Chef Jennifer). Destination page headers still show the old names in several places. Sweep these next time we focus on naming:
+
+- `app/picks/page.js` — header shows "📋 MyPlan"; "Added to MyPlan" toast text; "MyVault" button label.
+- `app/secret/page.js` — "Added to MyPlan" toast; "In MyPlan" / "MyPlan" button.
+- `app/cards/page.js` — "Added to MyPlan!" alert.
+- `app/saved/page.js` — likely references "MyFavorites".
+- `app/topchef/page.js` — "Saved to My Favorites" toast/button.
+
+Intentional kept-as-"My": `MyKitchen` (hub) stays.
 
 ## Don't-touch / confirm first
 

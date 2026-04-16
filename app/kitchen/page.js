@@ -14,7 +14,7 @@ const SECTIONS = [
     accent: '#f97316',
     items: [
       { emoji: '🍳', title: 'Explore Recipes', href: '/explore' },
-      { emoji: '🎬', title: 'MyChef TV', href: '/videos' },
+      { emoji: '🎬', title: 'Chef TV', href: '/videos' },
     ]
   },
   {
@@ -22,7 +22,7 @@ const SECTIONS = [
     subtitle: 'Your staging drawer — review, compare, and choose what moves into your cooking life.',
     accent: '#e85d8a',
     items: [
-      { emoji: '❤️', title: 'MyFavorites', href: '/saved' },
+      { emoji: '❤️', title: 'Favorites', href: '/saved' },
     ]
   },
   {
@@ -30,18 +30,17 @@ const SECTIONS = [
     subtitle: "Your saved recipes, cooking cards, and what you're making next.",
     accent: '#f59e0b',
     items: [
-      { emoji: '🔐', title: 'MyRecipeVault', href: '/secret' },
-      { emoji: '🃏', title: 'MyRecipe Cards', href: '/cards' },
-      { emoji: '🎯', title: 'MyPlan', href: '/picks' },
+      { emoji: '🔐', title: 'Recipe Vault',  href: '/secret' },
+      { emoji: '🃏', title: 'Recipe Cards',  href: '/cards' },
+      { emoji: '🎯', title: 'Plan',          href: '/picks' },
     ]
   },
   {
-    name: 'AI Helpers',
+    name: 'AI Kitchen',
     subtitle: 'Smart support whenever you need ideas, guidance, or answers.',
     accent: '#a855f7',
     items: [
-      { emoji: '👨‍🍳', title: 'MY-AI ChefJen', href: '/topchef' },
-      { emoji: '🤖', title: 'Ask-AI Anything', href: '/chef' },
+      { emoji: '👨‍🍳', title: 'Chef Jennifer', href: '/topchef' },
     ]
   },
 ]

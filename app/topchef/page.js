@@ -154,7 +154,7 @@ export default function MyChefPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">👨‍🍳 MY-AI ChefJen</h1>
+            <h1 className="text-lg font-bold text-gray-900">👨‍🍳 Chef Jennifer</h1>
           </div>
           {step !== STEPS.MEAL && (
             <button onClick={reset} className="text-xs text-orange-600 font-semibold hover:text-orange-700">
@@ -177,7 +177,7 @@ export default function MyChefPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 text-left">
-                <p className="text-white font-bold text-lg leading-tight">👨‍🍳 MY-AI ChefJen</p>
+                <p className="text-white font-bold text-lg leading-tight">👨‍🍳 Chef Jennifer</p>
                 <p className="text-white/80 text-xs">Your personal chef, ready to cook with you.</p>
               </div>
             </div>
@@ -191,6 +191,21 @@ export default function MyChefPage() {
                   <span className="text-sm font-semibold text-gray-900">{opt.label}</span>
                 </button>
               ))}
+            </div>
+
+            {/* Ask-anything entry — moved from MyKitchen nav */}
+            <div className="mt-10 pt-6 border-t-2 border-gray-100">
+              <p className="text-xs font-extrabold uppercase tracking-wider text-purple-600 mb-1">Or just ask</p>
+              <p className="text-xs text-gray-500 mb-3">Have a kitchen question instead of a recipe request? Chef Jennifer can answer anything.</p>
+              <button onClick={() => window.location.href='/chef'}
+                className="w-full flex items-center gap-3 p-4 bg-white border-2 border-purple-200 rounded-2xl hover:border-purple-400 hover:bg-purple-50 transition-all active:scale-95 text-left">
+                <span className="text-2xl">🤖</span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900">Ask anything</p>
+                  <p className="text-xs text-gray-500">Substitutions, techniques, tips — anything.</p>
+                </div>
+                <span className="text-gray-300 text-lg">›</span>
+              </button>
             </div>
           </div>
         )}
