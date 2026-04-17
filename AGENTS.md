@@ -115,14 +115,26 @@ Current options (value / label):
 
 The prompt includes an explicit guard: "Frame every change as a practical home-cook tip — do not provide medical advice or make health claims." The UI also shows a small disclaimer under the chips.
 
-The same option list should be reused when we build the Recipe Vault "Make This Recipe More..." flow — keep values identical so preferences can be shared across screens / compared across recipes.
+The **same option list** is also reused on the Recipe Vault "Make This Recipe More..." flow (see below). Keep the 8 `value` strings identical across Chef Jennifer (`app/topchef/page.js`), Recipe Vault (`app/secret/page.js`), and the server-side label map in `app/api/enhance-recipe/route.js` so preferences can be shared / compared across screens.
+
+## Recipe Vault "Make This Recipe More..." flow
+
+On `/secret` → open a recipe → tap **✨ AI** → scroll to the purple "Make This Recipe More..." card. Uses the same 8 preference values as Chef Jennifer.
+
+Flow: select chips → **Transform with N preferences** button → preview card shows the new title, description, chip summary, ingredients, and instructions → user picks one of three actions:
+
+- **💾 Save as new recipe** — inserts a new row in `personal_recipes` with `title = transformResult.title` (or `"<original> (adjusted)"`), prepends a `family_notes` line: `Transformed from "<original>" — made more <labels>.`, carries over category/tags/photo/servings from the original. Original is untouched.
+- **♻️ Replace this recipe** — confirms, then updates title/description/ingredients/instructions on the current row via `updateRecipe()`.
+- **✕ Discard** — clears transform state; nothing is saved.
+
+API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences: [...] }`. Returns `{ title, description, ingredients[], instructions }`. The same disclaimer guard from Chef Jennifer is in the prompt. `max_tokens` is 2000 on this route (bumped from 1500) to give transforms room.
 
 ## API routes (`app/api/`)
 
 - `/api/chef` — Ask-AI Anything backend.
 - `/api/topchef` — MY-AI ChefJen recipe generator.
 - `/api/import-recipe` — parse/ingest external recipes.
-- `/api/enhance-recipe` — AI enrichment of existing recipes.
+- `/api/enhance-recipe` — AI enrichment of existing recipes. Actions: `enhance`, `resize`, `generate_info`, `transform`.
 
 ## Ingestion scripts (run manually with `node <script>.js`)
 

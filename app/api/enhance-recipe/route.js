@@ -2,9 +2,22 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+// "Make This Recipe More..." — keep in sync with PREFERENCE_OPTIONS on the
+// Chef Jennifer page (app/topchef/page.js) and Recipe Vault (app/secret/page.js).
+const PREFERENCE_LABELS = {
+  carb_aware: 'Carb-aware',
+  carb_counting: 'Carb-counting friendly',
+  portion_focused: 'Portion-focused',
+  vegetarian: 'Vegetarian-friendly',
+  gluten_friendly: 'Gluten-friendly',
+  dairy_friendly: 'Dairy-friendly',
+  low_sodium: 'Low-sodium',
+  heart_healthy: 'Heart-healthy',
+}
+
 export async function POST(request) {
   try {
-    const { recipe, action, servings } = await request.json()
+    const { recipe, action, servings, preferences } = await request.json()
 
     const currentServings = recipe.servings || null
     let prompt = ''
@@ -36,6 +49,41 @@ Important: Scale every single ingredient amount accurately. Do not round aggress
 Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 {
   "ingredients": [{"name": "...", "measure": "..."}]
+}`
+
+    } else if (action === 'transform') {
+      const selected = Array.isArray(preferences) ? preferences : []
+      const prefLabels = selected
+        .map(v => PREFERENCE_LABELS[v])
+        .filter(Boolean)
+        .join(', ')
+
+      if (!prefLabels) {
+        return Response.json({ error: 'No preferences selected' }, { status: 400 })
+      }
+
+      const servingsNote = currentServings
+        ? `This recipe makes ${currentServings} servings.`
+        : 'Use your best judgment for serving size based on the original ingredient quantities.'
+
+      prompt = `You are a professional recipe editor helping a home cook adjust a saved recipe to better match their cooking preferences. Keep the dish recognizable — don't turn it into a completely different recipe. Adjust ingredients, quantities, and methods thoughtfully.
+
+IMPORTANT: Frame every change as a practical home-cook tip — do not provide medical advice or make health claims. When portion or carb adjustments are requested, give clear per-serving notes rather than prescriptive guidance.
+
+Original recipe: ${recipe.title}
+${recipe.description ? `Description: ${recipe.description}` : ''}
+${servingsNote}
+Ingredients: ${JSON.stringify(recipe.ingredients)}
+Instructions: ${recipe.instructions}
+
+Cooking preferences from the home cook: make this recipe more ${prefLabels}.
+
+Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
+{
+  "title": "Title for the transformed version (can be the same or slightly updated)",
+  "description": "A short, cozy note (1-2 sentences) about how this version was adjusted for the selected preferences",
+  "ingredients": [{"name": "...", "measure": "..."}],
+  "instructions": "Step 1...\\nStep 2...\\nStep 3..."
 }`
 
     } else if (action === 'generate_info') {
@@ -70,7 +118,7 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }]
     })
 

@@ -16,6 +16,19 @@ const SUGGESTED_TAGS = [
   'quick','family','holiday','comfort food','baking','healthy'
 ]
 
+// "Make This Recipe More..." — keep in sync with Chef Jennifer (app/topchef/page.js)
+// and the server-side labels in /api/enhance-recipe.
+const PREFERENCE_OPTIONS = [
+  { value: 'carb_aware',       label: 'Carb-aware',             emoji: '🌾', hint: 'lower carbs where sensible' },
+  { value: 'carb_counting',    label: 'Carb-counting friendly', emoji: '📊', hint: 'clearer per-serving carb info' },
+  { value: 'portion_focused',  label: 'Portion-focused',        emoji: '⚖️', hint: 'right-sized servings' },
+  { value: 'vegetarian',       label: 'Vegetarian-friendly',    emoji: '🥦', hint: 'swap meat for plant options' },
+  { value: 'gluten_friendly',  label: 'Gluten-friendly',        emoji: '🌿', hint: 'avoid wheat where possible' },
+  { value: 'dairy_friendly',   label: 'Dairy-friendly',         emoji: '🥛', hint: 'avoid dairy where possible' },
+  { value: 'low_sodium',       label: 'Low-sodium',             emoji: '🧂', hint: 'reduce added salt' },
+  { value: 'heart_healthy',    label: 'Heart-healthy',          emoji: '❤️', hint: 'leaner fats, more veg' },
+]
+
 // ── TAG SELECTOR DROPDOWN ──
 function TagSelector({ tags, onChange }) {
   const [open, setOpen] = useState(false)
@@ -361,6 +374,10 @@ export default function MyRecipeVaultPage() {
   const [enhancing, setEnhancing] = useState(false)
   const [enhanceResult, setEnhanceResult] = useState(null)
   const [generatedInfo, setGeneratedInfo] = useState(null)
+  // "Make This Recipe More..." state
+  const [transformPrefs, setTransformPrefs] = useState([])
+  const [transforming, setTransforming] = useState(false)
+  const [transformResult, setTransformResult] = useState(null)
   const [servings, setServings] = useState(4)
   const [importText, setImportText] = useState('')
   const [importUrl, setImportUrl] = useState('')
@@ -594,6 +611,87 @@ export default function MyRecipeVaultPage() {
     if (generatedInfo.nutrition_estimate) updates.nutrition = generatedInfo.nutrition_estimate
     await updateRecipe(viewing.id, updates)
     setGeneratedInfo(null); setEnhanceResult(null); setView('detail')
+  }
+
+  // ── "Make This Recipe More..." ──
+  function toggleTransformPref(value) {
+    setTransformPrefs(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    )
+  }
+
+  async function handleTransform() {
+    if (!viewing || transformPrefs.length === 0) return
+    setTransforming(true); setTransformResult(null)
+    try {
+      const res = await fetch('/api/enhance-recipe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipe: viewing, action: 'transform', preferences: transformPrefs })
+      })
+      const data = await res.json()
+      if (data.error) { alert(data.error); setTransforming(false); return }
+      setTransformResult(data)
+    } catch (err) { console.error('transform error:', err) }
+    setTransforming(false)
+  }
+
+  function discardTransform() {
+    setTransformResult(null)
+    setTransformPrefs([])
+  }
+
+  async function saveTransformAsNew() {
+    if (!transformResult || !user || !viewing) return
+    const originalTitle = viewing.title
+    const newTitle = transformResult.title && transformResult.title !== originalTitle
+      ? transformResult.title
+      : `${originalTitle} (adjusted)`
+    const prefLabels = transformPrefs
+      .map(v => PREFERENCE_OPTIONS.find(o => o.value === v)?.label)
+      .filter(Boolean)
+      .join(', ')
+    const noteLine = `Transformed from "${originalTitle}" — made more ${prefLabels}.`
+    const family_notes = viewing.family_notes
+      ? `${noteLine}\n\n${viewing.family_notes}`
+      : noteLine
+
+    const { data, error } = await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: newTitle,
+      description: transformResult.description || viewing.description || '',
+      ingredients: transformResult.ingredients || [],
+      instructions: transformResult.instructions || '',
+      category: viewing.category || '',
+      tags: viewing.tags || [],
+      family_notes,
+      photo_url: viewing.photo_url || '',
+      servings: viewing.servings || null,
+    }).select().single()
+    if (error) { alert('Save failed: ' + error.message); return }
+    if (data) {
+      setRecipes(prev => [data, ...prev])
+      setTransformResult(null)
+      setTransformPrefs([])
+      setViewing(data)
+      setView('detail')
+      showToast('Saved as new recipe ✓')
+    }
+  }
+
+  async function replaceWithTransform() {
+    if (!transformResult || !viewing) return
+    const ok = window.confirm('Replace this recipe with the transformed version? The original ingredients and instructions will be overwritten.')
+    if (!ok) return
+    const updates = {}
+    if (transformResult.title) updates.title = transformResult.title
+    if (transformResult.description) updates.description = transformResult.description
+    if (transformResult.ingredients) updates.ingredients = transformResult.ingredients
+    if (transformResult.instructions) updates.instructions = transformResult.instructions
+    await updateRecipe(viewing.id, updates)
+    setTransformResult(null)
+    setTransformPrefs([])
+    setView('detail')
+    showToast('Recipe updated ✓')
   }
 
   async function handleImport() {
@@ -842,7 +940,7 @@ export default function MyRecipeVaultPage() {
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
-            <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null) }}
+            <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null); setTransformResult(null); setTransformPrefs([]) }}
               className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">✨ AI Enhance</h1>
           </div>
@@ -940,6 +1038,134 @@ export default function MyRecipeVaultPage() {
                   </div>
                 )}
                 <button onClick={applyInfo} className="mt-2 w-full py-3 bg-green-600 text-white rounded-xl text-sm font-semibold">✓ Save to Recipe</button>
+              </div>
+            )}
+          </div>
+
+          {/* ── Make This Recipe More... ── */}
+          <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-5">
+            <p className="font-semibold text-gray-900 mb-1">🌿 Make This Recipe More...</p>
+            <p className="text-xs text-gray-500 mb-3">Pick one or more cooking-style preferences. AI will adjust this recipe to match.</p>
+
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {PREFERENCE_OPTIONS.map(opt => {
+                const selected = transformPrefs.includes(opt.value)
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => toggleTransformPref(opt.value)}
+                    disabled={transforming}
+                    className={`text-left rounded-xl border-2 p-3 transition-all ${
+                      selected
+                        ? 'bg-purple-600 text-white border-purple-600 ring-2 ring-purple-200'
+                        : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{opt.emoji}</span>
+                      <span className="text-sm font-semibold">{opt.label}</span>
+                    </div>
+                    <p className={`text-xs mt-1 ${selected ? 'text-purple-100' : 'text-gray-500'}`}>
+                      {opt.hint}
+                    </p>
+                  </button>
+                )
+              })}
+            </div>
+
+            <p className="text-xs text-gray-500 italic mb-3">
+              These are cooking-style preferences, not medical advice. Always check with a healthcare provider for specific dietary needs.
+            </p>
+
+            <div className="flex items-center gap-2 mb-1">
+              <button
+                onClick={handleTransform}
+                disabled={transforming || transformPrefs.length === 0}
+                className="flex-1 py-3 bg-purple-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50"
+              >
+                {transforming
+                  ? 'Transforming...'
+                  : transformPrefs.length === 0
+                    ? 'Select a preference to continue'
+                    : `Transform with ${transformPrefs.length} preference${transformPrefs.length === 1 ? '' : 's'} →`}
+              </button>
+              {transformPrefs.length > 0 && !transforming && (
+                <button
+                  onClick={() => setTransformPrefs([])}
+                  className="text-xs text-purple-700 underline px-2"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {transformResult && (
+              <div className="mt-4 bg-white rounded-xl p-4 border-2 border-purple-300 space-y-3">
+                <p className="text-xs font-semibold text-purple-700">Preview — pick an action below</p>
+
+                {transformResult.title && (
+                  <p className="text-base font-bold text-gray-900">{transformResult.title}</p>
+                )}
+
+                {transformResult.description && (
+                  <p className="text-sm text-gray-600 italic">{transformResult.description}</p>
+                )}
+
+                {transformPrefs.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {transformPrefs.map(v => {
+                      const opt = PREFERENCE_OPTIONS.find(o => o.value === v)
+                      if (!opt) return null
+                      return (
+                        <span key={v} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">
+                          {opt.emoji} {opt.label}
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {transformResult.ingredients?.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">Ingredients</p>
+                    <ul className="space-y-1">
+                      {transformResult.ingredients.map((ing, i) => (
+                        <li key={i} className="text-sm text-gray-700">
+                          • {ing.measure && <span className="font-semibold">{ing.measure} </span>}{ing.name}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {transformResult.instructions && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 mb-1">Instructions</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{transformResult.instructions}</p>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2 pt-2 border-t border-purple-100">
+                  <button
+                    onClick={saveTransformAsNew}
+                    className="w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold"
+                  >
+                    💾 Save as new recipe
+                  </button>
+                  <button
+                    onClick={replaceWithTransform}
+                    className="w-full py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold"
+                  >
+                    ♻️ Replace this recipe
+                  </button>
+                  <button
+                    onClick={discardTransform}
+                    className="w-full py-2 text-gray-500 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50"
+                  >
+                    ✕ Discard
+                  </button>
+                </div>
               </div>
             )}
           </div>
