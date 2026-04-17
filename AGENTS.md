@@ -74,9 +74,16 @@ Each collapsible section on the Plan page has a one-line subtitle below the labe
 | Shopping List  | 🛒      | Your ingredients, organized and ready to shop. |
 | AI Notes       | 💡      | Tips and answers from Chef Jennifer, saved for later. |
 | Chef Jennifer  | 👨‍🍳   | Your personal AI chef — guiding your cooking and planning. |
-| Chef Videos    | 🎬      | Skills you're learning, lessons you've added, and what you're mastering next. |
+| Saved Skills from Chef TV | 🎬 | Skills you're learning, lessons you've added, and what you're mastering next. |
 
 The ChefJen section is labeled **Chef Jennifer** on the Plan page to match the Kitchen nav. The underlying data key is still `chefjen` and the table is `favorites` with `type='ai_recipe'`.
+
+### Plan page behavior notes
+
+- **Icon tooltips.** Every icon-only button on `/picks` has a `title` attribute so hovering (desktop) or long-pressing (mobile) reveals a plain-English label. This includes the bucket move buttons (⭐ Top Pick, 📋 Maybe, 🗂 Later), × remove buttons across every section, the video play button, and the Chef Jennifer expand / save-to-vault controls.
+- **"Saved Skills from Chef TV" is dual-sourced.** `loadVideos` in `app/picks/page.js` reads **both** the legacy `saved_videos` / `saved_education_videos` tables **and** new Chef TV saves that land in `favorites` with `type in ('video_recipe','video_education')`. Favorites-sourced rows carry a `_favoriteId` marker so `removeVideo` knows to delete from `favorites`; legacy rows still delete from the per-source table. If the same video exists in both places the legacy record wins (dedupe is by `id`).
+- **Chef Jennifer items show measures.** `ChefJenItem` renders each ingredient as `{measure} {name}` — string ingredients still render as-is, and `{name, measure}` objects bold the measure. This fixes older saves that were dropping quantity.
+- **Save to Recipe Vault from Plan.** Each Chef Jennifer item has a 💾 **Save to Recipe Vault** button inside its expanded view. Clicking it calls `saveChefJenToVault(item)`, which inserts into `personal_recipes` with the recipe's title/description/ingredients/instructions/cuisine, `family_notes = "Saved from Chef Jennifer."`, empty `tags` and `photo_url`, and the original `difficulty`. The button disables to `✓ Saved to Recipe Vault` after one successful save (per session — no persisted flag yet).
 
 ## Supabase schema (inferred from code — verify before migrations)
 
@@ -183,7 +190,7 @@ The Kitchen nav now uses the simplified names (Chef TV, Favorites, Recipe Vault,
 - `app/secret/page.js` — "Added to MyPlan" toast; "In MyPlan" / "MyPlan" button.
 - `app/cards/page.js` — "Added to MyPlan!" alert.
 - `app/saved/page.js` — likely references "MyFavorites".
-- `app/topchef/page.js` — "Saved to My Favorites" toast/button.
+- ~~`app/topchef/page.js` — "Saved to My Favorites" toast/button.~~ ✅ Done — button/toast now read **Save to Plan** / **Saved to Plan ✓**.
 
 Intentional kept-as-"My": `MyKitchen` (hub) stays.
 

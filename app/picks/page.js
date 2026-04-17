@@ -79,9 +79,12 @@ export default function MyPlanPage() {
   }
 
   async function loadVideos(userId) {
-    const [{ data: sv1 }, { data: sv2 }] = await Promise.all([
+    // Legacy path — saved_videos / saved_education_videos tables
+    const [{ data: sv1 }, { data: sv2 }, { data: favVids }] = await Promise.all([
       supabase.from('saved_videos').select('video_id').eq('user_id', userId),
       supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
+      // New path — Chef TV page saves directly to `favorites` with video types
+      supabase.from('favorites').select('*').eq('user_id', userId).in('type', ['video_recipe', 'video_education']),
     ])
     const cookingIds = (sv1 || []).map(s => s.video_id)
     const educationIds = (sv2 || []).map(s => s.video_id)
@@ -89,10 +92,24 @@ export default function MyPlanPage() {
       cookingIds.length ? supabase.from('cooking_videos').select('*').in('id', cookingIds) : { data: [] },
       educationIds.length ? supabase.from('education_videos').select('*').in('id', educationIds) : { data: [] },
     ])
-    setChefVideos([
+    const legacyVideos = [
       ...(cv || []).map(v => ({ ...v, _source: 'cooking' })),
       ...(ev || []).map(v => ({ ...v, _source: 'education' })),
-    ])
+    ]
+    // Normalize favorites-based saves to the same shape used by the VideoItem component
+    const favoriteVideos = (favVids || []).map(fav => ({
+      id: fav.ref_id,
+      youtube_id: fav.metadata?.youtube_id || '',
+      title: fav.title || '',
+      channel: fav.metadata?.channel || '',
+      duration: fav.metadata?.duration || '',
+      _source: fav.type === 'video_education' ? 'education' : 'cooking',
+      _favoriteId: fav.id, // remember so we can delete from favorites on remove
+    }))
+    // Dedupe — if the same video was saved both ways, prefer the legacy record so removeVideo keeps working
+    const existingIds = new Set(legacyVideos.map(v => String(v.id)))
+    const favOnly = favoriteVideos.filter(v => !existingIds.has(String(v.id)))
+    setChefVideos([...legacyVideos, ...favOnly])
   }
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
@@ -133,10 +150,41 @@ export default function MyPlanPage() {
     showToast('Removed')
   }
 
+  // Save a Chef Jennifer recipe to the permanent Recipe Vault (personal_recipes)
+  async function saveChefJenToVault(item) {
+    if (!user) return
+    const meta = item.metadata || {}
+    // Normalize ingredients: keep {name, measure} shape expected by the Vault
+    const ingredients = Array.isArray(meta.ingredients)
+      ? meta.ingredients.map(ing => typeof ing === 'string'
+          ? { name: ing, measure: '' }
+          : { name: ing?.name || '', measure: ing?.measure || '' })
+      : []
+    const { error } = await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: item.title,
+      description: meta.description || '',
+      ingredients,
+      instructions: meta.instructions || '',
+      category: meta.cuisine || '',
+      tags: [],
+      family_notes: `Saved from Chef Jennifer.`,
+      photo_url: '',
+      difficulty: meta.difficulty || '',
+    })
+    if (error) { showToast('Save failed'); return }
+    showToast('Saved to Recipe Vault ✓')
+  }
+
   // Video actions
   async function removeVideo(video) {
-    const table = video._source === 'education' ? 'saved_education_videos' : 'saved_videos'
-    await supabase.from(table).delete().eq('user_id', user.id).eq('video_id', video.id)
+    if (video._favoriteId) {
+      // Came from Chef TV (favorites table)
+      await supabase.from('favorites').delete().eq('id', video._favoriteId)
+    } else {
+      const table = video._source === 'education' ? 'saved_education_videos' : 'saved_videos'
+      await supabase.from(table).delete().eq('user_id', user.id).eq('video_id', video.id)
+    }
     setChefVideos(prev => prev.filter(v => v.id !== video.id))
     showToast('Removed')
   }
@@ -151,7 +199,7 @@ export default function MyPlanPage() {
     { key: 'shopping_list', label: 'Shopping List', emoji: '🛒',   color: 'bg-green-50 text-green-700 border-green-200',   count: shoppingList.length, subtitle: 'Your ingredients, organized and ready to shop.' },
     { key: 'ai_notes',      label: 'AI Notes',      emoji: '💡',   color: 'bg-indigo-50 text-indigo-700 border-indigo-200', count: aiNotes.length,      subtitle: 'Tips and answers from Chef Jennifer, saved for later.' },
     { key: 'chefjen',       label: 'Chef Jennifer', emoji: '👨‍🍳', color: 'bg-purple-50 text-purple-700 border-purple-200', count: chefJen.length,      subtitle: 'Your personal AI chef — guiding your cooking and planning.' },
-    { key: 'chef_videos',   label: 'Chef Videos',   emoji: '🎬',   color: 'bg-blue-50 text-blue-700 border-blue-200',       count: chefVideos.length,   subtitle: "Skills you're learning, lessons you've added, and what you're mastering next." },
+    { key: 'chef_videos',   label: 'Saved Skills from Chef TV',   emoji: '🎬',   color: 'bg-blue-50 text-blue-700 border-blue-200',       count: chefVideos.length,   subtitle: "Skills you're learning, lessons you've added, and what you're mastering next." },
   ]
 
   return (
@@ -235,10 +283,10 @@ export default function MyPlanPage() {
                                         className="font-semibold text-xs text-orange-600 truncate text-left w-full">{pick.title} →</button>
                                     </div>
                                     <div className="flex gap-1">
-                                      {bucket.key !== 'top'   && <button onClick={() => moveTo(pick, 'top')}   className="text-xs px-1.5 py-0.5 rounded border-2 border-amber-400 text-amber-700 font-semibold">⭐</button>}
-                                      {bucket.key !== 'nice'  && <button onClick={() => moveTo(pick, 'nice')}  className="text-xs px-1.5 py-0.5 rounded border-2 border-violet-400 text-violet-700 font-semibold">📋</button>}
-                                      {bucket.key !== 'later' && <button onClick={() => moveTo(pick, 'later')} className="text-xs px-1.5 py-0.5 rounded border-2 border-sky-400 text-sky-700 font-semibold">🗂</button>}
-                                      <button onClick={() => removePick(pick.id)} className="text-gray-300 hover:text-red-400 text-lg leading-none ml-1">×</button>
+                                      {bucket.key !== 'top'   && <button onClick={() => moveTo(pick, 'top')}   title="Move to Top Pick — your main focus for now"   className="text-xs px-1.5 py-0.5 rounded border-2 border-amber-400 text-amber-700 font-semibold">⭐</button>}
+                                      {bucket.key !== 'nice'  && <button onClick={() => moveTo(pick, 'nice')}  title="Move to Maybe — if you get to it"                className="text-xs px-1.5 py-0.5 rounded border-2 border-violet-400 text-violet-700 font-semibold">📋</button>}
+                                      {bucket.key !== 'later' && <button onClick={() => moveTo(pick, 'later')} title="Move to Later — still saved, not forgotten"      className="text-xs px-1.5 py-0.5 rounded border-2 border-sky-400 text-sky-700 font-semibold">🗂</button>}
+                                      <button onClick={() => removePick(pick.id)} title="Remove from Plan" className="text-gray-300 hover:text-red-400 text-lg leading-none ml-1">×</button>
                                     </div>
                                   </div>
                                 ))}
@@ -267,7 +315,7 @@ export default function MyPlanPage() {
                                 </button>
                                 <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.ingredient}</span>
                                 {item.recipe_title && <span className="text-xs text-gray-400 truncate max-w-24">{item.recipe_title}</span>}
-                                <button onClick={() => removeShoppingItem(item.id)} className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+                                <button onClick={() => removeShoppingItem(item.id)} title="Remove from shopping list" className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
                               </div>
                             ))}
                           </div>
@@ -295,7 +343,12 @@ export default function MyPlanPage() {
                       ) : (
                         <div className="divide-y divide-gray-50">
                           {chefJen.map(item => (
-                            <ChefJenItem key={item.id} item={item} onRemove={() => removeFavorite(item)} />
+                            <ChefJenItem
+                              key={item.id}
+                              item={item}
+                              onRemove={() => removeFavorite(item)}
+                              onSaveToVault={() => saveChefJenToVault(item)}
+                            />
                           ))}
                         </div>
                       )
@@ -330,9 +383,13 @@ function ExpandableItem({ item, emoji, onRemove }) {
   return (
     <div className="bg-white hover:bg-gray-50">
       <div className="flex items-start gap-3 p-3">
-        <span className="text-xl shrink-0">{emoji}</span>
+        <span className="text-xl shrink-0" title="Saved AI note">{emoji}</span>
         <div className="flex-1 min-w-0">
-          <button onClick={() => setExpanded(!expanded)} className="font-semibold text-sm text-gray-900 leading-tight text-left w-full">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            title={expanded ? 'Collapse note' : 'Expand note'}
+            className="font-semibold text-sm text-gray-900 leading-tight text-left w-full"
+          >
             {item.title}
             <span className="text-gray-400 text-xs ml-1">{expanded ? '▲' : '▼'}</span>
           </button>
@@ -340,14 +397,15 @@ function ExpandableItem({ item, emoji, onRemove }) {
             <p className="text-sm text-gray-600 mt-2 leading-relaxed whitespace-pre-wrap">{answer}</p>
           )}
         </div>
-        <button onClick={onRemove} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+        <button onClick={onRemove} title="Remove from Plan" className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
       </div>
     </div>
   )
 }
 
-function ChefJenItem({ item, onRemove }) {
+function ChefJenItem({ item, onRemove, onSaveToVault }) {
   const [expanded, setExpanded] = useState(false)
+  const [savedToVault, setSavedToVault] = useState(false)
   const meta = item.metadata || {}
   const description  = meta.description || ''
   const ingredients  = Array.isArray(meta.ingredients) ? meta.ingredients : []
@@ -358,14 +416,21 @@ function ChefJenItem({ item, onRemove }) {
   const answer       = meta.answer || ''
   const hasContent   = description || ingredients.length > 0 || instructions || answer
 
+  async function handleSaveToVault() {
+    if (savedToVault) return
+    await onSaveToVault()
+    setSavedToVault(true)
+  }
+
   return (
     <div className="bg-white hover:bg-gray-50">
       <div className="flex items-start gap-3 p-3">
-        <span className="text-xl shrink-0">👨‍🍳</span>
+        <span className="text-xl shrink-0" title="Chef Jennifer recipe">👨‍🍳</span>
         <div className="flex-1 min-w-0">
           <button
             onClick={() => setExpanded(!expanded)}
             className="font-semibold text-sm text-gray-900 leading-tight text-left w-full"
+            title={expanded ? 'Collapse recipe' : 'Expand recipe'}
           >
             {item.title}
             <span className="text-gray-400 text-xs ml-1">{expanded ? '▲' : '▼'}</span>
@@ -388,9 +453,18 @@ function ChefJenItem({ item, onRemove }) {
                 <div>
                   <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Ingredients</h4>
                   <ul className="list-disc pl-5 space-y-0.5 text-gray-700">
-                    {ingredients.map((ing, i) => (
-                      <li key={i}>{typeof ing === 'string' ? ing : (ing?.name || JSON.stringify(ing))}</li>
-                    ))}
+                    {ingredients.map((ing, i) => {
+                      if (typeof ing === 'string') return <li key={i}>{ing}</li>
+                      const measure = ing?.measure || ''
+                      const name = ing?.name || ''
+                      if (!measure && !name) return <li key={i}>{JSON.stringify(ing)}</li>
+                      return (
+                        <li key={i}>
+                          {measure && <span className="font-semibold text-gray-900">{measure} </span>}
+                          {name}
+                        </li>
+                      )
+                    })}
                   </ul>
                 </div>
               )}
@@ -409,10 +483,32 @@ function ChefJenItem({ item, onRemove }) {
               {!hasContent && (
                 <p className="text-gray-400 italic">No details saved for this recipe.</p>
               )}
+
+              {/* Save to Vault — promotes this Chef Jennifer recipe into the permanent Recipe Vault */}
+              {onSaveToVault && (
+                <button
+                  onClick={handleSaveToVault}
+                  disabled={savedToVault}
+                  title="Save this recipe to your Recipe Vault"
+                  className={`w-full py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    savedToVault
+                      ? 'bg-gray-100 text-gray-400 cursor-default'
+                      : 'bg-purple-600 text-white hover:bg-purple-700'
+                  }`}
+                >
+                  {savedToVault ? '✓ Saved to Recipe Vault' : '💾 Save to Recipe Vault'}
+                </button>
+              )}
             </div>
           )}
         </div>
-        <button onClick={onRemove} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+        <button
+          onClick={onRemove}
+          title="Remove from Plan"
+          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+        >
+          ×
+        </button>
       </div>
     </div>
   )
@@ -435,7 +531,7 @@ function VideoItem({ video, onRemove }) {
         </div>
       ) : (
         <div className="flex items-center gap-3 p-3 hover:bg-gray-50">
-          <button onClick={() => setPlaying(true)} className="relative shrink-0">
+          <button onClick={() => setPlaying(true)} title="Play skill video" className="relative shrink-0">
             <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
               alt={video.title} className="w-16 h-12 rounded-xl object-cover" />
             <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center">
@@ -448,7 +544,7 @@ function VideoItem({ video, onRemove }) {
             <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{video.title}</p>
             <p className="text-xs text-orange-600">{video.channel}</p>
           </div>
-          <button onClick={onRemove} className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
+          <button onClick={onRemove} title="Remove saved video from Plan" className="shrink-0 text-gray-300 hover:text-red-400 text-xl">×</button>
         </div>
       )}
     </div>

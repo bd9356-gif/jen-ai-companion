@@ -168,7 +168,7 @@ export default function MyChefPage() {
       }
     })
     setSaved(true)
-    showToast('Saved to My Favorites ✓')
+    showToast('Saved to Plan ✓')
   }
 
   function showToast(msg) {
@@ -441,8 +441,9 @@ export default function MyChefPage() {
             {/* Actions */}
             <div className="flex flex-col gap-3">
               <button onClick={saveToFavorites} disabled={saved}
+                title="Save this recipe to your Plan"
                 className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${saved ? 'bg-gray-100 text-gray-400' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>
-                {saved ? '✓ Saved to My Favorites' : '❤️ Save to My Favorites'}
+                {saved ? '✓ Saved to Plan' : '📋 Save to Plan'}
               </button>
               <button onClick={reset}
                 className="w-full py-4 rounded-2xl text-base font-semibold bg-white border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
