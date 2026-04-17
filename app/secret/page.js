@@ -388,6 +388,16 @@ export default function MyRecipeVaultPage() {
   const [picksIds, setPicksIds] = useState([])
   const [toastMsg, setToastMsg] = useState(null)
   const [addedToList, setAddedToList] = useState(new Set())
+  // Recipe detail view — collapsible section state. Defaults to expanded.
+  const [detailCollapsed, setDetailCollapsed] = useState({
+    info: false,
+    notes: false,
+    ingredients: false,
+    instructions: false,
+  })
+  function toggleDetailSection(key) {
+    setDetailCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const fileInputRef = useRef(null)
   const photoInputRef = useRef(null)
@@ -804,7 +814,16 @@ export default function MyRecipeVaultPage() {
 
           {(viewing.cooking_time || viewing.prep_time || viewing.difficulty || viewing.equipment?.length > 0 || viewing.nutrition) && (
             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-5">
-              <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-3">📊 Recipe Info</p>
+              <button
+                type="button"
+                onClick={() => toggleDetailSection('info')}
+                title={detailCollapsed.info ? 'Expand Recipe Info' : 'Collapse Recipe Info'}
+                className="w-full flex items-center justify-between text-left mb-3"
+              >
+                <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">📊 Recipe Info</p>
+                <span className="text-orange-600 text-sm">{detailCollapsed.info ? '▶' : '▼'}</span>
+              </button>
+              {!detailCollapsed.info && (<>
               <div className="grid grid-cols-2 gap-3 mb-3">
                 {viewing.prep_time && (
                   <div className="bg-white rounded-xl p-3 text-center">
@@ -854,6 +873,7 @@ export default function MyRecipeVaultPage() {
                   </div>
                 </div>
               )}
+              </>)}
             </div>
           )}
 
@@ -862,51 +882,81 @@ export default function MyRecipeVaultPage() {
 
           {viewing.family_notes && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-5">
-              <p className="text-xs font-semibold text-amber-800 mb-1">📖 Family Notes</p>
-              <p className="text-sm text-amber-900">{viewing.family_notes}</p>
+              <button
+                type="button"
+                onClick={() => toggleDetailSection('notes')}
+                title={detailCollapsed.notes ? 'Expand Family Notes' : 'Collapse Family Notes'}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <p className="text-xs font-semibold text-amber-800">📖 Family Notes</p>
+                <span className="text-amber-700 text-sm">{detailCollapsed.notes ? '▶' : '▼'}</span>
+              </button>
+              {!detailCollapsed.notes && (
+                <p className="text-sm text-amber-900 mt-2">{viewing.family_notes}</p>
+              )}
             </div>
           )}
 
           {ingredients.length > 0 && (
             <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold text-gray-900">Ingredients</h2>
+              <div className="flex items-center justify-between mb-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleDetailSection('ingredients')}
+                  title={detailCollapsed.ingredients ? 'Expand Ingredients' : 'Collapse Ingredients'}
+                  className="flex items-center gap-2 text-left"
+                >
+                  <h2 className="text-lg font-bold text-gray-900">Ingredients</h2>
+                  <span className="text-gray-500 text-sm">{detailCollapsed.ingredients ? '▶' : '▼'}</span>
+                </button>
                 <button onClick={addAllToShoppingList} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🛒 Add All</button>
               </div>
-              <div className="bg-gray-50 rounded-2xl p-4">
-                <ul className="space-y-2">
-                  {ingredients.map((ing, i) => {
-                    const key = [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase()
-                    return (
-                      <li key={i} className="flex items-center gap-3 text-sm">
-                        <span className="text-orange-400">•</span>
-                        <span className="flex-1 text-gray-600">
-                          {ing.measure && <span className="font-semibold text-gray-800">{ing.measure} </span>}
-                          {ing.name}
-                        </span>
-                        <button onClick={() => addToShoppingList(ing)}
-                          className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${addedToList.has(key) ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}>
-                          {addedToList.has(key) ? '✓' : '+'}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
+              {!detailCollapsed.ingredients && (
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <ul className="space-y-2">
+                    {ingredients.map((ing, i) => {
+                      const key = [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase()
+                      return (
+                        <li key={i} className="flex items-center gap-3 text-sm">
+                          <span className="text-orange-400">•</span>
+                          <span className="flex-1 text-gray-600">
+                            {ing.measure && <span className="font-semibold text-gray-800">{ing.measure} </span>}
+                            {ing.name}
+                          </span>
+                          <button onClick={() => addToShoppingList(ing)}
+                            className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${addedToList.has(key) ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}>
+                            {addedToList.has(key) ? '✓' : '+'}
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
           {nonVideoInstructions.length > 0 && (
             <div>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">Instructions</h2>
-              <div className="space-y-4">
-                {nonVideoInstructions.map((step, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
-                    <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
-                  </div>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleDetailSection('instructions')}
+                title={detailCollapsed.instructions ? 'Expand Instructions' : 'Collapse Instructions'}
+                className="w-full flex items-center justify-between text-left mb-3"
+              >
+                <h2 className="text-lg font-bold text-gray-900">Instructions</h2>
+                <span className="text-gray-500 text-sm">{detailCollapsed.instructions ? '▶' : '▼'}</span>
+              </button>
+              {!detailCollapsed.instructions && (
+                <div className="space-y-4">
+                  {nonVideoInstructions.map((step, i) => (
+                    <div key={i} className="flex gap-3">
+                      <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
+                      <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -1420,14 +1470,13 @@ export default function MyRecipeVaultPage() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900">🔐 MyRecipeVault</h1>
+              <h1 className="text-lg font-bold text-gray-900">🔐 Recipe Vault</h1>
             </div>
             <div className="flex gap-2">
               <button onClick={() => setView('import')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">📥 Import</button>
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mb-3">Your personal cooking library — private and only visible to you.</p>
           <input type="text" placeholder="Search recipes..." value={searchText}
             onChange={e => setSearchText(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
@@ -1447,6 +1496,12 @@ export default function MyRecipeVaultPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Intro: "Your Personal Recipe Vault" */}
+        <div className="bg-orange-50 border-2 border-orange-100 rounded-2xl p-5 mb-5">
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Your Personal Recipe Vault</h2>
+          <p className="text-sm text-gray-600 leading-relaxed">Your recipes live here — organized, safe, and always within reach.</p>
+        </div>
+
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : recipes.length === 0 ? (
@@ -1534,21 +1589,6 @@ export default function MyRecipeVaultPage() {
                 </div>
               )}
 
-              {/* My Notes Section */}
-              {notes.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base">💬</span>
-                    <h2 className="text-sm font-bold text-gray-700">My Notes</h2>
-                    <span className="text-xs text-gray-500">({notes.length})</span>
-                  </div>
-                  <div className="space-y-3">
-                    {notes.map(note => (
-                      <NoteCard key={note.id} note={note} />
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )
         })()}
