@@ -6,9 +6,23 @@ const STEPS = {
   MEAL: 'meal',
   MOOD: 'mood',
   PROTEIN: 'protein',
+  PREFERENCES: 'preferences',
   COOKING: 'cooking',
   RESULT: 'result',
 }
+
+// "Make my recipe more..." — multi-select cooking preferences.
+// These are cooking-style adjustments, NOT medical advice.
+const PREFERENCE_OPTIONS = [
+  { value: 'carb_aware',       label: 'Carb-aware',            emoji: '🌾', hint: 'lower carbs where sensible' },
+  { value: 'carb_counting',    label: 'Carb-counting friendly', emoji: '📊', hint: 'clearer per-serving carb info' },
+  { value: 'portion_focused',  label: 'Portion-focused',       emoji: '⚖️', hint: 'right-sized servings' },
+  { value: 'vegetarian',       label: 'Vegetarian-friendly',   emoji: '🥦', hint: 'swap meat for plant options' },
+  { value: 'gluten_friendly',  label: 'Gluten-friendly',       emoji: '🌿', hint: 'avoid wheat where possible' },
+  { value: 'dairy_friendly',   label: 'Dairy-friendly',        emoji: '🥛', hint: 'avoid dairy where possible' },
+  { value: 'low_sodium',       label: 'Low-sodium',            emoji: '🧂', hint: 'reduce added salt' },
+  { value: 'heart_healthy',    label: 'Heart-healthy',         emoji: '❤️', hint: 'leaner fats, more veg' },
+]
 
 const MEAL_OPTIONS = [
   { label: 'Breakfast', emoji: '🌅', value: 'breakfast' },
@@ -56,6 +70,7 @@ export default function MyChefPage() {
   const [meal, setMeal] = useState(null)
   const [mood, setMood] = useState(null)
   const [protein, setProtein] = useState(null)
+  const [preferences, setPreferences] = useState([]) // array of PREFERENCE_OPTIONS values
   const [recipe, setRecipe] = useState(null)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -72,6 +87,7 @@ export default function MyChefPage() {
     setMeal(null)
     setMood(null)
     setProtein(null)
+    setPreferences([])
     setRecipe(null)
     setSaved(false)
   }
@@ -86,25 +102,46 @@ export default function MyChefPage() {
     setStep(STEPS.PROTEIN)
   }
 
-  async function selectProtein(option) {
+  function selectProtein(option) {
     setProtein(option)
+    setStep(STEPS.PREFERENCES)
+  }
+
+  function togglePreference(value) {
+    setPreferences(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value])
+  }
+
+  async function submitPreferences() {
     setStep(STEPS.COOKING)
     setLoading(true)
 
-    const prompt = `You are a warm, friendly personal chef. Create a ${meal.label} recipe that is ${mood.value} with ${option.value} as the main protein. Keep it approachable and delicious.`
+    let prompt = `You are a warm, friendly personal chef. Create a ${meal.label} recipe that is ${mood.value} with ${protein.value} as the main protein. Keep it approachable and delicious.`
+
+    if (preferences.length > 0) {
+      const prefLabels = preferences
+        .map(v => PREFERENCE_OPTIONS.find(o => o.value === v)?.label)
+        .filter(Boolean)
+        .join(', ')
+      prompt += `\n\nAdditional cooking preferences from the home cook: make this recipe more ${prefLabels}. Adjust ingredients, portions, and preparation methods to support these preferences. Frame every change as a practical home-cook tip — do not provide medical advice or make health claims. When portion or carb adjustments are requested, give clear per-serving notes rather than prescriptive guidance.`
+    }
 
     try {
       const res = await fetch('/api/topchef', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, drawer: `${meal.label} — ${mood.label}`, cuisine: meal.value })
+        body: JSON.stringify({
+          prompt,
+          drawer: `${meal.label} — ${mood.label}`,
+          cuisine: meal.value,
+          preferences, // send to backend for logging/metadata
+        })
       })
       const data = await res.json()
       setRecipe(data.recipe)
       setStep(STEPS.RESULT)
     } catch (err) {
       showToast('Something went wrong. Try again.')
-      setStep(STEPS.PROTEIN)
+      setStep(STEPS.PREFERENCES)
     }
     setLoading(false)
   }
@@ -127,6 +164,7 @@ export default function MyChefPage() {
         meal: meal?.value,
         mood: mood?.value,
         protein: protein?.value,
+        preferences, // snapshot of selected preferences for this generation
       }
     })
     setSaved(true)
@@ -255,7 +293,66 @@ export default function MyChefPage() {
           </div>
         )}
 
-        {/* STEP 4 — Cooking */}
+        {/* STEP 4 — Preferences (optional) */}
+        {step === STEPS.PREFERENCES && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">{meal?.emoji}</span>
+              <div>
+                <p className="text-xs text-gray-400">{meal?.label} · {mood?.label} · {protein?.label}</p>
+                <h2 className="text-xl font-bold text-gray-900">Make my recipe more...</h2>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">Choose the kind of support you want — or skip. Multi-select.</p>
+
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {PREFERENCE_OPTIONS.map(opt => {
+                const selected = preferences.includes(opt.value)
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => togglePreference(opt.value)}
+                    className={`flex items-start gap-2 p-3 rounded-2xl border-2 transition-all active:scale-95 text-left ${
+                      selected
+                        ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-200'
+                        : 'bg-white border-gray-200 hover:border-purple-300 hover:bg-purple-50/40'
+                    }`}
+                  >
+                    <span className="text-xl shrink-0">{opt.emoji}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm font-semibold leading-tight ${selected ? 'text-purple-800' : 'text-gray-900'}`}>{opt.label}</p>
+                      <p className="text-[11px] text-gray-500 leading-tight mt-0.5">{opt.hint}</p>
+                    </div>
+                    {selected && <span className="text-purple-600 text-sm font-bold shrink-0">✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+
+            <p className="text-[11px] text-gray-400 mb-4 leading-snug">
+              These are cooking-style preferences, not medical advice. Always check with a healthcare provider for specific dietary needs.
+            </p>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={submitPreferences}
+                className="w-full py-4 rounded-2xl text-base font-semibold bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+              >
+                {preferences.length === 0 ? 'Skip — keep it classic →' : `Continue with ${preferences.length} preference${preferences.length === 1 ? '' : 's'} →`}
+              </button>
+              {preferences.length > 0 && (
+                <button
+                  onClick={() => setPreferences([])}
+                  className="text-xs text-gray-500 hover:text-gray-700 underline"
+                >
+                  Clear selection
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5 — Cooking */}
         {step === STEPS.COOKING && (
           <div className="text-center py-16">
             <div className="text-5xl mb-4 animate-bounce">👨‍🍳</div>
@@ -264,17 +361,33 @@ export default function MyChefPage() {
           </div>
         )}
 
-        {/* STEP 5 — Result */}
+        {/* STEP 6 — Result */}
         {step === STEPS.RESULT && recipe && (
           <div>
             {/* Breadcrumb */}
-            <div className="flex items-center gap-2 mb-4 text-xs text-gray-400">
+            <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
               <span>{meal?.emoji} {meal?.label}</span>
               <span>·</span>
               <span>{mood?.emoji} {mood?.label}</span>
               <span>·</span>
               <span>{protein?.emoji} {protein?.label}</span>
             </div>
+
+            {/* Applied preferences */}
+            {preferences.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                <span className="text-[11px] font-semibold text-purple-700 uppercase tracking-wide mr-1 self-center">Made more:</span>
+                {preferences.map(v => {
+                  const opt = PREFERENCE_OPTIONS.find(o => o.value === v)
+                  if (!opt) return null
+                  return (
+                    <span key={v} className="text-xs bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full">
+                      {opt.emoji} {opt.label}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
 
             {/* Recipe header */}
             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 mb-5">

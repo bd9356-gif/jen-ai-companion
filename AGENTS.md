@@ -94,6 +94,29 @@ Tables referenced in the app:
 - **`education_video_metadata`** — per-video educational metadata, joined by `video_id`
 - **`video_metadata`** — `id, video_id, ingredients (jsonb[]), instructions` — populated by ingestion scripts.
 
+## Chef Jennifer "Make my recipe more..." preferences
+
+On `/topchef` the flow is: **Meal → Mood → Protein → Preferences → Cooking → Result.**
+
+Preferences are **multi-select, per-generation** cooking-style adjustments (not medical advice). They get woven into the prompt sent to `/api/topchef` and snapshotted into `metadata.preferences` on save.
+
+Current options (value / label):
+
+| Value              | Label                    |
+| ------------------ | ------------------------ |
+| `carb_aware`       | Carb-aware               |
+| `carb_counting`    | Carb-counting friendly   |
+| `portion_focused`  | Portion-focused          |
+| `vegetarian`       | Vegetarian-friendly      |
+| `gluten_friendly`  | Gluten-friendly          |
+| `dairy_friendly`   | Dairy-friendly           |
+| `low_sodium`       | Low-sodium               |
+| `heart_healthy`    | Heart-healthy            |
+
+The prompt includes an explicit guard: "Frame every change as a practical home-cook tip — do not provide medical advice or make health claims." The UI also shows a small disclaimer under the chips.
+
+The same option list should be reused when we build the Recipe Vault "Make This Recipe More..." flow — keep values identical so preferences can be shared across screens / compared across recipes.
+
 ## API routes (`app/api/`)
 
 - `/api/chef` — Ask-AI Anything backend.
