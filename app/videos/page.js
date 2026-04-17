@@ -155,11 +155,14 @@ export default function VideosPage() {
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">🎬 MyChef TV</h1>
+            <h1 className="text-lg font-bold text-gray-900">🎬 Chef TV</h1>
           </div>
-          <p className="text-xs text-gray-500 mb-3">{totalNonShort} videos from top YouTube channels</p>
+          <p className="text-base font-bold text-gray-900 leading-snug">Watch. Learn. Save the Skills You Want to Master.</p>
+          <p className="text-xs text-gray-600 leading-relaxed mt-1 mb-3">
+            Top Chef videos curated for your cooking journey — save your favorites or explore their channel for more.
+          </p>
           <input type="text" placeholder="Search videos..." value={search}
             onChange={e => { setSearch(e.target.value); setShowCount(10) }}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3" />
@@ -192,7 +195,14 @@ export default function VideosPage() {
           <div className="text-center py-20 text-gray-500">Loading videos...</div>
         ) : (
           <>
-            <p className="text-sm text-gray-500 mb-4">{filtered.length} videos</p>
+            {/* Intro card */}
+            <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-5 mb-5">
+              <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-2">🎬 Your personal cooking classroom</p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Chef TV is your personal cooking classroom. Watch top chef videos, learn new techniques, and discover skills worth mastering. Save the ones you want in your Plan, or visit each chef&apos;s channel anytime for even more inspiration.
+              </p>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">{filtered.length} video{filtered.length === 1 ? '' : 's'} · {totalNonShort} total from top YouTube channels</p>
             <div className="space-y-4">
               {visible.map(video => {
                 const meta = metadata[video.id]
@@ -219,7 +229,15 @@ export default function VideosPage() {
                     <div className="p-4">
                       <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1">{video.title}</h3>
                       <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
-                      <p className="text-xs text-gray-500 mt-0.5 mb-3">{viewCount(video.view_count)}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 mb-2">{viewCount(video.view_count)}</p>
+                      <a
+                        href={`https://www.youtube.com/results?search_query=${encodeURIComponent(video.channel)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-700 mb-3"
+                      >
+                        ↗ Visit Chef&apos;s Channel
+                      </a>
                       <div className="flex items-center flex-wrap gap-3">
                         <button onClick={() => toggleExpand(video.id)} className="text-sm text-orange-600 font-semibold hover:text-orange-800">
                           {isExpanded ? 'Hide Details ▲' : 'See Details ▼'}
