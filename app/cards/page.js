@@ -318,7 +318,7 @@ export default function CardsPage() {
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900">🃏 MyRecipe Cards</h1>
+              <h1 className="text-lg font-bold text-gray-900">🃏 Recipe Cards</h1>
               {recipes.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{recipes.length}</span>}
             </div>
             <div className="flex gap-2">
@@ -336,6 +336,12 @@ export default function CardsPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Intro: "Your Modern Recipe Box" */}
+        <div className="bg-orange-50 border-2 border-orange-100 rounded-2xl p-5 mb-5">
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Your Modern Recipe Box</h2>
+          <p className="text-sm text-gray-600 leading-relaxed">A fresh take on the old kitchen card box — notes, photos, and tips saved to every recipe.</p>
+        </div>
+
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your cards...</div>
         ) : filtered.length === 0 ? (
@@ -351,8 +357,8 @@ export default function CardsPage() {
             <div className="grid grid-cols-2 gap-3">
               {filtered.map(recipe => (
                 <button key={recipe.id} onClick={() => openCard(recipe)}
-                  className="text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-300 hover:shadow-md transition-all active:scale-95">
-                  <div className="bg-orange-700 px-3 py-2.5">
+                  className="text-left bg-white border-2 border-gray-200 rounded-2xl overflow-hidden hover:border-orange-300 hover:shadow-md transition-all active:scale-95">
+                  <div className="bg-orange-700 px-3 py-2.5 rounded-t-2xl">
                     <p className="text-white font-bold text-xs leading-tight line-clamp-2">{recipe.title}</p>
                   </div>
                   <div className="p-3">
