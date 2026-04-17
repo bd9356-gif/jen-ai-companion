@@ -942,110 +942,173 @@ export default function MyRecipeVaultPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null); setTransformResult(null); setTransformPrefs([]) }}
               className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">✨ AI Enhance</h1>
+            <h1 className="text-lg font-bold text-gray-900">✨ AI Kitchen Helpers</h1>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6 pb-16 space-y-4">
-          <p className="text-sm text-gray-500 font-semibold">{viewing.title}</p>
-
-          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
-            <p className="font-semibold text-gray-900 mb-1">🧹 Polish Recipe</p>
-            <p className="text-xs text-gray-500 mb-3">AI rewrites steps for clarity and fixes formatting</p>
-            <button onClick={() => handleEnhance('enhance')} disabled={enhancing}
-              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
-              {enhancing ? 'Polishing...' : 'Polish My Recipe'}
-            </button>
-            {enhanceResult?.instructions && (
-              <div className="mt-3 bg-white rounded-xl p-4 border border-orange-200">
-                <p className="text-xs font-semibold text-orange-700 mb-2">Preview — tap Apply to save</p>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{enhanceResult.instructions}</p>
-                <button onClick={applyEnhancement} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold">✓ Apply Changes</button>
-              </div>
-            )}
+        <main className="max-w-2xl mx-auto px-4 py-6 pb-16 space-y-5">
+          {/* Intro card */}
+          <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-5">
+            <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-1">Helping with</p>
+            <p className="text-lg font-bold text-gray-900 leading-snug">{viewing.title}</p>
+            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+              Four cozy ways to tune up this recipe. Nothing saves until you tap the green button in each card, so feel free to experiment.
+            </p>
           </div>
 
-          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
-            <p className="font-semibold text-gray-900 mb-1">⚖️ Resize Servings</p>
-            <p className="text-xs text-gray-500 mb-3">Recalculate ingredient amounts</p>
-            <div className="mb-3 space-y-3">
-              <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
-                <label className="text-sm text-gray-600">Currently makes</label>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => updateRecipe(viewing.id, { servings: Math.max(1, (viewing.servings || 4) - 1) })}
-                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center">−</button>
-                  <span className="text-base font-semibold w-6 text-center">{viewing.servings || 4}</span>
-                  <button onClick={() => updateRecipe(viewing.id, { servings: (viewing.servings || 4) + 1 })}
-                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center">+</button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3">
-                <label className="text-sm text-gray-600">Resize to</label>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setServings(s => Math.max(1, s - 1))}
-                    className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-lg flex items-center justify-center">−</button>
-                  <span className="text-base font-semibold text-orange-700 w-6 text-center">{servings}</span>
-                  <button onClick={() => setServings(s => s + 1)}
-                    className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-lg flex items-center justify-center">+</button>
-                </div>
+          {/* 🧹 Polish Recipe — ORANGE */}
+          <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-5">
+            <div className="flex items-start gap-3 mb-2">
+              <span className="text-2xl">🧹</span>
+              <div>
+                <p className="font-bold text-gray-900">Polish this recipe</p>
+                <p className="text-xs text-gray-600 mt-0.5">AI tidies up your steps, fixes wording, and makes instructions easier to follow.</p>
               </div>
             </div>
-            <button onClick={() => handleEnhance('resize')} disabled={enhancing}
-              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
-              {enhancing ? 'Calculating...' : `Resize to ${servings} Servings`}
+            <button onClick={() => handleEnhance('enhance')} disabled={enhancing}
+              className="mt-3 w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity">
+              {enhancing ? 'Polishing…' : '🧹 Polish my recipe'}
             </button>
-            {enhanceResult?.ingredients && !enhanceResult?.instructions && (
-              <div className="mt-3 bg-white rounded-xl p-4 border border-orange-200">
-                <p className="text-xs font-semibold text-orange-700 mb-2">Resized — tap Apply to save & update nutrition</p>
-                <ul className="space-y-1">
-                  {enhanceResult.ingredients.map((ing, i) => (
-                    <li key={i} className="text-sm text-gray-700">• <span className="font-semibold">{ing.measure}</span> {ing.name}</li>
-                  ))}
-                </ul>
-                <button onClick={applyEnhancement} disabled={enhancing} className="mt-3 w-full py-2 bg-green-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50">
-                  {enhancing ? '⏳ Updating nutrition...' : '✓ Apply & Update Nutrition'}
+            {enhanceResult?.instructions && (
+              <div className="mt-4 bg-white rounded-xl p-4 border-2 border-orange-300">
+                <p className="text-xs font-semibold text-orange-700 mb-2">✨ Preview the polished version</p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{enhanceResult.instructions}</p>
+                <button onClick={applyEnhancement} className="mt-4 w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold">
+                  ✓ Apply these changes
                 </button>
               </div>
             )}
           </div>
 
-          <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
-            <p className="font-semibold text-gray-900 mb-1">📊 Generate Recipe Info</p>
-            <p className="text-xs text-gray-500 mb-3">AI generates cook time, difficulty, equipment & nutrition</p>
+          {/* ⚖️ Resize Servings — SKY */}
+          <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-5">
+            <div className="flex items-start gap-3 mb-2">
+              <span className="text-2xl">⚖️</span>
+              <div>
+                <p className="font-bold text-gray-900">Resize for a different crowd</p>
+                <p className="text-xs text-gray-600 mt-0.5">Scale ingredients up or down to match how many you are cooking for.</p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between bg-white rounded-xl border border-sky-100 px-4 py-3">
+                <label className="text-sm text-gray-600">Currently makes</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => updateRecipe(viewing.id, { servings: Math.max(1, (viewing.servings || 4) - 1) })}
+                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center hover:bg-gray-200">−</button>
+                  <span className="text-base font-semibold w-6 text-center">{viewing.servings || 4}</span>
+                  <button onClick={() => updateRecipe(viewing.id, { servings: (viewing.servings || 4) + 1 })}
+                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center hover:bg-gray-200">+</button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between bg-white rounded-xl border border-sky-200 px-4 py-3">
+                <label className="text-sm text-sky-700 font-semibold">Resize to</label>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setServings(s => Math.max(1, s - 1))}
+                    className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-bold text-lg flex items-center justify-center hover:bg-sky-200">−</button>
+                  <span className="text-base font-semibold text-sky-700 w-6 text-center">{servings}</span>
+                  <button onClick={() => setServings(s => s + 1)}
+                    className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-bold text-lg flex items-center justify-center hover:bg-sky-200">+</button>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => handleEnhance('resize')} disabled={enhancing}
+              className="mt-3 w-full py-3 bg-sky-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity">
+              {enhancing ? 'Calculating…' : `⚖️ Resize to ${servings} serving${servings === 1 ? '' : 's'}`}
+            </button>
+            {enhanceResult?.ingredients && !enhanceResult?.instructions && (
+              <div className="mt-4 bg-white rounded-xl p-4 border-2 border-sky-300">
+                <p className="text-xs font-semibold text-sky-700 mb-2">✨ Preview — resized ingredients</p>
+                <ul className="space-y-1.5">
+                  {enhanceResult.ingredients.map((ing, i) => (
+                    <li key={i} className="text-sm text-gray-700 flex gap-2">
+                      <span className="text-sky-400">•</span>
+                      <span><span className="font-semibold text-gray-900">{ing.measure}</span> {ing.name}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button onClick={applyEnhancement} disabled={enhancing} className="mt-4 w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50">
+                  {enhancing ? '⏳ Updating nutrition…' : '✓ Apply & refresh nutrition'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 📊 Generate Recipe Info — EMERALD */}
+          <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-5">
+            <div className="flex items-start gap-3 mb-2">
+              <span className="text-2xl">📊</span>
+              <div>
+                <p className="font-bold text-gray-900">Add cooking details</p>
+                <p className="text-xs text-gray-600 mt-0.5">AI estimates prep & cook time, difficulty, equipment, and nutrition.</p>
+              </div>
+            </div>
             <button onClick={() => handleEnhance('generate_info')} disabled={enhancing}
-              className="w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
-              {enhancing ? 'Analyzing...' : 'Generate Info'}
+              className="mt-3 w-full py-3 bg-emerald-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity">
+              {enhancing ? 'Analyzing…' : '📊 Generate details'}
             </button>
             {generatedInfo && (
-              <div className="mt-3 bg-white rounded-xl p-4 border border-orange-200 space-y-2">
-                <p className="text-xs font-semibold text-orange-700 mb-2">Generated — tap Save to add to recipe</p>
-                {generatedInfo.cooking_time && <p className="text-sm text-gray-700">⏱ Cook time: <span className="font-semibold">{generatedInfo.cooking_time}</span></p>}
-                {generatedInfo.prep_time && <p className="text-sm text-gray-700">🔪 Prep time: <span className="font-semibold">{generatedInfo.prep_time}</span></p>}
-                {generatedInfo.difficulty && <p className="text-sm text-gray-700">📊 Difficulty: <span className="font-semibold capitalize">{generatedInfo.difficulty}</span></p>}
+              <div className="mt-4 bg-white rounded-xl p-4 border-2 border-emerald-300 space-y-2">
+                <p className="text-xs font-semibold text-emerald-700 mb-2">✨ Preview the generated details</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {generatedInfo.prep_time && (
+                    <div className="bg-emerald-50 rounded-xl p-3">
+                      <p className="text-xs text-gray-500">🔪 Prep time</p>
+                      <p className="text-sm font-bold text-gray-900">{generatedInfo.prep_time}</p>
+                    </div>
+                  )}
+                  {generatedInfo.cooking_time && (
+                    <div className="bg-emerald-50 rounded-xl p-3">
+                      <p className="text-xs text-gray-500">⏱ Cook time</p>
+                      <p className="text-sm font-bold text-gray-900">{generatedInfo.cooking_time}</p>
+                    </div>
+                  )}
+                  {generatedInfo.difficulty && (
+                    <div className="bg-emerald-50 rounded-xl p-3">
+                      <p className="text-xs text-gray-500">📊 Difficulty</p>
+                      <p className="text-sm font-bold text-gray-900 capitalize">{generatedInfo.difficulty}</p>
+                    </div>
+                  )}
+                  {generatedInfo.servings && (
+                    <div className="bg-emerald-50 rounded-xl p-3">
+                      <p className="text-xs text-gray-500">👥 Makes</p>
+                      <p className="text-sm font-bold text-gray-900">{generatedInfo.servings} serving{generatedInfo.servings === 1 ? '' : 's'}</p>
+                    </div>
+                  )}
+                </div>
                 {generatedInfo.equipment?.length > 0 && (
-                  <p className="text-sm text-gray-700">🍳 Equipment: <span className="font-semibold">{generatedInfo.equipment.join(', ')}</span></p>
+                  <div className="bg-emerald-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-500 mb-1">🍳 Equipment</p>
+                    <p className="text-sm text-gray-700">{generatedInfo.equipment.join(', ')}</p>
+                  </div>
                 )}
                 {generatedInfo.nutrition_estimate && (
-                  <div className="bg-gray-50 rounded-xl p-3 mt-2">
+                  <div className="bg-emerald-50 rounded-xl p-3">
                     <p className="text-xs font-semibold text-gray-600 mb-2">Nutrition (per serving estimate)</p>
                     <div className="grid grid-cols-4 gap-2">
                       {['calories','protein','carbs','fat'].map(k => generatedInfo.nutrition_estimate[k] && (
                         <div key={k} className="text-center bg-white rounded-lg p-2">
-                          <p className="text-xs font-bold text-orange-700">{generatedInfo.nutrition_estimate[k]}</p>
+                          <p className="text-xs font-bold text-emerald-700">{generatedInfo.nutrition_estimate[k]}</p>
                           <p className="text-xs text-gray-500 capitalize">{k}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-                <button onClick={applyInfo} className="mt-2 w-full py-3 bg-green-600 text-white rounded-xl text-sm font-semibold">✓ Save to Recipe</button>
+                <button onClick={applyInfo} className="mt-2 w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold">
+                  ✓ Save to recipe
+                </button>
               </div>
             )}
           </div>
 
-          {/* ── Make This Recipe More... ── */}
-          <div className="bg-purple-50 border-2 border-purple-200 rounded-2xl p-5">
-            <p className="font-semibold text-gray-900 mb-1">🌿 Make This Recipe More...</p>
-            <p className="text-xs text-gray-500 mb-3">Pick one or more cooking-style preferences. AI will adjust this recipe to match.</p>
+          {/* 🌿 Make This Recipe More... — PURPLE */}
+          <div className="rounded-2xl border-2 border-purple-200 bg-purple-50 p-5">
+            <div className="flex items-start gap-3 mb-3">
+              <span className="text-2xl">🌿</span>
+              <div>
+                <p className="font-bold text-gray-900">Make this recipe more…</p>
+                <p className="text-xs text-gray-600 mt-0.5">Pick one or more cooking-style preferences — AI will adjust the recipe to match.</p>
+              </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-2 mb-3">
               {PREFERENCE_OPTIONS.map(opt => {
