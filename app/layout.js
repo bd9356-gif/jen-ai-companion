@@ -12,15 +12,41 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "MyRecipe Companion",
-  description: "Your personal AI-powered cooking companion",
+  title: "Recipe AI Companion",
+  description:
+    "A cozy cooking companion — save recipes, plan meals, learn new skills, and cook alongside an AI chef.",
+  applicationName: "Recipe AI Companion",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Recipe AI",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <script dangerouslySetInnerHTML={{ __html: `
           window.addEventListener('resize', function() {
             document.body.style.minHeight = window.innerHeight + 'px';
