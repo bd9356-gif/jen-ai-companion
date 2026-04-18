@@ -1547,7 +1547,7 @@ export default function MyRecipeVaultPage() {
               <input type="text" placeholder="Search recipes..." value={searchText}
                 autoFocus
                 onChange={e => setSearchText(e.target.value)}
-                className="flex-1 border-2 border-orange-300 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
+                className="flex-1 min-w-0 border-2 border-orange-300 rounded-full px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
             ) : (
               topTags.length > 0 ? (
                 <div className="flex gap-2 overflow-x-auto flex-1 pb-1 -mx-1 px-1 scrollbar-thin">
