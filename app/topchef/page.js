@@ -11,6 +11,26 @@ const STEPS = {
   RESULT: 'result',
 }
 
+// Ordered list used to render the "Step N of 4" progress pill.
+const WIZARD_ORDER = [STEPS.MEAL, STEPS.MOOD, STEPS.PROTEIN, STEPS.PREFERENCES]
+
+// Rotating messages during the /api/topchef call. Cozy, not clinical.
+const COOKING_MESSAGES = [
+  "Chef Jennifer is tasting…",
+  "…adjusting the seasoning…",
+  "…pulling the good pans out…",
+  "…double-checking the measurements…",
+  "…plating it now…",
+]
+
+// Simple greeting based on local hour. Safe in SSR because we compute on mount.
+function greetingFor(hour) {
+  if (hour < 5)  return 'Up late?'
+  if (hour < 12) return 'Morning'
+  if (hour < 17) return 'Afternoon'
+  return 'Evening'
+}
+
 // "Make my recipe more..." — multi-select cooking preferences.
 // These are cooking-style adjustments, NOT medical advice.
 const PREFERENCE_OPTIONS = [
@@ -60,6 +80,23 @@ const PROTEIN_OPTIONS = [
   { label: 'Surprise me', emoji: '🎲', value: 'chef\'s choice' },
 ]
 
+function StepPill({ current }) {
+  const idx = WIZARD_ORDER.indexOf(current)
+  if (idx < 0) return null
+  return (
+    <div className="flex items-center gap-2 mb-5">
+      <span className="text-[11px] font-extrabold uppercase tracking-wider text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2.5 py-1">
+        Step {idx + 1} of {WIZARD_ORDER.length}
+      </span>
+      <div className="flex-1 flex gap-1">
+        {WIZARD_ORDER.map((s, i) => (
+          <span key={s} className={`h-1.5 flex-1 rounded-full ${i <= idx ? 'bg-orange-400' : 'bg-gray-200'}`} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function MyChefPage() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -75,12 +112,25 @@ export default function MyChefPage() {
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
   const [toast, setToast] = useState(null)
+  const [greeting, setGreeting] = useState('')   // set on mount to avoid SSR mismatch
+  const [cookingIdx, setCookingIdx] = useState(0)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setUser(session.user)
     })
+    setGreeting(greetingFor(new Date().getHours()))
   }, [])
+
+  // Rotate the cooking messages every ~1.6s while the AI is thinking.
+  useEffect(() => {
+    if (step !== STEPS.COOKING) return
+    setCookingIdx(0)
+    const t = setInterval(() => {
+      setCookingIdx(i => (i + 1) % COOKING_MESSAGES.length)
+    }, 1600)
+    return () => clearInterval(t)
+  }, [step])
 
   function reset() {
     setStep(STEPS.MEAL)
@@ -199,15 +249,19 @@ export default function MyChefPage() {
       .filter(Boolean)
   })()
 
+  // Pull the first name from the user's email for a personal touch.
+  const firstName = user?.email ? user.email.split('@')[0].split('.')[0] : ''
+  const niceName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : ''
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50/40 via-white to-white">
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">
           {toast}
         </div>
       )}
 
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <header className="bg-white/90 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
@@ -223,27 +277,38 @@ export default function MyChefPage() {
 
       <main className="max-w-lg mx-auto px-4 py-8">
 
-        {/* STEP 1 — Meal time */}
+        {/* STEP 1 — Meal time (with greeting + avatar) */}
         {step === STEPS.MEAL && (
-          <div className="text-center">
-            <div className="w-full rounded-2xl overflow-hidden mb-6 relative" style={{height:'200px'}}>
+          <div>
+            {/* Chef hero card */}
+            <div className="relative rounded-3xl overflow-hidden mb-6 shadow-sm border border-orange-100" style={{height:'220px'}}>
               <img
                 src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80"
                 alt="Your personal chef"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 text-left">
-                <p className="text-white font-bold text-lg leading-tight">👨‍🍳 Chef Jennifer</p>
-                <p className="text-white/80 text-xs">Your personal chef, ready to cook with you.</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-3">
+                <div className="w-14 h-14 rounded-full bg-white/95 border-2 border-orange-300 flex items-center justify-center text-3xl shrink-0 shadow-md">
+                  👨‍🍳
+                </div>
+                <div className="text-white">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-orange-200/90">Chef Jennifer</p>
+                  <p className="font-bold text-lg leading-tight">
+                    {greeting ? `${greeting}${niceName ? `, ${niceName}` : ''} — what are we cooking?` : 'What are we cooking today?'}
+                  </p>
+                </div>
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">What are we making?</h2>
-            <p className="text-gray-400 text-sm mb-8">Tell your chef what meal you need.</p>
+
+            <StepPill current={STEPS.MEAL} />
+
+            <h2 className="text-2xl font-bold text-gray-900 mb-1">Pick a meal</h2>
+            <p className="text-gray-500 text-sm mb-6">Tell me what time of day we're cooking for.</p>
             <div className="grid grid-cols-3 gap-3">
               {MEAL_OPTIONS.map(opt => (
                 <button key={opt.value} onClick={() => selectMeal(opt)}
-                  className="flex flex-col items-center gap-2 py-6 bg-orange-50 border-2 border-orange-100 rounded-2xl hover:border-orange-400 hover:bg-orange-100 transition-all active:scale-95">
+                  className="flex flex-col items-center gap-2 py-6 bg-white border-2 border-orange-100 rounded-2xl hover:border-orange-400 hover:bg-orange-50 hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95">
                   <span className="text-3xl">{opt.emoji}</span>
                   <span className="text-sm font-semibold text-gray-900">{opt.label}</span>
                 </button>
@@ -270,6 +335,7 @@ export default function MyChefPage() {
         {/* STEP 2 — Mood */}
         {step === STEPS.MOOD && (
           <div>
+            <StepPill current={STEPS.MOOD} />
             <div className="flex items-center gap-2 mb-6">
               <span className="text-2xl">{meal?.emoji}</span>
               <div>
@@ -280,7 +346,7 @@ export default function MyChefPage() {
             <div className="grid grid-cols-2 gap-3">
               {MOOD_OPTIONS[meal?.value]?.map(opt => (
                 <button key={opt.value} onClick={() => selectMood(opt)}
-                  className="flex items-center gap-3 p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95 text-left">
+                  className="flex items-center gap-3 p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-orange-300 hover:bg-orange-50 hover:shadow-sm hover:-translate-y-0.5 transition-all active:scale-95 text-left">
                   <span className="text-2xl">{opt.emoji}</span>
                   <span className="text-sm font-semibold text-gray-900">{opt.label}</span>
                 </button>
@@ -292,6 +358,7 @@ export default function MyChefPage() {
         {/* STEP 3 — Protein */}
         {step === STEPS.PROTEIN && (
           <div>
+            <StepPill current={STEPS.PROTEIN} />
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{meal?.emoji}</span>
               <div>
@@ -299,11 +366,11 @@ export default function MyChefPage() {
                 <h2 className="text-xl font-bold text-gray-900">Pick your protein</h2>
               </div>
             </div>
-            <p className="text-sm text-gray-400 mb-6">Last question — then your chef gets cooking.</p>
+            <p className="text-sm text-gray-400 mb-6">Almost there — one more tiny choice.</p>
             <div className="grid grid-cols-2 gap-3">
               {PROTEIN_OPTIONS.map(opt => (
                 <button key={opt.value} onClick={() => selectProtein(opt)}
-                  className="flex items-center gap-3 p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-orange-300 hover:bg-orange-50 transition-all active:scale-95 text-left">
+                  className="flex items-center gap-3 p-4 bg-white border-2 border-gray-100 rounded-2xl hover:border-orange-300 hover:bg-orange-50 hover:shadow-sm hover:-translate-y-0.5 transition-all active:scale-95 text-left">
                   <span className="text-2xl">{opt.emoji}</span>
                   <span className="text-sm font-semibold text-gray-900">{opt.label}</span>
                 </button>
@@ -315,6 +382,7 @@ export default function MyChefPage() {
         {/* STEP 4 — Preferences (optional) */}
         {step === STEPS.PREFERENCES && (
           <div>
+            <StepPill current={STEPS.PREFERENCES} />
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{meal?.emoji}</span>
               <div>
@@ -355,7 +423,7 @@ export default function MyChefPage() {
             <div className="flex flex-col gap-2">
               <button
                 onClick={submitPreferences}
-                className="w-full py-4 rounded-2xl text-base font-semibold bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+                className="w-full py-4 rounded-2xl text-base font-semibold bg-orange-600 text-white hover:bg-orange-700 transition-colors shadow-md shadow-orange-200"
               >
                 {preferences.length === 0 ? 'Skip — keep it classic →' : `Continue with ${preferences.length} preference${preferences.length === 1 ? '' : 's'} →`}
               </button>
@@ -371,12 +439,20 @@ export default function MyChefPage() {
           </div>
         )}
 
-        {/* STEP 5 — Cooking */}
+        {/* STEP 5 — Cooking (rotating cozy messages) */}
         {step === STEPS.COOKING && (
           <div className="text-center py-16">
-            <div className="text-5xl mb-4 animate-bounce">👨‍🍳</div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Your chef is cooking...</h2>
-            <p className="text-gray-400 text-sm">{meal?.label} · {mood?.label} · {protein?.label}</p>
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 rounded-full bg-orange-200/60 blur-2xl animate-pulse" />
+              <div className="relative w-24 h-24 rounded-full bg-white border-4 border-orange-300 flex items-center justify-center text-5xl shadow-lg animate-bounce">
+                👨‍🍳
+              </div>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-1">Your chef is cooking</h2>
+            <p className="text-orange-600 text-sm font-semibold min-h-[1.25rem] transition-opacity">
+              {COOKING_MESSAGES[cookingIdx]}
+            </p>
+            <p className="text-gray-400 text-xs mt-4">{meal?.label} · {mood?.label} · {protein?.label}</p>
           </div>
         )}
 
@@ -408,49 +484,53 @@ export default function MyChefPage() {
               </div>
             )}
 
-            {/* Recipe header */}
-            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 mb-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide mb-1">Chef's Recipe</p>
-                  <h2 className="text-xl font-bold text-gray-900 leading-tight">{recipe.title}</h2>
+            {/* Recipe hero — soft gradient card with chef badge */}
+            <div className="relative rounded-3xl overflow-hidden mb-5 p-6 bg-gradient-to-br from-orange-100 via-amber-50 to-rose-50 border-2 border-orange-200 shadow-sm">
+              <div className="absolute -top-6 -right-6 text-[120px] opacity-10 select-none">👨‍🍳</div>
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-orange-700 bg-white/70 border border-orange-200 rounded-full px-2 py-0.5">Chef's recipe</span>
+                  {recipe.difficulty && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-600 bg-white/70 border border-gray-200 rounded-full px-2 py-0.5">{recipe.difficulty}</span>
+                  )}
                 </div>
-                <span className="text-3xl shrink-0">👨‍🍳</span>
+                <h2 className="text-2xl font-bold text-gray-900 leading-tight">{recipe.title}</h2>
+                {recipe.description && (
+                  <p className="text-sm text-gray-700 mt-3 leading-relaxed">{recipe.description}</p>
+                )}
               </div>
-              {recipe.description && (
-                <p className="text-sm text-gray-600 mt-3 leading-relaxed">{recipe.description}</p>
-              )}
             </div>
 
-            {/* Ingredients */}
+            {/* Ingredients — index-card chips */}
             {recipe.ingredients?.length > 0 && (
-              <div className="mb-5">
+              <div className="mb-6">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Ingredients</h3>
-                <div className="bg-gray-50 rounded-2xl p-4">
-                  <ul className="space-y-2">
-                    {recipe.ingredients.map((ing, i) => (
-                      <li key={i} className="flex gap-3 text-sm">
-                        <span className="text-orange-400 shrink-0">•</span>
-                        <span className="text-gray-700">
-                          {ing.measure && <span className="font-semibold text-gray-900">{ing.measure} </span>}
-                          {ing.name}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {recipe.ingredients.map((ing, i) => (
+                    <div key={i} className="relative flex items-start gap-2 px-3 py-2 bg-amber-50 border-2 border-amber-200 rounded-xl text-sm">
+                      <span className="absolute left-0 top-2 bottom-2 w-1 bg-red-600 rounded-r" />
+                      <span className="text-amber-700 shrink-0 ml-1">•</span>
+                      <span className="text-gray-800">
+                        {ing.measure && <span className="font-semibold text-gray-900">{ing.measure} </span>}
+                        {ing.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Instructions */}
+            {/* Instructions — numbered steps */}
             {instructions.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Instructions</h3>
-                <div className="space-y-4">
-                  {instructions.map((step, i) => (
-                    <div key={i} className="flex gap-3">
-                      <div className="shrink-0 w-7 h-7 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
-                      <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
+                <div className="space-y-3">
+                  {instructions.map((stepText, i) => (
+                    <div key={i} className="flex gap-3 p-3 bg-white border border-gray-100 rounded-2xl hover:border-orange-200 hover:bg-orange-50/40 transition-colors">
+                      <div className="shrink-0 w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
+                        {i+1}
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed pt-1">{stepText}</p>
                     </div>
                   ))}
                 </div>
@@ -461,7 +541,7 @@ export default function MyChefPage() {
             <div className="flex flex-col gap-3">
               <button onClick={saveToFavorites} disabled={saved}
                 title="Save this recipe to your MyPlan"
-                className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${saved ? 'bg-gray-100 text-gray-400' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>
+                className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors shadow-md ${saved ? 'bg-gray-100 text-gray-400 shadow-none' : 'bg-orange-600 text-white hover:bg-orange-700 shadow-orange-200'}`}>
                 {saved ? '✓ Saved to MyPlan' : '📋 Save to MyPlan'}
               </button>
               <button onClick={reset}
