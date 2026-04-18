@@ -13,7 +13,7 @@ export default function CardsPage() {
   const [viewing, setViewing] = useState(null)
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [addingToList, setAddingToList] = useState(false)
+  const [addedToList, setAddedToList] = useState(new Set())
   const [familyNotes, setFamilyNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
@@ -44,6 +44,7 @@ export default function CardsPage() {
     setFamilyNotes(recipe.family_notes || '')
     setNotesSaved(false)
     setSuggestions(null)
+    setAddedToList(new Set())
   }
 
   async function saveNotes() {
@@ -83,27 +84,35 @@ export default function CardsPage() {
     setLoadingSuggestions(false)
   }
 
-  async function addToShoppingList() {
-    if (!viewing || !user) return
-    const ingredients = viewing.ingredients || []
-    if (ingredients.length === 0) {
-      showToast('No ingredients to add')
-      return
+  // Toggle a single ingredient — matches the Recipe Vault pattern: + adds, ✓ removes.
+  async function toggleIngredient(ing) {
+    if (!user || !viewing) return
+    const ingredient = [ing.measure, ing.name].filter(Boolean).join(' ') || String(ing)
+    const key = ingredient.toLowerCase()
+    if (addedToList.has(key)) {
+      await supabase.from('shopping_list').delete().eq('user_id', user.id).eq('ingredient', ingredient)
+      setAddedToList(prev => { const n = new Set(prev); n.delete(key); return n })
+      showToast('Removed from Shopping List')
+    } else {
+      await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing.title || '', checked: false })
+      setAddedToList(prev => new Set([...prev, key]))
+      showToast('Added to Shopping List')
     }
-    setAddingToList(true)
-    const rows = ingredients.map(ing => ({
+  }
+
+  async function addAllToShoppingList() {
+    if (!user || !viewing) return
+    const ings = viewing.ingredients || []
+    if (!ings.length) return
+    const rows = ings.map(ing => ({
       user_id: user.id,
-      ingredient: ing.measure ? `${ing.measure} ${ing.name}` : (ing.name || String(ing)),
-      recipe_title: viewing.title,
+      ingredient: [ing.measure, ing.name].filter(Boolean).join(' ') || String(ing),
+      recipe_title: viewing.title || '',
       checked: false
     }))
-    const { error } = await supabase.from('shopping_list').insert(rows)
-    setAddingToList(false)
-    if (error) {
-      showToast('Could not add ingredients')
-      return
-    }
-    showToast(`Added ${rows.length} ingredient${rows.length === 1 ? '' : 's'} to Shopping List ✓`)
+    await supabase.from('shopping_list').insert(rows)
+    setAddedToList(new Set(rows.map(r => r.ingredient.toLowerCase())))
+    showToast(`Added ${rows.length} ingredient${rows.length === 1 ? '' : 's'} to Shopping List`)
   }
 
   async function removeCard(recipeId) {
@@ -177,37 +186,48 @@ export default function CardsPage() {
               </div>
             </div>
 
-            {/* Ingredients */}
+            {/* Ingredients — per-item +/✓ toggles (matches Recipe Vault). */}
             <div className="px-5 pb-5">
               <div className="border-t border-gray-100 pt-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Ingredients</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ingredients</p>
+                  {ingredients.length > 0 && (
+                    <button
+                      onClick={addAllToShoppingList}
+                      className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2 py-1 hover:bg-orange-50"
+                    >
+                      🛒 Add All
+                    </button>
+                  )}
+                </div>
                 {ingredients.length === 0 ? (
                   <p className="text-sm text-gray-500 italic">No ingredients listed</p>
                 ) : (
                   <ul>
-                    {ingredients.map((ing, i) => (
-                      <li key={i} className="flex gap-3 py-2 border-b border-gray-50 last:border-0">
-                        <span className="text-orange-400 shrink-0 mt-0.5" style={{fontSize:'12px'}}>•</span>
-                        <span className="text-sm text-gray-700">
-                          {ing.measure && <span className="font-semibold text-gray-900">{ing.measure} </span>}
-                          {ing.name}
-                        </span>
-                      </li>
-                    ))}
+                    {ingredients.map((ing, i) => {
+                      const key = [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase()
+                      return (
+                        <li key={i} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+                          <span className="text-orange-400 shrink-0" style={{fontSize:'12px'}}>•</span>
+                          <span className="flex-1 text-sm text-gray-700">
+                            {ing.measure && <span className="font-semibold text-gray-900">{ing.measure} </span>}
+                            {ing.name}
+                          </span>
+                          <button
+                            onClick={() => toggleIngredient(ing)}
+                            title={addedToList.has(key) ? 'Remove from Shopping List' : 'Add to Shopping List'}
+                            className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${addedToList.has(key) ? 'bg-green-500 text-white' : 'bg-orange-100 text-orange-600 hover:bg-orange-200'}`}
+                          >
+                            {addedToList.has(key) ? '✓' : '+'}
+                          </button>
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
               </div>
             </div>
           </div>
-
-          {/* Add to Shopping List */}
-          <button
-            onClick={addToShoppingList}
-            disabled={addingToList || (viewing.ingredients || []).length === 0}
-            className="w-full py-3 mb-5 rounded-2xl text-sm font-bold transition-colors bg-orange-600 text-white hover:bg-orange-700 disabled:bg-gray-200 disabled:text-gray-500 shadow-sm"
-          >
-            {addingToList ? 'Adding...' : `🛒 Add all ingredients to Shopping List`}
-          </button>
 
           {/* Family Notes */}
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-5">
