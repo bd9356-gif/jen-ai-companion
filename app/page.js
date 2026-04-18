@@ -65,7 +65,7 @@ export default function HomePage() {
   const image = getDailyImage()
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="min-h-screen bg-amber-50 flex flex-col">
 
       {/* Header */}
       <header className="bg-white border-b border-stone-200">
@@ -75,7 +75,7 @@ export default function HomePage() {
             <span className="text-stone-800 text-base font-semibold tracking-tight">Recipe AI Companion</span>
           </div>
           {user ? (
-            <a href="/kitchen" className="text-emerald-700 text-sm font-medium border border-emerald-200 bg-emerald-50 rounded-full px-3 py-1 hover:bg-emerald-100 transition-colors">
+            <a href="/kitchen" className="text-stone-800 text-sm font-medium border border-stone-300 bg-white rounded-full px-3 py-1 hover:bg-stone-100 transition-colors">
               MyKitchen →
             </a>
           ) : (
@@ -87,63 +87,60 @@ export default function HomePage() {
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-5 pb-10 flex flex-col">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-4 pb-8 flex flex-col">
 
         {/* Hero image with text overlay */}
-        <div className="w-full rounded-3xl overflow-hidden mb-5 relative shadow-sm" style={{height: '260px'}}>
+        <div className="w-full rounded-3xl overflow-hidden mb-4 relative shadow-sm" style={{height: '180px'}}>
           <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-900/80 via-stone-900/30 to-stone-900/10" />
-          <div className="absolute inset-0 flex flex-col items-center justify-end px-6 pb-7 text-center">
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-900/85 via-stone-900/40 to-stone-900/10" />
+          <div className="absolute inset-0 flex flex-col items-center justify-end px-5 pb-5 text-center">
             {userName ? (
               <>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow">
+                <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 drop-shadow">
                   Welcome back, {userName}.
                 </h1>
-                <p className="text-stone-100 text-sm drop-shadow">
+                <p className="text-stone-100 text-xs sm:text-sm drop-shadow">
                   Your kitchen is right where you left it.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 drop-shadow">
+                <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 drop-shadow">
                   Cook with a little help.
                 </h1>
-                <p className="text-stone-100 text-sm drop-shadow">
+                <p className="text-stone-100 text-xs sm:text-sm drop-shadow">
                   Save recipes, plan meals, and ask an AI chef anything.
                 </p>
               </>
             )}
           </div>
-          <div className="absolute bottom-2 right-3">
-            <span className="text-white/60 text-[10px] tracking-wide">{image.name}</span>
-          </div>
         </div>
 
         {/* Primary CTA */}
         <a href={user ? '/kitchen' : '/login'}
-          className="w-full py-4 bg-emerald-700 text-white rounded-2xl text-base font-semibold hover:bg-emerald-800 transition-colors text-center block shadow-sm">
+          className="w-full py-3.5 bg-stone-800 text-white rounded-2xl text-base font-semibold hover:bg-stone-900 transition-colors text-center block shadow-sm">
           {user ? 'Enter your kitchen →' : 'Get started →'}
         </a>
 
         {!user && (
-          <p className="text-xs text-stone-500 text-center mt-3">
+          <p className="text-xs text-stone-500 text-center mt-2">
             Free to start — sign in or create an account in a few taps.
           </p>
         )}
 
         {/* Feature tiles */}
-        <section className="mt-8">
+        <section className="mt-6">
           <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-3">
             What's inside
           </p>
-          <div className="grid gap-3">
+          <div className="grid gap-2.5">
             {FEATURES.map(({ emoji, title, blurb }) => (
               <div key={title}
-                className="bg-white border border-stone-200 rounded-2xl p-4 flex items-start gap-3 hover:border-emerald-200 transition-colors">
-                <span className="text-2xl leading-none shrink-0 mt-0.5">{emoji}</span>
-                <div className="text-left">
+                className="bg-white border border-stone-200 rounded-2xl px-3.5 py-3 flex items-start gap-3">
+                <span className="text-xl leading-none shrink-0 mt-0.5">{emoji}</span>
+                <div className="text-left min-w-0">
                   <p className="text-stone-800 font-semibold text-sm">{title}</p>
-                  <p className="text-stone-600 text-sm leading-snug mt-0.5">{blurb}</p>
+                  <p className="text-stone-600 text-xs sm:text-sm leading-snug mt-0.5">{blurb}</p>
                 </div>
               </div>
             ))}
@@ -151,11 +148,11 @@ export default function HomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-10 pt-6 border-t border-stone-200 text-center">
+        <footer className="mt-8 pt-5 border-t border-stone-200 text-center">
           <a href="/about" className="text-xs text-stone-500 hover:text-stone-700 transition-colors">
             About Recipe AI Companion
           </a>
-          <p className="text-[10px] text-stone-400 mt-2">
+          <p className="text-[10px] text-stone-400 mt-1.5">
             A cozy cooking companion, made with care.
           </p>
         </footer>
