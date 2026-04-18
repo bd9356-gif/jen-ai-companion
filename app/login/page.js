@@ -9,15 +9,39 @@ const supabase = createClient(
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
 
   async function handleGoogle() {
+    setError('')
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` }
     })
     if (error) { setError(error.message); setLoading(false) }
+  }
+
+  async function handleMagicLink(e) {
+    e.preventDefault()
+    setError('')
+    const trimmed = email.trim()
+    if (!trimmed) return
+    setSending(true)
+    const { error } = await supabase.auth.signInWithOtp({
+      email: trimmed,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    setSending(false)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setSent(true)
   }
 
   return (
@@ -44,6 +68,58 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+
+          {sent ? (
+            <div className="mb-6 px-4 py-4 bg-green-50 border-2 border-green-200 rounded-xl text-sm text-green-800">
+              <p className="font-semibold mb-1">📬 Check your email</p>
+              <p>
+                We sent a sign-in link to <span className="font-medium">{email.trim()}</span>.
+                Click the link to finish signing in. It may take a minute — and check your spam folder if you don't see it.
+              </p>
+              <button
+                onClick={() => { setSent(false); setEmail('') }}
+                className="mt-3 text-xs font-semibold text-green-700 underline"
+              >
+                Use a different email
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleMagicLink} className="mb-5">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Sign in with email
+              </label>
+              <input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                style={{ fontSize: '16px' }}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mb-3 focus:outline-none focus:border-orange-400"
+              />
+              <button
+                type="submit"
+                disabled={sending || !email.trim()}
+                className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors"
+              >
+                {sending ? 'Sending…' : 'Email me a sign-in link'}
+              </button>
+              <p className="mt-2 text-xs text-gray-400 text-center">
+                No password needed — we'll email you a secure one-time link.
+              </p>
+            </form>
+          )}
+
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-3 text-xs text-gray-400 uppercase tracking-wide">or</span>
+            </div>
+          </div>
 
           <button
             onClick={handleGoogle}
