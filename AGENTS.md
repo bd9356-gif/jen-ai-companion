@@ -236,6 +236,17 @@ The landing page (`app/page.js`) and About page (`app/about/page.js`) intentiona
 
 The shift from cream landing → orange MyKitchen reads as an intentional tone change, not a jarring break. Keep MyKitchen orange; keep landing cream.
 
+## New-user seeding (starter recipes)
+
+First-time users get a small set of starter recipes loaded into their Recipe Vault automatically, so the app never feels empty on day one.
+
+- Recipe data lives in `lib/starter_recipes.js` as a hand-curated array of 5 recipes — one quick weeknight (Aglio e Olio), one one-pan weeknight (Sheet-Pan Lemon Chicken), one comfort (Tomato Soup + Grilled Cheese), one healthy/modern (Honey-Soy Salmon Bowl), one project bake (Brown Butter Chocolate Chip Cookies). Each carries `family_notes: "A starter recipe — swap, edit, or delete anytime."` so users can tell they're examples.
+- Seeding fires from `app/kitchen/page.js` via `seedStarterRecipesOnce(user)` inside the auth `useEffect`. It is idempotent in two ways:
+  1. It checks a `localStorage` flag `recipe_ai_seeded_${STARTER_RECIPES_VERSION}_${user.id}`. If set, no work happens.
+  2. If unflagged, it counts the user's `personal_recipes`. If count > 0 (returning user, or already seeded on another device), it sets the flag without inserting.
+- Only when both checks indicate a brand-new vault does the function bulk-insert the starter rows. Insert errors do not set the flag, so the next visit retries.
+- `STARTER_RECIPES_VERSION` is in the import path so we can ship a future v2 of the starter set without re-seeding existing users (just bump the const).
+
 ## PWA
 
 The app is an installable PWA as of April 2026:

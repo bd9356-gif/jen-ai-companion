@@ -1,11 +1,49 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { STARTER_RECIPES, STARTER_RECIPES_VERSION } from '@/lib/starter_recipes'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
+
+// Seed starter recipes the first time a user lands on MyKitchen.
+// Idempotent: skips if a localStorage flag is set OR if the user already
+// has any recipes in personal_recipes. The localStorage flag prevents
+// re-seeding for someone who deliberately empties their Vault.
+async function seedStarterRecipesOnce(user) {
+  if (typeof window === 'undefined' || !user?.id) return
+  const flagKey = `recipe_ai_seeded_${STARTER_RECIPES_VERSION}_${user.id}`
+  if (localStorage.getItem(flagKey)) return
+
+  const { count, error: countError } = await supabase
+    .from('personal_recipes')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+  if (countError) return
+  if ((count || 0) > 0) {
+    // User already has recipes — don't seed, but mark as handled
+    localStorage.setItem(flagKey, '1')
+    return
+  }
+
+  const rows = STARTER_RECIPES.map(r => ({
+    user_id: user.id,
+    title: r.title,
+    description: r.description,
+    ingredients: r.ingredients,
+    instructions: r.instructions,
+    category: r.category || '',
+    tags: r.tags || [],
+    family_notes: r.family_notes || '',
+    photo_url: r.photo_url || '',
+    difficulty: r.difficulty || '',
+    servings: r.servings ?? null,
+  }))
+  const { error: insertError } = await supabase.from('personal_recipes').insert(rows)
+  if (!insertError) localStorage.setItem(flagKey, '1')
+}
 
 const SECTIONS = [
   {
@@ -41,7 +79,11 @@ export default function KitchenPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setUser(session.user)
+      if (session) {
+        setUser(session.user)
+        // Seed starter recipes on first visit (idempotent).
+        seedStarterRecipesOnce(session.user).catch(() => {})
+      }
     })
   }, [])
 
