@@ -175,6 +175,11 @@ export default function MyChefPage() {
       prompt += `\n\nAdditional cooking preferences from the home cook: make this recipe more ${prefLabels}. Adjust ingredients, portions, and preparation methods to support these preferences. Frame every change as a practical home-cook tip — do not provide medical advice or make health claims. When portion or carb adjustments are requested, give clear per-serving notes rather than prescriptive guidance.`
     }
 
+    // Minimum cooking display time so users actually see the rotating
+    // messages even when the API is very fast.
+    const cookingStart = Date.now()
+    const MIN_COOKING_MS = 2400
+
     try {
       const res = await fetch('/api/topchef', {
         method: 'POST',
@@ -187,13 +192,45 @@ export default function MyChefPage() {
         })
       })
       const data = await res.json()
+      const elapsed = Date.now() - cookingStart
+      if (elapsed < MIN_COOKING_MS) {
+        await new Promise(r => setTimeout(r, MIN_COOKING_MS - elapsed))
+      }
       setRecipe(data.recipe)
       setStep(STEPS.RESULT)
+      playChime()
     } catch (err) {
       showToast('Something went wrong. Try again.')
       setStep(STEPS.PREFERENCES)
     }
     setLoading(false)
+  }
+
+  // Soft two-note "recipe is ready" chime. Uses Web Audio API — no asset files,
+  // no autoplay issues since it fires from a user-initiated click chain.
+  function playChime() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext
+      if (!AC) return
+      const ctx = new AC()
+      const now = ctx.currentTime
+      const notes = [[880, now], [1175, now + 0.12]] // A5 then D6
+      notes.forEach(([freq, t]) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.value = freq
+        gain.gain.setValueAtTime(0.0001, t)
+        gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start(t)
+        osc.stop(t + 0.4)
+      })
+      setTimeout(() => ctx.close().catch(() => {}), 800)
+    } catch (e) {
+      // Audio is a bonus, never block on it.
+    }
   }
 
   async function saveToFavorites() {
@@ -249,9 +286,7 @@ export default function MyChefPage() {
       .filter(Boolean)
   })()
 
-  // Pull the first name from the user's email for a personal touch.
-  const firstName = user?.email ? user.email.split('@')[0].split('.')[0] : ''
-  const niceName = firstName ? firstName.charAt(0).toUpperCase() + firstName.slice(1) : ''
+  // Greeting is time-of-day only — no name (email prefixes rarely read well).
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50/40 via-white to-white">
@@ -295,7 +330,7 @@ export default function MyChefPage() {
                 <div className="text-white">
                   <p className="text-xs font-semibold uppercase tracking-wider text-orange-200/90">Chef Jennifer</p>
                   <p className="font-bold text-lg leading-tight">
-                    {greeting ? `${greeting}${niceName ? `, ${niceName}` : ''} — what are we cooking?` : 'What are we cooking today?'}
+                    {greeting ? `${greeting} — what are we cooking?` : 'What are we cooking today?'}
                   </p>
                 </div>
               </div>
@@ -459,6 +494,14 @@ export default function MyChefPage() {
         {/* STEP 6 — Result */}
         {step === STEPS.RESULT && recipe && (
           <div>
+            {/* "Done!" badge — completion cue after the wizard */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-green-700 bg-green-50 border-2 border-green-200 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5">
+                <span className="w-4 h-4 rounded-full bg-green-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                Recipe ready
+              </span>
+            </div>
+
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 mb-3 text-xs text-gray-400">
               <span>{meal?.emoji} {meal?.label}</span>
