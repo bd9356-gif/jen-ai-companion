@@ -811,9 +811,10 @@ export default function MyRecipeVaultPage() {
           </div>
         </header>
 
-        {/* FULL-BLEED HERO — photo (if any) or gradient fallback, with title overlay.
-            Compact on mobile, grows a bit on larger screens. */}
-        <div className="relative w-full h-40 sm:h-52 md:h-64">
+        {/* HERO — photo (if any) or gradient fallback, with title overlay.
+            Edge-to-edge on mobile; caps at max-w-2xl on desktop so it doesn't
+            stretch across a wide monitor. */}
+        <div className="relative w-full max-w-2xl mx-auto h-40 sm:h-52 md:h-64">
           {viewing.photo_url ? (
             <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
           ) : (
