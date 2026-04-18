@@ -23,7 +23,7 @@ export default function ProfilePage() {
   async function handleSignOut() {
     setSigningOut(true)
     await supabase.auth.signOut()
-    window.location.href = '/login'
+    window.location.href = '/'
   }
 
   function getInitials(user) {
