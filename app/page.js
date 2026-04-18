@@ -7,6 +7,19 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+/* ─────────────────────────────────────────────────────────────
+   TESTER BANNER — edit message/link here, redeploy.
+   Bump BANNER.version to force-redisplay to users who dismissed.
+   Set BANNER.enabled to false to hide entirely.
+   ─────────────────────────────────────────────────────────── */
+const BANNER = {
+  enabled: true,
+  version: 'v1',
+  message: "Welcome, testers — here's what's new and what to try.",
+  linkHref: '/notes',
+  linkLabel: 'Tester notes →',
+}
+
 const FEATURES = [
   {
     emoji: '📒',
@@ -60,6 +73,7 @@ function firstNameFromUser(user) {
 
 export default function HomePage() {
   const [user, setUser] = useState(null)
+  const [bannerVisible, setBannerVisible] = useState(false)
 
   useEffect(() => {
     if (window.location.hash && window.location.hash.includes('access_token')) {
@@ -69,7 +83,19 @@ export default function HomePage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setUser(session.user)
     })
+
+    if (BANNER.enabled && typeof window !== 'undefined') {
+      const flagKey = `recipe_ai_banner_dismissed_${BANNER.version}`
+      if (!localStorage.getItem(flagKey)) setBannerVisible(true)
+    }
   }, [])
+
+  function dismissBanner() {
+    setBannerVisible(false)
+    try {
+      localStorage.setItem(`recipe_ai_banner_dismissed_${BANNER.version}`, '1')
+    } catch {}
+  }
 
   const userName = firstNameFromUser(user)
   const image = getDailyImage()
@@ -98,6 +124,29 @@ export default function HomePage() {
 
       {/* Main */}
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-4 pb-6 flex flex-col">
+
+        {/* Tester banner (dismissible) */}
+        {BANNER.enabled && bannerVisible && (
+          <div className="mb-3 bg-stone-900 text-white rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
+            <span className="text-sm leading-snug flex-1 min-w-0">
+              {BANNER.message}{' '}
+              <a
+                href={BANNER.linkHref}
+                className="underline font-semibold whitespace-nowrap"
+              >
+                {BANNER.linkLabel}
+              </a>
+            </span>
+            <button
+              type="button"
+              onClick={dismissBanner}
+              aria-label="Dismiss"
+              className="text-stone-400 hover:text-white text-lg leading-none px-1 shrink-0"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {/* Entry box: hero image + CTA wrapped as one unit */}
         <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm mb-5">
@@ -156,9 +205,13 @@ export default function HomePage() {
         </section>
 
         {/* Footer */}
-        <footer className="mt-5 text-center">
+        <footer className="mt-5 text-center flex items-center justify-center gap-3">
           <a href="/about" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">
             About Recipe AI Companion
+          </a>
+          <span className="text-[11px] text-stone-300">•</span>
+          <a href="/notes" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">
+            Tester notes
           </a>
         </footer>
 
