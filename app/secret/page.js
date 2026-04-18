@@ -1540,48 +1540,61 @@ export default function MyRecipeVaultPage() {
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
           </div>
+          {/* Single row that SWAPS between tag chips and the search input,
+              so toggling search doesn't push content down. */}
           <div className="flex items-center gap-2 mb-2">
-            {topTags.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto flex-1 pb-1 -mx-1 px-1 scrollbar-thin">
-                <button
-                  onClick={() => setSearchTag('')}
-                  title="Show all recipes"
-                  className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                    !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-                  }`}
-                >
-                  All
-                </button>
-                {topTags.map(tag => (
+            {(showSearch || searchText) ? (
+              <input type="text" placeholder="Search recipes..." value={searchText}
+                autoFocus
+                onChange={e => setSearchText(e.target.value)}
+                className="flex-1 border-2 border-orange-300 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
+            ) : (
+              topTags.length > 0 ? (
+                <div className="flex gap-2 overflow-x-auto flex-1 pb-1 -mx-1 px-1 scrollbar-thin">
                   <button
-                    key={tag}
-                    onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
-                    title={`Filter by #${tag}`}
+                    onClick={() => setSearchTag('')}
+                    title="Show all recipes"
                     className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                      searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                      !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
                     }`}
                   >
-                    #{tag}
+                    All
                   </button>
-                ))}
-              </div>
+                  {topTags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
+                      title={`Filter by #${tag}`}
+                      className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
+                        searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex-1" />
+              )
             )}
             <button
-              onClick={() => setShowSearch(v => !v)}
-              title={showSearch ? 'Hide search' : 'Search by name'}
+              onClick={() => {
+                if (showSearch || searchText) {
+                  // Close: clear any active query AND collapse back to chips
+                  setSearchText('')
+                  setShowSearch(false)
+                } else {
+                  setShowSearch(true)
+                }
+              }}
+              title={(showSearch || searchText) ? 'Close search' : 'Search by name'}
               className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-full border-2 transition-colors ${
-                showSearch || searchText ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-              } ${topTags.length === 0 ? 'ml-auto' : ''}`}
+                (showSearch || searchText) ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+              }`}
             >
-              🔍
+              {(showSearch || searchText) ? '✕' : '🔍'}
             </button>
           </div>
-          {(showSearch || searchText) && (
-            <input type="text" placeholder="Search recipes..." value={searchText}
-              autoFocus
-              onChange={e => setSearchText(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
-          )}
           {allTags.length > topTags.length && (
             <select
               value={searchTag}
@@ -1599,12 +1612,6 @@ export default function MyRecipeVaultPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Intro: "Your Personal Recipe Vault" */}
-        <div className="bg-orange-50 border-2 border-orange-100 rounded-2xl p-5 mb-5">
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Your Personal Recipe Vault</h2>
-          <p className="text-sm text-gray-600 leading-relaxed">Your recipes live here — organized, safe, and always within reach.</p>
-        </div>
-
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : recipes.length === 0 ? (
