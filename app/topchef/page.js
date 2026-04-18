@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const STEPS = {
@@ -10,9 +10,6 @@ const STEPS = {
   COOKING: 'cooking',
   RESULT: 'result',
 }
-
-// Ordered list used to render the "Step N of 4" progress pill.
-const WIZARD_ORDER = [STEPS.MEAL, STEPS.MOOD, STEPS.PROTEIN, STEPS.PREFERENCES]
 
 // Rotating messages during the /api/topchef call. Cozy, not clinical.
 const COOKING_MESSAGES = [
@@ -80,23 +77,6 @@ const PROTEIN_OPTIONS = [
   { label: 'Surprise me', emoji: '🎲', value: 'chef\'s choice' },
 ]
 
-function StepPill({ current }) {
-  const idx = WIZARD_ORDER.indexOf(current)
-  if (idx < 0) return null
-  return (
-    <div className="flex items-center gap-2 mb-5">
-      <span className="text-[11px] font-extrabold uppercase tracking-wider text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2.5 py-1">
-        Step {idx + 1} of {WIZARD_ORDER.length}
-      </span>
-      <div className="flex-1 flex gap-1">
-        {WIZARD_ORDER.map((s, i) => (
-          <span key={s} className={`h-1.5 flex-1 rounded-full ${i <= idx ? 'bg-orange-400' : 'bg-gray-200'}`} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function MyChefPage() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -114,6 +94,10 @@ export default function MyChefPage() {
   const [toast, setToast] = useState(null)
   const [greeting, setGreeting] = useState('')   // set on mount to avoid SSR mismatch
   const [cookingIdx, setCookingIdx] = useState(0)
+  // Persistent AudioContext — iOS Safari requires creating/resuming during a
+  // user gesture, so we unlock it on the first click rather than when we
+  // actually want to play the chime.
+  const audioCtxRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -162,6 +146,8 @@ export default function MyChefPage() {
   }
 
   async function submitPreferences() {
+    // Unlock the AudioContext on this click (iOS Safari requirement).
+    unlockAudio()
     setStep(STEPS.COOKING)
     setLoading(true)
 
@@ -206,28 +192,46 @@ export default function MyChefPage() {
     setLoading(false)
   }
 
-  // Soft two-note "recipe is ready" chime. Uses Web Audio API — no asset files,
-  // no autoplay issues since it fires from a user-initiated click chain.
+  // Create and/or resume the AudioContext synchronously during a user click.
+  // iOS Safari silently refuses to play if the context is created outside a
+  // user gesture, so we unlock here and reuse the same context for the chime.
+  function unlockAudio() {
+    try {
+      const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)
+      if (!AC) return
+      if (!audioCtxRef.current) audioCtxRef.current = new AC()
+      const ctx = audioCtxRef.current
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+      // Play a silent buffer — the actual unlock trick on iOS Safari.
+      const buf = ctx.createBuffer(1, 1, 22050)
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(ctx.destination)
+      src.start(0)
+    } catch (e) {}
+  }
+
+  // Soft two-note "recipe is ready" chime. Reuses the unlocked AudioContext
+  // created during the user gesture so iOS Safari allows playback.
   function playChime() {
     try {
-      const AC = window.AudioContext || window.webkitAudioContext
-      if (!AC) return
-      const ctx = new AC()
+      const ctx = audioCtxRef.current
+      if (!ctx) return
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {})
       const now = ctx.currentTime
-      const notes = [[880, now], [1175, now + 0.12]] // A5 then D6
+      const notes = [[880, now], [1175, now + 0.15]] // A5 then D6
       notes.forEach(([freq, t]) => {
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
         osc.type = 'sine'
         osc.frequency.value = freq
         gain.gain.setValueAtTime(0.0001, t)
-        gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02)
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35)
+        gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45)
         osc.connect(gain).connect(ctx.destination)
         osc.start(t)
-        osc.stop(t + 0.4)
+        osc.stop(t + 0.5)
       })
-      setTimeout(() => ctx.close().catch(() => {}), 800)
     } catch (e) {
       // Audio is a bonus, never block on it.
     }
@@ -336,8 +340,6 @@ export default function MyChefPage() {
               </div>
             </div>
 
-            <StepPill current={STEPS.MEAL} />
-
             <h2 className="text-2xl font-bold text-gray-900 mb-1">Pick a meal</h2>
             <p className="text-gray-500 text-sm mb-6">Tell me what time of day we're cooking for.</p>
             <div className="grid grid-cols-3 gap-3">
@@ -370,7 +372,6 @@ export default function MyChefPage() {
         {/* STEP 2 — Mood */}
         {step === STEPS.MOOD && (
           <div>
-            <StepPill current={STEPS.MOOD} />
             <div className="flex items-center gap-2 mb-6">
               <span className="text-2xl">{meal?.emoji}</span>
               <div>
@@ -393,7 +394,6 @@ export default function MyChefPage() {
         {/* STEP 3 — Protein */}
         {step === STEPS.PROTEIN && (
           <div>
-            <StepPill current={STEPS.PROTEIN} />
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{meal?.emoji}</span>
               <div>
@@ -417,7 +417,6 @@ export default function MyChefPage() {
         {/* STEP 4 — Preferences (optional) */}
         {step === STEPS.PREFERENCES && (
           <div>
-            <StepPill current={STEPS.PREFERENCES} />
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{meal?.emoji}</span>
               <div>
