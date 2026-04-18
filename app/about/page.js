@@ -41,6 +41,24 @@ export default function AboutPage() {
           </p>
         </div>
 
+        {/* Our Approach */}
+        <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-stone-100">
+            <p className="text-xs font-semibold text-stone-500 uppercase tracking-[0.15em]">Our Approach</p>
+          </div>
+          <div className="px-4 py-4 space-y-3 text-sm text-stone-700 leading-relaxed">
+            <p>
+              We built a modern cooking companion designed for people who want more than recipes. Real chefs teach you technique on Chef TV, while Chef Jennifer elevates everything you cook — generating new dishes, refining existing ones, adjusting servings, adding cooking detail, nutrition, and dietary modes like vegetarian-friendly or heart-healthy.
+            </p>
+            <p>
+              Your Recipe Vault becomes a curated library of the recipes you choose — whether they're saved, imported from the web, chef-created, or AI-enhanced. Every part of the experience is focused, personal, and intentionally crafted to help you grow in the kitchen.
+            </p>
+            <p className="text-stone-800 font-medium">
+              No clutter. No overwhelm. Just a cozy, premium space for learning, creating, and cooking with confidence.
+            </p>
+          </div>
+        </div>
+
         {/* Features */}
         <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
           <div className="px-4 py-3 border-b border-stone-100">
