@@ -36,6 +36,7 @@ export default function MyPlanPage() {
   // Stores (grocery store grouping for shopping list)
   const [stores, setStores] = useState([])
   const [showStoreEditor, setShowStoreEditor] = useState(false)
+  const [cleaningList, setCleaningList] = useState(false)
   // AI Notes + ChefJen
   const [aiNotes, setAiNotes] = useState([])
   const [chefJen, setChefJen] = useState([])
@@ -186,6 +187,50 @@ export default function MyPlanPage() {
     await supabase.from('shopping_list').delete().eq('user_id', user.id)
     setShoppingList([])
     showToast('Shopping list cleared')
+  }
+
+  // AI cleanup — sends the current list to Claude, gets back a cleaned /
+  // deduped / shoppable version, then replaces the list in Supabase.
+  async function cleanUpList() {
+    if (!user || shoppingList.length === 0 || cleaningList) return
+    if (!confirm('Clean up the whole list with AI? This will replace the current items with a cleaned, deduped version.')) return
+    setCleaningList(true)
+    try {
+      const res = await fetch('/api/cleanup-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: shoppingList.map(i => ({ id: i.id, ingredient: i.ingredient, store_id: i.store_id || null })),
+          stores: stores.map(s => ({ id: s.id, name: s.name })),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !Array.isArray(data.items)) {
+        showToast(data?.error || 'Cleanup failed')
+        return
+      }
+      if (data.items.length === 0) {
+        showToast('Cleanup returned no items')
+        return
+      }
+      // Replace: delete all current rows, insert cleaned ones.
+      const { error: delErr } = await supabase.from('shopping_list').delete().eq('user_id', user.id)
+      if (delErr) { showToast('Could not clear existing list'); return }
+      const rows = data.items.map(it => ({
+        user_id: user.id,
+        ingredient: it.ingredient,
+        recipe_title: '',
+        store_id: it.store_id || null,
+      }))
+      const { data: inserted, error: insErr } = await supabase.from('shopping_list').insert(rows).select()
+      if (insErr) { showToast('Could not save cleaned list'); return }
+      setShoppingList(inserted || [])
+      showToast(`Cleaned ✨ — ${data.items.length} item${data.items.length === 1 ? '' : 's'}`)
+    } catch (err) {
+      showToast('Cleanup failed: ' + err.message)
+    } finally {
+      setCleaningList(false)
+    }
   }
 
   // Favorites actions
@@ -347,13 +392,25 @@ export default function MyPlanPage() {
                     {section.key === 'shopping_list' && (
                       <>
                         <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1">
-                          <button
-                            onClick={() => setShowStoreEditor(v => !v)}
-                            title="Add or edit the stores you shop at"
-                            className="text-xs font-semibold text-sky-700 border border-sky-200 rounded-lg px-2.5 py-1 hover:bg-sky-50"
-                          >
-                            🏬 Manage Stores
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setShowStoreEditor(v => !v)}
+                              title="Add or edit the stores you shop at"
+                              className="text-xs font-semibold text-sky-700 border border-sky-200 rounded-lg px-2.5 py-1 hover:bg-sky-50"
+                            >
+                              🏬 Manage Stores
+                            </button>
+                            {shoppingList.length > 0 && (
+                              <button
+                                onClick={cleanUpList}
+                                disabled={cleaningList}
+                                title="Use AI to consolidate fractions into whole store units, strip cooking-only measures (tsp/tbsp/pinch), and dedupe repeats"
+                                className="text-xs font-semibold text-purple-700 border border-purple-200 rounded-lg px-2.5 py-1 hover:bg-purple-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {cleaningList ? '✨ Cleaning…' : '✨ Clean Up List'}
+                              </button>
+                            )}
+                          </div>
                           {shoppingList.length > 0 && (
                             <button onClick={clearShoppingList} title="Clear every item from the shopping list" className="text-xs text-red-400 hover:text-red-600 font-semibold">Clear All</button>
                           )}
