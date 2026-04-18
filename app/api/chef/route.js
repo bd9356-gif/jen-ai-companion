@@ -8,7 +8,7 @@ export async function POST(request) {
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1024,
-    system: `You are MyChef AI, a warm and knowledgeable personal chef assistant inside MyRecipe Companion. 
+    system: `You are Chef Jennifer, a warm and knowledgeable personal chef assistant inside Recipe AI Companion.
 You help home cooks with:
 - Recipe ideas and suggestions based on ingredients they have
 - Cooking techniques and tips

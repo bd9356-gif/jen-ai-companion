@@ -35,9 +35,9 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Chef TV         | `/videos`    | Cooking videos (YouTube-backed). (Renamed from MyChef TV.)            |
 | Recipe Vault    | `/secret`    | Your permanent, organized recipe collection.                          |
 | Recipe Cards    | `/cards`     | Card-style recipe browser (swipe / pick).                             |
-| Plan            | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
-| Chef Jennifer   | `/topchef`   | AI chef who generates recipes tailored to mood/meal/protein, **and** hosts the "Ask anything" entry. |
-| Ask anything    | `/chef`      | Free-form AI Q&A (saves answers as AI Notes). **Not in the Kitchen nav** — reached via Chef Jennifer's first screen. |
+| MyPlan          | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
+| Chef Jennifer   | `/topchef`   | AI chef who generates recipes tailored to mood/meal/protein, **and** hosts the "Ask Chef Anything" entry. |
+| Ask Chef Anything | `/chef`    | Free-form AI Q&A (saves answers to MyPlan). **Not in the Kitchen nav** — reached via Chef Jennifer's first screen. |
 
 Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/browse`, `/about`, `/profile`, `/login`, `/auth`, `/not-found`.
 
@@ -47,7 +47,7 @@ These live in `app/kitchen/page.js` and drive MyKitchen's grouped layout. Copy t
 
 Section order (top → bottom) flows from "your saved stuff" → "AI support" → "discovery":
 
-- **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, Plan
+- **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, MyPlan
 - **AI Kitchen** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers." → Chef Jennifer (which also contains the Ask-anything entry)
 - **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Chef TV
 
@@ -205,16 +205,46 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 
 Not breaking, but worth cleaning up in a focused pass.
 
-## Pending naming cleanup (in-page titles still use old names)
+## Naming canon (current state)
 
-The Kitchen nav now uses the simplified names (Chef TV, Recipe Vault, Recipe Cards, Plan, Chef Jennifer). Destination page headers still show the old names in several places. Sweep these next time we focus on naming:
+The canonical names in use across the app are:
 
-- `app/picks/page.js` — ~~header shows "📋 MyPlan"~~ ✅ now "📋 Plan". Still to sweep: "Added to MyPlan" toast text; "MyVault" button label.
-- `app/secret/page.js` — "Added to MyPlan" toast; "In MyPlan" / "MyPlan" button.
-- `app/cards/page.js` — "Added to MyPlan!" alert.
-- ~~`app/topchef/page.js` — "Saved to My Favorites" toast/button.~~ ✅ Done — button/toast now read **Save to Plan** / **Saved to Plan ✓**.
+- **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub.
+- **MyPlan** (`/picks`) — the other "My" we keep, for the user's cooking plan. (We briefly tried "Plan" but reverted — users wanted the personal framing.)
+- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Anything** (`/chef`) — simplified, no "My" prefix.
+- Brand name in titles, meta, headers, and copy is **Recipe AI Companion** (not "MyRecipe Companion").
+- Chef Jennifer's save buttons read **Save to MyPlan** / **Saved to MyPlan ✓**. Ask Chef Anything's save button matches.
 
-Intentional kept-as-"My": `MyKitchen` (hub) stays.
+Swept in recent passes and no longer present:
+- `app/picks/page.js` — MyVault buttons (→ Recipe Vault), MyRecipe Cards button (→ Recipe Cards).
+- `app/login/page.js`, `app/profile/page.js`, `app/about/page.js` — brand text (→ Recipe AI Companion).
+- `app/api/chef/route.js` — system prompt persona (→ Chef Jennifer, inside Recipe AI Companion).
+
+Known still-stale spots (future cleanup candidates, low urgency):
+- `app/topchef/page.js` — internal function name `MyChefPage` (harmless, internal only).
+- `app/saved/page.js` — uses "MyFavorites" in the header and in a `family_notes` DB string. The page isn't in the main MyKitchen nav and the DB string is historical; leaving as-is unless the page is brought back into the main nav.
+
+## Landing page palette (decided)
+
+The landing page (`app/page.js`) and About page (`app/about/page.js`) intentionally break from the orange-heavy MyKitchen palette. Current scheme:
+
+- Background: `bg-amber-50` (warm cream parchment).
+- Cards/tiles: white with `border-stone-200`.
+- Primary CTA: `bg-stone-800` warm charcoal, `hover:bg-stone-900`. (We tried `emerald-700` briefly; user felt it was too green.)
+- Section label: `text-stone-500 uppercase tracking-[0.15em]`.
+- Footer: single "About Recipe AI Companion" link in `text-stone-500`.
+
+The shift from cream landing → orange MyKitchen reads as an intentional tone change, not a jarring break. Keep MyKitchen orange; keep landing cream.
+
+## PWA
+
+The app is an installable PWA as of April 2026:
+
+- `app/manifest.js` — Next 16 built-in manifest. Name "Recipe AI Companion", short name "Recipe AI", standalone display, portrait, `background_color: #fffbeb`, `theme_color: #ffffff`. Served by Next at `/manifest.webmanifest`.
+- `app/layout.js` — uses the Next 16 metadata + viewport exports. `appleWebApp.title` is "Recipe AI", phone auto-detection disabled, `mobile-web-app-capable` meta for non-Apple browsers.
+- `/public/icon-192.png`, `/public/icon-512.png`, `/public/icon-512-maskable.png`, `/public/apple-touch-icon.png` (180x180), `/public/favicon-32.png` — stone-800 background with a cream circle + bold "R" + amber accent dot. Placeholder design; swap for a brand-final icon later.
+- No service worker yet. Offline support and push notifications are deferred — per the Next PWA guide, installability doesn't require a service worker.
+- iOS install path: Safari → Share → Add to Home Screen.
 
 ## Don't-touch / confirm first
 

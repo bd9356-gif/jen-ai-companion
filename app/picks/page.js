@@ -366,7 +366,7 @@ export default function MyPlanPage() {
             <h1 className="text-lg font-bold text-gray-900">📋 MyPlan</h1>
             {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
           </div>
-          <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">MyVault</button>
+          <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Recipe Vault</button>
         </div>
       </header>
 
@@ -402,8 +402,8 @@ export default function MyPlanPage() {
                         <div className="text-center py-8">
                           <p className="text-gray-400 text-sm mb-4">No recipes in your meal plan yet</p>
                           <div className="flex gap-3 justify-center">
-                            <button onClick={() => window.location.href='/cards'} className="px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-semibold">MyRecipe Cards</button>
-                            <button onClick={() => window.location.href='/secret'} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold">MyVault</button>
+                            <button onClick={() => window.location.href='/cards'} className="px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-semibold">Recipe Cards</button>
+                            <button onClick={() => window.location.href='/secret'} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-semibold">Recipe Vault</button>
                           </div>
                         </div>
                       ) : (
