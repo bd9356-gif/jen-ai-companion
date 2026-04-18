@@ -33,7 +33,6 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | --------------- | ------------ | -------------------------------------------------------------------- |
 | MyKitchen       | `/kitchen`   | The hub page. Everything routes from here.                            |
 | Chef TV         | `/videos`    | Cooking videos (YouTube-backed). (Renamed from MyChef TV.)            |
-| Favorites       | `/saved`     | Staging drawer — recipes you've hearted but not committed to.         |
 | Recipe Vault    | `/secret`    | Your permanent, organized recipe collection.                          |
 | Recipe Cards    | `/cards`     | Card-style recipe browser (swipe / pick).                             |
 | Plan            | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
@@ -47,7 +46,6 @@ Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/brows
 These live in `app/kitchen/page.js` and drive MyKitchen's grouped layout. Copy them exactly if referenced elsewhere:
 
 - **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Chef TV
-- **Collect & Decide** (`#e85d8a` pink) — "Your staging drawer — review, compare, and choose what moves into your cooking life." → Favorites
 - **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, Plan
 - **AI Kitchen** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers." → Chef Jennifer (which also contains the Ask-anything entry)
 
@@ -207,12 +205,11 @@ Not breaking, but worth cleaning up in a focused pass.
 
 ## Pending naming cleanup (in-page titles still use old names)
 
-The Kitchen nav now uses the simplified names (Chef TV, Favorites, Recipe Vault, Recipe Cards, Plan, Chef Jennifer). Destination page headers still show the old names in several places. Sweep these next time we focus on naming:
+The Kitchen nav now uses the simplified names (Chef TV, Recipe Vault, Recipe Cards, Plan, Chef Jennifer). Destination page headers still show the old names in several places. Sweep these next time we focus on naming:
 
 - `app/picks/page.js` — ~~header shows "📋 MyPlan"~~ ✅ now "📋 Plan". Still to sweep: "Added to MyPlan" toast text; "MyVault" button label.
 - `app/secret/page.js` — "Added to MyPlan" toast; "In MyPlan" / "MyPlan" button.
 - `app/cards/page.js` — "Added to MyPlan!" alert.
-- `app/saved/page.js` — likely references "MyFavorites".
 - ~~`app/topchef/page.js` — "Saved to My Favorites" toast/button.~~ ✅ Done — button/toast now read **Save to Plan** / **Saved to Plan ✓**.
 
 Intentional kept-as-"My": `MyKitchen` (hub) stays.

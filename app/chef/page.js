@@ -146,7 +146,7 @@ export default function ChefPage() {
                           ? 'bg-gray-100 text-gray-400 border-gray-200'
                           : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50'
                       }`}>
-                      {savedIds.has(msg.question) ? '✓ Saved to MyFavorites' : '♥ Save to MyFavorites'}
+                      {savedIds.has(msg.question) ? '✓ Saved as AI Note' : '♥ Save as AI Note'}
                     </button>
                   </div>
                 )}

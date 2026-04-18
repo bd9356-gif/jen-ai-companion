@@ -17,14 +17,6 @@ const SECTIONS = [
     ]
   },
   {
-    name: 'Collect & Decide',
-    subtitle: 'Your staging drawer — review, compare, and choose what moves into your cooking life.',
-    accent: '#e85d8a',
-    items: [
-      { emoji: '❤️', title: 'Favorites', href: '/saved' },
-    ]
-  },
-  {
     name: 'Your Cooking Life',
     subtitle: "Your saved recipes, cooking cards, and what you're making next.",
     accent: '#f59e0b',

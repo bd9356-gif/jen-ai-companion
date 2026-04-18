@@ -179,7 +179,7 @@ export default function RecipeDetailPage() {
 
         <button onClick={toggleSave}
           className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${saved ? 'bg-red-50 text-red-500 border-2 border-red-200' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>
-          {saved ? '♥ Saved to Favorites' : '♡ Save to Favorites'}
+          {saved ? '♥ Saved' : '♡ Save'}
         </button>
       </main>
     </div>
