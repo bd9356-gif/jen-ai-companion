@@ -1536,65 +1536,66 @@ export default function MyRecipeVaultPage() {
               <h1 className="text-lg font-bold text-gray-900">🔐 Recipe Vault</h1>
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (showSearch || searchText) {
+                    // Close: clear any active query AND collapse back to chips
+                    setSearchText('')
+                    setShowSearch(false)
+                  } else {
+                    setShowSearch(true)
+                  }
+                }}
+                title={(showSearch || searchText) ? 'Close search' : 'Search by name'}
+                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 ${
+                  (showSearch || searchText)
+                    ? 'bg-orange-600 text-white border-orange-600'
+                    : 'text-gray-500 border-gray-200'
+                }`}
+              >
+                {(showSearch || searchText) ? '✕' : '🔍'}
+              </button>
               <button onClick={() => setView('import')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">📥 Import</button>
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
           </div>
-          {/* Single row that SWAPS between tag chips and the search input,
-              so toggling search doesn't push content down. */}
-          <div className="flex items-center gap-2 mb-2">
-            {(showSearch || searchText) ? (
-              <input type="text" placeholder="Search recipes..." value={searchText}
-                autoFocus
-                onChange={e => setSearchText(e.target.value)}
-                className="flex-1 min-w-0 border-2 border-orange-300 rounded-full px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
-            ) : (
-              topTags.length > 0 ? (
-                <div className="flex gap-2 overflow-x-auto flex-1 pb-1 -mx-1 px-1 scrollbar-thin">
+          {/* Row below the header swaps between the chip scroller and the
+              full-width search input. The search toggle lives up in the
+              header (see 🔍/✕ button above), so the input takes 100% of
+              this row and never has to share horizontal space. */}
+          {(showSearch || searchText) ? (
+            <input type="text" placeholder="Search recipes..." value={searchText}
+              autoFocus
+              onChange={e => setSearchText(e.target.value)}
+              style={{ fontSize: '16px' }}
+              className="w-full border-2 border-orange-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200 mb-2" />
+          ) : (
+            topTags.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 mb-2 -mx-1 px-1 scrollbar-thin">
+                <button
+                  onClick={() => setSearchTag('')}
+                  title="Show all recipes"
+                  className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
+                    !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  All
+                </button>
+                {topTags.map(tag => (
                   <button
-                    onClick={() => setSearchTag('')}
-                    title="Show all recipes"
+                    key={tag}
+                    onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
+                    title={`Filter by #${tag}`}
                     className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                      !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                      searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
                     }`}
                   >
-                    All
+                    #{tag}
                   </button>
-                  {topTags.map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
-                      title={`Filter by #${tag}`}
-                      className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                        searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-                      }`}
-                    >
-                      #{tag}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex-1" />
-              )
-            )}
-            <button
-              onClick={() => {
-                if (showSearch || searchText) {
-                  // Close: clear any active query AND collapse back to chips
-                  setSearchText('')
-                  setShowSearch(false)
-                } else {
-                  setShowSearch(true)
-                }
-              }}
-              title={(showSearch || searchText) ? 'Close search' : 'Search by name'}
-              className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-full border-2 transition-colors ${
-                (showSearch || searchText) ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-              }`}
-            >
-              {(showSearch || searchText) ? '✕' : '🔍'}
-            </button>
-          </div>
+                ))}
+              </div>
+            )
+          )}
           {allTags.length > topTags.length && (
             <select
               value={searchTag}
