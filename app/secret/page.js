@@ -16,6 +16,30 @@ const SUGGESTED_TAGS = [
   'quick','family','holiday','comfort food','baking','healthy'
 ]
 
+// Best-guess emoji for recipes without a photo. Used as a visual fallback
+// on vault cards and the detail hero. Order matters — first match wins.
+function categoryEmoji(recipe) {
+  const t = `${recipe?.title || ''} ${recipe?.category || ''} ${(recipe?.tags || []).join(' ')}`.toLowerCase()
+  if (/pizza/.test(t)) return '🍕'
+  if (/pasta|spaghetti|linguine|noodle|lasagna|ravioli|gnocchi/.test(t)) return '🍝'
+  if (/salad/.test(t)) return '🥗'
+  if (/soup|chowder|stew|broth|chili/.test(t)) return '🍲'
+  if (/bread|loaf|focaccia|baguette/.test(t)) return '🍞'
+  if (/burger/.test(t)) return '🍔'
+  if (/taco|burrito|enchilada|fajita|quesadilla/.test(t)) return '🌮'
+  if (/sushi|sashimi|poke/.test(t)) return '🍣'
+  if (/cake|cupcake|cookie|brownie|pie|tart|dessert|cobbler/.test(t)) return '🍰'
+  if (/pancake|waffle|breakfast|omelet|frittata|egg/.test(t)) return '🥞'
+  if (/chicken|poultry|turkey/.test(t)) return '🍗'
+  if (/beef|steak|roast|brisket/.test(t)) return '🥩'
+  if (/fish|salmon|tuna|shrimp|seafood|cod|halibut/.test(t)) return '🐟'
+  if (/rice|risotto|pilaf|paella/.test(t)) return '🍚'
+  if (/sandwich|wrap|panini/.test(t)) return '🥪'
+  if (/taco|tortilla/.test(t)) return '🌯'
+  if (/drink|cocktail|smoothie|beverage/.test(t)) return '🥤'
+  return '🍽️'
+}
+
 // "Make This Recipe More..." — keep in sync with Chef Jennifer (app/topchef/page.js)
 // and the server-side labels in /api/enhance-recipe.
 const PREFERENCE_OPTIONS = [
@@ -733,6 +757,13 @@ export default function MyRecipeVaultPage() {
 
   const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
 
+  // Top 5 most-used tags for the chip row above search
+  const topTags = (() => {
+    const counts = new Map()
+    recipes.forEach(r => (r.tags || []).forEach(t => counts.set(t, (counts.get(t) || 0) + 1)))
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([t]) => t)
+  })()
+
   // ── DETAIL VIEW ──
   if (view === 'detail' && viewing) {
     const ingredients = viewing.ingredients || []
@@ -778,18 +809,17 @@ export default function MyRecipeVaultPage() {
             </div>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          {/* Photo only - no video playback in vault */}
+
+        {/* FULL-BLEED HERO — photo (if any) or gradient fallback, with title overlay */}
+        <div className="relative w-full" style={{ aspectRatio: '16 / 9', maxHeight: '360px' }}>
           {viewing.photo_url ? (
-            <div className="w-full rounded-2xl overflow-hidden mb-5" style={{height:'220px'}}>
-              <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
-            </div>
+            <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 mb-5 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
-              onClick={() => photoInputRef.current?.click()}>
-              <span className="text-3xl mb-2">📷</span>
-              <p className="text-sm text-orange-600 font-semibold">Add a photo</p>
-              <p className="text-xs text-gray-500">Tap to upload</p>
+            <div className="w-full h-full bg-gradient-to-br from-orange-100 via-orange-50 to-amber-100 flex items-center justify-center cursor-pointer hover:brightness-95 transition-all"
+              onClick={() => photoInputRef.current?.click()}
+              title="Tap to add a photo"
+            >
+              <span className="text-7xl opacity-60">{categoryEmoji(viewing)}</span>
               <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
                 onChange={async e => {
                   const file = e.target.files?.[0]; if (!file) return
@@ -798,6 +828,38 @@ export default function MyRecipeVaultPage() {
                 }} />
             </div>
           )}
+          {/* Dark gradient so the title reads on any photo */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent pointer-events-none" />
+          {/* Title overlay */}
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+            <div className="max-w-2xl mx-auto px-4 pb-4">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight drop-shadow-lg">{viewing.title}</h1>
+              {viewing.description && (
+                <p className="text-sm text-white/90 mt-1 line-clamp-2 drop-shadow">{viewing.description}</p>
+              )}
+            </div>
+          </div>
+          {/* Small "change photo" affordance when a photo is already set */}
+          {viewing.photo_url && (
+            <button
+              onClick={() => photoInputRef.current?.click()}
+              title="Change photo"
+              className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-700 text-xs font-semibold rounded-full px-3 py-1.5 shadow-sm"
+            >
+              📷 Change
+            </button>
+          )}
+          {viewing.photo_url && (
+            <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
+              onChange={async e => {
+                const file = e.target.files?.[0]; if (!file) return
+                const url = await uploadPhoto(file, user.id)
+                if (url) await updateRecipe(viewing.id, { photo_url: url })
+              }} />
+          )}
+        </div>
+
+        <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
 
           {(viewing.tags || []).length > 0 && (
             <div className="flex flex-wrap gap-2 mb-3">
@@ -878,9 +940,6 @@ export default function MyRecipeVaultPage() {
               </>)}
             </div>
           )}
-
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{viewing.title}</h1>
-          {viewing.description && <p className="text-gray-500 text-sm mb-4">{viewing.description}</p>}
 
           {viewing.family_notes && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-5">
@@ -1479,16 +1538,42 @@ export default function MyRecipeVaultPage() {
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
           </div>
+          {topTags.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-2 -mx-1 px-1 scrollbar-thin">
+              <button
+                onClick={() => setSearchTag('')}
+                title="Show all recipes"
+                className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
+                  !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                }`}
+              >
+                All
+              </button>
+              {topTags.map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
+                  title={`Filter by #${tag}`}
+                  className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
+                    searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  #{tag}
+                </button>
+              ))}
+            </div>
+          )}
           <input type="text" placeholder="Search recipes..." value={searchText}
             onChange={e => setSearchText(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
-          {allTags.length > 0 && (
+          {allTags.length > topTags.length && (
             <select
               value={searchTag}
               onChange={e => setSearchTag(e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-600"
+              title="All tags (overflow)"
             >
-              <option value="">All Tags</option>
+              <option value="">All tags…</option>
               {allTags.map(tag => (
                 <option key={tag} value={tag}>#{tag}</option>
               ))}

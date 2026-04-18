@@ -128,6 +128,14 @@ The prompt includes an explicit guard: "Frame every change as a practical home-c
 
 The **same option list** is also reused on the Recipe Vault "Make This Recipe More..." flow (see below). Keep the 8 `value` strings identical across Chef Jennifer (`app/topchef/page.js`), Recipe Vault (`app/secret/page.js`), and the server-side label map in `app/api/enhance-recipe/route.js` so preferences can be shared / compared across screens.
 
+## Recipe Vault presentation notes (`/secret`)
+
+- **Tag chip quick-filter (list view).** Above the search input, the top 5 most-used tags render as pill buttons along with an "All" chip. Tapping a chip sets `searchTag` (tapping the same chip twice clears it). The full `<select value={searchTag}>` dropdown still renders below the search input — but only when `allTags.length > topTags.length`, so it's hidden on vaults with ≤ 5 unique tags (chips cover everything). `topTags` is computed by counting tag occurrences across all recipes and sorting desc.
+- **Full-bleed hero on the detail view.** The recipe detail screen replaces the old 220px inset photo with a full-bleed hero that breaks out of `max-w-2xl` and uses `aspect-ratio: 16/9` (capped at `360px` tall). The title and description overlay the photo's bottom via a dark gradient (`from-black/75 via-black/30 to-transparent`). The title is no longer duplicated in the body — it lives in the hero.
+- **Photo-less hero fallback.** When `viewing.photo_url` is empty, the hero shows a soft orange gradient (`from-orange-100 via-orange-50 to-amber-100`) with a large category emoji from `categoryEmoji(recipe)` — the fallback gives each recipe visual personality without a photo. The whole gradient is clickable and triggers the hidden `<input type="file">` for photo upload.
+- **Change-photo affordance.** When a photo IS set, a small "📷 Change" button floats at the top-right of the hero. It triggers the same upload input, so the hero stays self-contained.
+- **`categoryEmoji(recipe)` helper.** Lives at the top of `app/secret/page.js` and returns an emoji based on regex matches against the recipe's title / category / tags (pizza → 🍕, pasta → 🍝, salad → 🥗, soup → 🍲, etc.). Falls back to 🍽️. Used by the photo-less hero; can be reused for list cards if we want to extend the pattern.
+
 ## Recipe Vault "Make This Recipe More..." flow
 
 On `/secret` → open a recipe → tap **✨ AI** → scroll to the purple "Make This Recipe More..." card. Uses the same 8 preference values as Chef Jennifer.
