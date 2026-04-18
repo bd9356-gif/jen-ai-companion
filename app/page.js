@@ -86,7 +86,12 @@ export default function HomePage() {
 
     if (BANNER.enabled && typeof window !== 'undefined') {
       const flagKey = `recipe_ai_banner_dismissed_${BANNER.version}`
-      if (!localStorage.getItem(flagKey)) setBannerVisible(true)
+      if (!localStorage.getItem(flagKey)) {
+        // Reading persisted dismissal from localStorage must happen after
+        // mount (SSR has no window), so setState-in-effect is intentional.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBannerVisible(true)
+      }
     }
   }, [])
 

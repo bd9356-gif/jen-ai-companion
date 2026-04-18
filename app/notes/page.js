@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 /* ─────────────────────────────────────────────────────────────
    TESTER NOTES — edit below, push, Vercel redeploys in ~1 min.
    ─────────────────────────────────────────────────────────── */
@@ -43,18 +45,18 @@ export default function NotesPage() {
 
       <header className="bg-white border-b border-stone-200">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <span className="text-xl">🍽️</span>
             <span className="text-stone-800 text-base font-semibold tracking-tight">
               Recipe AI Companion
             </span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/"
             className="text-stone-700 text-sm font-medium border border-stone-300 rounded-full px-3 py-1 hover:bg-stone-100 transition-colors"
           >
             ← Home
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -95,12 +97,12 @@ export default function NotesPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <a
+          <Link
             href="/"
             className="text-xs text-stone-500 hover:text-stone-800 transition-colors"
           >
             ← Back to home
-          </a>
+          </Link>
         </div>
 
       </main>
