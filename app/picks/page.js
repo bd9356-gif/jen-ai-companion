@@ -189,6 +189,66 @@ export default function MyPlanPage() {
     showToast('Shopping list cleared')
   }
 
+  // Build a plain-text version of the shopping list, grouped by store in the
+  // same order the UI shows them. Used for both Copy-to-clipboard and Print.
+  function buildShoppingListText() {
+    if (!shoppingList.length) return ''
+    const groups = new Map()
+    for (const item of shoppingList) {
+      const key = item.store_id || '__unsorted__'
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key).push(item)
+    }
+    const storeById = Object.fromEntries(stores.map(s => [s.id, s]))
+    const sortedKeys = [...groups.keys()].sort((a, b) => {
+      if (a === '__unsorted__') return 1
+      if (b === '__unsorted__') return -1
+      const sa = storeById[a]?.sort_order ?? 0
+      const sb = storeById[b]?.sort_order ?? 0
+      return sa - sb
+    })
+    const lines = ['Shopping List', '']
+    for (const key of sortedKeys) {
+      const header = key === '__unsorted__'
+        ? '📦 Unsorted'
+        : `${storeById[key]?.emoji || '🏪'} ${storeById[key]?.name || 'Store'}`
+      lines.push(header)
+      for (const item of groups.get(key)) {
+        const prefix = item.checked ? '[x]' : '[ ]'
+        lines.push(`${prefix} ${item.ingredient}`)
+      }
+      lines.push('')
+    }
+    return lines.join('\n').trim()
+  }
+
+  async function copyShoppingList() {
+    const text = buildShoppingListText()
+    if (!text) { showToast('Nothing to copy'); return }
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast('Shopping list copied to clipboard ✓')
+    } catch {
+      showToast('Copy failed — try Print instead')
+    }
+  }
+
+  function printShoppingList() {
+    const text = buildShoppingListText()
+    if (!text) { showToast('Nothing to print'); return }
+    const w = window.open('', '_blank', 'width=520,height=720')
+    if (!w) { showToast('Pop-up blocked — allow pop-ups to print'); return }
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    w.document.write(`<!doctype html><html><head><title>Shopping List</title><style>
+      body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; padding: 24px; color: #111; max-width: 520px; margin: 0 auto; }
+      pre { font-family: inherit; white-space: pre-wrap; font-size: 14px; line-height: 1.7; margin: 0; }
+      @media print { body { padding: 0; max-width: none; } }
+    </style></head><body><pre>${escaped}</pre>
+    <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 200); });</script>
+    </body></html>`)
+    w.document.close()
+  }
+
   // AI cleanup — sends the current list to Claude, gets back a cleaned /
   // deduped / shoppable version, then replaces the list in Supabase.
   async function cleanUpList() {
@@ -303,7 +363,7 @@ export default function MyPlanPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">📋 MyPlan</h1>
+            <h1 className="text-lg font-bold text-gray-900">📋 Plan</h1>
             {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
           </div>
           <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">MyVault</button>
@@ -391,8 +451,8 @@ export default function MyPlanPage() {
                     {/* SHOPPING LIST */}
                     {section.key === 'shopping_list' && (
                       <>
-                        <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <button
                               onClick={() => setShowStoreEditor(v => !v)}
                               title="Add or edit the stores you shop at"
@@ -408,6 +468,24 @@ export default function MyPlanPage() {
                                 className="text-xs font-semibold text-purple-700 border border-purple-200 rounded-lg px-2.5 py-1 hover:bg-purple-50 disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 {cleaningList ? '✨ Cleaning…' : '✨ Clean Up List'}
+                              </button>
+                            )}
+                            {shoppingList.length > 0 && (
+                              <button
+                                onClick={copyShoppingList}
+                                title="Copy the list as plain text so you can paste it into Notes, Reminders, or your store's app"
+                                className="text-xs font-semibold text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 hover:bg-emerald-50"
+                              >
+                                📋 Copy
+                              </button>
+                            )}
+                            {shoppingList.length > 0 && (
+                              <button
+                                onClick={printShoppingList}
+                                title="Open a printable version of the shopping list in a new window"
+                                className="text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg px-2.5 py-1 hover:bg-gray-50"
+                              >
+                                🖨️ Print
                               </button>
                             )}
                           </div>
