@@ -521,8 +521,10 @@ export default function MyRecipeVaultPage() {
 
   async function saveRecipe() {
     if (!form.title.trim()) return
+    // Preference order: a newly-picked file → the scraped/imported URL → none.
     let photo_url = ''
     if (selectedPhoto) photo_url = await uploadPhoto(selectedPhoto, user.id) || ''
+    else if (form.photo_url) photo_url = form.photo_url
     const ingredients = form.ingredients.split('\n').filter(Boolean).map(line => {
       const parts = line.split(' - ')
       return { name: parts[0]?.trim(), measure: parts[1]?.trim() || '' }
@@ -717,7 +719,7 @@ export default function MyRecipeVaultPage() {
       const ingredientsText = (data.ingredients || []).map(i => `${i.name} - ${i.measure}`).join('\n')
       setForm({ title: data.title || '', description: data.description || '', ingredients: ingredientsText,
         instructions: data.instructions || '', category: data.category || '', tags: data.tags || [],
-        family_notes: data.family_notes || '', photo_url: '' })
+        family_notes: data.family_notes || '', photo_url: data.image || '' })
       setImportText(''); setImportUrl(''); setView('add')
     } catch (err) { console.error(err) }
     setImporting(false)
