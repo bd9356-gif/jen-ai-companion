@@ -232,9 +232,38 @@ The landing page (`app/page.js`) and About page (`app/about/page.js`) intentiona
 - Cards/tiles: white with `border-stone-200`.
 - Primary CTA: `bg-stone-800` warm charcoal, `hover:bg-stone-900`. (We tried `emerald-700` briefly; user felt it was too green.)
 - Section label: `text-stone-500 uppercase tracking-[0.15em]`.
-- Footer: single "About Recipe AI Companion" link in `text-stone-500`.
+- Footer: two inline links in `text-stone-500` separated by a bullet — **About Recipe AI Companion** and **Tester notes** (see below).
 
 The shift from cream landing → orange MyKitchen reads as an intentional tone change, not a jarring break. Keep MyKitchen orange; keep landing cream.
+
+## Tester banner & `/notes` page
+
+During the private test period, the landing page carries a small dark **tester banner** above the entry box, and a dedicated `/notes` page holds the longer "what to try this week" copy. Both are designed so non-dev Bill can edit copy by changing constants at the top of a file and pushing.
+
+- **Banner** (`app/page.js`, `BANNER` constant): `{ enabled, version, message, linkHref, linkLabel }`. Dark `bg-stone-900` strip with an `×` dismiss button. Dismissal persists via `localStorage.recipe_ai_banner_dismissed_${BANNER.version}`. Bump `BANNER.version` to force-redisplay. Set `BANNER.enabled = false` to hide entirely. The setState-in-effect that reads the dismissal flag on mount is intentional (SSR has no `window`) and has a localized eslint-disable.
+- **`/notes` page** (`app/notes/page.js`): palette matches the landing page. All copy lives in clearly-commented constants at the top: `NOTES_UPDATED` (date string), `INTRO` (paragraph), `WHATS_NEW` / `TRY_THIS` / `KNOWN_QUIRKS` (arrays of strings rendered as bullet lists via `<Section>`), and `FEEDBACK` (text + email). The page uses `next/link` for in-app navigation to satisfy `no-html-link-for-pages`.
+- Footer on the landing page has a permanent `Tester notes` link next to `About Recipe AI Companion` so the page stays reachable after the banner is dismissed.
+- When we ship publicly, the quickest retirement is `BANNER.enabled = false` in code and/or deleting the footer link. The `/notes` route can stay or be removed; nothing else depends on it.
+
+## Authentication (Google OAuth + magic link via Resend)
+
+Two ways to sign in, both on `/login`:
+
+- **Continue with Google** — `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: '<origin>/auth/callback' } })`.
+- **Email me a sign-in link** — `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '<origin>/auth/callback' } })`. Success state replaces the form with a "Check your email" panel.
+
+Both flows converge on `app/auth/callback/route.js` → forwards the `code` to `app/auth/confirm/page.js` → `exchangeCodeForSession(code)` → `/kitchen`. No callback changes are needed when adding another provider.
+
+### SMTP for magic-link deliverability (Resend)
+
+Supabase's default SMTP is rate-limited and gets spam-flagged by Hotmail/Outlook. Custom SMTP is wired up through Resend:
+
+- **Provider:** Resend — domain `mycompanionapps.com` verified (SPF/DKIM/DMARC records live on the domain's DNS).
+- **Supabase → Project Settings → Authentication → SMTP Settings:** host `smtp.resend.com`, port `465`, username `resend`, password = Resend API key. Sender `noreply@mycompanionapps.com`, display name "Recipe AI Companion".
+- **Supabase → Auth → URL Configuration:** Site URL = `https://jen-ai-companion.vercel.app`. Redirect allow-list includes `https://jen-ai-companion.vercel.app/auth/callback` (and `http://localhost:3000/auth/callback` for local dev).
+- **Supabase → Auth → Providers → Email:** enabled.
+
+Rotating / revoking the Resend API key is a Supabase SMTP-fields update only; no app-code change.
 
 ## New-user seeding (starter recipes)
 
