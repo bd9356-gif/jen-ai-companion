@@ -395,6 +395,7 @@ export default function MyRecipeVaultPage() {
   const [showVideo, setShowVideo] = useState(true)
   const [searchTag, setSearchTag] = useState('')
   const [searchText, setSearchText] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   const [enhancing, setEnhancing] = useState(false)
   const [enhanceResult, setEnhanceResult] = useState(null)
   const [generatedInfo, setGeneratedInfo] = useState(null)
@@ -810,8 +811,9 @@ export default function MyRecipeVaultPage() {
           </div>
         </header>
 
-        {/* FULL-BLEED HERO — photo (if any) or gradient fallback, with title overlay */}
-        <div className="relative w-full" style={{ aspectRatio: '16 / 9', maxHeight: '360px' }}>
+        {/* FULL-BLEED HERO — photo (if any) or gradient fallback, with title overlay.
+            Compact on mobile, grows a bit on larger screens. */}
+        <div className="relative w-full h-40 sm:h-52 md:h-64">
           {viewing.photo_url ? (
             <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
           ) : (
@@ -819,7 +821,7 @@ export default function MyRecipeVaultPage() {
               onClick={() => photoInputRef.current?.click()}
               title="Tap to add a photo"
             >
-              <span className="text-7xl opacity-60">{categoryEmoji(viewing)}</span>
+              <span className="text-5xl sm:text-6xl md:text-7xl opacity-60">{categoryEmoji(viewing)}</span>
               <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
                 onChange={async e => {
                   const file = e.target.files?.[0]; if (!file) return
@@ -832,10 +834,10 @@ export default function MyRecipeVaultPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent pointer-events-none" />
           {/* Title overlay */}
           <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-            <div className="max-w-2xl mx-auto px-4 pb-4">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight drop-shadow-lg">{viewing.title}</h1>
+            <div className="max-w-2xl mx-auto px-4 pb-3 sm:pb-4">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-lg line-clamp-2">{viewing.title}</h1>
               {viewing.description && (
-                <p className="text-sm text-white/90 mt-1 line-clamp-2 drop-shadow">{viewing.description}</p>
+                <p className="text-xs sm:text-sm text-white/90 mt-1 line-clamp-1 sm:line-clamp-2 drop-shadow">{viewing.description}</p>
               )}
             </div>
           </div>
@@ -1538,34 +1540,48 @@ export default function MyRecipeVaultPage() {
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
           </div>
-          {topTags.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-2 -mx-1 px-1 scrollbar-thin">
-              <button
-                onClick={() => setSearchTag('')}
-                title="Show all recipes"
-                className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                  !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-                }`}
-              >
-                All
-              </button>
-              {topTags.map(tag => (
+          <div className="flex items-center gap-2 mb-2">
+            {topTags.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto flex-1 pb-1 -mx-1 px-1 scrollbar-thin">
                 <button
-                  key={tag}
-                  onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
-                  title={`Filter by #${tag}`}
+                  onClick={() => setSearchTag('')}
+                  title="Show all recipes"
                   className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                    searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                    !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
                   }`}
                 >
-                  #{tag}
+                  All
                 </button>
-              ))}
-            </div>
+                {topTags.map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
+                    title={`Filter by #${tag}`}
+                    className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
+                      searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => setShowSearch(v => !v)}
+              title={showSearch ? 'Hide search' : 'Search by name'}
+              className={`shrink-0 w-9 h-9 flex items-center justify-center rounded-full border-2 transition-colors ${
+                showSearch || searchText ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+              } ${topTags.length === 0 ? 'ml-auto' : ''}`}
+            >
+              🔍
+            </button>
+          </div>
+          {(showSearch || searchText) && (
+            <input type="text" placeholder="Search recipes..." value={searchText}
+              autoFocus
+              onChange={e => setSearchText(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
           )}
-          <input type="text" placeholder="Search recipes..." value={searchText}
-            onChange={e => setSearchText(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2" />
           {allTags.length > topTags.length && (
             <select
               value={searchTag}
