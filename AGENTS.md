@@ -45,9 +45,11 @@ Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/brows
 
 These live in `app/kitchen/page.js` and drive MyKitchen's grouped layout. Copy them exactly if referenced elsewhere:
 
-- **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Chef TV
+Section order (top → bottom) flows from "your saved stuff" → "AI support" → "discovery":
+
 - **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, Plan
 - **AI Kitchen** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers." → Chef Jennifer (which also contains the Ask-anything entry)
+- **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Chef TV
 
 ## MyPlan buckets (`/picks`)
 

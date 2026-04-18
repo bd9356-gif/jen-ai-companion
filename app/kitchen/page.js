@@ -9,14 +9,6 @@ const supabase = createClient(
 
 const SECTIONS = [
   {
-    name: 'Explore',
-    subtitle: 'Find ideas, inspiration, and dishes worth considering.',
-    accent: '#f97316',
-    items: [
-      { emoji: '🎬', title: 'Chef TV', href: '/videos' },
-    ]
-  },
-  {
     name: 'Your Cooking Life',
     subtitle: "Your saved recipes, cooking cards, and what you're making next.",
     accent: '#f59e0b',
@@ -32,6 +24,14 @@ const SECTIONS = [
     accent: '#a855f7',
     items: [
       { emoji: '👨‍🍳', title: 'Chef Jennifer', href: '/topchef' },
+    ]
+  },
+  {
+    name: 'Explore',
+    subtitle: 'Find ideas, inspiration, and dishes worth considering.',
+    accent: '#f97316',
+    items: [
+      { emoji: '🎬', title: 'Chef TV', href: '/videos' },
     ]
   },
 ]
