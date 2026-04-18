@@ -84,13 +84,16 @@ The ChefJen section is labeled **Chef Jennifer** on the Plan page to match the K
 - **"Saved Skills from Chef TV" is dual-sourced.** `loadVideos` in `app/picks/page.js` reads **both** the legacy `saved_videos` / `saved_education_videos` tables **and** new Chef TV saves that land in `favorites` with `type in ('video_recipe','video_education')`. Favorites-sourced rows carry a `_favoriteId` marker so `removeVideo` knows to delete from `favorites`; legacy rows still delete from the per-source table. If the same video exists in both places the legacy record wins (dedupe is by `id`).
 - **Chef Jennifer items show measures.** `ChefJenItem` renders each ingredient as `{measure} {name}` — string ingredients still render as-is, and `{name, measure}` objects bold the measure. This fixes older saves that were dropping quantity.
 - **Save to Recipe Vault from Plan.** Each Chef Jennifer item has a 💾 **Save to Recipe Vault** button inside its expanded view. Clicking it calls `saveChefJenToVault(item)`, which inserts into `personal_recipes` with the recipe's title/description/ingredients/instructions/cuisine, `family_notes = "Saved from Chef Jennifer."`, empty `tags` and `photo_url`, and the original `difficulty`. The button disables to `✓ Saved to Recipe Vault` after one successful save (per session — no persisted flag yet).
+- **Shopping list is grouped by store.** The Shopping List section renders items grouped by their `store_id` using `<ShoppingByStore>`. Items with a null `store_id` land in a final "📦 Unsorted" bucket (which is hidden when empty). Each group shows an emoji + name + count header; when the store has a `website_url`, an "Open ↗" button opens it in a new tab. Every row also has a small `<select>` that lets the user reassign the item to a different store (or Unsorted) via `setItemStore(itemId, storeId)`.
+- **Inline "Manage Stores" editor.** The Shopping List header has a 🏬 Manage Stores toggle that shows `<StoreEditor>` in place. Users can add a store (name + emoji + optional website URL), rename, change emoji/URL, or remove. Removing a store soft-detaches items — they drop back to `store_id = null` both in-memory and via the DB's `on delete set null` cascade.
 
 ## Supabase schema (inferred from code — verify before migrations)
 
 Tables referenced in the app:
 
 - **`my_picks`** — `id, user_id, recipe_id, title, photo_url, bucket ('top'|'nice'|'later'), sort_order, created_at`
-- **`shopping_list`** — `id, user_id, ingredient, recipe_title, checked, created_at`
+- **`shopping_list`** — `id, user_id, ingredient, recipe_title, checked, store_id (nullable fk to stores), created_at`
+- **`stores`** — `id, user_id, name, emoji, website_url, sort_order, created_at` — per-user grocery stores the user shops at. Migration lives in `supabase/001_stores.sql` (run once in the Supabase SQL editor). RLS policy restricts rows to the owner.
 - **`favorites`** — `id, user_id, type ('ai_answer'|'ai_recipe'|'recipe'|'video_recipe'), title, thumbnail_url, source, metadata (jsonb), is_in_vault, created_at`
   - For `type='ai_recipe'`, `metadata` contains `{description, ingredients[], instructions, difficulty, cuisine, meal, mood, protein}`.
   - For `type='ai_answer'`, `metadata.answer` holds the AI response text.
