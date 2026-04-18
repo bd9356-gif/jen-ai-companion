@@ -168,7 +168,7 @@ export default function MyChefPage() {
       }
     })
     setSaved(true)
-    showToast('Saved to Plan ✓')
+    showToast('Saved to MyPlan ✓')
   }
 
   function showToast(msg) {
@@ -176,9 +176,28 @@ export default function MyChefPage() {
     setTimeout(() => setToast(null), 2500)
   }
 
-  const instructions = recipe?.instructions
-    ? recipe.instructions.split('\n').filter(Boolean)
-    : []
+  // Tolerant parser: handles array, newline-separated string, OR a single
+  // "1. foo 2. bar" blob (legacy rows). Strips leading "1." / "1)" numbers.
+  const instructions = (() => {
+    const raw = recipe?.instructions
+    if (!raw) return []
+    let parts = []
+    if (Array.isArray(raw)) {
+      parts = raw.map(String)
+    } else if (typeof raw === 'string') {
+      const s = raw.trim()
+      if (s.includes('\n')) {
+        parts = s.split('\n')
+      } else if (/\s\d+[\.\)]\s/.test(s)) {
+        parts = s.split(/\s(?=\d+[\.\)]\s)/)
+      } else {
+        parts = [s]
+      }
+    }
+    return parts
+      .map(p => String(p).trim().replace(/^\s*\d+[\.\)]\s*/, ''))
+      .filter(Boolean)
+  })()
 
   return (
     <div className="min-h-screen bg-white">
@@ -239,7 +258,7 @@ export default function MyChefPage() {
                 className="w-full flex items-center gap-3 p-4 bg-white border-2 border-purple-200 rounded-2xl hover:border-purple-400 hover:bg-purple-50 transition-all active:scale-95 text-left">
                 <span className="text-2xl">🤖</span>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">Ask anything</p>
+                  <p className="text-sm font-semibold text-gray-900">Ask Chef Anything</p>
                   <p className="text-xs text-gray-500">Substitutions, techniques, tips — anything.</p>
                 </div>
                 <span className="text-gray-300 text-lg">›</span>
@@ -441,9 +460,9 @@ export default function MyChefPage() {
             {/* Actions */}
             <div className="flex flex-col gap-3">
               <button onClick={saveToFavorites} disabled={saved}
-                title="Save this recipe to your Plan"
+                title="Save this recipe to your MyPlan"
                 className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors ${saved ? 'bg-gray-100 text-gray-400' : 'bg-orange-600 text-white hover:bg-orange-700'}`}>
-                {saved ? '✓ Saved to Plan' : '📋 Save to Plan'}
+                {saved ? '✓ Saved to MyPlan' : '📋 Save to MyPlan'}
               </button>
               <button onClick={reset}
                 className="w-full py-4 rounded-2xl text-base font-semibold bg-white border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">

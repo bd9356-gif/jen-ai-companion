@@ -94,7 +94,7 @@ export default function ChefPage() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">🤖 Ask-AI Anything</h1>
+            <h1 className="text-lg font-bold text-gray-900">🤖 Ask Chef Anything</h1>
           </div>
           <button onClick={() => setMessages([])} className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg px-3 py-1">
             Clear
@@ -130,7 +130,7 @@ export default function ChefPage() {
                     : 'bg-gray-100 text-gray-800 rounded-bl-sm'
                 }`}>
                   {msg.role === 'assistant' && (
-                    <p className="text-xs text-gray-500 font-semibold mb-1">🤖 Ask-AI Anything</p>
+                    <p className="text-xs text-gray-500 font-semibold mb-1">🤖 Ask Chef Anything</p>
                   )}
                   {msg.content}
                 </div>
@@ -146,7 +146,7 @@ export default function ChefPage() {
                           ? 'bg-gray-100 text-gray-400 border-gray-200'
                           : 'bg-white text-orange-600 border-orange-200 hover:bg-orange-50'
                       }`}>
-                      {savedIds.has(msg.question) ? '✓ Saved as AI Note' : '♥ Save as AI Note'}
+                      {savedIds.has(msg.question) ? '✓ Saved to MyPlan' : '♥ Save to MyPlan'}
                     </button>
                   </div>
                 )}
