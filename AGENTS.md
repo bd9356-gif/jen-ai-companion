@@ -138,6 +138,15 @@ The **same option list** is also reused on the Recipe Vault "Make This Recipe Mo
 - **Change-photo affordance.** When a photo IS set, a small "📷 Change" button floats at the top-right of the hero. It triggers the same upload input, so the hero stays self-contained.
 - **`categoryEmoji(recipe)` helper.** Lives at the top of `app/secret/page.js` and returns an emoji based on regex matches against the recipe's title / category / tags (pizza → 🍕, pasta → 🍝, salad → 🥗, soup → 🍲, etc.). Falls back to 🍽️. Used by the photo-less hero; can be reused for list cards if we want to extend the pattern.
 
+## Recipe Cards presentation notes (`/cards`)
+
+- **Index-card paper look.** Card thumbnails use `bg-amber-50` (cream paper) with `border-2 border-amber-200` and a thin `bg-red-600 h-1.5` top rule — a nod to classic 3x5 index cards. Hover state lifts the border to `border-orange-400` with a soft shadow. The old orange-header + white-body look was retired.
+- **Title + picture only on the tile.** Each card now shows just the recipe title (bold, two-line clamp with `min-h-[2.5rem]` so short titles still reserve two rows for a tidy grid) and the photo below (100px, rounded). Category, servings count, ingredient count, and the "📝 Notes" badge were removed from the grid — all the metadata still lives one tap away in the detail view.
+- **Photo-less fallback.** If `photo_url` is empty the tile shows `bg-amber-100` with a 32px 🍽️ emoji so every card stays rectangular in the grid.
+- **Collapsible search in the header.** `/cards` mirrors the Recipe Vault pattern: a 🔍/✕ toggle lives in the sticky header's right-side button group (next to Clear All and + Add), and the full-width `<input>` only appears under the header when search is active. Input uses `style={{ fontSize: '16px' }}` to block iOS Safari auto-zoom.
+- **"My Photo" section removed.** The "My Photo" (`card_photos` upload) block on the card detail view is gone. The `card_photos` table is no longer read or written from this page — the supporting state (`cardPhoto`, `uploadingPhoto`, `photoInputRef`) and the `loadCardPhoto` / `uploadCardPhoto` helpers were deleted at the same time. If/when we bring user photos back on cards, plan for a simpler UX (e.g. swap the hero photo itself, like Recipe Vault).
+- **🛒 Add all to Shopping List button.** Between the card and Family Notes, a full-width orange button calls `addToShoppingList()` which inserts every recipe ingredient into the `shopping_list` table as `{measure} {name}` with `recipe_title = viewing.title`, `checked = false`, and `store_id = null` (users can reassign to a store later on `/picks`). The button disables while the request is in-flight and while the recipe has zero ingredients; a toast reports the count on success (`Added N ingredients to Shopping List ✓`).
+
 ## Recipe Vault "Make This Recipe More..." flow
 
 On `/secret` → open a recipe → tap **✨ AI** → scroll to the purple "Make This Recipe More..." card. Uses the same 8 preference values as Chef Jennifer.

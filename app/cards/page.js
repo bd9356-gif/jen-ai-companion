@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 export default function CardsPage() {
@@ -12,15 +12,14 @@ export default function CardsPage() {
   const [loading, setLoading] = useState(true)
   const [viewing, setViewing] = useState(null)
   const [search, setSearch] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
+  const [addingToList, setAddingToList] = useState(false)
   const [familyNotes, setFamilyNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
-  const [cardPhoto, setCardPhoto] = useState(null)
-  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [suggestions, setSuggestions] = useState(null)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [toast, setToast] = useState(null)
-  const photoInputRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -40,24 +39,11 @@ export default function CardsPage() {
     setLoading(false)
   }
 
-  async function loadCardPhoto(recipeId) {
-    const { data } = await supabase
-      .from('card_photos')
-      .select('*')
-      .eq('recipe_id', recipeId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-    setCardPhoto(data || null)
-  }
-
   function openCard(recipe) {
     setViewing(recipe)
     setFamilyNotes(recipe.family_notes || '')
     setNotesSaved(false)
     setSuggestions(null)
-    setCardPhoto(null)
-    loadCardPhoto(recipe.id)
   }
 
   async function saveNotes() {
@@ -69,35 +55,6 @@ export default function CardsPage() {
     setNotesSaved(true)
     showToast('Notes saved ✓')
     setTimeout(() => setNotesSaved(false), 2000)
-  }
-
-  async function uploadCardPhoto(file) {
-    if (!file || !user) return
-    setUploadingPhoto(true)
-    try {
-      const ext = file.name.split('.').pop().toLowerCase()
-      const path = `card-photos/${user.id}/${viewing.id}-${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('personal_recipes')
-        .upload(path, file, { upsert: true })
-      if (uploadError) throw uploadError
-      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/personal_recipes/${path}`
-
-      // Delete old photo if exists
-      if (cardPhoto) {
-        await supabase.from('card_photos').delete().eq('id', cardPhoto.id)
-      }
-      const { data } = await supabase.from('card_photos').insert({
-        user_id: user.id,
-        recipe_id: viewing.id,
-        photo_url: publicUrl
-      }).select().single()
-      setCardPhoto(data)
-      showToast('Photo saved ✓')
-    } catch (err) {
-      showToast('Photo upload failed')
-    }
-    setUploadingPhoto(false)
   }
 
   async function getSuggestions() {
@@ -124,6 +81,29 @@ export default function CardsPage() {
       setSuggestions([{ type: 'Suggestion', tip: 'Could not load suggestions right now. Try again.' }])
     }
     setLoadingSuggestions(false)
+  }
+
+  async function addToShoppingList() {
+    if (!viewing || !user) return
+    const ingredients = viewing.ingredients || []
+    if (ingredients.length === 0) {
+      showToast('No ingredients to add')
+      return
+    }
+    setAddingToList(true)
+    const rows = ingredients.map(ing => ({
+      user_id: user.id,
+      ingredient: ing.measure ? `${ing.measure} ${ing.name}` : (ing.name || String(ing)),
+      recipe_title: viewing.title,
+      checked: false
+    }))
+    const { error } = await supabase.from('shopping_list').insert(rows)
+    setAddingToList(false)
+    if (error) {
+      showToast('Could not add ingredients')
+      return
+    }
+    showToast(`Added ${rows.length} ingredient${rows.length === 1 ? '' : 's'} to Shopping List ✓`)
   }
 
   async function removeCard(recipeId) {
@@ -220,6 +200,15 @@ export default function CardsPage() {
             </div>
           </div>
 
+          {/* Add to Shopping List */}
+          <button
+            onClick={addToShoppingList}
+            disabled={addingToList || (viewing.ingredients || []).length === 0}
+            className="w-full py-3 mb-5 rounded-2xl text-sm font-bold transition-colors bg-orange-600 text-white hover:bg-orange-700 disabled:bg-gray-200 disabled:text-gray-500 shadow-sm"
+          >
+            {addingToList ? 'Adding...' : `🛒 Add all ingredients to Shopping List`}
+          </button>
+
           {/* Family Notes */}
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-5">
             <div className="flex items-center gap-2 mb-3">
@@ -238,35 +227,6 @@ export default function CardsPage() {
               className={`mt-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${notesSaved ? 'bg-green-100 text-green-700' : 'bg-amber-600 text-white hover:bg-amber-700'}`}>
               {savingNotes ? 'Saving...' : notesSaved ? '✓ Saved' : 'Save Notes'}
             </button>
-          </div>
-
-          {/* My Photo */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">📷</span>
-              <h2 className="text-sm font-bold text-gray-900">My Photo</h2>
-              <span className="text-xs text-gray-500">— your version of the dish</span>
-            </div>
-            {cardPhoto ? (
-              <div className="relative rounded-xl overflow-hidden mb-3" style={{height:'200px'}}>
-                <img src={cardPhoto.photo_url} alt="My version" className="w-full h-full object-cover" />
-                <button
-                  onClick={() => photoInputRef.current?.click()}
-                  className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg font-semibold">
-                  Replace
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => photoInputRef.current?.click()}
-                className="w-full py-10 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center gap-2 hover:border-orange-300 hover:bg-orange-50 transition-colors mb-3">
-                <span className="text-3xl">📷</span>
-                <span className="text-sm text-gray-500 font-semibold">Add your photo</span>
-                <span className="text-xs text-gray-500">Your cooked version, holiday edition, or kids helping!</span>
-              </button>
-            )}
-            <input ref={photoInputRef} type="file" accept="image/*" className="hidden"
-              onChange={e => e.target.files?.[0] && uploadCardPhoto(e.target.files[0])} />
-            {uploadingPhoto && <p className="text-xs text-center text-gray-500">Uploading...</p>}
           </div>
 
           {/* AI Suggestions */}
@@ -322,6 +282,24 @@ export default function CardsPage() {
               {recipes.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{recipes.length}</span>}
             </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (showSearch || search) {
+                    setSearch('')
+                    setShowSearch(false)
+                  } else {
+                    setShowSearch(true)
+                  }
+                }}
+                title={(showSearch || search) ? 'Close search' : 'Search by name'}
+                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 ${
+                  (showSearch || search)
+                    ? 'bg-orange-600 text-white border-orange-600'
+                    : 'text-gray-500 border-gray-200'
+                }`}
+              >
+                {(showSearch || search) ? '✕' : '🔍'}
+              </button>
               {recipes.length > 0 && (
                 <button onClick={clearAll} className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Clear All</button>
               )}
@@ -329,9 +307,13 @@ export default function CardsPage() {
             </div>
           </div>
           <p className="text-xs text-gray-500 mb-3">Your kitchen memory — family notes, photos, and AI tips for every recipe.</p>
-          <input type="text" placeholder="Search your cards..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+          {(showSearch || search) && (
+            <input type="text" placeholder="Search your cards..."
+              autoFocus
+              value={search} onChange={e => setSearch(e.target.value)}
+              style={{ fontSize: '16px' }}
+              className="w-full border-2 border-orange-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200 mb-2" />
+          )}
         </div>
       </header>
 
@@ -354,26 +336,26 @@ export default function CardsPage() {
         ) : (
           <>
             <p className="text-sm text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
+            {/* Index-card grid: cream paper body, red top rule, thin amber border. */}
             <div className="grid grid-cols-2 gap-3">
               {filtered.map(recipe => (
                 <button key={recipe.id} onClick={() => openCard(recipe)}
-                  className="text-left bg-white border-2 border-gray-200 rounded-2xl overflow-hidden hover:border-orange-300 hover:shadow-md transition-all active:scale-95">
-                  <div className="bg-orange-700 px-3 py-2.5 rounded-t-2xl">
-                    <p className="text-white font-bold text-xs leading-tight line-clamp-2">{recipe.title}</p>
+                  className="text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
+                  {/* Red "top rule" like an index card */}
+                  <div className="bg-red-600 h-1.5" />
+                  <div className="px-3 pt-3 pb-1">
+                    <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
                   </div>
-                  <div className="p-3">
+                  <div className="px-3 pb-3">
                     {recipe.photo_url ? (
-                      <div style={{height:'90px'}} className="rounded-xl overflow-hidden mb-2">
+                      <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
                         <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                       </div>
                     ) : (
-                      <div style={{height:'90px'}} className="rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center mb-2">
-                        <span style={{fontSize:'28px'}}>🍽️</span>
+                      <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+                        <span style={{fontSize:'32px'}}>🍽️</span>
                       </div>
                     )}
-                    <p className="text-xs text-gray-500">{recipe.category || 'Recipe'}{recipe.servings ? ` · ${recipe.servings} servings` : ''}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{(recipe.ingredients || []).length} ingredients</p>
-                    {recipe.family_notes && <p className="text-xs text-amber-600 mt-0.5">📝 Notes</p>}
                   </div>
                 </button>
               ))}
