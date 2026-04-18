@@ -97,29 +97,29 @@ export default function HomePage() {
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-3 pb-5 flex flex-col">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-4 pb-6 flex flex-col">
 
         {/* Entry box: hero image + CTA wrapped as one unit */}
-        <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm mb-4">
-          <div className="w-full relative" style={{ height: '120px' }}>
+        <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm mb-5">
+          <div className="w-full relative" style={{ height: '150px' }}>
             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/85 via-stone-900/35 to-stone-900/5" />
-            <div className="absolute inset-0 flex flex-col items-center justify-end px-4 pb-3 text-center">
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/85 via-stone-900/35 to-stone-900/10" />
+            <div className="absolute inset-0 flex flex-col items-center justify-end px-5 pb-4 text-center">
               {userName ? (
                 <>
-                  <h1 className="text-lg font-bold text-white drop-shadow leading-tight">
+                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
                     Welcome back, {userName}.
                   </h1>
-                  <p className="text-stone-100 text-[11px] drop-shadow">
+                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
                     Your kitchen is right where you left it.
                   </p>
                 </>
               ) : (
                 <>
-                  <h1 className="text-lg font-bold text-white drop-shadow leading-tight">
+                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
                     Cook with a little help.
                   </h1>
-                  <p className="text-stone-100 text-[11px] drop-shadow">
+                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
                     Save recipes, plan meals, ask an AI chef anything.
                   </p>
                 </>
@@ -128,33 +128,35 @@ export default function HomePage() {
           </div>
           <a
             href={user ? '/kitchen' : '/login'}
-            className="block w-full py-3 bg-stone-800 text-white text-center text-sm font-semibold hover:bg-stone-900 transition-colors"
+            className="block w-full py-3.5 bg-stone-800 text-white text-center text-base font-semibold hover:bg-stone-900 transition-colors"
           >
             {user ? 'Enter your kitchen →' : 'Get started →'}
           </a>
         </div>
 
-        {/* Feature tiles - compact single-row layout */}
+        {/* Feature tiles */}
         <section>
-          <p className="text-[10px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-2">
+          <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-2.5">
             What's inside
           </p>
-          <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
-            {FEATURES.map(({ emoji, title, blurb }, i, arr) => (
+          <div className="grid gap-2">
+            {FEATURES.map(({ emoji, title, blurb }) => (
               <div
                 key={title}
-                className={`flex items-center gap-2.5 px-3 py-2 ${i < arr.length - 1 ? 'border-b border-stone-100' : ''}`}
+                className="bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 flex items-start gap-3"
               >
-                <span className="text-base shrink-0">{emoji}</span>
-                <span className="text-stone-800 font-semibold text-xs shrink-0">{title}</span>
-                <span className="text-stone-500 text-xs truncate">{blurb}</span>
+                <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
+                <div className="text-left min-w-0 flex-1">
+                  <p className="text-stone-800 font-semibold text-sm leading-tight">{title}</p>
+                  <p className="text-stone-600 text-xs leading-snug mt-0.5">{blurb}</p>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="mt-4 text-center">
+        <footer className="mt-5 text-center">
           <a href="/about" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">
             About Recipe AI Companion
           </a>
