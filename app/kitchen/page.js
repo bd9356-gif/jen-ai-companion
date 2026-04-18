@@ -13,7 +13,6 @@ const SECTIONS = [
     subtitle: 'Find ideas, inspiration, and dishes worth considering.',
     accent: '#f97316',
     items: [
-      { emoji: '🍳', title: 'Explore Recipes', href: '/explore' },
       { emoji: '🎬', title: 'Chef TV', href: '/videos' },
     ]
   },

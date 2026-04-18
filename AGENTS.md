@@ -32,7 +32,6 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Name            | Route        | What it is                                                           |
 | --------------- | ------------ | -------------------------------------------------------------------- |
 | MyKitchen       | `/kitchen`   | The hub page. Everything routes from here.                            |
-| Explore Recipes | `/explore`   | Discovery feed of new recipe ideas.                                   |
 | Chef TV         | `/videos`    | Cooking videos (YouTube-backed). (Renamed from MyChef TV.)            |
 | Favorites       | `/saved`     | Staging drawer — recipes you've hearted but not committed to.         |
 | Recipe Vault    | `/secret`    | Your permanent, organized recipe collection.                          |
@@ -47,7 +46,7 @@ Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/brows
 
 These live in `app/kitchen/page.js` and drive MyKitchen's grouped layout. Copy them exactly if referenced elsewhere:
 
-- **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Explore Recipes, Chef TV
+- **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Chef TV
 - **Collect & Decide** (`#e85d8a` pink) — "Your staging drawer — review, compare, and choose what moves into your cooking life." → Favorites
 - **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, Plan
 - **AI Kitchen** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers." → Chef Jennifer (which also contains the Ask-anything entry)

@@ -205,10 +205,10 @@ export default function FavoritesPage() {
             <div className="text-6xl mb-4">🗂️</div>
             <p className="text-gray-700 font-semibold mb-2">Nothing saved yet</p>
             <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
-              Anything you save while exploring will land here. Pick what you love, then add it to your Vault.
+              Anything you heart from Chef TV or your Recipe Vault will land here. Pick what you love, then add it to your Vault.
             </p>
-            <a href="/explore" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
-              Explore Recipes
+            <a href="/kitchen" className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
+              Back to MyKitchen
             </a>
           </div>
         ) : (

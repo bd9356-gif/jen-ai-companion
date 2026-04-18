@@ -30,7 +30,6 @@ export default function AboutPage() {
           </div>
           {[
             { emoji: '🔐', label: 'MyRecipeVault', desc: 'Your private recipe library' },
-            { emoji: '🍳', label: 'Explore Recipes', desc: '1,200+ recipes to discover' },
             { emoji: '❤️', label: 'MyFavorites', desc: 'Save recipes and cooking videos' },
             { emoji: '🤖', label: 'MyChef AI', desc: 'AI-powered cooking guidance' },
             { emoji: '📅', label: 'Meal Planner', desc: 'Plan your week ahead' },
