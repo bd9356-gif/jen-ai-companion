@@ -11,17 +11,27 @@ const FEATURES = [
   {
     emoji: '📒',
     title: 'Recipe Vault',
-    blurb: 'Your personal collection — saved, organized, and always a tap away.',
+    blurb: 'Your private library of saved recipes, organized and searchable.',
   },
   {
-    emoji: '👨‍🍳',
-    title: 'Chef Jennifer',
-    blurb: 'An AI chef who builds recipes around your mood, meal, and pantry.',
+    emoji: '🗂',
+    title: 'Recipe Cards',
+    blurb: 'Flip through your recipes like a deck of cozy index cards.',
   },
   {
     emoji: '🎯',
     title: 'MyPlan',
-    blurb: 'What you\'re actually cooking this week — with a shopping list to match.',
+    blurb: "What you're cooking this week, with a shopping list to match.",
+  },
+  {
+    emoji: '👨‍🍳',
+    title: 'Chef Jennifer',
+    blurb: 'An AI chef who builds recipes and answers kitchen questions.',
+  },
+  {
+    emoji: '📺',
+    title: 'Chef TV',
+    blurb: 'Cooking videos for learning skills and finding new ideas.',
   },
 ]
 
