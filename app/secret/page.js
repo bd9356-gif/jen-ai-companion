@@ -160,13 +160,35 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 
   async function handleSave() {
     setSaving(true)
-    const parsedIngredients = ingredients.split('\n').filter(Boolean).map(line => {
-      const parts = line.split(' - ')
-      return { name: parts[0]?.trim(), measure: parts[1]?.trim() || '' }
+    // Ingredient lines are now "Measure - Name" (measure/qty first), matching
+    // how they render in the recipe. If only one segment is present, treat
+    // the whole line as the name with no measure (e.g. "Salt").
+    const parsedIngredients = ingredients.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const sep = line.indexOf(' - ')
+      if (sep === -1) return { name: line, measure: '' }
+      return {
+        measure: line.slice(0, sep).trim(),
+        name: line.slice(sep + 3).trim(),
+      }
     })
     await onSave({ title, description, category, ingredients: parsedIngredients, instructions, family_notes: familyNotes, tags })
     setSaving(false)
   }
+
+  // If scraped instructions arrived as one giant paragraph, this heuristically
+  // splits them on sentence boundaries so each step gets its own line.
+  function autoSplitSteps() {
+    const raw = instructions.trim()
+    if (!raw || raw.includes('\n')) return
+    const parts = raw
+      .split(/(?<=[.!?])\s+(?=[A-Z0-9])/g)
+      .map(s => s.trim())
+      .filter(Boolean)
+    if (parts.length > 1) setInstructions(parts.join('\n'))
+  }
+
+  const instructionsLooksLikeParagraph =
+    instructions.trim().length > 200 && !instructions.includes('\n')
 
   return (
     <div className="space-y-6">
@@ -195,16 +217,24 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
-        <p className="text-xs text-gray-500 mb-2">One per line — format: Flour - 2 cups</p>
+        <p className="text-xs text-gray-500 mb-2">One per line — format: <span className="font-mono">2 cups - flour</span> (quantity first, then a dash, then the name)</p>
         <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
-          placeholder="Flour - 2 cups&#10;Sugar - 1 cup&#10;Butter - 1/2 cup"
+          placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
           rows={10}
           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
       </div>
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Instructions</label>
-        <p className="text-xs text-gray-500 mb-2">One step per line</p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs text-gray-500">One step per line</p>
+          {instructionsLooksLikeParagraph && (
+            <button type="button" onClick={autoSplitSteps}
+              className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2 py-1 hover:bg-orange-50">
+              ✨ Auto-split into steps
+            </button>
+          )}
+        </div>
         <textarea value={instructions} onChange={e => setInstructions(e.target.value)}
           placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients and stir"
           rows={12}
@@ -1030,7 +1060,15 @@ export default function MyRecipeVaultPage() {
 
   // ── EDIT VIEW ──
   if (view === 'edit' && viewing) {
-    const editIngredients = (viewing.ingredients || []).map(i => `${i.name} - ${i.measure}`).join('\n')
+    // Edit textarea uses "Measure - Name" order so it matches the on-screen
+    // display convention. If measure is empty, show just the name (no dash).
+    const editIngredients = (viewing.ingredients || []).map(i => {
+      const m = (i?.measure || '').trim()
+      const n = (i?.name || '').trim()
+      if (!m) return n
+      if (!n) return m
+      return `${m} - ${n}`
+    }).join('\n')
     return (
       <div className="min-h-screen bg-white">
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">

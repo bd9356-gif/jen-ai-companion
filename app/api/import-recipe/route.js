@@ -105,10 +105,16 @@ export async function POST(request) {
 Content:
 ${content}
 
+Rules for the output:
+- "description" MUST be one short sentence, max ~25 words. If the source has a longer intro, keep only the opening sentence; put any additional context into "family_notes".
+- "instructions" MUST use a real newline (\\n) between every step — never one paragraph. If the source has one running paragraph, break it on each sentence so each step is on its own line.
+- "ingredients" entries: "measure" is the quantity and unit (e.g. "2 cups", "1 large", "to taste"); "name" is just the ingredient name. If there's no quantity, leave "measure" as an empty string.
+- "family_notes" is for anecdotes, tips, source attribution, and any overflow from description. Keep it short.
+
 Respond with ONLY a valid JSON object, no markdown, no backticks:
 {
   "title": "Recipe name",
-  "description": "Brief 1-2 sentence description",
+  "description": "One short sentence.",
   "ingredients": [
     {"name": "ingredient name", "measure": "amount and unit"}
   ],
@@ -136,6 +142,39 @@ If no recipe is found, return exactly: {"error": "No recipe found"}`
     // asking the model to pick one), fall back to whatever Claude returned.
     if (!result.error) {
       result.image = scrapedImage || result.image || ''
+
+      // Belt-and-suspenders post-processing — the model usually honors the
+      // prompt, but some sites push it into overlong descriptions or one
+      // giant instructions paragraph. Normalize here so the edit form
+      // doesn't inherit the mess.
+
+      // 1. Keep description short; dump overflow into family_notes.
+      const DESC_MAX = 200
+      if (typeof result.description === 'string' && result.description.length > DESC_MAX) {
+        const firstSentenceMatch = result.description.match(/^[^.!?]+[.!?]/)
+        const firstSentence = firstSentenceMatch ? firstSentenceMatch[0].trim() : result.description.slice(0, DESC_MAX).trim()
+        const overflow = result.description.slice(firstSentence.length).trim()
+        result.description = firstSentence
+        if (overflow) {
+          const existing = (result.family_notes || '').trim()
+          result.family_notes = existing
+            ? `${existing}\n\nFrom the original post: ${overflow}`
+            : `From the original post: ${overflow}`
+        }
+      }
+
+      // 2. If instructions came back as one paragraph, split on sentence
+      //    boundaries so every step gets its own line.
+      if (typeof result.instructions === 'string') {
+        const inst = result.instructions.trim()
+        if (inst && !inst.includes('\n')) {
+          const steps = inst
+            .split(/(?<=[.!?])\s+(?=[A-Z0-9])/g)
+            .map(s => s.trim())
+            .filter(Boolean)
+          if (steps.length > 1) result.instructions = steps.join('\n')
+        }
+      }
     }
     return Response.json(result)
   } catch (err) {
