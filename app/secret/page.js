@@ -580,9 +580,15 @@ export default function MyRecipeVaultPage() {
     let photo_url = ''
     if (selectedPhoto) photo_url = await uploadPhoto(selectedPhoto, user.id) || ''
     else if (form.photo_url) photo_url = form.photo_url
-    const ingredients = form.ingredients.split('\n').filter(Boolean).map(line => {
-      const parts = line.split(' - ')
-      return { name: parts[0]?.trim(), measure: parts[1]?.trim() || '' }
+    // Same "Measure - Name" parser as EditForm: split on the first ' - '.
+    // If only one segment, treat it as the ingredient name with no measure.
+    const ingredients = form.ingredients.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const sep = line.indexOf(' - ')
+      if (sep === -1) return { name: line, measure: '' }
+      return {
+        measure: line.slice(0, sep).trim(),
+        name: line.slice(sep + 3).trim(),
+      }
     })
     const { data, error } = await supabase.from('personal_recipes').insert({
       user_id: user.id, title: form.title, description: form.description,
@@ -771,7 +777,16 @@ export default function MyRecipeVaultPage() {
       })
       const data = await res.json()
       if (data.error) { alert(data.error); setImporting(false); return }
-      const ingredientsText = (data.ingredients || []).map(i => `${i.name} - ${i.measure}`).join('\n')
+      // Render scraped ingredients into the Add form textarea in
+      // "Measure - Name" order so it matches the edit form and the
+      // on-screen display. If measure is empty, show just the name.
+      const ingredientsText = (data.ingredients || []).map(i => {
+        const m = (i?.measure || '').trim()
+        const n = (i?.name || '').trim()
+        if (!m) return n
+        if (!n) return m
+        return `${m} - ${n}`
+      }).join('\n')
       setForm({ title: data.title || '', description: data.description || '', ingredients: ingredientsText,
         instructions: data.instructions || '', category: data.category || '', tags: data.tags || [],
         family_notes: data.family_notes || '', photo_url: data.image || '' })
@@ -1533,8 +1548,8 @@ export default function MyRecipeVaultPage() {
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
-              <p className="text-xs text-gray-500 mb-2">One per line — format: Flour - 2 cups</p>
-              <textarea placeholder="Flour - 2 cups&#10;Sugar - 1 cup&#10;Butter - 1/2 cup"
+              <p className="text-xs text-gray-500 mb-2">One per line — format: <span className="font-mono">2 cups - flour</span> (quantity first, then a dash, then the name)</p>
+              <textarea placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
                 value={form.ingredients} onChange={e => setForm(f => ({...f, ingredients: e.target.value}))}
                 rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
             </div>
