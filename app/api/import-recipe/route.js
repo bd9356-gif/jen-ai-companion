@@ -135,8 +135,50 @@ If no recipe is found, return exactly: {"error": "No recipe found"}`
     })
 
     const responseText = message.content[0].text.trim()
-    const clean = responseText.replace(/```json|```/g, '').trim()
-    const result = JSON.parse(clean)
+    // Strip any markdown fences the model might still wrap the JSON in.
+    const stripped = responseText.replace(/```json|```/g, '').trim()
+
+    // Robustly extract the first balanced JSON object from the response.
+    // Some pages nudge the model into a preamble ("Here is the recipe:…") or
+    // a trailing explanation, which made the naive JSON.parse fail with
+    // "Unexpected non-whitespace character after JSON at position N".
+    // Walk through, find the first `{`, then balance braces while ignoring
+    // braces that appear inside strings. Stop at the matching close brace.
+    function extractFirstJsonObject(src) {
+      const start = src.indexOf('{')
+      if (start === -1) return null
+      let depth = 0
+      let inString = false
+      let escape = false
+      for (let i = start; i < src.length; i++) {
+        const ch = src[i]
+        if (inString) {
+          if (escape) { escape = false; continue }
+          if (ch === '\\') { escape = true; continue }
+          if (ch === '"') inString = false
+          continue
+        }
+        if (ch === '"') { inString = true; continue }
+        if (ch === '{') depth++
+        else if (ch === '}') {
+          depth--
+          if (depth === 0) return src.slice(start, i + 1)
+        }
+      }
+      return null
+    }
+
+    const candidate = extractFirstJsonObject(stripped) || stripped
+    let result
+    try {
+      result = JSON.parse(candidate)
+    } catch (parseErr) {
+      // Surface a helpful snippet so we can see what the model actually said.
+      const snippet = responseText.slice(0, 200).replace(/\s+/g, ' ')
+      return Response.json({
+        error: `Could not parse recipe: ${parseErr.message}. Response started with: "${snippet}${responseText.length > 200 ? '…' : ''}"`
+      }, { status: 500 })
+    }
 
     // Prefer a directly scraped og:image/JSON-LD image (more reliable than
     // asking the model to pick one), fall back to whatever Claude returned.
