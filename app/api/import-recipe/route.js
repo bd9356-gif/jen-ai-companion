@@ -56,11 +56,28 @@ export async function POST(request) {
 
   if (url && !text) {
     try {
+      // Use a real-browser User-Agent + standard headers so recipe blogs
+      // behind Cloudflare / Sucuri / WP bot protection don't 403 us. Our
+      // previous "RecipeBot/1.0" UA was getting blocked outright by big
+      // sites (e.g. natashaskitchen.com), which returned challenge pages
+      // with no recipe data and caused the model to report "No recipe found".
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; RecipeBot/1.0)' },
-        signal: AbortSignal.timeout(10000)
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        signal: AbortSignal.timeout(10000),
       })
       const html = await res.text()
+
+      // Surface HTTP-level blocks clearly — otherwise we try to extract a
+      // recipe from a 403/503 body and the user just sees "No recipe found".
+      if (!res.ok) {
+        return Response.json({
+          error: `The site returned ${res.status} ${res.statusText || ''}. This usually means the site is blocking automated fetches. Try a different URL.`,
+        }, { status: 400 })
+      }
 
       // Grab the best available image up front — independent of the content path
       scrapedImage = extractImageUrl(html, url)
