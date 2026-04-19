@@ -464,6 +464,8 @@ export default function MyRecipeVaultPage() {
   const [importText, setImportText] = useState('')
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState('')
+  const importTextRef = useRef(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [pinnedCards, setPinnedCards] = useState([])
@@ -797,13 +799,24 @@ export default function MyRecipeVaultPage() {
   async function handleImport() {
     if (!importText.trim() && !importUrl.trim()) return
     setImporting(true)
+    setImportError('')
     try {
       const res = await fetch('/api/import-recipe', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: importText, url: importUrl })
       })
       const data = await res.json()
-      if (data.error) { alert(data.error); setImporting(false); return }
+      if (data.error) {
+        setImportError(data.error)
+        setImporting(false)
+        // If the URL was blocked, nudge the user toward the paste textarea
+        // by focusing it — paste is a first-class fallback, not a dead end.
+        const wasUrlAttempt = importUrl.trim() && !importText.trim()
+        if (wasUrlAttempt && importTextRef.current) {
+          setTimeout(() => importTextRef.current?.focus(), 100)
+        }
+        return
+      }
       // Render scraped ingredients into the Add form textarea in
       // "Measure - Name" order so it matches the edit form and the
       // on-screen display. If measure is empty, show just the name.
@@ -1441,23 +1454,47 @@ export default function MyRecipeVaultPage() {
             <h1 className="text-lg font-bold text-gray-900">📥 Import Recipe</h1>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          <p className="text-sm text-gray-500">Paste a recipe URL or recipe text. AI will extract and clean it up.</p>
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">Recipe URL</label>
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+          <p className="text-sm text-gray-600">Paste a recipe URL or the recipe text itself. AI will extract and clean it up.</p>
+
+          {/* URL import card */}
+          <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
+            <label className="text-base font-bold text-gray-800 block">🔗 Import by URL</label>
+            <p className="text-sm text-gray-500">Works for most recipe sites. Some big sites (Food Network, AllRecipes, Serious Eats, Natasha&apos;s Kitchen) block automated fetches — if that happens, use paste below.</p>
             <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+              style={{ fontSize: '16px' }}
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
           </div>
+
+          {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-500">or paste text below</span><div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">or</span><div className="flex-1 h-px bg-gray-200" />
           </div>
-          <div>
-            <label className="text-sm font-bold text-gray-700 mb-2 block">Recipe Text</label>
-            <textarea placeholder="Paste your recipe here..." value={importText} onChange={e => setImportText(e.target.value)}
-              rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+
+          {/* Paste-text card */}
+          <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
+            <label className="text-base font-bold text-gray-800 block">📋 Paste Recipe Text</label>
+            <p className="text-sm text-gray-500">Copy the recipe from the website (Select All is fine — AI filters the noise), then paste here. Works on every site, no matter who blocks what.</p>
+            <textarea ref={importTextRef} placeholder="Paste your recipe here — title, ingredients, instructions, notes…" value={importText} onChange={e => setImportText(e.target.value)}
+              rows={12}
+              style={{ fontSize: '16px' }}
+              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
           </div>
+
+          {/* Inline error banner — replaces the old alert(). */}
+          {importError && (
+            <div className="border-2 border-red-200 bg-red-50 rounded-2xl p-4 space-y-2">
+              <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
+              <p className="text-sm text-red-700">{importError}</p>
+              <p className="text-sm text-red-700">
+                👇 Copy the recipe text from the page and paste it above — it works on every site.
+              </p>
+            </div>
+          )}
+
           <button onClick={handleImport} disabled={importing || (!importText.trim() && !importUrl.trim())}
-            className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold disabled:opacity-50">
+            style={{ fontSize: '16px' }}
+            className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
             {importing ? '🤖 Extracting recipe...' : '📥 Import & Clean with AI'}
           </button>
 
