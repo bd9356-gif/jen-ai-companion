@@ -190,73 +190,100 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
   const instructionsLooksLikeParagraph =
     instructions.trim().length > 200 && !instructions.includes('\n')
 
+  // Shared styling for all inputs/textareas. fontSize:16px is required to
+  // stop iOS Safari from auto-zooming when a field is tapped. text-base keeps
+  // desktop at 16px too; padding + rounded corners are bumped for finger taps.
+  const fieldBase =
+    "w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors"
+  const fieldStyle = { fontSize: '16px' }
+  const labelClass = "block text-base font-bold text-gray-800 mb-2"
+  const helperClass = "text-sm text-gray-500 mb-2"
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-7 pb-24">
+
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Title *</label>
+        <label className={labelClass}>Recipe Title *</label>
         <input value={title} onChange={e => setTitle(e.target.value)}
           placeholder="e.g. Grandma's Chicken Soup"
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+          style={fieldStyle}
+          className={fieldBase} />
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
-        <input value={description} onChange={e => setDescription(e.target.value)}
+        <label className={labelClass}>Description</label>
+        <p className={helperClass}>One or two sentences about the dish.</p>
+        <textarea value={description} onChange={e => setDescription(e.target.value)}
           placeholder="A short description of this recipe"
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+          rows={3}
+          style={fieldStyle}
+          className={`${fieldBase} resize-y`} />
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Category</label>
+        <label className={labelClass}>Category</label>
         <input value={category} onChange={e => setCategory(e.target.value)}
           placeholder="e.g. Main Dish, Dessert, Side"
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+          style={fieldStyle}
+          className={fieldBase} />
       </div>
 
       <TagSelector tags={tags} onChange={setTags} />
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
-        <p className="text-xs text-gray-500 mb-2">One per line — format: <span className="font-mono">2 cups - flour</span> (quantity first, then a dash, then the name)</p>
+        <label className={labelClass}>Ingredients</label>
+        <p className={helperClass}>
+          One per line. Format: <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">2 cups - flour</span> — quantity first, then a dash, then the name.
+        </p>
         <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
           placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
           rows={10}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+          style={fieldStyle}
+          className={`${fieldBase} resize-y font-mono`} />
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Instructions</label>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs text-gray-500">One step per line</p>
+          <label className={`${labelClass} mb-0`}>Instructions</label>
           {instructionsLooksLikeParagraph && (
             <button type="button" onClick={autoSplitSteps}
-              className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2 py-1 hover:bg-orange-50">
+              className="text-sm font-semibold text-orange-600 border-2 border-orange-200 rounded-xl px-3 py-1.5 hover:bg-orange-50 transition-colors">
               ✨ Auto-split into steps
             </button>
           )}
         </div>
+        <p className={helperClass}>One step per line — a new line per numbered instruction.</p>
         <textarea value={instructions} onChange={e => setInstructions(e.target.value)}
           placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients and stir"
           rows={12}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+          style={fieldStyle}
+          className={`${fieldBase} resize-y`} />
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Family Notes</label>
+        <label className={labelClass}>Family Notes</label>
+        <p className={helperClass}>The story, tips, source attribution — anything you want to remember.</p>
         <textarea value={familyNotes} onChange={e => setFamilyNotes(e.target.value)}
           placeholder="The story behind this recipe, tips, memories..."
           rows={4}
-          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+          style={fieldStyle}
+          className={`${fieldBase} resize-y`} />
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button onClick={handleSave} disabled={!title.trim() || saving}
-          className="flex-1 py-4 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50 transition-colors">
-          {saving ? 'Saving...' : '💾 Save Changes'}
-        </button>
+      {/* Sticky save/cancel footer — always reachable even on long recipes.
+          bg-white/95 + backdrop-blur keeps form content readable through it
+          while scrolling. pb-24 on the form body reserves room so the last
+          field isn't hidden behind the bar. */}
+      <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-white/95 backdrop-blur-sm border-t border-gray-200 flex gap-3 z-20">
         <button onClick={onCancel}
-          className="px-6 py-4 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-colors">
+          style={fieldStyle}
+          className="px-5 py-4 border-2 border-gray-200 text-gray-600 rounded-2xl font-semibold hover:bg-gray-50 transition-colors">
           Cancel
+        </button>
+        <button onClick={handleSave} disabled={!title.trim() || saving}
+          style={fieldStyle}
+          className="flex-1 py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
+          {saving ? 'Saving...' : '💾 Save Changes'}
         </button>
       </div>
     </div>
@@ -883,7 +910,7 @@ export default function MyRecipeVaultPage() {
             <div className="max-w-2xl mx-auto px-4 pb-3 sm:pb-4">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-lg line-clamp-2">{viewing.title}</h1>
               {viewing.description && (
-                <p className="text-xs sm:text-sm text-white/90 mt-1 line-clamp-1 sm:line-clamp-2 drop-shadow">{viewing.description}</p>
+                <p className="text-xs sm:text-sm text-white/90 mt-1 line-clamp-3 drop-shadow">{viewing.description}</p>
               )}
             </div>
           </div>
@@ -1500,19 +1527,19 @@ export default function MyRecipeVaultPage() {
             <h1 className="text-lg font-bold text-gray-900">➕ Add Recipe</h1>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-          <div className="space-y-6">
+        <main className="max-w-2xl mx-auto px-4 py-6">
+          <div className="space-y-7 pb-24">
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">📷 Photo</label>
+              <label className="block text-base font-bold text-gray-800 mb-2">📷 Photo</label>
               <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
                 onClick={() => fileInputRef.current?.click()}>
                 {form.photo_url ? (
                   <img src={form.photo_url} alt="Preview" className="h-32 object-cover rounded-xl" />
                 ) : (
                   <><span className="text-3xl mb-2">📷</span>
-                  <p className="text-sm text-orange-600 font-semibold">Browse & Upload Photo</p>
-                  <p className="text-xs text-gray-500">JPG, PNG, HEIC supported</p></>
+                  <p className="text-base text-orange-600 font-semibold">Browse & Upload Photo</p>
+                  <p className="text-sm text-gray-500">JPG, PNG, HEIC supported</p></>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*,.heic" className="hidden"
                   onChange={e => {
@@ -1524,55 +1551,78 @@ export default function MyRecipeVaultPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Title *</label>
+              <label className="block text-base font-bold text-gray-800 mb-2">Recipe Title *</label>
               <input placeholder="e.g. Grandma's Chicken Soup" value={form.title}
                 onChange={e => setForm(f => ({...f, title: e.target.value}))}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
-              <input placeholder="A short description" value={form.description}
+              <label className="block text-base font-bold text-gray-800 mb-2">Description</label>
+              <p className="text-sm text-gray-500 mb-2">One or two sentences about the dish.</p>
+              <textarea placeholder="A short description of this recipe" value={form.description}
                 onChange={e => setForm(f => ({...f, description: e.target.value}))}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+                rows={3}
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Category</label>
+              <label className="block text-base font-bold text-gray-800 mb-2">Category</label>
               <input placeholder="e.g. Main Dish, Dessert, Side" value={form.category}
                 onChange={e => setForm(f => ({...f, category: e.target.value}))}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
             </div>
 
             <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} />
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Ingredients</label>
-              <p className="text-xs text-gray-500 mb-2">One per line — format: <span className="font-mono">2 cups - flour</span> (quantity first, then a dash, then the name)</p>
+              <label className="block text-base font-bold text-gray-800 mb-2">Ingredients</label>
+              <p className="text-sm text-gray-500 mb-2">
+                One per line. Format: <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">2 cups - flour</span> — quantity first, then a dash, then the name.
+              </p>
               <textarea placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
                 value={form.ingredients} onChange={e => setForm(f => ({...f, ingredients: e.target.value}))}
-                rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+                rows={10}
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Instructions</label>
-              <p className="text-xs text-gray-500 mb-2">One step per line</p>
+              <label className="block text-base font-bold text-gray-800 mb-2">Instructions</label>
+              <p className="text-sm text-gray-500 mb-2">One step per line — a new line per numbered instruction.</p>
               <textarea placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Combine wet and dry"
                 value={form.instructions} onChange={e => setForm(f => ({...f, instructions: e.target.value}))}
-                rows={12} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+                rows={12}
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Family Notes</label>
+              <label className="block text-base font-bold text-gray-800 mb-2">Family Notes</label>
+              <p className="text-sm text-gray-500 mb-2">The story, tips, source attribution — anything you want to remember.</p>
               <textarea placeholder="The story behind this recipe, tips, memories..."
                 value={form.family_notes} onChange={e => setForm(f => ({...f, family_notes: e.target.value}))}
-                rows={4} className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 resize-y" />
+                rows={4}
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
             </div>
 
-            <button onClick={saveRecipe} disabled={!form.title.trim() || uploadingPhoto}
-              className="w-full py-4 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 disabled:opacity-50">
-              {uploadingPhoto ? '📷 Uploading photo...' : '💾 Save Recipe'}
-            </button>
+            {/* Sticky save footer — always reachable. */}
+            <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-white/95 backdrop-blur-sm border-t border-gray-200 flex gap-3 z-20">
+              <button onClick={() => setView('list')}
+                style={{ fontSize: '16px' }}
+                className="px-5 py-4 border-2 border-gray-200 text-gray-600 rounded-2xl font-semibold hover:bg-gray-50 transition-colors">
+                Cancel
+              </button>
+              <button onClick={saveRecipe} disabled={!form.title.trim() || uploadingPhoto}
+                style={{ fontSize: '16px' }}
+                className="flex-1 py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
+                {uploadingPhoto ? '📷 Uploading photo...' : '💾 Save Recipe'}
+              </button>
+            </div>
           </div>
         </main>
       </div>
