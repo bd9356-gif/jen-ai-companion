@@ -237,7 +237,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
         </p>
         <textarea value={ingredients} onChange={e => setIngredients(e.target.value)}
           placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
-          rows={10}
+          rows={14}
           style={fieldStyle}
           className={`${fieldBase} resize-y font-mono`} />
       </div>
@@ -255,9 +255,9 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
         <p className={helperClass}>One step per line — a new line per numbered instruction.</p>
         <textarea value={instructions} onChange={e => setInstructions(e.target.value)}
           placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Add wet ingredients and stir"
-          rows={12}
+          rows={16}
           style={fieldStyle}
-          className={`${fieldBase} resize-y`} />
+          className={`${fieldBase} resize-y font-mono`} />
       </div>
 
       <div>
@@ -265,9 +265,9 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
         <p className={helperClass}>The story, tips, source attribution — anything you want to remember.</p>
         <textarea value={familyNotes} onChange={e => setFamilyNotes(e.target.value)}
           placeholder="The story behind this recipe, tips, memories..."
-          rows={4}
+          rows={8}
           style={fieldStyle}
-          className={`${fieldBase} resize-y`} />
+          className={`${fieldBase} resize-y font-mono`} />
       </div>
 
       {/* Sticky save/cancel footer — always reachable even on long recipes.
@@ -1585,7 +1585,7 @@ export default function MyRecipeVaultPage() {
               </p>
               <textarea placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
                 value={form.ingredients} onChange={e => setForm(f => ({...f, ingredients: e.target.value}))}
-                rows={10}
+                rows={14}
                 style={{ fontSize: '16px' }}
                 className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
             </div>
@@ -1595,9 +1595,9 @@ export default function MyRecipeVaultPage() {
               <p className="text-sm text-gray-500 mb-2">One step per line — a new line per numbered instruction.</p>
               <textarea placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Combine wet and dry"
                 value={form.instructions} onChange={e => setForm(f => ({...f, instructions: e.target.value}))}
-                rows={12}
+                rows={16}
                 style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
             </div>
 
             <div>
@@ -1605,9 +1605,9 @@ export default function MyRecipeVaultPage() {
               <p className="text-sm text-gray-500 mb-2">The story, tips, source attribution — anything you want to remember.</p>
               <textarea placeholder="The story behind this recipe, tips, memories..."
                 value={form.family_notes} onChange={e => setForm(f => ({...f, family_notes: e.target.value}))}
-                rows={4}
+                rows={8}
                 style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
             </div>
 
             {/* Sticky save footer — always reachable. */}
