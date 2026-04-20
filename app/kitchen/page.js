@@ -105,16 +105,16 @@ export default function KitchenPage() {
       </div>
 
       {/* Sections */}
-      <main className="px-4 py-4 max-w-lg mx-auto pb-6 space-y-5">
+      <main className="px-4 pt-6 pb-10 max-w-lg mx-auto space-y-8">
         {SECTIONS.map(section => (
           <div key={section.name}>
             {/* Section header */}
-            <div className="mb-2 px-1">
+            <div className="mb-3 px-1">
               <h2 className="text-xs font-extrabold uppercase tracking-wider" style={{color: section.accent}}>{section.name}</h2>
-              {section.subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
+              {section.subtitle && <p className="text-sm text-gray-500 mt-1 leading-snug">{section.subtitle}</p>}
             </div>
             {/* Section items */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {section.items.map(item => (
                 <button
                   key={item.href}
@@ -122,10 +122,10 @@ export default function KitchenPage() {
                   className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
                   style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${section.accent}` }}
                 >
-                  <div className="flex items-center gap-4 px-4 py-2.5">
-                    <span style={{fontSize:'22px', lineHeight:1}}>{item.emoji}</span>
-                    <p className="flex-1 text-sm font-semibold text-gray-900">{item.title}</p>
-                    <span className="text-gray-300 text-lg font-light">›</span>
+                  <div className="flex items-center gap-4 px-5 py-4">
+                    <span style={{fontSize:'28px', lineHeight:1}}>{item.emoji}</span>
+                    <p className="flex-1 text-base font-semibold text-gray-900">{item.title}</p>
+                    <span className="text-gray-300 text-xl font-light">›</span>
                   </div>
                 </button>
               ))}
