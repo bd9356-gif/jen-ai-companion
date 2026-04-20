@@ -158,7 +158,7 @@ export default function HomePage() {
           <div className="w-full relative" style={{ height: '150px' }}>
             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-900/85 via-stone-900/35 to-stone-900/10" />
-            <div className="absolute inset-0 flex flex-col items-center justify-end px-5 pb-4 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
               {userName ? (
                 <>
                   <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
