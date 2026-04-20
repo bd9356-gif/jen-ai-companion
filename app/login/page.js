@@ -45,22 +45,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <header className="bg-orange-700 px-4 py-4">
-        <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-amber-50 flex flex-col">
+      <header className="bg-white border-b border-stone-200">
+        <div className="max-w-2xl mx-auto px-4 py-4">
           <a href="/" className="flex items-center gap-2">
             <span className="text-2xl">🍽️</span>
-            <span className="text-orange-100 text-lg font-semibold">MyRecipe Companion</span>
+            <span className="text-stone-900 text-lg font-bold tracking-tight">MyRecipe Companion</span>
           </a>
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-start justify-center px-4 pt-6 pb-8">
         <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-4">🍽️</div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="text-gray-500 mt-1">Sign in to your kitchen</p>
+          <div className="text-center mb-5">
+            <h1 className="text-2xl font-bold text-stone-900">Welcome back</h1>
+            <p className="text-stone-500 mt-1">Sign in to your kitchen</p>
           </div>
 
           {error && (
@@ -97,12 +96,12 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 style={{ fontSize: '16px' }}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl mb-3 focus:outline-none focus:border-orange-400"
+                className="w-full px-4 py-3 bg-white border-2 border-stone-200 rounded-xl mb-3 focus:outline-none focus:border-stone-600"
               />
               <button
                 type="submit"
                 disabled={sending || !email.trim()}
-                className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 text-white font-semibold rounded-xl transition-colors"
+                className="w-full px-4 py-3 bg-stone-800 hover:bg-stone-900 disabled:bg-stone-300 text-white font-semibold rounded-xl transition-colors"
               >
                 {sending ? 'Sending…' : 'Email me a sign-in link'}
               </button>
@@ -114,17 +113,17 @@ export default function LoginPage() {
 
           <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-stone-200"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-xs text-gray-400 uppercase tracking-wide">or</span>
+              <span className="bg-amber-50 px-3 text-xs text-stone-400 uppercase tracking-wide">or</span>
             </div>
           </div>
 
           <button
             onClick={handleGoogle}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors mb-6"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border-2 border-stone-200 rounded-xl text-sm font-semibold text-stone-700 hover:bg-stone-50 transition-colors mb-6"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -135,7 +134,7 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Continue with Google'}
           </button>
 
-          <p className="text-center text-xs text-gray-400">
+          <p className="text-center text-xs text-stone-400">
             Sign in to save recipes and get personalized recommendations
           </p>
         </div>
