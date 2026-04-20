@@ -12,14 +12,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Recipe AI Companion",
+  title: "MyRecipe Companion",
   description:
     "A cozy cooking companion — save recipes, plan meals, learn new skills, and cook alongside an AI chef.",
-  applicationName: "Recipe AI Companion",
+  applicationName: "MyRecipe Companion",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Recipe AI",
+    title: "MyRecipe",
     statusBarStyle: "default",
   },
   formatDetection: {

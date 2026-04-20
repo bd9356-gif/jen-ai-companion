@@ -50,7 +50,7 @@ export default function LoginPage() {
         <div className="max-w-4xl mx-auto">
           <a href="/" className="flex items-center gap-2">
             <span className="text-2xl">🍽️</span>
-            <span className="text-orange-100 text-lg font-semibold">Recipe AI Companion</span>
+            <span className="text-orange-100 text-lg font-semibold">MyRecipe Companion</span>
           </a>
         </div>
       </header>

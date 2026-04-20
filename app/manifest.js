@@ -1,7 +1,7 @@
 export default function manifest() {
   return {
-    name: 'Recipe AI Companion',
-    short_name: 'Recipe AI',
+    name: 'MyRecipe Companion',
+    short_name: 'MyRecipe',
     description:
       'A cozy cooking companion — save recipes, plan meals, learn new skills, and cook alongside an AI chef.',
     start_url: '/',

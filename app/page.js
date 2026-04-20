@@ -113,7 +113,7 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl">🍽️</span>
-            <span className="text-stone-800 text-base font-semibold tracking-tight">Recipe AI Companion</span>
+            <span className="text-stone-800 text-base font-semibold tracking-tight">MyRecipe Companion</span>
           </div>
           {user ? (
             <a href="/kitchen" className="text-stone-800 text-sm font-medium border border-stone-300 bg-white rounded-full px-3 py-1 hover:bg-stone-100 transition-colors">
@@ -212,7 +212,7 @@ export default function HomePage() {
         {/* Footer */}
         <footer className="mt-5 text-center flex items-center justify-center gap-3">
           <a href="/about" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">
-            About Recipe AI Companion
+            About MyRecipe Companion
           </a>
           <span className="text-[11px] text-stone-300">•</span>
           <a href="/notes" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">

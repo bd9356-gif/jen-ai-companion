@@ -8,7 +8,7 @@ import Link from 'next/link'
 
 const NOTES_UPDATED = 'April 18, 2026'
 
-const INTRO = `Thanks for helping test Recipe AI Companion. Here's what's
+const INTRO = `Thanks for helping test MyRecipe Companion. Here's what's
 new, what to try, and what to ignore for now. Use the thumbs-up /
 thumbs-down feedback in your head — or better, text Bill directly.`
 
@@ -48,7 +48,7 @@ export default function NotesPage() {
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl">🍽️</span>
             <span className="text-stone-800 text-base font-semibold tracking-tight">
-              Recipe AI Companion
+              MyRecipe Companion
             </span>
           </Link>
           <Link

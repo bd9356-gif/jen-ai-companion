@@ -88,7 +88,7 @@ export default function ProfilePage() {
           </div>
           <button onClick={() => window.location.href = '/about'}
             className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-50">
-            <p className="text-sm text-gray-900">About Recipe AI Companion</p>
+            <p className="text-sm text-gray-900">About MyRecipe Companion</p>
             <span className="text-gray-300 text-lg">›</span>
           </button>
           <a href="https://mycompanionapps.com" target="_blank" rel="noreferrer"

@@ -6,7 +6,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
-# Recipe AI Companion — Project Brief
+# MyRecipe Companion — Project Brief
 
 A **cozy, modern cooking companion** that blends a personal recipe vault, guided learning, and an AI chef who's always ready to help. For **home cooks** who want a simple, confidence-building way to save recipes, learn skills, and get AI help in the kitchen.
 
@@ -212,13 +212,15 @@ The canonical names in use across the app are:
 - **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub.
 - **MyPlan** (`/picks`) — the other "My" we keep, for the user's cooking plan. (We briefly tried "Plan" but reverted — users wanted the personal framing.)
 - **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Anything** (`/chef`) — simplified, no "My" prefix.
-- Brand name in titles, meta, headers, and copy is **Recipe AI Companion** (not "MyRecipe Companion").
+- Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
 - Chef Jennifer's save buttons read **Save to MyPlan** / **Saved to MyPlan ✓**. Ask Chef Anything's save button matches.
 
 Swept in recent passes and no longer present:
 - `app/picks/page.js` — MyVault buttons (→ Recipe Vault), MyRecipe Cards button (→ Recipe Cards).
-- `app/login/page.js`, `app/profile/page.js`, `app/about/page.js` — brand text (→ Recipe AI Companion).
-- `app/api/chef/route.js` — system prompt persona (→ Chef Jennifer, inside Recipe AI Companion).
+- `app/login/page.js`, `app/profile/page.js`, `app/about/page.js`, `app/page.js`, `app/notes/page.js` — brand text (→ MyRecipe Companion).
+- `app/manifest.js`, `app/layout.js` — PWA + HTML metadata (→ name "MyRecipe Companion", short_name "MyRecipe").
+- `app/api/chef/route.js` — system prompt persona (→ Chef Jennifer, inside MyRecipe Companion).
+- `../my-companion-apps/app/page.tsx` — hub landing tile + footer link (→ MyRecipe Companion / "MyRecipe").
 
 Known still-stale spots (future cleanup candidates, low urgency):
 - `app/topchef/page.js` — internal function name `MyChefPage` (harmless, internal only).
@@ -232,7 +234,7 @@ The landing page (`app/page.js`) and About page (`app/about/page.js`) intentiona
 - Cards/tiles: white with `border-stone-200`.
 - Primary CTA: `bg-stone-800` warm charcoal, `hover:bg-stone-900`. (We tried `emerald-700` briefly; user felt it was too green.)
 - Section label: `text-stone-500 uppercase tracking-[0.15em]`.
-- Footer: two inline links in `text-stone-500` separated by a bullet — **About Recipe AI Companion** and **Tester notes** (see below).
+- Footer: two inline links in `text-stone-500` separated by a bullet — **About MyRecipe Companion** and **Tester notes** (see below).
 
 The shift from cream landing → orange MyKitchen reads as an intentional tone change, not a jarring break. Keep MyKitchen orange; keep landing cream.
 
@@ -242,7 +244,7 @@ During the private test period, the landing page carries a small dark **tester b
 
 - **Banner** (`app/page.js`, `BANNER` constant): `{ enabled, version, message, linkHref, linkLabel }`. Dark `bg-stone-900` strip with an `×` dismiss button. Dismissal persists via `localStorage.recipe_ai_banner_dismissed_${BANNER.version}`. Bump `BANNER.version` to force-redisplay. Set `BANNER.enabled = false` to hide entirely. The setState-in-effect that reads the dismissal flag on mount is intentional (SSR has no `window`) and has a localized eslint-disable.
 - **`/notes` page** (`app/notes/page.js`): palette matches the landing page. All copy lives in clearly-commented constants at the top: `NOTES_UPDATED` (date string), `INTRO` (paragraph), `WHATS_NEW` / `TRY_THIS` / `KNOWN_QUIRKS` (arrays of strings rendered as bullet lists via `<Section>`), and `FEEDBACK` (text + email). The page uses `next/link` for in-app navigation to satisfy `no-html-link-for-pages`.
-- Footer on the landing page has a permanent `Tester notes` link next to `About Recipe AI Companion` so the page stays reachable after the banner is dismissed.
+- Footer on the landing page has a permanent `Tester notes` link next to `About MyRecipe Companion` so the page stays reachable after the banner is dismissed.
 - When we ship publicly, the quickest retirement is `BANNER.enabled = false` in code and/or deleting the footer link. The `/notes` route can stay or be removed; nothing else depends on it.
 
 ## Authentication (Google OAuth + magic link via Resend)
@@ -259,7 +261,7 @@ Both flows converge on `app/auth/callback/route.js` → forwards the `code` to `
 Supabase's default SMTP is rate-limited and gets spam-flagged by Hotmail/Outlook. Custom SMTP is wired up through Resend:
 
 - **Provider:** Resend — domain `mycompanionapps.com` verified (SPF/DKIM/DMARC records live on the domain's DNS).
-- **Supabase → Project Settings → Authentication → SMTP Settings:** host `smtp.resend.com`, port `465`, username `resend`, password = Resend API key. Sender `noreply@mycompanionapps.com`, display name "Recipe AI Companion".
+- **Supabase → Project Settings → Authentication → SMTP Settings:** host `smtp.resend.com`, port `465`, username `resend`, password = Resend API key. Sender `noreply@mycompanionapps.com`, display name "MyRecipe Companion".
 - **Supabase → Auth → URL Configuration:** Site URL = `https://www.mycompanionapps.com`. Redirect allow-list includes `https://www.mycompanionapps.com/auth/callback`, `https://jen-ai-companion.vercel.app/auth/callback` (kept during the transition / for Vercel preview deploys), and `http://localhost:3000/auth/callback` for local dev.
 - **Supabase → Auth → Providers → Email:** enabled.
 
@@ -280,7 +282,7 @@ First-time users get a small set of starter recipes loaded into their Recipe Vau
 
 The app is an installable PWA as of April 2026:
 
-- `app/manifest.js` — Next 16 built-in manifest. Name "Recipe AI Companion", short name "Recipe AI", standalone display, portrait, `background_color: #fffbeb`, `theme_color: #ffffff`. Served by Next at `/manifest.webmanifest`.
+- `app/manifest.js` — Next 16 built-in manifest. Name "MyRecipe Companion", short name "MyRecipe", standalone display, portrait, `background_color: #fffbeb`, `theme_color: #ffffff`. Served by Next at `/manifest.webmanifest`.
 - `app/layout.js` — uses the Next 16 metadata + viewport exports. `appleWebApp.title` is "Recipe AI", phone auto-detection disabled, `mobile-web-app-capable` meta for non-Apple browsers.
 - `/public/icon-192.png`, `/public/icon-512.png`, `/public/icon-512-maskable.png`, `/public/apple-touch-icon.png` (180x180), `/public/favicon-32.png` — stone-800 background with a cream circle + bold "R" + amber accent dot. Placeholder design; swap for a brand-final icon later.
 - No service worker yet. Offline support and push notifications are deferred — per the Next PWA guide, installability doesn't require a service worker.
