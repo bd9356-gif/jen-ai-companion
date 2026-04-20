@@ -110,10 +110,10 @@ export default function HomePage() {
 
       {/* Header */}
       <header className="bg-white border-b border-stone-200">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🍽️</span>
-            <span className="text-stone-800 text-base font-semibold tracking-tight">MyRecipe Companion</span>
+            <span className="text-2xl">🍽️</span>
+            <span className="text-stone-900 text-lg font-bold tracking-tight">MyRecipe Companion</span>
           </div>
           {user ? (
             <a href="/kitchen" className="text-stone-800 text-sm font-medium border border-stone-300 bg-white rounded-full px-3 py-1 hover:bg-stone-100 transition-colors">
