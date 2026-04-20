@@ -128,7 +128,7 @@ export default function HomePage() {
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-4 pb-6 flex flex-col">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-2 pb-6 flex flex-col">
 
         {/* Tester banner (dismissible) */}
         {BANNER.enabled && bannerVisible && (
