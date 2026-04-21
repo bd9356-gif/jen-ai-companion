@@ -121,12 +121,6 @@ export default function CardsPage() {
     setViewing(null)
   }
 
-  async function clearAll() {
-    await supabase.from('recipe_cards').delete().eq('user_id', user.id)
-    setRecipes([])
-    setViewing(null)
-  }
-
   function showToast(msg) {
     setToast(msg)
     setTimeout(() => setToast(null), 2500)
@@ -320,9 +314,6 @@ export default function CardsPage() {
               >
                 {(showSearch || search) ? '✕' : '🔍'}
               </button>
-              {recipes.length > 0 && (
-                <button onClick={clearAll} className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Clear All</button>
-              )}
               <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">+ Add</a>
             </div>
           </div>
@@ -337,10 +328,13 @@ export default function CardsPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-3 pb-6">
-        {/* Intro: "Your Modern Recipe Box" — rose tone picks up the red top rule on the cards below. */}
-        <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 mb-4">
-          <h2 className="text-lg font-bold text-rose-900 mb-1">Your Modern Recipe Box</h2>
-          <p className="text-sm text-rose-800/80 leading-relaxed">A fresh take on the old kitchen card box — notes, photos, and tips saved to every recipe.</p>
+        <div className="text-center px-2 mb-4">
+          <p className="text-sm font-semibold text-gray-700 leading-snug">
+            Your modern recipe box.
+          </p>
+          <p className="text-xs text-gray-500 leading-snug mt-0.5">
+            A fresh take on the old kitchen card box — notes, photos, and tips saved to every recipe.
+          </p>
         </div>
 
         {loading ? (
