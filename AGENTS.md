@@ -65,7 +65,7 @@ Borders on bucket frames, section cards, and move buttons use `border-2` with `-
 
 ## Plan page sections (`/picks`) — labels & subtitles
 
-Under the sticky header, the page shows a one-line **tagline** defining MyCooking to the user: *"Everything you're actively cooking — your plan, shopping list, saved tips, and Chef Jennifer."* Small, centered, gray-500.
+Under the sticky header, the page shows a two-line **tagline** defining MyCooking as a central hub. Line 1 (semibold gray-700): *"Your central cooking hub."* Line 2 (smaller gray-500): *"Plan, shop, watch, learn, save tips, and create with Chef Jennifer — all in one place."* The tagline is deliberately broad because MyCooking isn't just the week's plan — it's planning, saving, learning, watching, shopping, AI notes, and Chef Jennifer's creations all under one roof.
 
 Each collapsible section on the Plan page has a one-line subtitle below the label. Keep the tone cozy and user-facing. Current copy:
 

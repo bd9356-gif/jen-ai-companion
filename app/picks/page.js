@@ -371,9 +371,14 @@ export default function MyCookingPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-4 pb-16 space-y-3">
-        <p className="text-sm text-gray-500 text-center leading-snug px-2 -mt-1 mb-1">
-          Everything you're actively cooking — your plan, shopping list, saved tips, and Chef Jennifer.
-        </p>
+        <div className="text-center px-2 -mt-1 mb-1">
+          <p className="text-sm font-semibold text-gray-700 leading-snug">
+            Your central cooking hub.
+          </p>
+          <p className="text-xs text-gray-500 leading-snug mt-0.5">
+            Plan, shop, watch, learn, save tips, and create with Chef Jennifer — all in one place.
+          </p>
+        </div>
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading your plan...</div>
         ) : (
