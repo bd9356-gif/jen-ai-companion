@@ -35,9 +35,9 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Chef TV         | `/videos`    | Cooking videos (YouTube-backed). (Renamed from MyChef TV.)            |
 | Recipe Vault    | `/secret`    | Your permanent, organized recipe collection.                          |
 | Recipe Cards    | `/cards`     | Card-style recipe browser (swipe / pick).                             |
-| MyPlan          | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
+| MyCooking          | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
 | Chef Jennifer   | `/topchef`   | AI chef who generates recipes tailored to mood/meal/protein, **and** hosts the "Ask Chef Anything" entry. |
-| Ask Chef Anything | `/chef`    | Free-form AI Q&A (saves answers to MyPlan). **Not in the Kitchen nav** — reached via Chef Jennifer's first screen. |
+| Ask Chef Anything | `/chef`    | Free-form AI Q&A (saves answers to MyCooking). **Not in the Kitchen nav** — reached via Chef Jennifer's first screen. |
 
 Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/browse`, `/about`, `/profile`, `/login`, `/auth`, `/not-found`.
 
@@ -47,13 +47,13 @@ These live in `app/kitchen/page.js` and drive MyKitchen's grouped layout. Copy t
 
 Section order (top → bottom) flows from "your saved stuff" → "AI support" → "discovery":
 
-- **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, MyPlan
+- **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, MyCooking
 - **AI Kitchen** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers." → Chef Jennifer (which also contains the Ask-anything entry)
 - **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Chef TV
 
-## MyPlan buckets (`/picks`)
+## MyCooking buckets (`/picks`)
 
-MyPlan organizes meal-plan recipes into three buckets and color-codes them consistently across the page (frames + move-to buttons):
+MyCooking organizes meal-plan recipes into three buckets and color-codes them consistently across the page (frames + move-to buttons):
 
 | Bucket  | Emoji | Meaning                        | Color  |
 | ------- | ----- | ------------------------------ | ------ |
@@ -178,7 +178,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 - **Mobile-first** layout. Main containers use `max-w-lg` (kitchen/hub) or `max-w-2xl` (content pages) with `mx-auto px-4`.
 - **Sticky headers** with `← Back` button on the left, page title (emoji + name) center-left, and a context action on the right.
 - **Toast**: `fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white …` — 2.5s auto-dismiss.
-- **Color system**: page actions lean orange (`orange-600`), section accents follow MyKitchen palette (amber / pink / orange / purple). MyPlan buckets override with amber/violet/sky.
+- **Color system**: page actions lean orange (`orange-600`), section accents follow MyKitchen palette (amber / pink / orange / purple). MyCooking buckets override with amber/violet/sky.
 - **Borders**: `border-2` with `-300`/`-400` shades on emphasis elements; `border` with `-100`/`-200` for subtle dividers.
 - **Rounded**: cards are `rounded-2xl`; chips/pills are `rounded-full`; buttons `rounded-xl`.
 - **Auth gate**: every authenticated page does a `supabase.auth.getSession()` check in `useEffect` and redirects to `/login` if absent.
@@ -196,7 +196,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 
 - `npm run dev` — local dev at `http://localhost:3000`.
 - `git push origin main` — triggers Vercel deploy to `www.mycompanionapps.com`.
-- Commit style: `feat: <page> - <short description>` (e.g., `feat: MyPlan - default tabs closed, fix ChefJen expand`). Body uses `-` bullets for specifics.
+- Commit style: `feat: <page> - <short description>` (e.g., `feat: MyCooking - default tabs closed, fix ChefJen expand`). Body uses `-` bullets for specifics.
 
 ## Known pre-existing lint issues in `app/picks/page.js`
 
@@ -210,10 +210,10 @@ Not breaking, but worth cleaning up in a focused pass.
 The canonical names in use across the app are:
 
 - **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub.
-- **MyPlan** (`/picks`) — the other "My" we keep, for the user's cooking plan. (We briefly tried "Plan" but reverted — users wanted the personal framing.)
+- **MyCooking** (`/picks`) — the other "My" we keep, for everything the user is actively making. (Was previously **MyPlan**; renamed in April 2026 because "MyCooking" captures everything the user does there, not just the week's plan. Route stays `/picks` to preserve bookmarks. We'd also briefly tried plain "Plan" even earlier but reverted — users wanted the personal framing.)
 - **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Anything** (`/chef`) — simplified, no "My" prefix.
 - Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
-- Chef Jennifer's save buttons read **Save to MyPlan** / **Saved to MyPlan ✓**. Ask Chef Anything's save button matches.
+- Chef Jennifer's save buttons read **Save to MyCooking** / **Saved to MyCooking ✓**. Ask Chef Anything's save button matches.
 
 Swept in recent passes and no longer present:
 - `app/picks/page.js` — MyVault buttons (→ Recipe Vault), MyRecipe Cards button (→ Recipe Cards).

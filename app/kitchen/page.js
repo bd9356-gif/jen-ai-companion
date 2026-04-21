@@ -53,7 +53,7 @@ const SECTIONS = [
     items: [
       { emoji: '🔐', title: 'Recipe Vault',  href: '/secret' },
       { emoji: '🃏', title: 'Recipe Cards',  href: '/cards' },
-      { emoji: '🎯', title: 'MyPlan',        href: '/picks' },
+      { emoji: '🎯', title: 'MyCooking',     href: '/picks' },
     ]
   },
   {

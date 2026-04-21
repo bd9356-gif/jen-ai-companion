@@ -15,7 +15,7 @@ const BUCKETS = [
 
 const DEFAULT_SHOW = 5
 
-export default function MyPlanPage() {
+export default function MyCookingPage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
@@ -363,7 +363,7 @@ export default function MyPlanPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">📋 MyPlan</h1>
+            <h1 className="text-lg font-bold text-gray-900">📋 MyCooking</h1>
             {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
           </div>
           <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Recipe Vault</button>

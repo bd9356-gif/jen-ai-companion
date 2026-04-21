@@ -33,7 +33,7 @@ const FEATURES = [
   },
   {
     emoji: '🎯',
-    title: 'MyPlan',
+    title: 'MyCooking',
     blurb: "What you're cooking this week, with a shopping list to match.",
   },
   {
