@@ -165,7 +165,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 
 - `/api/chef` — Ask-AI Anything backend.
 - `/api/topchef` — MY-AI ChefJen recipe generator.
-- `/api/import-recipe` — parse/ingest external recipes.
+- `/api/import-recipe` — parse/ingest external recipes. Accepts `{ url }` or `{ text }`. **YouTube support:** if `url` is a `youtu.be` / `youtube.com/watch` / `youtube.com/shorts` link, the route pulls title/channel/description/thumbnail via the YouTube Data API v3 and captions via `youtube-transcript`, then feeds the combined blob to Claude. Requires `YOUTUBE_API_KEY` in env. Falls back to description-only when captions are unavailable. Thumbnail becomes the recipe image.
 - `/api/enhance-recipe` — AI enrichment of existing recipes. Actions: `enhance`, `resize`, `generate_info`, `transform`.
 
 ## Ingestion scripts (run manually with `node <script>.js`)
@@ -190,7 +190,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 
 ## Security & secrets
 
-- `.env.local` holds `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`. Never commit these.
+- `.env.local` holds `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY`. Never commit these. `YOUTUBE_API_KEY` is only used by `/api/import-recipe` for YouTube URL imports (Data API v3).
 - Service role key is only for ingestion scripts; app code uses the anon key.
 - **Known issue**: the GitHub Personal Access Token is currently embedded in the `origin` remote URL (`.git/config`). Rotate at https://github.com/settings/tokens and reset the remote to use SSH or a credential helper.
 
