@@ -218,7 +218,12 @@ The **same option list** is also reused on the Recipe Vault "Make This Recipe Mo
 - **Hero on the detail view.** The recipe detail screen replaces the old 220px inset photo with a full-width hero that is capped at `max-w-2xl mx-auto` so it spans edge-to-edge on phones but doesn't stretch across a wide desktop monitor. Heights are responsive: `h-40 sm:h-52 md:h-64` (160px / 208px / 256px) so the hero doesn't swallow the iPhone viewport. The title and description overlay the photo's bottom via a dark gradient (`from-black/75 via-black/30 to-transparent`). The title uses `text-xl sm:text-2xl md:text-3xl` and is no longer duplicated in the body — it lives in the hero.
 - **Photo-less hero fallback.** When `viewing.photo_url` is empty, the hero shows a soft orange gradient (`from-orange-100 via-orange-50 to-amber-100`) with a large category emoji from `categoryEmoji(recipe)` — the fallback gives each recipe visual personality without a photo. The whole gradient is clickable and triggers the hidden `<input type="file">` for photo upload.
 - **Change-photo affordance.** When a photo IS set, a small "📷 Change" button floats at the top-right of the hero. It triggers the same upload input, so the hero stays self-contained.
-- **`categoryEmoji(recipe)` helper.** Lives at the top of `app/secret/page.js` and returns an emoji based on regex matches against the recipe's title / category / tags (pizza → 🍕, pasta → 🍝, salad → 🥗, soup → 🍲, etc.). Falls back to 🍽️. Used by the photo-less hero; can be reused for list cards if we want to extend the pattern.
+- **`categoryEmoji(recipe)` helper.** Lives at the top of `app/secret/page.js` and returns an emoji based on regex matches against the recipe's title / category / tags (pizza → 🍕, pasta → 🍝, salad → 🥗, soup → 🍲, etc.). Falls back to 🍽️. Used by the photo-less hero and by the Grid view's photo-less tile fallback.
+- **List / Grid view toggle.** The sticky header has a 🖼/📋 button next to 🔍 / 📥 Import / + Add that flips the list-view layout between two styles:
+  - **List** (default) — single column with a 64px thumb, title, description, category chip, and tag chips. Good when you know what you're looking for.
+  - **Grid** — two-column photo-first tiles styled like classic 3x5 index cards: cream paper (`bg-amber-50`), thin `bg-red-600` top rule, title (bold, two-line clamp with `min-h-[2.5rem]`) + 100px photo below. Photo-less tiles fall back to `bg-amber-100` with the `categoryEmoji(recipe)`. Good for browsing/serendipity.
+  - State lives in `listStyle` in `app/secret/page.js`. The toggle writes/clears `?view=grid` via `history.replaceState` so refresh and share preserve the choice. Unknown values stay on `list`.
+  - **This is a Vault-only display choice, NOT the same as Recipe Cards (`/cards`).** Both styles tap through to the standard Vault detail view with full instructions. The index-card *visual* is intentionally reused — home cooks recognize it — but the *concept* stays separate (see "Recipe Cards concept" below).
 
 ## Recipe Cards concept — READ THIS BEFORE TOUCHING `/cards`
 
@@ -235,6 +240,7 @@ Implications for anyone tempted to "simplify" `/cards`:
 - Do not tap a card and open the Vault detail view with full instructions — that defeats the point.
 - Cards are a curated subset (the ones a user has actually captured to their "card box") — not every vault recipe is automatically a card.
 - The pin-to-cards button on the Vault detail view is the user's way of saying "this one goes in the card box." Keep it.
+- The Vault's **Grid** view *reuses the index-card visual* (cream paper, red top rule) because home cooks recognize that shape. That's cosmetic only — it's still a Vault recipe underneath, and tapping opens the full Vault detail (with instructions). Do NOT wire the Grid tile to open `/cards`-style detail, and do NOT treat Grid recipes as being "in the card box." The Grid view and `/cards` are two different surfaces that happen to share a look.
 
 ## Recipe Cards presentation notes (`/cards`)
 

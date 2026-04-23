@@ -448,6 +448,15 @@ export default function MyRecipeVaultPage() {
   const [educationVideos, setEducationVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
+  // listStyle = 'list' | 'grid' — how the vault list-view lays out regular
+  // recipes. 'list' is the long-standing single-column row layout with a thumb
+  // + description; 'grid' is a two-column photo-first layout (cream paper +
+  // red top rule, title + photo tile). Grid is purely a display mode for the
+  // Vault — tapping still opens the normal Vault detail view with full
+  // instructions. Distinct from Recipe Cards (/cards), which is its own
+  // concept (chef card, no instructions). Synced to ?view=grid via
+  // history.replaceState so refresh/share preserves the user's choice.
+  const [listStyle, setListStyle] = useState('list')
   const [viewing, setViewing] = useState(null)
   const [showVideo, setShowVideo] = useState(true)
   const [searchTag, setSearchTag] = useState('')
@@ -574,11 +583,15 @@ export default function MyRecipeVaultPage() {
     setRecipes(data || [])
     setLoading(false)
     // Auto-open recipe if ?recipe=ID in URL
-    const recipeParam = new URLSearchParams(window.location.search).get('recipe')
+    const searchParams = new URLSearchParams(window.location.search)
+    const recipeParam = searchParams.get('recipe')
     if (recipeParam && data) {
       const match = data.find(r => r.id === recipeParam)
       if (match) { setViewing(match); setView('detail') }
     }
+    // Honor ?view=grid so a bookmark / shared link preserves the user's
+    // chosen list style. Unknown / missing values leave the default 'list'.
+    if (searchParams.get('view') === 'grid') setListStyle('grid')
   }
 
   async function uploadPhoto(file, userId) {
@@ -1696,6 +1709,29 @@ export default function MyRecipeVaultPage() {
               >
                 {(showSearch || searchText) ? '✕' : '🔍'}
               </button>
+              {/* List/Grid style toggle. Pure display choice — Grid shows
+                  recipes as photo-first tiles (cream paper, red top rule);
+                  tapping either style opens the same Vault detail view with
+                  full instructions. NOT the same as /cards (a separate
+                  "chef card" concept with no instructions). */}
+              <button
+                onClick={() => {
+                  const next = listStyle === 'grid' ? 'list' : 'grid'
+                  setListStyle(next)
+                  const url = new URL(window.location.href)
+                  if (next === 'grid') url.searchParams.set('view', 'grid')
+                  else url.searchParams.delete('view')
+                  window.history.replaceState({}, '', url.toString())
+                }}
+                title={listStyle === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 ${
+                  listStyle === 'grid'
+                    ? 'bg-orange-600 text-white border-orange-600'
+                    : 'text-gray-500 border-gray-200'
+                }`}
+              >
+                {listStyle === 'grid' ? '📋' : '🖼'}
+              </button>
               <button onClick={() => setView('import')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">📥 Import</button>
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
@@ -1777,33 +1813,62 @@ export default function MyRecipeVaultPage() {
                 {regularRecipes.length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-4">No recipes match your search</p>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {regularRecipes.map(recipe => (
-                    <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
-                      className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
-                      <div className="flex gap-3 p-4">
-                        {recipe.photo_url ? (
-                          <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                        ) : (
-                          <div className="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-                            <span className="text-2xl">🍽️</span>
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
-                          {recipe.description && <p className="text-xs text-gray-500 truncate mb-1">{recipe.description}</p>}
-                          <div className="flex flex-wrap gap-1">
-                            {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
-                            {(recipe.tags || []).slice(0, 3).map(tag => (
-                              <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">#{tag}</span>
-                            ))}
-                          </div>
+                {listStyle === 'grid' ? (
+                  /* Grid view — cream "index card" paper, thin red top rule,
+                     title + photo tile. Shows every vault recipe as a
+                     photo-first tile. Tapping opens the standard Vault
+                     detail view (not the Card detail). */
+                  <div className="grid grid-cols-2 gap-3">
+                    {regularRecipes.map(recipe => (
+                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
+                        className="text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
+                        <div className="bg-red-600 h-1.5" />
+                        <div className="px-3 pt-3 pb-1">
+                          <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
                         </div>
-                        <span className="text-gray-400 text-xl self-center">→</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                        <div className="px-3 pb-3">
+                          {recipe.photo_url ? (
+                            <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
+                              <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+                              <span style={{fontSize:'32px'}}>{categoryEmoji(recipe)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {regularRecipes.map(recipe => (
+                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
+                        className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
+                        <div className="flex gap-3 p-4">
+                          {recipe.photo_url ? (
+                            <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                          ) : (
+                            <div className="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
+                              <span className="text-2xl">🍽️</span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
+                            {recipe.description && <p className="text-xs text-gray-500 truncate mb-1">{recipe.description}</p>}
+                            <div className="flex flex-wrap gap-1">
+                              {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
+                              {(recipe.tags || []).slice(0, 3).map(tag => (
+                                <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">#{tag}</span>
+                              ))}
+                            </div>
+                          </div>
+                          <span className="text-gray-400 text-xl self-center">→</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* My References Section */}
