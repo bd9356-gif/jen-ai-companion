@@ -32,8 +32,8 @@ const FEATURES = [
     blurb: 'Flip through your recipes like a deck of cozy index cards.',
   },
   {
-    emoji: '🎯',
-    title: 'MyCooking',
+    emoji: '📅',
+    title: 'Meal Plan',
     blurb: "What you're cooking this week, with a shopping list to match.",
   },
   {

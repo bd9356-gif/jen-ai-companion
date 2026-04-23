@@ -376,8 +376,8 @@ export default function VideosPage() {
                           <span
                             role="button"
                             tabIndex={0}
-                            aria-label={saved ? 'Remove from MyCooking' : 'Save to MyCooking'}
-                            title={saved ? 'Saved — tap to remove' : 'Save to MyCooking'}
+                            aria-label={saved ? 'Remove from Skills I Learned' : 'Save to Skills I Learned'}
+                            title={saved ? 'Saved — tap to remove' : 'Save to Skills I Learned'}
                             onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleSave(video) }}
                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); toggleSave(video) } }}
                             className={`absolute top-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-110 ${

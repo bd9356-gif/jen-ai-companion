@@ -259,7 +259,7 @@ export default function MyChefPage() {
       }
     })
     setSaved(true)
-    showToast('Saved to MyCooking ✓')
+    showToast('Saved to Chef Jennifer Recipes ✓')
   }
 
   function showToast(msg) {
@@ -582,9 +582,9 @@ export default function MyChefPage() {
             {/* Actions */}
             <div className="flex flex-col gap-3">
               <button onClick={saveToFavorites} disabled={saved}
-                title="Save this recipe to your MyCooking"
+                title="Save this recipe to Chef Jennifer Recipes"
                 className={`w-full py-4 rounded-2xl text-base font-semibold transition-colors shadow-md ${saved ? 'bg-gray-100 text-gray-400 shadow-none' : 'bg-orange-600 text-white hover:bg-orange-700 shadow-orange-200'}`}>
-                {saved ? '✓ Saved to MyCooking' : '📋 Save to MyCooking'}
+                {saved ? '✓ Saved to Chef Jennifer Recipes' : '📋 Save to Chef Jennifer Recipes'}
               </button>
               <button onClick={reset}
                 className="w-full py-4 rounded-2xl text-base font-semibold bg-white border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">

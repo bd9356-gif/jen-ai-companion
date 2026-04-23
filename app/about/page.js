@@ -3,7 +3,7 @@
 const FEATURES = [
   { emoji: '📒', label: 'Recipe Vault', desc: 'Your private library of saved recipes, organized and searchable.' },
   { emoji: '🗂', label: 'Recipe Cards', desc: 'Flip through your recipes like a deck of cozy index cards.' },
-  { emoji: '🎯', label: 'MyCooking', desc: "This week's cooking plan, with a shopping list to match." },
+  { emoji: '📅', label: 'Meal Plan', desc: "This week's cooking plan, with a shopping list to match." },
   { emoji: '👨‍🍳', label: 'Chef Jennifer', desc: 'An AI chef who builds recipes and answers any kitchen question.' },
   { emoji: '📺', label: 'Chef TV', desc: 'Cooking videos for learning skills and finding new ideas.' },
 ]

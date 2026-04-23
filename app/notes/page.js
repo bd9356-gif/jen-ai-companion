@@ -21,7 +21,7 @@ const WHATS_NEW = [
 const TRY_THIS = [
   "Add a recipe of your own in Recipe Vault — paste from a website, type it in, or snap a photo.",
   'Ask Chef Jennifer to build a dinner for tonight based on your mood and what protein you have.',
-  "Move 2–3 recipes into MyCooking's 'To Make' bucket and try the shopping list.",
+  "Move 2–3 recipes into the Meal Plan's 'To Make' bucket and try the shopping list.",
   'Try the ✨ Clean Up List button on the shopping list after adding a few recipes.',
   'Open a recipe in Recipe Vault, tap ✨ AI, and try "Make This Recipe More…" — adjust it to be lighter, vegetarian, or heart-healthy.',
 ]

@@ -888,8 +888,8 @@ export default function MyRecipeVaultPage() {
               <button onClick={async () => {
                 await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
                 setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
-                showToast('Added to MyCooking ✓')
-              }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>🎯 {picksIds.includes(viewing.id) ? 'In MyCooking' : 'MyCooking'}</button>
+                showToast('Added to Meal Plan ✓')
+              }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>📅 {picksIds.includes(viewing.id) ? 'In Meal Plan' : 'Meal Plan'}</button>
               <button onClick={() => deleteRecipe(viewing.id)}
                 className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
             </div>
