@@ -38,7 +38,7 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Meal Plan              | `/picks?open=meal_plan` (Phase 1) | What you're cooking soon, organized by bucket.  |
 | Shopping List          | `/picks?open=shopping_list` (Phase 1) | Ingredients grouped by store.               |
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
-| Skills I Learned       | `/picks?open=chef_videos` (Phase 2A bridge) | Saved Chef TV videos + notes, by course. Becomes `/skills` in Phase 2B. |
+| Skills I Learned       | `/skills`     | Saved Chef TV videos + Chef Notes, bucketed by course type.         |
 | Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes.                         |
 | Chef Notes             | `/chef-notes` | Saved AI answers, chronological.                                    |
 | Chef Jennifer Recipes  | `/chef-recipes` | Recipes Chef Jennifer made for you; save-to-vault from here.      |
@@ -46,7 +46,7 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Shopping List          | `/shopping-list` | Ingredients grouped by store; AI cleanup / copy / print.         |
 | Chef Jennifer          | `/topchef`    | AI chef who generates recipes tailored to mood/meal/protein.        |
 
-"(Phase 2A bridge)" marks the one tile still deep-linking into `/picks` via `?open=<section_key>`. That bridge retires when Phase 2B ships `/skills` — see **IA restructure roadmap** below.
+All tiles now route to dedicated pages. The `?open=<section_key>` bridge into `/picks` is retired for the hub — see **IA restructure roadmap** below. Old bookmark URLs still land on `/picks` with the right section expanded for back-compat until Phase 2C retires the page.
 
 Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/browse`, `/about`, `/profile`, `/login`, `/auth`, `/not-found`.
 
@@ -57,11 +57,12 @@ MyKitchen moved from a 3-section (Your Cooking Life / AI Kitchen / Explore) layo
 The rollout is phased so no single commit drops a huge amount of unreviewed code:
 
 - **Phase 1 (shipped).** Rewrite `app/kitchen/page.js` with the new sections/tiles and a unified orange left stripe. Add a `?open=<key>` handler on `/picks` so five of the tiles (Meal Plan, Shopping List, Chef Notes, Skills I Learned, Chef Jennifer Recipes) deep-link straight to the right section on that still-combined page. This is a **bridge** — the hub looks finished immediately, the underlying pages catch up in Phase 2.
-- **Phase 2A (shipped).** Extract four dedicated pages from `/picks` — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes` — each a focused, single-purpose screen. Hub tiles updated to point at the real routes. The `?open=` handler stays on `/picks` for now because Skills I Learned is still the combined section until Phase 2B. Shared row components live in `components/ExpandableItem.js`, `components/ChefJenItem.js`, `components/VideoItem.js`, `components/ShoppingByStore.js` (which also exports `StoreEditor`) so both the old `/picks` page and the new dedicated pages stay in sync.
-- **Phase 2B (next).** Ship Skills I Learned at `/skills` as a MyBag-style bucketed view (see "Skills I Learned buckets" below). Retire the `?open=` handler and the `/picks` page entirely.
+- **Phase 2A (shipped).** Extract four dedicated pages from `/picks` — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes` — each a focused, single-purpose screen. Hub tiles updated to point at the real routes. Shared row components live in `components/ExpandableItem.js`, `components/ChefJenItem.js`, `components/VideoItem.js`, `components/ShoppingByStore.js` (which also exports `StoreEditor`) so both the old `/picks` page and the new dedicated pages stay in sync.
+- **Phase 2B (shipped).** Ship Skills I Learned at `/skills` as a MyBag-style bucketed view — six fixed buckets (📥 The Starter, 🍳 Breakfast, 🍽️ Mains, 🥕 Sides & Veg, 🥖 Baking, 🍰 Desserts). Bucket assignments live in a new `cooking_skill_items` table (migration `supabase/002_cooking_skill_items.sql`). Hub tile updated; old `?open=chef_videos` links still resolve for back-compat.
+- **Phase 2C (next).** Retire `/picks` entirely. Redirect `/picks` → `/kitchen` (or delete the route), remove the `?open=` handler. Do this after a grace period for any lingering bookmarks.
 - **Phase 3.** Fold `/cards` into `/secret` as a list/card view toggle. Decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — will pick based on how many Chef Jen saves feel natural alongside vault recipes once people are using the dedicated page.
 
-Phase 2A is NOT a naming sweep of downstream pages yet — Ask Chef Anything still says "Ask Chef Anything" in places, `/picks` still labels itself "MyCooking" internally. Those get swept as each page is touched in later phases.
+Phase 2B is NOT a naming sweep of downstream pages yet — Ask Chef Anything still says "Ask Chef Anything" in places, `/picks` still labels itself "MyCooking" internally. Those get swept as each page is touched in later phases.
 
 ## Kitchen navigation sections
 
@@ -82,18 +83,18 @@ Section headers are small orange uppercase labels with a one-line section subtit
 
 3. **Learn** — "Build your cooking skills."
    - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away."
-   - 🎓 Skills I Learned → `/picks?open=chef_videos` (Phase 2A bridge) — "Your saves, by course."
+   - 🎓 Skills I Learned → `/skills` — "Your saves, by course."
    - 💬 Ask Chef Jennifer → `/chef` — "Ask anything. Get clear answers."
    - 📝 Chef Notes → `/chef-notes` — "Saved AI answers, anytime."
 
 4. **Chef Jennifer** — "Your personal AI chef."
    - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you."
 
-### `/picks` deep-link handler (Phase 2A bridge)
+### `/picks` deep-link handler (legacy — to be retired)
 
 `app/picks/page.js` has a second `useEffect` that reads `?open=<section_key>` on mount. If the key is valid (`meal_plan`, `shopping_list`, `ai_notes`, `chefjen`, `chef_videos`), the page auto-expands that section and smooth-scrolls to it via `document.getElementById('section-' + key)`. Each section wrapper has a matching `id` and `scroll-mt-20` so the section title isn't hidden under the sticky header.
 
-Four of the five section keys are now effectively dead — the hub routes Meal Plan / Shopping List / Chef Notes / Chef Jennifer Recipes straight at the dedicated Phase 2A pages. Only **`?open=chef_videos`** (Skills I Learned) still uses the bridge, because that section hasn't moved to `/skills` yet. Keep the handler generic (still accepts all five keys) so direct links from old bookmarks don't break — they'll still land on the right section of `/picks`. Phase 2B retires this whole file.
+As of Phase 2B, ALL hub tiles now route directly to dedicated pages — the handler exists purely for back-compat with old bookmarks. Phase 2C retires this entire page.
 
 ### Phase 2A pages (new as of April 2026)
 
@@ -115,20 +116,29 @@ Factored out of `app/picks/page.js` so both `/picks` and the Phase 2A pages rend
 
 `/picks` still imports and uses all of these for its remaining Skills I Learned section (and keeps rendering its other sections the same way until Phase 2B).
 
-### Skills I Learned buckets (Phase 2 spec)
+### Skills I Learned (`/skills`)
 
-When Phase 2 ships Skills I Learned at its own route, it will mirror Golf's MyBag pattern — six **fixed** buckets that hold both saved Chef TV videos AND saved Chef Notes together. Buckets are **by course type**, not technique, because that matches how home cooks actually learn (Bill: "I learned the dishes first, then realized they were skills"):
+Mirrors Golf's MyBag pattern — six **fixed** buckets that hold both saved Chef TV videos AND saved Chef Notes together. Buckets are **by course type**, not technique, because that matches how home cooks actually learn (Bill: "I learned the dishes first, then realized they were skills"):
 
-| Emoji | Bucket       | Meaning                                             |
-| ----- | ------------ | --------------------------------------------------- |
-| 📥    | The Starter  | New saves land here; user moves them.               |
-| 🍳    | Breakfast    |                                                     |
-| 🍽️    | Mains        |                                                     |
-| 🥕    | Sides & Veg  |                                                     |
-| 🥖    | Baking       | Breads and savory baking.                           |
-| 🍰    | Desserts     | Sweet endings.                                      |
+| Key       | Emoji | Bucket       | Color  |
+| --------- | ----- | ------------ | ------ |
+| starter   | 📥    | The Starter  | yellow |
+| breakfast | 🍳    | Breakfast    | orange |
+| mains     | 🍽️    | Mains        | rose   |
+| sides     | 🥕    | Sides & Veg  | green  |
+| baking    | 🥖    | Baking       | amber  |
+| desserts  | 🍰    | Desserts     | pink   |
 
-No rename / reorder / delete (locked like Golf's MyBag). The `favorites` + `saved_videos` + `saved_education_videos` tables already carry enough metadata; Phase 2 will add a nullable `cooking_bucket` column (or a per-user mapping table) to remember which item the user has placed in which bucket.
+No rename / reorder / delete — locked like Golf's MyBag. All colors are written as complete literal Tailwind class strings in `app/skills/page.js` (`COLOR` map) so v4's JIT scanner picks them up.
+
+**Data model.** A `cooking_skill_items` table (migration `supabase/002_cooking_skill_items.sql`) stores one row per `(user_id, item_type, item_id)` placing an item into a bucket. It does NOT own the save — source items still live in `saved_videos` / `saved_education_videos` / `favorites`. Items with no row default to `starter`.
+
+`item_type` values:
+- `cooking_video` — `item_id` = `cooking_videos.id` (legacy Chef TV save)
+- `education_video` — `item_id` = `education_videos.id` (legacy education save)
+- `favorite` — `item_id` = `favorites.id`. Covers all favorites-sourced items (`ai_answer`, `video_recipe`, `video_education`) — the source's `favorites.type` discriminates how to render.
+
+**Page behavior.** `loadAll` fetches the three source tables + `cooking_skill_items` in parallel and merges them into one normalized list. If the same underlying video exists in both legacy (`saved_videos`) and new (`favorites`) form, the legacy row wins (dedupe by `_item_type:_item_id`). Each row renders via `<VideoItem>` (videos) or `<ExpandableItem>` (AI answers) plus an inline "Move ▾" menu showing the other five buckets as colored chips. Moving upserts into `cooking_skill_items`; removing deletes from the source table AND the `cooking_skill_items` row. All buckets default to **collapsed** on page load; moving an item auto-expands the destination bucket so the user sees where it went. A yellow callout at the top of the page explains that new saves land in The Starter.
 
 ## MyCooking buckets (`/picks`)
 

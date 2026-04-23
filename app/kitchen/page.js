@@ -52,12 +52,13 @@ async function seedStarterRecipesOnce(user) {
    the tiles but don't change the tile styling — consistency
    across the whole hub.
 
-   Routing note (Phase 1 of 3):
-   Some tiles currently route to /picks with a ?open= query param
-   so the right section auto-expands on arrival. Phase 2 will split
-   /picks into dedicated pages (/meal-plan, /shopping-list, etc.)
-   and these routes will update in one sweep. Phase 3 folds Recipe
-   Cards into Recipe Vault and adds a Chef Jennifer Recipes page.
+   Routing note:
+   All tiles now route to dedicated pages. The /picks combined view
+   is deprecated — its direct sections (Meal Plan, Shopping List,
+   Chef Notes, Chef Jennifer Recipes, Skills I Learned) live at
+   /meal-plan, /shopping-list, /chef-notes, /chef-recipes, and
+   /skills respectively. Old ?open= bookmarks still land on /picks
+   for back-compat until Phase 2C retires that page.
    ─────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
@@ -82,7 +83,7 @@ const SECTIONS = [
     subtitle: 'Build your cooking skills.',
     items: [
       { emoji: '🎬', title: 'Chef TV',            description: 'Cooking videos, one tap away.',     href: '/videos' },
-      { emoji: '🎓', title: 'Skills I Learned',   description: 'Your saves, by course.',            href: '/picks?open=chef_videos' },
+      { emoji: '🎓', title: 'Skills I Learned',   description: 'Your saves, by course.',            href: '/skills' },
       { emoji: '💬', title: 'Ask Chef Jennifer',  description: 'Ask anything. Get clear answers.',  href: '/chef' },
       { emoji: '📝', title: 'Chef Notes',         description: 'Saved AI answers, anytime.',        href: '/chef-notes' },
     ]
