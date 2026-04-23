@@ -51,6 +51,26 @@ export default function MyCookingPage() {
     })
   }, [])
 
+  // Deep-link: ?open=<section_key> auto-expands that section and scrolls to it.
+  // Used by MyKitchen tiles (Meal Plan, Shopping List, Chef Notes, Skills I
+  // Learned, Chef Jennifer Recipes) so users land in the right cupboard.
+  // Phase 2 will retire this path by splitting /picks into dedicated pages.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const open = params.get('open')
+    if (!open) return
+    const valid = ['meal_plan', 'shopping_list', 'ai_notes', 'chefjen', 'chef_videos']
+    if (!valid.includes(open)) return
+    setCollapsed(prev => ({ ...prev, [open]: false }))
+    // Wait for the section body to render, then scroll it into view.
+    const t = setTimeout(() => {
+      const el = document.getElementById(`section-${open}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 250)
+    return () => clearTimeout(t)
+  }, [])
+
   async function loadAll(userId) {
     await Promise.all([
       loadPicks(userId),
@@ -386,7 +406,7 @@ export default function MyCookingPage() {
             const isCollapsed = collapsed[section.key]
 
             return (
-              <div key={section.key} className="border-2 border-gray-300 rounded-2xl overflow-hidden shadow-sm">
+              <div key={section.key} id={`section-${section.key}`} className="border-2 border-gray-300 rounded-2xl overflow-hidden shadow-sm scroll-mt-20">
                 <button onClick={() => toggleCollapse(section.key)}
                   className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div className="flex items-center justify-between gap-2">

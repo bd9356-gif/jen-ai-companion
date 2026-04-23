@@ -45,31 +45,53 @@ async function seedStarterRecipesOnce(user) {
   if (!insertError) localStorage.setItem(flagKey, '1')
 }
 
+/* ─────────────────────────────────────────────────────────────
+   MyKitchen hub — 4 sections, 10 tiles.
+   Every tile uses a unified orange left stripe (brand color)
+   mirroring Golf's green-stripe pattern. Section headers group
+   the tiles but don't change the tile styling — consistency
+   across the whole hub.
+
+   Routing note (Phase 1 of 3):
+   Some tiles currently route to /picks with a ?open= query param
+   so the right section auto-expands on arrival. Phase 2 will split
+   /picks into dedicated pages (/meal-plan, /shopping-list, etc.)
+   and these routes will update in one sweep. Phase 3 folds Recipe
+   Cards into Recipe Vault and adds a Chef Jennifer Recipes page.
+   ─────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
-    name: 'Your Cooking Life',
-    subtitle: "Your saved recipes, cooking cards, and what you're making next.",
-    accent: '#f59e0b',
+    name: 'Your Recipes',
+    subtitle: 'Your saved recipes and collections.',
     items: [
-      { emoji: '🔐', title: 'Recipe Vault',  href: '/secret' },
-      { emoji: '🃏', title: 'Recipe Cards',  href: '/cards' },
-      { emoji: '🎯', title: 'MyCooking',     href: '/picks' },
+      { emoji: '🔐', title: 'Recipe Vault',            description: 'Your saved recipes, organized.',       href: '/secret' },
+      { emoji: '🃏', title: 'Recipe Cards',            description: 'Flip through your collection.',        href: '/cards' },
+      { emoji: '✨', title: 'Chef Jennifer Recipes',   description: 'Recipes Jennifer made for you.',       href: '/picks?open=chefjen' },
     ]
   },
   {
-    name: 'AI Kitchen',
-    subtitle: 'Smart support whenever you need ideas, guidance, or answers.',
-    accent: '#a855f7',
+    name: 'Plan & Shop',
+    subtitle: 'Organize what you\'re cooking next.',
     items: [
-      { emoji: '👨‍🍳', title: 'Chef Jennifer', href: '/topchef' },
+      { emoji: '📅', title: 'Meal Plan',     description: 'What you\'re cooking soon.',        href: '/picks?open=meal_plan' },
+      { emoji: '🛒', title: 'Shopping List', description: 'Ingredients, organized to shop.',   href: '/picks?open=shopping_list' },
     ]
   },
   {
-    name: 'Explore',
-    subtitle: 'Find ideas, inspiration, and dishes worth considering.',
-    accent: '#f97316',
+    name: 'Learn',
+    subtitle: 'Build your cooking skills.',
     items: [
-      { emoji: '🎬', title: 'Chef TV', href: '/videos' },
+      { emoji: '🎬', title: 'Chef TV',            description: 'Cooking videos, one tap away.',     href: '/videos' },
+      { emoji: '🎓', title: 'Skills I Learned',   description: 'Your saves, by course.',            href: '/picks?open=chef_videos' },
+      { emoji: '💬', title: 'Ask Chef Jennifer',  description: 'Ask anything. Get clear answers.',  href: '/chef' },
+      { emoji: '📝', title: 'Chef Notes',         description: 'Saved AI answers, anytime.',        href: '/picks?open=ai_notes' },
+    ]
+  },
+  {
+    name: 'Chef Jennifer',
+    subtitle: 'Your personal AI chef.',
+    items: [
+      { emoji: '👨‍🍳', title: 'Chef Jennifer', description: 'Create a new recipe, tailored to you.', href: '/topchef' },
     ]
   },
 ]
@@ -110,24 +132,26 @@ export default function KitchenPage() {
           <div key={section.name}>
             {/* Section header */}
             <div className="mb-3 px-1">
-              <h2 className="text-xs font-extrabold uppercase tracking-wider" style={{color: section.accent}}>{section.name}</h2>
+              <h2 className="text-xs font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
               {section.subtitle && <p className="text-sm text-gray-500 mt-1 leading-snug">{section.subtitle}</p>}
             </div>
             {/* Section items */}
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {section.items.map(item => (
-                <button
-                  key={item.href}
-                  onClick={() => window.location.href = item.href}
-                  className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-95 transition-transform"
-                  style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.07)', borderLeft: `4px solid ${section.accent}` }}
+                <a
+                  key={item.title}
+                  href={item.href}
+                  className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl px-4 py-3 transition-all active:scale-[0.98]"
                 >
-                  <div className="flex items-center gap-4 px-5 py-4">
-                    <span style={{fontSize:'28px', lineHeight:1}}>{item.emoji}</span>
-                    <p className="flex-1 text-base font-semibold text-gray-900">{item.title}</p>
-                    <span className="text-gray-300 text-xl font-light">›</span>
+                  <div className="flex items-center gap-3">
+                    <span style={{fontSize:'26px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-base text-gray-900 leading-tight">{item.title}</h3>
+                      <p className="text-sm text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
+                    </div>
+                    <span className="text-gray-300 text-xl font-light shrink-0">›</span>
                   </div>
-                </button>
+                </a>
               ))}
             </div>
           </div>

@@ -29,27 +29,82 @@ Brand voice is **cozy, modern, confidence-building**. User is **home cooks** who
 
 The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labels were simplified — use them exactly:
 
-| Name            | Route        | What it is                                                           |
-| --------------- | ------------ | -------------------------------------------------------------------- |
-| MyKitchen       | `/kitchen`   | The hub page. Everything routes from here.                            |
-| Chef TV         | `/videos`    | Cooking videos (YouTube-backed). (Renamed from MyChef TV.)            |
-| Recipe Vault    | `/secret`    | Your permanent, organized recipe collection.                          |
-| Recipe Cards    | `/cards`     | Card-style recipe browser (swipe / pick).                             |
-| MyCooking          | `/picks`     | What you're actually cooking. 3 buckets + shopping list + notes.      |
-| Chef Jennifer   | `/topchef`   | AI chef who generates recipes tailored to mood/meal/protein, **and** hosts the "Ask Chef Anything" entry. |
-| Ask Chef Anything | `/chef`    | Free-form AI Q&A (saves answers to MyCooking). **Not in the Kitchen nav** — reached via Chef Jennifer's first screen. |
+| Name                   | Route         | What it is                                                         |
+| ---------------------- | ------------- | ------------------------------------------------------------------ |
+| MyKitchen              | `/kitchen`    | The hub page. Everything routes from here.                          |
+| Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
+| Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
+| Chef Jennifer Recipes  | `/picks?open=chefjen` (Phase 1) | Recipes Jennifer has created and you've saved.   |
+| Meal Plan              | `/picks?open=meal_plan` (Phase 1) | What you're cooking soon, organized by bucket.  |
+| Shopping List          | `/picks?open=shopping_list` (Phase 1) | Ingredients grouped by store.               |
+| Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
+| Skills I Learned       | `/picks?open=chef_videos` (Phase 1) | Saved Chef TV videos + notes, by course.      |
+| Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes.                         |
+| Chef Notes             | `/picks?open=ai_notes` (Phase 1) | Saved AI answers, chronological.                 |
+| Chef Jennifer          | `/topchef`    | AI chef who generates recipes tailored to mood/meal/protein.        |
+
+"(Phase 1)" markers flag tiles that currently deep-link into `/picks` using a `?open=<section_key>` query param. Phase 2 splits `/picks` into dedicated pages and those routes update in one sweep — see **IA restructure roadmap** below.
 
 Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/browse`, `/about`, `/profile`, `/login`, `/auth`, `/not-found`.
 
-## Kitchen navigation sections (with accent colors)
+## IA restructure roadmap (April 2026)
 
-These live in `app/kitchen/page.js` and drive MyKitchen's grouped layout. Copy them exactly if referenced elsewhere:
+MyKitchen moved from a 3-section (Your Cooking Life / AI Kitchen / Explore) layout with 5 tiles to a **4-section, 10-tile** layout. Bill's framing: "Separate cupboards, separate bowls — each thing with its place. It reminds me of my mother's way of cooking."
 
-Section order (top → bottom) flows from "your saved stuff" → "AI support" → "discovery":
+The rollout is phased so no single commit drops a huge amount of unreviewed code:
 
-- **Your Cooking Life** (`#f59e0b` amber) — "Your saved recipes, cooking cards, and what you're making next." → Recipe Vault, Recipe Cards, MyCooking
-- **AI Kitchen** (`#a855f7` purple) — "Smart support whenever you need ideas, guidance, or answers." → Chef Jennifer (which also contains the Ask-anything entry)
-- **Explore** (`#f97316` orange) — "Find ideas, inspiration, and dishes worth considering." → Chef TV
+- **Phase 1 (shipped).** Rewrite `app/kitchen/page.js` with the new sections/tiles and a unified orange left stripe. Add a `?open=<key>` handler on `/picks` so five of the tiles (Meal Plan, Shopping List, Chef Notes, Skills I Learned, Chef Jennifer Recipes) deep-link straight to the right section on that still-combined page. This is a **bridge** — the hub looks finished immediately, the underlying pages catch up in Phase 2.
+- **Phase 2 (next).** Split `/picks` into four dedicated pages — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/skills`. Retire the `?open=` handler. Ship Skills I Learned as a MyBag-style bucketed view (see "Skills I Learned buckets" below).
+- **Phase 3.** Fold `/cards` into `/secret` as a list/card view toggle; build a dedicated Chef Jennifer Recipes page (or filter inside Recipe Vault). Decision on which is deferred — will pick based on how many Chef Jen saves feel natural alongside vault recipes during Phase 2 review.
+
+Phase 1 is NOT a full naming sweep of downstream pages yet — the /picks page still labels itself "MyCooking" internally, Ask Chef Anything still says "Ask Chef Anything" in places, etc. Those get swept as each page is rebuilt in its phase.
+
+## Kitchen navigation sections
+
+These live in `app/kitchen/page.js`. MyKitchen is **4 sections and 10 tiles** total. All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern. No dash subtitles; each tile shows `title` (bold) + `description` (truncated one-liner).
+
+Section headers are small orange uppercase labels with a one-line section subtitle below, followed by the section's tiles.
+
+### Section structure
+
+1. **Your Recipes** — "Your saved recipes and collections."
+   - 🔐 Recipe Vault → `/secret` — "Your saved recipes, organized."
+   - 🃏 Recipe Cards → `/cards` — "Flip through your collection."
+   - ✨ Chef Jennifer Recipes → `/picks?open=chefjen` — "Recipes Jennifer made for you."
+
+2. **Plan & Shop** — "Organize what you're cooking next."
+   - 📅 Meal Plan → `/picks?open=meal_plan` — "What you're cooking soon."
+   - 🛒 Shopping List → `/picks?open=shopping_list` — "Ingredients, organized to shop."
+
+3. **Learn** — "Build your cooking skills."
+   - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away."
+   - 🎓 Skills I Learned → `/picks?open=chef_videos` — "Your saves, by course."
+   - 💬 Ask Chef Jennifer → `/chef` — "Ask anything. Get clear answers."
+   - 📝 Chef Notes → `/picks?open=ai_notes` — "Saved AI answers, anytime."
+
+4. **Chef Jennifer** — "Your personal AI chef."
+   - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you."
+
+### `/picks` deep-link handler (Phase 1 bridge)
+
+`app/picks/page.js` has a second `useEffect` that reads `?open=<section_key>` on mount. If the key is valid (`meal_plan`, `shopping_list`, `ai_notes`, `chefjen`, `chef_videos`), the page auto-expands that section and smooth-scrolls to it via `document.getElementById('section-' + key)`. Each section wrapper has a matching `id` and `scroll-mt-20` so the section title isn't hidden under the sticky header.
+
+This handler exists purely to make Phase 1 usable on its own. Phase 2 retires it.
+
+### Skills I Learned buckets (Phase 2 spec)
+
+When Phase 2 ships Skills I Learned at its own route, it will mirror Golf's MyBag pattern — six **fixed** buckets that hold both saved Chef TV videos AND saved Chef Notes together. Buckets are **by course type**, not technique, because that matches how home cooks actually learn (Bill: "I learned the dishes first, then realized they were skills"):
+
+| Emoji | Bucket       | Meaning                                             |
+| ----- | ------------ | --------------------------------------------------- |
+| 📥    | The Starter  | New saves land here; user moves them.               |
+| 🍳    | Breakfast    |                                                     |
+| 🍽️    | Mains        |                                                     |
+| 🥕    | Sides & Veg  |                                                     |
+| 🥖    | Baking       | Breads and savory baking.                           |
+| 🍰    | Desserts     | Sweet endings.                                      |
+
+No rename / reorder / delete (locked like Golf's MyBag). The `favorites` + `saved_videos` + `saved_education_videos` tables already carry enough metadata; Phase 2 will add a nullable `cooking_bucket` column (or a per-user mapping table) to remember which item the user has placed in which bucket.
 
 ## MyCooking buckets (`/picks`)
 
