@@ -57,7 +57,7 @@ The rollout is phased so no single commit drops a huge amount of unreviewed code
 - **Phase 2A (shipped).** Extract four dedicated pages from `/picks` — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes` — each a focused, single-purpose screen. Hub tiles updated to point at the real routes. Shared row components live in `components/ExpandableItem.js`, `components/ChefJenItem.js`, `components/VideoItem.js`, `components/ShoppingByStore.js` (which also exports `StoreEditor`) so both the old `/picks` page and the new dedicated pages stay in sync.
 - **Phase 2B (shipped).** Ship Skills I Learned at `/skills` as a MyBag-style bucketed view — six fixed buckets (📥 The Starter, 🍳 Breakfast, 🍽️ Mains, 🥕 Sides & Veg, 🥖 Baking, 🍰 Desserts). Bucket assignments live in a new `cooking_skill_items` table (migration `supabase/002_cooking_skill_items.sql`). Hub tile updated; old `?open=chef_videos` links still resolve for back-compat.
 - **Phase 2C (shipped).** Retire `/picks` entirely. `app/picks/page.js` is now a server-side redirect — it forwards the plain route to `/kitchen` and each of the five old `?open=<key>` bookmarks to the matching dedicated page (see "`/picks` redirect" below). The combined `/picks` UI (and its `loadAll` etc.) is gone; behavior that lived there now lives in `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes`, and `/skills`.
-- **Phase 3.** Fold `/cards` into `/secret` as a list/card view toggle. Decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — will pick based on how many Chef Jen saves feel natural alongside vault recipes once people are using the dedicated page.
+- **Phase 3 (reverted, reopened).** First attempt folded `/cards` into `/secret` as a list/card view toggle — that was **wrong** (see "Recipe Cards concept" below). A Card is its own object, not a visual mode of a recipe. Reverted in commit `2e211bc`. Still to do: decide whether a separate `/cards` page is the right home going forward or if the Card concept lives as something else. Also still to decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — picking once there's usage signal.
 
 Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything still says "Ask Chef Anything" in places, for example. Those get swept as each page is touched in later phases.
 
@@ -219,6 +219,22 @@ The **same option list** is also reused on the Recipe Vault "Make This Recipe Mo
 - **Photo-less hero fallback.** When `viewing.photo_url` is empty, the hero shows a soft orange gradient (`from-orange-100 via-orange-50 to-amber-100`) with a large category emoji from `categoryEmoji(recipe)` — the fallback gives each recipe visual personality without a photo. The whole gradient is clickable and triggers the hidden `<input type="file">` for photo upload.
 - **Change-photo affordance.** When a photo IS set, a small "📷 Change" button floats at the top-right of the hero. It triggers the same upload input, so the hero stays self-contained.
 - **`categoryEmoji(recipe)` helper.** Lives at the top of `app/secret/page.js` and returns an emoji based on regex matches against the recipe's title / category / tags (pizza → 🍕, pasta → 🍝, salad → 🥗, soup → 🍲, etc.). Falls back to 🍽️. Used by the photo-less hero; can be reused for list cards if we want to extend the pattern.
+
+## Recipe Cards concept — READ THIS BEFORE TOUCHING `/cards`
+
+**A Card is NOT a short recipe or a visual mode of a recipe. A Card is a chef card.**
+
+Bill's framing: "The card does not need instructions — concept is an old-style card or chef card, they know how to make it." Think grandma's 3x5 index box, or a pro's station cards: the stuff a chef already knows how to make and only needs a reminder for. Name, picture, ingredients, a place for family notes and memories, maybe quick tips. The formal step-by-step recipe lives in the **Vault**, not on the Card — that's what "Full Recipe →" links out to when you actually need instructions.
+
+So:
+- **Vault recipe** = the full teach-me-how version: ingredients AND instructions AND metadata.
+- **Card** = the remind-me version: ingredients + family notes + (optionally) quick chef suggestions. **No instructions.** The absence is the point.
+
+Implications for anyone tempted to "simplify" `/cards`:
+- Do not fold `/cards` into `/secret` as a visual toggle. That was tried once (Phase 3, commit `b4c4a38`) and reverted (`2e211bc`) because it deleted the concept.
+- Do not tap a card and open the Vault detail view with full instructions — that defeats the point.
+- Cards are a curated subset (the ones a user has actually captured to their "card box") — not every vault recipe is automatically a card.
+- The pin-to-cards button on the Vault detail view is the user's way of saying "this one goes in the card box." Keep it.
 
 ## Recipe Cards presentation notes (`/cards`)
 
