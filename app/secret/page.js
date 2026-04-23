@@ -448,7 +448,6 @@ export default function MyRecipeVaultPage() {
   const [educationVideos, setEducationVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
-  const [listStyle, setListStyle] = useState('list') // 'list' | 'cards' — list-view grid style (Phase 3)
   const [viewing, setViewing] = useState(null)
   const [showVideo, setShowVideo] = useState(true)
   const [searchTag, setSearchTag] = useState('')
@@ -575,15 +574,11 @@ export default function MyRecipeVaultPage() {
     setRecipes(data || [])
     setLoading(false)
     // Auto-open recipe if ?recipe=ID in URL
-    const searchParams = new URLSearchParams(window.location.search)
-    const recipeParam = searchParams.get('recipe')
+    const recipeParam = new URLSearchParams(window.location.search).get('recipe')
     if (recipeParam && data) {
       const match = data.find(r => r.id === recipeParam)
       if (match) { setViewing(match); setView('detail') }
     }
-    // Honor ?view=cards — lets the Kitchen tile (and the /cards redirect) land
-    // users directly in the index-card grid. Phase 3 folded /cards into here.
-    if (searchParams.get('view') === 'cards') setListStyle('cards')
   }
 
   async function uploadPhoto(file, userId) {
@@ -885,6 +880,11 @@ export default function MyRecipeVaultPage() {
                 className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
               <button onClick={() => setView('enhance')}
                 className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI</button>
+              <button onClick={() => toggleCardPin(viewing.id)}
+                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
+                  pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200'}`}>
+                {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
+              </button>
               <button onClick={async () => {
                 await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
                 setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
@@ -1696,25 +1696,6 @@ export default function MyRecipeVaultPage() {
               >
                 {(showSearch || searchText) ? '✕' : '🔍'}
               </button>
-              <button
-                onClick={() => {
-                  const next = listStyle === 'cards' ? 'list' : 'cards'
-                  setListStyle(next)
-                  // Keep the URL in sync so refresh / share preserves the view.
-                  const url = new URL(window.location.href)
-                  if (next === 'cards') url.searchParams.set('view', 'cards')
-                  else url.searchParams.delete('view')
-                  window.history.replaceState({}, '', url.toString())
-                }}
-                title={listStyle === 'cards' ? 'Switch to list view' : 'Switch to cards view'}
-                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 ${
-                  listStyle === 'cards'
-                    ? 'bg-orange-600 text-white border-orange-600'
-                    : 'text-gray-500 border-gray-200'
-                }`}
-              >
-                {listStyle === 'cards' ? '📋' : '🃏'}
-              </button>
               <button onClick={() => setView('import')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">📥 Import</button>
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
@@ -1796,60 +1777,33 @@ export default function MyRecipeVaultPage() {
                 {regularRecipes.length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-4">No recipes match your search</p>
                 )}
-                {listStyle === 'cards' ? (
-                  /* Index-card grid (folded in from the old /cards page).
-                     Cream paper body, red top rule, thin amber border. */
-                  <div className="grid grid-cols-2 gap-3">
-                    {regularRecipes.map(recipe => (
-                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
-                        className="text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
-                        <div className="bg-red-600 h-1.5" />
-                        <div className="px-3 pt-3 pb-1">
-                          <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
-                        </div>
-                        <div className="px-3 pb-3">
-                          {recipe.photo_url ? (
-                            <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
-                              <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
-                            </div>
-                          ) : (
-                            <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
-                              <span style={{fontSize:'32px'}}>{categoryEmoji(recipe)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {regularRecipes.map(recipe => (
-                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
-                        className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
-                        <div className="flex gap-3 p-4">
-                          {recipe.photo_url ? (
-                            <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                          ) : (
-                            <div className="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-                              <span className="text-2xl">🍽️</span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
-                            {recipe.description && <p className="text-xs text-gray-500 truncate mb-1">{recipe.description}</p>}
-                            <div className="flex flex-wrap gap-1">
-                              {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
-                              {(recipe.tags || []).slice(0, 3).map(tag => (
-                                <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">#{tag}</span>
-                              ))}
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {regularRecipes.map(recipe => (
+                    <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
+                      className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
+                      <div className="flex gap-3 p-4">
+                        {recipe.photo_url ? (
+                          <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                        ) : (
+                          <div className="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
+                            <span className="text-2xl">🍽️</span>
                           </div>
-                          <span className="text-gray-400 text-xl self-center">→</span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
+                          {recipe.description && <p className="text-xs text-gray-500 truncate mb-1">{recipe.description}</p>}
+                          <div className="flex flex-wrap gap-1">
+                            {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
+                            {(recipe.tags || []).slice(0, 3).map(tag => (
+                              <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">#{tag}</span>
+                            ))}
+                          </div>
                         </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                        <span className="text-gray-400 text-xl self-center">→</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* My References Section */}
