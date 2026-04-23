@@ -7,14 +7,14 @@ import { redirect } from 'next/navigation'
 //   /picks?open=shopping_list      → /shopping-list
 //   /picks?open=ai_notes           → /chef-notes
 //   /picks?open=chefjen            → /chef-recipes
-//   /picks?open=chef_videos        → /skills
+//   /picks?open=chef_videos        → /playbook   (was /skills; pivoted April 2026)
 // Any unknown `?open=` value falls through to /kitchen.
 const OPEN_TO_ROUTE = {
   meal_plan: '/meal-plan',
   shopping_list: '/shopping-list',
   ai_notes: '/chef-notes',
   chefjen: '/chef-recipes',
-  chef_videos: '/skills',
+  chef_videos: '/playbook',
 }
 
 export default async function PicksRedirect({ searchParams }) {

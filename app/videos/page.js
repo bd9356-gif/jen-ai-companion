@@ -18,6 +18,19 @@ const CATEGORY_GROUPS = [
   { label: 'Style',    items: ['Quick', 'Baking', 'Technique'] },
 ]
 
+// My Playbook buckets — a save isn't a save, it's a placement into one of
+// these four intent-based buckets. Tapping a bucket on an unsaved video
+// creates the favorites + cooking_skill_items rows; tapping the same bucket
+// again removes both; tapping a different bucket updates the bucket in
+// place. Matches /playbook exactly. Full Tailwind class literals per
+// bucket (JIT requirement).
+const PLAYBOOK_BUCKETS = [
+  { key: 'save',   emoji: '📥', label: 'Save',   activeCls: 'bg-slate-600 text-white border-slate-600' },
+  { key: 'love',   emoji: '❤️', label: 'Love',   activeCls: 'bg-rose-500 text-white border-rose-500' },
+  { key: 'cooked', emoji: '👩‍🍳', label: 'Cooked', activeCls: 'bg-emerald-600 text-white border-emerald-600' },
+  { key: 'learn',  emoji: '🎓', label: 'Learn',  activeCls: 'bg-sky-500 text-white border-sky-500' },
+]
+
 const CHANNELS = [
   'All Channels',
   'Chef Jean-Pierre', 'Jamie Oliver', 'Binging with Babish', 'Joshua Weissman',
@@ -85,7 +98,11 @@ export default function VideosPage() {
   const [user, setUser] = useState(null)
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
-  const [savedIds, setSavedIds] = useState(new Set())
+  // savedMap: video.id (string ref_id) → { favId, bucket }.
+  // favId is the favorites row UUID (for deletes + bucket upserts).
+  // bucket is the current Playbook bucket (save/love/cooked/learn).
+  // Absence from this map = video is not saved at all.
+  const [savedMap, setSavedMap] = useState(new Map())
   const [category, setCategory] = useState('All Categories')
   const [channel, setChannel] = useState('All Channels')
   const [search, setSearch] = useState('')
@@ -132,42 +149,104 @@ export default function VideosPage() {
   }
 
   async function loadSaved(userId) {
-    const { data } = await supabase
+    // Load favorites first (video-only types), then join cooking_skill_items
+    // via the favorites UUID to find each save's current Playbook bucket.
+    // Videos not in cooking_skill_items default to 'save'.
+    const { data: favs } = await supabase
       .from('favorites')
-      .select('ref_id')
+      .select('id, ref_id')
       .eq('user_id', userId)
       .eq('is_in_vault', false)
       .in('type', ['video_recipe', 'video_education'])
-    setSavedIds(new Set((data || []).map(s => s.ref_id)))
+    const favIds = (favs || []).map(f => f.id)
+    const { data: bucketRows } = favIds.length
+      ? await supabase
+          .from('cooking_skill_items')
+          .select('item_id, bucket')
+          .eq('user_id', userId)
+          .eq('item_type', 'favorite')
+          .in('item_id', favIds)
+      : { data: [] }
+    const bucketByFavId = new Map((bucketRows || []).map(r => [r.item_id, r.bucket]))
+    const next = new Map()
+    for (const f of (favs || [])) {
+      next.set(f.ref_id, { favId: f.id, bucket: bucketByFavId.get(f.id) || 'save' })
+    }
+    setSavedMap(next)
   }
 
-  async function toggleSave(video) {
+  // Tap a bucket on a video. Three cases:
+  //   1. Video not saved       → insert favorites + cooking_skill_items(bucket)
+  //   2. Video in same bucket  → remove (delete favorites + cooking_skill_items)
+  //   3. Video in other bucket → upsert cooking_skill_items to new bucket
+  // The favorites row is the single source-of-truth for "is this saved?"; the
+  // cooking_skill_items row carries the bucket placement.
+  async function setBucket(video, bucket) {
     if (!user) return
     const videoId = String(video.id)
-    if (savedIds.has(videoId)) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('ref_id', videoId)
-      setSavedIds(prev => { const n = new Set(prev); n.delete(videoId); return n })
-    } else {
-      const meta = metadata[video.id]
-      const hasRecipe = meta?.ingredients?.length > 0
-      await supabase.from('favorites').insert({
-        user_id: user.id,
-        type: hasRecipe ? 'video_recipe' : 'video_education',
-        ref_id: videoId,
-        title: video.title,
-        thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
-        source: hasRecipe ? 'chef' : 'education',
-        metadata: {
-          channel: video.channel,
-          duration: video.duration,
-          youtube_id: video.youtube_id,
-          ingredients: meta?.ingredients || [],
-          instructions: meta?.instructions || '',
-          ai_summary: meta?.ai_summary || '',
-        }
-      })
-      setSavedIds(prev => new Set([...prev, videoId]))
+    const current = savedMap.get(videoId)
+
+    if (current && current.bucket === bucket) {
+      // Case 2: toggle off
+      await supabase.from('favorites').delete().eq('id', current.favId)
+      await supabase.from('cooking_skill_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('item_type', 'favorite')
+        .eq('item_id', current.favId)
+      setSavedMap(prev => { const n = new Map(prev); n.delete(videoId); return n })
+      return
     }
+
+    if (current) {
+      // Case 3: move between buckets
+      const { error } = await supabase.from('cooking_skill_items').upsert({
+        user_id: user.id,
+        item_type: 'favorite',
+        item_id: current.favId,
+        bucket,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,item_type,item_id' })
+      if (error) return
+      setSavedMap(prev => {
+        const n = new Map(prev)
+        n.set(videoId, { ...current, bucket })
+        return n
+      })
+      return
+    }
+
+    // Case 1: first save — insert both rows
+    const meta = metadata[video.id]
+    const hasRecipe = meta?.ingredients?.length > 0
+    const { data: inserted, error: favErr } = await supabase.from('favorites').insert({
+      user_id: user.id,
+      type: hasRecipe ? 'video_recipe' : 'video_education',
+      ref_id: videoId,
+      title: video.title,
+      thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+      source: hasRecipe ? 'chef' : 'education',
+      metadata: {
+        channel: video.channel,
+        duration: video.duration,
+        youtube_id: video.youtube_id,
+        ingredients: meta?.ingredients || [],
+        instructions: meta?.instructions || '',
+        ai_summary: meta?.ai_summary || '',
+      }
+    }).select('id').single()
+    if (favErr || !inserted) return
+    await supabase.from('cooking_skill_items').insert({
+      user_id: user.id,
+      item_type: 'favorite',
+      item_id: inserted.id,
+      bucket,
+    })
+    setSavedMap(prev => {
+      const n = new Map(prev)
+      n.set(videoId, { favId: inserted.id, bucket })
+      return n
+    })
   }
 
   function toggleExpand(videoId) {
@@ -194,7 +273,7 @@ export default function VideosPage() {
       const matchSearch = search === '' || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase())
       const matchFilter = filter === 'all' || (filter === 'recipe' && hasRecipe) || (filter === 'summary' && !hasRecipe)
       const matchShorts = showShorts || !isShort(v.duration)
-      const matchSaved  = sortBy !== 'saved' || savedIds.has(String(v.id))
+      const matchSaved  = sortBy !== 'saved' || savedMap.has(String(v.id))
       return matchCategory && matchChannel && matchSearch && matchFilter && matchShorts && matchSaved
     })
     .sort((a, b) => {
@@ -355,7 +434,7 @@ export default function VideosPage() {
                   const isExpanded = expandedId === video.id
                   const hasRecipe = meta?.ingredients?.length > 0
                   const videoId = String(video.id)
-                  const saved = savedIds.has(videoId)
+                  const savedEntry = savedMap.get(videoId)  // { favId, bucket } | undefined
                   const steps = parseInstructions(meta?.instructions)
                   return (
                     <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 hover:shadow-sm transition-all">
@@ -372,25 +451,33 @@ export default function VideosPage() {
                           {video.duration && (
                             <div className="absolute bottom-2 right-2 bg-black/85 text-white text-[11px] px-2 py-0.5 rounded-md font-semibold">{video.duration}</div>
                           )}
-                          {/* Floating save button (stopPropagation so the thumbnail doesn't play) */}
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            aria-label={saved ? 'Remove from Skills I Learned' : 'Save to Skills I Learned'}
-                            title={saved ? 'Saved — tap to remove' : 'Save to Skills I Learned'}
-                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleSave(video) }}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); toggleSave(video) } }}
-                            className={`absolute top-2 right-2 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-110 ${
-                              saved ? 'bg-rose-500 text-white' : 'bg-white/95 text-gray-700 hover:text-rose-500'
-                            }`}
-                          >
-                            <svg viewBox="0 0 24 24" className="w-5 h-5" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                          </span>
                         </button>
                       )}
                       <div className="p-4">
+                        {/* Playbook save strip — tap a bucket to save this video there.
+                            Tap the same bucket again to remove. Tap a different bucket
+                            to move. No separate save button — the strip IS the save UX. */}
+                        <div className="flex gap-1 mb-3">
+                          {PLAYBOOK_BUCKETS.map(b => {
+                            const isActive = savedEntry?.bucket === b.key
+                            return (
+                              <button
+                                key={b.key}
+                                onClick={() => setBucket(video, b.key)}
+                                title={isActive ? `Remove from ${b.label}` : `Save to ${b.label}`}
+                                aria-label={isActive ? `Remove from ${b.label}` : `Save to ${b.label}`}
+                                className={`flex-1 flex items-center justify-center gap-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
+                                  isActive
+                                    ? b.activeCls
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
+                                }`}
+                              >
+                                <span className="text-sm leading-none">{b.emoji}</span>
+                                <span className="hidden sm:inline">{b.label}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
                         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">{video.title}</h3>
                         <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
                         <p className="text-xs text-gray-500 mt-0.5 mb-2">{viewCount(video.view_count)}</p>

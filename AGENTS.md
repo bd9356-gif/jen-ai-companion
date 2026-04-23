@@ -35,7 +35,7 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
 | Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
-| Skills I Learned       | `/skills`     | Saved Chef TV videos + Chef Notes, bucketed by course type.         |
+| My Playbook            | `/playbook`   | Saved Chef TV videos, bucketed by intent (Save/Love/Cooked/Learn).  |
 | Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes.                         |
 | Chef Notes             | `/chef-notes` | Saved AI answers, chronological.                                    |
 | Chef Jennifer Recipes  | `/chef-recipes` | Recipes Chef Jennifer made for you; save-to-vault from here.      |
@@ -55,8 +55,8 @@ The rollout is phased so no single commit drops a huge amount of unreviewed code
 
 - **Phase 1 (shipped).** Rewrite `app/kitchen/page.js` with the new sections/tiles and a unified orange left stripe. Add a `?open=<key>` handler on `/picks` so five of the tiles (Meal Plan, Shopping List, Chef Notes, Skills I Learned, Chef Jennifer Recipes) deep-link straight to the right section on that still-combined page. This is a **bridge** — the hub looks finished immediately, the underlying pages catch up in Phase 2.
 - **Phase 2A (shipped).** Extract four dedicated pages from `/picks` — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes` — each a focused, single-purpose screen. Hub tiles updated to point at the real routes. Shared row components live in `components/ExpandableItem.js`, `components/ChefJenItem.js`, `components/VideoItem.js`, `components/ShoppingByStore.js` (which also exports `StoreEditor`) so both the old `/picks` page and the new dedicated pages stay in sync.
-- **Phase 2B (shipped).** Ship Skills I Learned at `/skills` as a MyBag-style bucketed view — six fixed buckets (📥 The Starter, 🍳 Breakfast, 🍽️ Mains, 🥕 Sides & Veg, 🥖 Baking, 🍰 Desserts). Bucket assignments live in a new `cooking_skill_items` table (migration `supabase/002_cooking_skill_items.sql`). Hub tile updated; old `?open=chef_videos` links still resolve for back-compat.
-- **Phase 2C (shipped).** Retire `/picks` entirely. `app/picks/page.js` is now a server-side redirect — it forwards the plain route to `/kitchen` and each of the five old `?open=<key>` bookmarks to the matching dedicated page (see "`/picks` redirect" below). The combined `/picks` UI (and its `loadAll` etc.) is gone; behavior that lived there now lives in `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes`, and `/skills`.
+- **Phase 2B (shipped, later pivoted).** Initially shipped Skills I Learned at `/skills` with six course-type buckets (📥 The Starter, 🍳 Breakfast, 🍽️ Mains, 🥕 Sides & Veg, 🥖 Baking, 🍰 Desserts). Bucket assignments live in `cooking_skill_items` (migration `supabase/002_cooking_skill_items.sql`). This was **retired in April 2026** — see "My Playbook pivot" below. `/skills` is now a server-side redirect to `/playbook`; the `cooking_skill_items` table was migrated via `supabase/003_playbook_buckets.sql` to use the new intent-based buckets (Save/Love/Cooked/Learn).
+- **Phase 2C (shipped).** Retire `/picks` entirely. `app/picks/page.js` is now a server-side redirect — it forwards the plain route to `/kitchen` and each of the five old `?open=<key>` bookmarks to the matching dedicated page (see "`/picks` redirect" below). The combined `/picks` UI (and its `loadAll` etc.) is gone; behavior that lived there now lives in `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes`, and `/playbook` (formerly `/skills`).
 - **Phase 3 (reverted, reopened).** First attempt folded `/cards` into `/secret` as a list/card view toggle — that was **wrong** (see "Recipe Cards concept" below). A Card is its own object, not a visual mode of a recipe. Reverted in commit `2e211bc`. Still to do: decide whether a separate `/cards` page is the right home going forward or if the Card concept lives as something else. Also still to decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — picking once there's usage signal.
 
 Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything still says "Ask Chef Anything" in places, for example. Those get swept as each page is touched in later phases.
@@ -78,11 +78,11 @@ Section headers are small orange uppercase labels with a one-line section subtit
    - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
-3. **Learn** — "Build your cooking skills."
-   - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away."
-   - 🎓 Skills I Learned → `/skills` — "Your saves, by course."
-   - 💬 Ask Chef Jennifer → `/chef` — "Ask anything. Get clear answers."
-   - 📝 Chef Notes → `/chef-notes` — "Saved AI answers, anytime."
+3. **Learn** — "Build your cooking skills." Two sources (Chef TV for videos, Ask Chef Jennifer for AI answers) each have their own destination for saves (My Playbook for videos, Chef Notes for AI answers). Keeping them separate is intentional.
+   - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away." **Source.**
+   - 📘 My Playbook → `/playbook` — "What you save, make, and improve." **Destination for Chef TV saves.**
+   - 💬 Ask Chef Jennifer → `/chef` — "Ask anything. Get clear answers." **Source.**
+   - 📝 Chef Notes → `/chef-notes` — "Saved AI answers, anytime." **Destination for Ask Chef Jennifer saves.**
 
 4. **Chef Jennifer** — "Your personal AI chef."
    - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you."
@@ -97,7 +97,7 @@ Section headers are small orange uppercase labels with a one-line section subtit
 | `shopping_list`    | `/shopping-list`   |
 | `ai_notes`         | `/chef-notes`      |
 | `chefjen`          | `/chef-recipes`    |
-| `chef_videos`      | `/skills`          |
+| `chef_videos`      | `/playbook`        |
 | (missing/unknown)  | `/kitchen`         |
 
 This preserves old bookmarks while the combined `/picks` page is gone. If/when we're confident no one is hitting these URLs anymore, delete `app/picks/` outright and Next will 404.
@@ -117,34 +117,38 @@ Factored out of `app/picks/page.js` so both `/picks` and the Phase 2A pages rend
 
 - `components/ExpandableItem.js` — one saved AI answer. Props: `item`, `emoji`, `onRemove`. Toggle-open reveals `metadata.answer`.
 - `components/ChefJenItem.js` — one saved Chef Jennifer recipe. Props: `item`, `onRemove`, `onSaveToVault`. Renders measure + name for each ingredient; bolds measures when present.
-- `components/VideoItem.js` — one saved Chef TV video thumbnail with play-to-embed behavior (for Skills I Learned rows — used by `/picks` today and `/skills` in Phase 2B).
+- `components/VideoItem.js` — one saved Chef TV video thumbnail with play-to-embed behavior (used by `/playbook`).
 - `components/ShoppingByStore.js` — the grouped-by-store grid. Default export: `ShoppingByStore`. Named export: `StoreEditor` (inline store manager — add/edit/remove with emoji + website URL). Internal helper: `StoreRow`.
 
-`/picks` still imports and uses all of these for its remaining Skills I Learned section (and keeps rendering its other sections the same way until Phase 2B).
+`/picks` was retired in Phase 2C — the shared components above are used by the dedicated pages (`/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes`, `/playbook`).
 
-### Skills I Learned (`/skills`)
+### My Playbook (`/playbook`)
 
-Mirrors Golf's MyBag pattern — six **fixed** buckets that hold both saved Chef TV videos AND saved Chef Notes together. Buckets are **by course type**, not technique, because that matches how home cooks actually learn (Bill: "I learned the dishes first, then realized they were skills"):
+**Pivot from Skills I Learned (April 2026).** The original Skills I Learned used six course-type buckets (Starter / Breakfast / Mains / Sides & Veg / Baking / Desserts). Bill's read: sorting cooking videos that way is impossible because videos don't cleanly fit course types — a single video is often a main AND a technique AND a weeknight thing. The buckets asked *what kind of food is it?*, but the question the user can actually answer at save time is *what do I want to do with this?*
 
-| Key       | Emoji | Bucket       | Color  |
-| --------- | ----- | ------------ | ------ |
-| starter   | 📥    | The Starter  | yellow |
-| breakfast | 🍳    | Breakfast    | orange |
-| mains     | 🍽️    | Mains        | rose   |
-| sides     | 🥕    | Sides & Veg  | green  |
-| baking    | 🥖    | Baking       | amber  |
-| desserts  | 🍰    | Desserts     | pink   |
+My Playbook replaces course-type buckets with four **intent-based** buckets. It's also video-only now — saved AI answers land in Chef Notes (`/chef-notes`), not here, giving Chef TV and Ask Chef Jennifer each their own destination tile under the Learn section.
 
-No rename / reorder / delete — locked like Golf's MyBag. All colors are written as complete literal Tailwind class strings in `app/skills/page.js` (`COLOR` map) so v4's JIT scanner picks them up.
+| Key    | Emoji | Bucket | Meaning                    | Color    |
+| ------ | ----- | ------ | -------------------------- | -------- |
+| save   | 📥    | Save   | Quick stash, no thinking.  | slate    |
+| love   | ❤️    | Love   | Meals you want to make.    | rose     |
+| cooked | 👩‍🍳  | Cooked | What you've made.          | emerald  |
+| learn  | 🎓    | Learn  | What you're working on.    | sky      |
 
-**Data model.** A `cooking_skill_items` table (migration `supabase/002_cooking_skill_items.sql`) stores one row per `(user_id, item_type, item_id)` placing an item into a bucket. It does NOT own the save — source items still live in `saved_videos` / `saved_education_videos` / `favorites`. Items with no row default to `starter`.
+No rename / reorder / delete — locked, like Golf's MyBag. All colors are written as complete literal Tailwind class strings in `app/playbook/page.js` (`COLOR` map) and `app/videos/page.js` (`PLAYBOOK_BUCKETS`) so v4's JIT scanner picks them up.
 
-`item_type` values:
+**Save-at-source UX (important).** Chef TV video cards no longer have a single heart-shaped save button. Instead, each card shows a **4-button save strip** under the thumbnail — 📥 Save / ❤️ Love / 👩‍🍳 Cooked / 🎓 Learn. One tap places the video directly into that bucket (no default "Starter" limbo). Tapping the same bucket again removes the save. Tapping a different bucket moves it between buckets. Labels are hidden on mobile (`sm:inline`) to fit 4 buttons side-by-side; desktop shows emoji + label. Per-bucket active state uses `activeCls` with a filled colored background; inactive buttons are white with gray border.
+
+**Data model.** Same `cooking_skill_items` table as before. `supabase/003_playbook_buckets.sql` migrated the old course-type buckets: dropped the CHECK constraint by definition lookup, collapsed every existing row from `starter`/`breakfast`/`mains`/`sides`/`baking`/`desserts` → `save`, changed the default to `save`, installed a new CHECK allowing only `save`/`love`/`cooked`/`learn`. Safe to re-run.
+
+`item_type` values (unchanged from Phase 2B):
 - `cooking_video` — `item_id` = `cooking_videos.id` (legacy Chef TV save)
 - `education_video` — `item_id` = `education_videos.id` (legacy education save)
-- `favorite` — `item_id` = `favorites.id`. Covers all favorites-sourced items (`ai_answer`, `video_recipe`, `video_education`) — the source's `favorites.type` discriminates how to render.
+- `favorite` — `item_id` = `favorites.id`. Covers all favorites-sourced items. The source's `favorites.type` still discriminates — but `/playbook` only loads `video_recipe` and `video_education` (videos); `ai_answer` favorites are intentionally excluded and live only in Chef Notes.
 
-**Page behavior.** `loadAll` fetches the three source tables + `cooking_skill_items` in parallel and merges them into one normalized list. If the same underlying video exists in both legacy (`saved_videos`) and new (`favorites`) form, the legacy row wins (dedupe by `_item_type:_item_id`). Each row renders via `<VideoItem>` (videos) or `<ExpandableItem>` (AI answers) plus an inline "Move ▾" menu showing the other five buckets as colored chips. Moving upserts into `cooking_skill_items`; removing deletes from the source table AND the `cooking_skill_items` row. All buckets default to **collapsed** on page load; moving an item auto-expands the destination bucket so the user sees where it went. A yellow callout at the top of the page explains that new saves land in The Starter.
+**Page behavior.** `loadAll` fetches the three source tables + `cooking_skill_items` in parallel and merges them. If the same underlying video exists in both legacy (`saved_videos`) and new (`favorites`) form, the legacy row wins (dedupe by `_item_type:_item_id`). Each row renders via `<VideoItem>` plus an inline "Move ▾" menu showing the other three buckets as colored chips. Moving upserts into `cooking_skill_items`; removing deletes from the source table AND the `cooking_skill_items` row. All buckets default to **collapsed** on page load; moving an item auto-expands the destination bucket so the user sees where it went. A slate callout at the top of the page explains the four buckets.
+
+**Back-compat.** `/skills` is now a server-side `redirect()` → `/playbook`. Old bookmarks survive.
 
 ## Meal Plan buckets (`/meal-plan`)
 
@@ -282,7 +286,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 - **Mobile-first** layout. Main containers use `max-w-lg` (kitchen/hub) or `max-w-2xl` (content pages) with `mx-auto px-4`.
 - **Sticky headers** with `← Back` button on the left, page title (emoji + name) center-left, and a context action on the right.
 - **Toast**: `fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white …` — 2.5s auto-dismiss.
-- **Color system**: page actions lean orange (`orange-600`), section accents follow MyKitchen palette (amber / pink / orange / purple). Meal Plan buckets override with amber/violet/sky; Skills I Learned buckets use yellow/orange/rose/green/amber/pink.
+- **Color system**: page actions lean orange (`orange-600`), section accents follow MyKitchen palette (amber / pink / orange / purple). Meal Plan buckets override with amber/violet/sky; My Playbook buckets use slate/rose/emerald/sky.
 - **Borders**: `border-2` with `-300`/`-400` shades on emphasis elements; `border` with `-100`/`-200` for subtle dividers.
 - **Rounded**: cards are `rounded-2xl`; chips/pills are `rounded-full`; buttons `rounded-xl`.
 - **Auth gate**: every authenticated page does a `supabase.auth.getSession()` check in `useEffect` and redirects to `/login` if absent.
@@ -307,9 +311,9 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 The canonical names in use across the app are:
 
 - **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub. Every other tile has a simple, direct name.
-- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Notes** (`/chef-notes`), **Chef Jennifer Recipes** (`/chef-recipes`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **Skills I Learned** (`/skills`) — simplified, no "My" prefix.
+- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Notes** (`/chef-notes`), **Chef Jennifer Recipes** (`/chef-recipes`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **My Playbook** (`/playbook`) — simplified, no "My" prefix except Playbook (which keeps it because the intent-buckets are personal and it mirrors Golf's "MyBag").
 - Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
-- `MyCooking` / `MyPlan` (the old combined `/picks` page) was retired in Phase 2C. Its sections now live at dedicated routes; `/picks` is a thin server-side redirect (see "`/picks` redirect" above). Save-button labels across the app were updated in the follow-up Phase 2C.1 sweep — "Save to MyCooking" now reads "Save to Chef Jennifer Recipes" on `/topchef`, "Save to Chef Notes" on `/chef`, "Meal Plan" on `/cards` and `/secret`, "Save to Skills I Learned" on `/videos`, and the landing/about/notes tiles were retitled "Meal Plan".
+- `MyCooking` / `MyPlan` (the old combined `/picks` page) was retired in Phase 2C. Its sections now live at dedicated routes; `/picks` is a thin server-side redirect (see "`/picks` redirect" above). Save-button labels across the app were updated in the follow-up Phase 2C.1 sweep — "Save to MyCooking" now reads "Save to Chef Jennifer Recipes" on `/topchef`, "Save to Chef Notes" on `/chef`, "Meal Plan" on `/cards` and `/secret`, and the landing/about/notes tiles were retitled "Meal Plan". The single heart-save on Chef TV was later replaced by the 4-button My Playbook strip (see "My Playbook" above).
 
 Swept in recent passes and no longer present:
 - `app/login/page.js`, `app/profile/page.js`, `app/about/page.js`, `app/page.js`, `app/notes/page.js` — brand text (→ MyRecipe Companion).

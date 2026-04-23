@@ -83,7 +83,7 @@ const SECTIONS = [
     subtitle: 'Build your cooking skills.',
     items: [
       { emoji: '🎬', title: 'Chef TV',            description: 'Cooking videos, one tap away.',     href: '/videos' },
-      { emoji: '🎓', title: 'Skills I Learned',   description: 'Your saves, by course.',            href: '/skills' },
+      { emoji: '📘', title: 'My Playbook',        description: 'What you save, make, and improve.', href: '/playbook' },
       { emoji: '💬', title: 'Ask Chef Jennifer',  description: 'Ask anything. Get clear answers.',  href: '/chef' },
       { emoji: '📝', title: 'Chef Notes',         description: 'Saved AI answers, anytime.',        href: '/chef-notes' },
     ]
