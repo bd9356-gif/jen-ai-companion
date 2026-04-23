@@ -66,7 +66,7 @@ const SECTIONS = [
     subtitle: 'Your saved recipes and collections.',
     items: [
       { emoji: '🔐', title: 'Recipe Vault',            description: 'Your saved recipes, organized.',       href: '/secret' },
-      { emoji: '🃏', title: 'Recipe Cards',            description: 'Flip through your collection.',        href: '/cards' },
+      { emoji: '🃏', title: 'Recipe Cards',            description: 'Flip through your collection.',        href: '/secret?view=cards' },
       { emoji: '✨', title: 'Chef Jennifer Recipes',   description: 'Recipes Jennifer made for you.',       href: '/chef-recipes' },
     ]
   },

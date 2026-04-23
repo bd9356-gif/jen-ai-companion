@@ -33,7 +33,7 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | ---------------------- | ------------- | ------------------------------------------------------------------ |
 | MyKitchen              | `/kitchen`    | The hub page. Everything routes from here.                          |
 | Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
-| Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
+| Recipe Cards           | `/secret?view=cards` | Recipe Vault in cards-grid mode (same data, index-card tiles).    |
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
 | Skills I Learned       | `/skills`     | Saved Chef TV videos + Chef Notes, bucketed by course type.         |
 | Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes.                         |
@@ -57,7 +57,8 @@ The rollout is phased so no single commit drops a huge amount of unreviewed code
 - **Phase 2A (shipped).** Extract four dedicated pages from `/picks` — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes` — each a focused, single-purpose screen. Hub tiles updated to point at the real routes. Shared row components live in `components/ExpandableItem.js`, `components/ChefJenItem.js`, `components/VideoItem.js`, `components/ShoppingByStore.js` (which also exports `StoreEditor`) so both the old `/picks` page and the new dedicated pages stay in sync.
 - **Phase 2B (shipped).** Ship Skills I Learned at `/skills` as a MyBag-style bucketed view — six fixed buckets (📥 The Starter, 🍳 Breakfast, 🍽️ Mains, 🥕 Sides & Veg, 🥖 Baking, 🍰 Desserts). Bucket assignments live in a new `cooking_skill_items` table (migration `supabase/002_cooking_skill_items.sql`). Hub tile updated; old `?open=chef_videos` links still resolve for back-compat.
 - **Phase 2C (shipped).** Retire `/picks` entirely. `app/picks/page.js` is now a server-side redirect — it forwards the plain route to `/kitchen` and each of the five old `?open=<key>` bookmarks to the matching dedicated page (see "`/picks` redirect" below). The combined `/picks` UI (and its `loadAll` etc.) is gone; behavior that lived there now lives in `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes`, and `/skills`.
-- **Phase 3.** Fold `/cards` into `/secret` as a list/card view toggle. Decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — will pick based on how many Chef Jen saves feel natural alongside vault recipes once people are using the dedicated page.
+- **Phase 3 (shipped).** Folded `/cards` into `/secret` as a list/cards view toggle. The vault now has a `📋`/`🃏` toggle in the sticky header that swaps the grid between the existing list rows and the old index-card grid (cream paper, red top rule). URL stays in sync via `?view=cards`. `/cards` is a server-side redirect to `/secret?view=cards`; the Kitchen tile points directly at `/secret?view=cards`. The pin-to-cards button was removed from the detail view — cards view now shows every vault recipe, so pinning is obsolete. The `recipe_cards` table and the `pinnedCards` / `toggleCardPin` / `loadPinnedCards` state + helpers are left in place as dead code for back-compat; planned drop once no one's hitting them. The card-detail-view extras from the old `/cards` page (inline family-notes editor, AI Chef Suggestions) are NOT ported in this phase — they stay in `/cards`'s git history if we want them back later.
+- **Phase 3 open decision.** Whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — will pick based on how many Chef Jen saves feel natural alongside vault recipes once people are using the dedicated page. Deferred.
 
 Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything still says "Ask Chef Anything" in places, for example. Those get swept as each page is touched in later phases.
 
@@ -71,7 +72,7 @@ Section headers are small orange uppercase labels with a one-line section subtit
 
 1. **Your Recipes** — "Your saved recipes and collections."
    - 🔐 Recipe Vault → `/secret` — "Your saved recipes, organized."
-   - 🃏 Recipe Cards → `/cards` — "Flip through your collection."
+   - 🃏 Recipe Cards → `/secret?view=cards` — "Flip through your collection." (same data as Recipe Vault, cards-grid mode)
    - ✨ Chef Jennifer Recipes → `/chef-recipes` — "Recipes Jennifer made for you."
 
 2. **Plan & Shop** — "Organize what you're cooking next."
@@ -220,14 +221,16 @@ The **same option list** is also reused on the Recipe Vault "Make This Recipe Mo
 - **Change-photo affordance.** When a photo IS set, a small "📷 Change" button floats at the top-right of the hero. It triggers the same upload input, so the hero stays self-contained.
 - **`categoryEmoji(recipe)` helper.** Lives at the top of `app/secret/page.js` and returns an emoji based on regex matches against the recipe's title / category / tags (pizza → 🍕, pasta → 🍝, salad → 🥗, soup → 🍲, etc.). Falls back to 🍽️. Used by the photo-less hero; can be reused for list cards if we want to extend the pattern.
 
-## Recipe Cards presentation notes (`/cards`)
+## Recipe Cards presentation notes (folded into `/secret` — Phase 3)
 
-- **Index-card paper look.** Card thumbnails use `bg-amber-50` (cream paper) with `border-2 border-amber-200` and a thin `bg-red-600 h-1.5` top rule — a nod to classic 3x5 index cards. Hover state lifts the border to `border-orange-400` with a soft shadow. The old orange-header + white-body look was retired.
-- **Title + picture only on the tile.** Each card now shows just the recipe title (bold, two-line clamp with `min-h-[2.5rem]` so short titles still reserve two rows for a tidy grid) and the photo below (100px, rounded). Category, servings count, ingredient count, and the "📝 Notes" badge were removed from the grid — all the metadata still lives one tap away in the detail view.
-- **Photo-less fallback.** If `photo_url` is empty the tile shows `bg-amber-100` with a 32px 🍽️ emoji so every card stays rectangular in the grid.
-- **Collapsible search in the header.** `/cards` mirrors the Recipe Vault pattern: a 🔍/✕ toggle lives in the sticky header's right-side button group (next to Clear All and + Add), and the full-width `<input>` only appears under the header when search is active. Input uses `style={{ fontSize: '16px' }}` to block iOS Safari auto-zoom.
-- **"My Photo" section removed.** The "My Photo" (`card_photos` upload) block on the card detail view is gone. The `card_photos` table is no longer read or written from this page — the supporting state (`cardPhoto`, `uploadingPhoto`, `photoInputRef`) and the `loadCardPhoto` / `uploadCardPhoto` helpers were deleted at the same time. If/when we bring user photos back on cards, plan for a simpler UX (e.g. swap the hero photo itself, like Recipe Vault).
-- **Shopping List — per-ingredient +/✓ toggle (matches Recipe Vault).** Inside the Ingredients section of the card detail view, each row has a small round `+` button that turns green `✓` once that ingredient is in the list. `toggleIngredient(ing)` adds a row to `shopping_list` (`ingredient = "{measure} {name}"`, `recipe_title = viewing.title`, `checked = false`, `store_id = null`) or deletes it on toggle-off. A `🛒 Add All` button sits next to the "Ingredients" heading and calls `addAllToShoppingList()` to insert every ingredient at once and mark them all as added. Session-level state (`addedToList: Set<string>`) tracks what was added during the current view; it resets when a different card is opened. The old full-width "Add all ingredients" button below the card was removed.
+Recipe Cards is now a **view mode** of Recipe Vault (not a separate route). Tap `🃏` in the Vault header to swap the grid into index-card tiles; tap `📋` to swap back. The URL stays in sync via `?view=cards` so the Kitchen tile (and the `/cards` redirect, and refresh/share) lands straight in cards mode.
+
+- **Index-card paper look.** Card tiles use `bg-amber-50` (cream paper) with `border-2 border-amber-200` and a thin `bg-red-600 h-1.5` top rule — a nod to classic 3x5 index cards. Hover state lifts the border to `border-orange-400` with a soft shadow.
+- **Title + picture only on the tile.** Each card shows just the recipe title (bold, two-line clamp with `min-h-[2.5rem]` so short titles still reserve two rows for a tidy grid) and the photo below (100px, rounded). No category, no servings, no chip row — all metadata is one tap away in the detail view.
+- **Photo-less fallback uses `categoryEmoji(recipe)`.** If `photo_url` is empty the tile shows `bg-amber-100` with a 32px emoji from the same helper that drives the Vault hero fallback (pizza → 🍕, pasta → 🍝, etc. → 🍽️). Every card stays rectangular in the grid.
+- **No separate data.** Cards view queries the same `personal_recipes` rows as the list view — the `recipe_cards` join table and the pin-to-cards button are gone from the UI. The table, `pinnedCards` state, `loadPinnedCards`, and `toggleCardPin` are left in place as dead code for back-compat; planned drop once no one depends on them.
+- **Card detail view is the Vault detail view.** Tapping a card opens the standard Vault detail (hero photo, edit, ✨ AI, Meal Plan, Delete). The old standalone `/cards` detail view — with its inline family-notes editor and AI Chef Suggestions — is NOT ported. If we want those back later, git history has them; either feature could land on the Vault detail view as an enhancement.
+- **`/cards` route is a redirect.** `app/cards/page.js` is a 9-line server component that calls `redirect('/secret?view=cards')` so old bookmarks still land in cards mode.
 
 ## Recipe Vault "Make This Recipe More..." flow
 
@@ -285,7 +288,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 The canonical names in use across the app are:
 
 - **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub. Every other tile has a simple, direct name.
-- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Notes** (`/chef-notes`), **Chef Jennifer Recipes** (`/chef-recipes`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **Skills I Learned** (`/skills`) — simplified, no "My" prefix.
+- **Recipe Vault** (`/secret`), **Recipe Cards** (`/secret?view=cards` — view mode of the Vault since Phase 3), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Notes** (`/chef-notes`), **Chef Jennifer Recipes** (`/chef-recipes`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **Skills I Learned** (`/skills`) — simplified, no "My" prefix.
 - Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
 - `MyCooking` / `MyPlan` (the old combined `/picks` page) was retired in Phase 2C. Its sections now live at dedicated routes; `/picks` is a thin server-side redirect (see "`/picks` redirect" above). Save-button labels across the app were updated in the follow-up Phase 2C.1 sweep — "Save to MyCooking" now reads "Save to Chef Jennifer Recipes" on `/topchef`, "Save to Chef Notes" on `/chef`, "Meal Plan" on `/cards` and `/secret`, "Save to Skills I Learned" on `/videos`, and the landing/about/notes tiles were retitled "Meal Plan".
 
