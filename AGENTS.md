@@ -38,12 +38,15 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Meal Plan              | `/picks?open=meal_plan` (Phase 1) | What you're cooking soon, organized by bucket.  |
 | Shopping List          | `/picks?open=shopping_list` (Phase 1) | Ingredients grouped by store.               |
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
-| Skills I Learned       | `/picks?open=chef_videos` (Phase 1) | Saved Chef TV videos + notes, by course.      |
+| Skills I Learned       | `/picks?open=chef_videos` (Phase 2A bridge) | Saved Chef TV videos + notes, by course. Becomes `/skills` in Phase 2B. |
 | Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes.                         |
-| Chef Notes             | `/picks?open=ai_notes` (Phase 1) | Saved AI answers, chronological.                 |
+| Chef Notes             | `/chef-notes` | Saved AI answers, chronological.                                    |
+| Chef Jennifer Recipes  | `/chef-recipes` | Recipes Chef Jennifer made for you; save-to-vault from here.      |
+| Meal Plan              | `/meal-plan`  | 3 buckets of "what you're cooking soon".                            |
+| Shopping List          | `/shopping-list` | Ingredients grouped by store; AI cleanup / copy / print.         |
 | Chef Jennifer          | `/topchef`    | AI chef who generates recipes tailored to mood/meal/protein.        |
 
-"(Phase 1)" markers flag tiles that currently deep-link into `/picks` using a `?open=<section_key>` query param. Phase 2 splits `/picks` into dedicated pages and those routes update in one sweep — see **IA restructure roadmap** below.
+"(Phase 2A bridge)" marks the one tile still deep-linking into `/picks` via `?open=<section_key>`. That bridge retires when Phase 2B ships `/skills` — see **IA restructure roadmap** below.
 
 Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/browse`, `/about`, `/profile`, `/login`, `/auth`, `/not-found`.
 
@@ -54,10 +57,11 @@ MyKitchen moved from a 3-section (Your Cooking Life / AI Kitchen / Explore) layo
 The rollout is phased so no single commit drops a huge amount of unreviewed code:
 
 - **Phase 1 (shipped).** Rewrite `app/kitchen/page.js` with the new sections/tiles and a unified orange left stripe. Add a `?open=<key>` handler on `/picks` so five of the tiles (Meal Plan, Shopping List, Chef Notes, Skills I Learned, Chef Jennifer Recipes) deep-link straight to the right section on that still-combined page. This is a **bridge** — the hub looks finished immediately, the underlying pages catch up in Phase 2.
-- **Phase 2 (next).** Split `/picks` into four dedicated pages — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/skills`. Retire the `?open=` handler. Ship Skills I Learned as a MyBag-style bucketed view (see "Skills I Learned buckets" below).
-- **Phase 3.** Fold `/cards` into `/secret` as a list/card view toggle; build a dedicated Chef Jennifer Recipes page (or filter inside Recipe Vault). Decision on which is deferred — will pick based on how many Chef Jen saves feel natural alongside vault recipes during Phase 2 review.
+- **Phase 2A (shipped).** Extract four dedicated pages from `/picks` — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes` — each a focused, single-purpose screen. Hub tiles updated to point at the real routes. The `?open=` handler stays on `/picks` for now because Skills I Learned is still the combined section until Phase 2B. Shared row components live in `components/ExpandableItem.js`, `components/ChefJenItem.js`, `components/VideoItem.js`, `components/ShoppingByStore.js` (which also exports `StoreEditor`) so both the old `/picks` page and the new dedicated pages stay in sync.
+- **Phase 2B (next).** Ship Skills I Learned at `/skills` as a MyBag-style bucketed view (see "Skills I Learned buckets" below). Retire the `?open=` handler and the `/picks` page entirely.
+- **Phase 3.** Fold `/cards` into `/secret` as a list/card view toggle. Decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — will pick based on how many Chef Jen saves feel natural alongside vault recipes once people are using the dedicated page.
 
-Phase 1 is NOT a full naming sweep of downstream pages yet — the /picks page still labels itself "MyCooking" internally, Ask Chef Anything still says "Ask Chef Anything" in places, etc. Those get swept as each page is rebuilt in its phase.
+Phase 2A is NOT a naming sweep of downstream pages yet — Ask Chef Anything still says "Ask Chef Anything" in places, `/picks` still labels itself "MyCooking" internally. Those get swept as each page is touched in later phases.
 
 ## Kitchen navigation sections
 
@@ -70,26 +74,46 @@ Section headers are small orange uppercase labels with a one-line section subtit
 1. **Your Recipes** — "Your saved recipes and collections."
    - 🔐 Recipe Vault → `/secret` — "Your saved recipes, organized."
    - 🃏 Recipe Cards → `/cards` — "Flip through your collection."
-   - ✨ Chef Jennifer Recipes → `/picks?open=chefjen` — "Recipes Jennifer made for you."
+   - ✨ Chef Jennifer Recipes → `/chef-recipes` — "Recipes Jennifer made for you."
 
 2. **Plan & Shop** — "Organize what you're cooking next."
-   - 📅 Meal Plan → `/picks?open=meal_plan` — "What you're cooking soon."
-   - 🛒 Shopping List → `/picks?open=shopping_list` — "Ingredients, organized to shop."
+   - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
+   - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
 3. **Learn** — "Build your cooking skills."
    - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away."
-   - 🎓 Skills I Learned → `/picks?open=chef_videos` — "Your saves, by course."
+   - 🎓 Skills I Learned → `/picks?open=chef_videos` (Phase 2A bridge) — "Your saves, by course."
    - 💬 Ask Chef Jennifer → `/chef` — "Ask anything. Get clear answers."
-   - 📝 Chef Notes → `/picks?open=ai_notes` — "Saved AI answers, anytime."
+   - 📝 Chef Notes → `/chef-notes` — "Saved AI answers, anytime."
 
 4. **Chef Jennifer** — "Your personal AI chef."
    - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you."
 
-### `/picks` deep-link handler (Phase 1 bridge)
+### `/picks` deep-link handler (Phase 2A bridge)
 
 `app/picks/page.js` has a second `useEffect` that reads `?open=<section_key>` on mount. If the key is valid (`meal_plan`, `shopping_list`, `ai_notes`, `chefjen`, `chef_videos`), the page auto-expands that section and smooth-scrolls to it via `document.getElementById('section-' + key)`. Each section wrapper has a matching `id` and `scroll-mt-20` so the section title isn't hidden under the sticky header.
 
-This handler exists purely to make Phase 1 usable on its own. Phase 2 retires it.
+Four of the five section keys are now effectively dead — the hub routes Meal Plan / Shopping List / Chef Notes / Chef Jennifer Recipes straight at the dedicated Phase 2A pages. Only **`?open=chef_videos`** (Skills I Learned) still uses the bridge, because that section hasn't moved to `/skills` yet. Keep the handler generic (still accepts all five keys) so direct links from old bookmarks don't break — they'll still land on the right section of `/picks`. Phase 2B retires this whole file.
+
+### Phase 2A pages (new as of April 2026)
+
+Each of the four new pages is a focused single-screen experience, matching MyKitchen's aesthetic (sticky header, orange accents, mobile-first `max-w-2xl` container, toast system, auth gate).
+
+- **`app/meal-plan/page.js`** — renders three bucket frames (⭐ To Make amber / 📋 Maybe violet / 🗂 Later sky). Data in `my_picks` keyed by `bucket`. Per-item move buttons show the *other* two bucket colors as cues for where the item would go. Empty state offers shortcut buttons to Recipe Cards and Recipe Vault.
+- **`app/shopping-list/page.js`** — uses the shared `<ShoppingByStore>` grid, the shared `<StoreEditor>` (shown inline via `showStoreEditor` toggle), plus a full action bar in the card header: 🏬 Manage Stores, ✨ Clean Up List (calls `/api/cleanup-list`), 📋 Copy (clipboard), 🖨️ Print (popup window). "Clear All" lives on the right. All the existing `/picks` behaviors (grouped-by-store render, unsorted bucket, per-item store reassignment, AI cleanup with `recipe_title` discard, plain-text export sorted by `stores.sort_order`) are preserved because the heavy logic lives in the shared components plus the helpers duplicated here (`buildShoppingListText`, `cleanUpList`).
+- **`app/chef-notes/page.js`** — chronological list of saved AI answers (`favorites` where `type='ai_answer'`). Each row uses `<ExpandableItem>` which opens in place to show the full answer. Header action points at `/chef`. Empty state encourages asking a question and saving it.
+- **`app/chef-recipes/page.js`** — list of Chef Jennifer recipes (`favorites` where `type='ai_recipe'`). Each row uses `<ChefJenItem>`, which expands to show cuisine/difficulty chips, ingredients, instructions, and a 💾 Save to Recipe Vault button. `saveToVault(item)` inserts into `personal_recipes` with `family_notes: 'Saved from Chef Jennifer.'`, normalizing ingredients to `{name, measure}` shape. Header action points at `/topchef`.
+
+### Shared row components (new as of April 2026)
+
+Factored out of `app/picks/page.js` so both `/picks` and the Phase 2A pages render identical rows:
+
+- `components/ExpandableItem.js` — one saved AI answer. Props: `item`, `emoji`, `onRemove`. Toggle-open reveals `metadata.answer`.
+- `components/ChefJenItem.js` — one saved Chef Jennifer recipe. Props: `item`, `onRemove`, `onSaveToVault`. Renders measure + name for each ingredient; bolds measures when present.
+- `components/VideoItem.js` — one saved Chef TV video thumbnail with play-to-embed behavior (for Skills I Learned rows — used by `/picks` today and `/skills` in Phase 2B).
+- `components/ShoppingByStore.js` — the grouped-by-store grid. Default export: `ShoppingByStore`. Named export: `StoreEditor` (inline store manager — add/edit/remove with emoji + website URL). Internal helper: `StoreRow`.
+
+`/picks` still imports and uses all of these for its remaining Skills I Learned section (and keeps rendering its other sections the same way until Phase 2B).
 
 ### Skills I Learned buckets (Phase 2 spec)
 

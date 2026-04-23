@@ -66,15 +66,15 @@ const SECTIONS = [
     items: [
       { emoji: '🔐', title: 'Recipe Vault',            description: 'Your saved recipes, organized.',       href: '/secret' },
       { emoji: '🃏', title: 'Recipe Cards',            description: 'Flip through your collection.',        href: '/cards' },
-      { emoji: '✨', title: 'Chef Jennifer Recipes',   description: 'Recipes Jennifer made for you.',       href: '/picks?open=chefjen' },
+      { emoji: '✨', title: 'Chef Jennifer Recipes',   description: 'Recipes Jennifer made for you.',       href: '/chef-recipes' },
     ]
   },
   {
     name: 'Plan & Shop',
     subtitle: 'Organize what you\'re cooking next.',
     items: [
-      { emoji: '📅', title: 'Meal Plan',     description: 'What you\'re cooking soon.',        href: '/picks?open=meal_plan' },
-      { emoji: '🛒', title: 'Shopping List', description: 'Ingredients, organized to shop.',   href: '/picks?open=shopping_list' },
+      { emoji: '📅', title: 'Meal Plan',     description: 'What you\'re cooking soon.',        href: '/meal-plan' },
+      { emoji: '🛒', title: 'Shopping List', description: 'Ingredients, organized to shop.',   href: '/shopping-list' },
     ]
   },
   {
@@ -84,7 +84,7 @@ const SECTIONS = [
       { emoji: '🎬', title: 'Chef TV',            description: 'Cooking videos, one tap away.',     href: '/videos' },
       { emoji: '🎓', title: 'Skills I Learned',   description: 'Your saves, by course.',            href: '/picks?open=chef_videos' },
       { emoji: '💬', title: 'Ask Chef Jennifer',  description: 'Ask anything. Get clear answers.',  href: '/chef' },
-      { emoji: '📝', title: 'Chef Notes',         description: 'Saved AI answers, anytime.',        href: '/picks?open=ai_notes' },
+      { emoji: '📝', title: 'Chef Notes',         description: 'Saved AI answers, anytime.',        href: '/chef-notes' },
     ]
   },
   {
