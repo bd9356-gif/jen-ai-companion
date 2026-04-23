@@ -34,9 +34,6 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | MyKitchen              | `/kitchen`    | The hub page. Everything routes from here.                          |
 | Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
 | Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
-| Chef Jennifer Recipes  | `/picks?open=chefjen` (Phase 1) | Recipes Jennifer has created and you've saved.   |
-| Meal Plan              | `/picks?open=meal_plan` (Phase 1) | What you're cooking soon, organized by bucket.  |
-| Shopping List          | `/picks?open=shopping_list` (Phase 1) | Ingredients grouped by store.               |
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
 | Skills I Learned       | `/skills`     | Saved Chef TV videos + Chef Notes, bucketed by course type.         |
 | Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes.                         |
@@ -46,7 +43,7 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Shopping List          | `/shopping-list` | Ingredients grouped by store; AI cleanup / copy / print.         |
 | Chef Jennifer          | `/topchef`    | AI chef who generates recipes tailored to mood/meal/protein.        |
 
-All tiles now route to dedicated pages. The `?open=<section_key>` bridge into `/picks` is retired for the hub — see **IA restructure roadmap** below. Old bookmark URLs still land on `/picks` with the right section expanded for back-compat until Phase 2C retires the page.
+All tiles route to dedicated pages. `/picks` is retired as of Phase 2C — it's now a thin server-side redirect that forwards `/picks` → `/kitchen` and old `?open=<key>` bookmarks to their new homes (see the **IA restructure roadmap** below).
 
 Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/browse`, `/about`, `/profile`, `/login`, `/auth`, `/not-found`.
 
@@ -59,10 +56,10 @@ The rollout is phased so no single commit drops a huge amount of unreviewed code
 - **Phase 1 (shipped).** Rewrite `app/kitchen/page.js` with the new sections/tiles and a unified orange left stripe. Add a `?open=<key>` handler on `/picks` so five of the tiles (Meal Plan, Shopping List, Chef Notes, Skills I Learned, Chef Jennifer Recipes) deep-link straight to the right section on that still-combined page. This is a **bridge** — the hub looks finished immediately, the underlying pages catch up in Phase 2.
 - **Phase 2A (shipped).** Extract four dedicated pages from `/picks` — `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes` — each a focused, single-purpose screen. Hub tiles updated to point at the real routes. Shared row components live in `components/ExpandableItem.js`, `components/ChefJenItem.js`, `components/VideoItem.js`, `components/ShoppingByStore.js` (which also exports `StoreEditor`) so both the old `/picks` page and the new dedicated pages stay in sync.
 - **Phase 2B (shipped).** Ship Skills I Learned at `/skills` as a MyBag-style bucketed view — six fixed buckets (📥 The Starter, 🍳 Breakfast, 🍽️ Mains, 🥕 Sides & Veg, 🥖 Baking, 🍰 Desserts). Bucket assignments live in a new `cooking_skill_items` table (migration `supabase/002_cooking_skill_items.sql`). Hub tile updated; old `?open=chef_videos` links still resolve for back-compat.
-- **Phase 2C (next).** Retire `/picks` entirely. Redirect `/picks` → `/kitchen` (or delete the route), remove the `?open=` handler. Do this after a grace period for any lingering bookmarks.
+- **Phase 2C (shipped).** Retire `/picks` entirely. `app/picks/page.js` is now a server-side redirect — it forwards the plain route to `/kitchen` and each of the five old `?open=<key>` bookmarks to the matching dedicated page (see "`/picks` redirect" below). The combined `/picks` UI (and its `loadAll` etc.) is gone; behavior that lived there now lives in `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes`, and `/skills`.
 - **Phase 3.** Fold `/cards` into `/secret` as a list/card view toggle. Decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — will pick based on how many Chef Jen saves feel natural alongside vault recipes once people are using the dedicated page.
 
-Phase 2B is NOT a naming sweep of downstream pages yet — Ask Chef Anything still says "Ask Chef Anything" in places, `/picks` still labels itself "MyCooking" internally. Those get swept as each page is touched in later phases.
+Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything still says "Ask Chef Anything" in places, for example. Those get swept as each page is touched in later phases.
 
 ## Kitchen navigation sections
 
@@ -90,11 +87,20 @@ Section headers are small orange uppercase labels with a one-line section subtit
 4. **Chef Jennifer** — "Your personal AI chef."
    - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you."
 
-### `/picks` deep-link handler (legacy — to be retired)
+### `/picks` redirect
 
-`app/picks/page.js` has a second `useEffect` that reads `?open=<section_key>` on mount. If the key is valid (`meal_plan`, `shopping_list`, `ai_notes`, `chefjen`, `chef_videos`), the page auto-expands that section and smooth-scrolls to it via `document.getElementById('section-' + key)`. Each section wrapper has a matching `id` and `scroll-mt-20` so the section title isn't hidden under the sticky header.
+`app/picks/page.js` is a server component that calls `redirect()` from `next/navigation`. It reads `searchParams.open` (awaited — Next 16 pattern) and maps old keys to new routes:
 
-As of Phase 2B, ALL hub tiles now route directly to dedicated pages — the handler exists purely for back-compat with old bookmarks. Phase 2C retires this entire page.
+| `?open=` value     | Destination        |
+| ------------------ | ------------------ |
+| `meal_plan`        | `/meal-plan`       |
+| `shopping_list`    | `/shopping-list`   |
+| `ai_notes`         | `/chef-notes`      |
+| `chefjen`          | `/chef-recipes`    |
+| `chef_videos`      | `/skills`          |
+| (missing/unknown)  | `/kitchen`         |
+
+This preserves old bookmarks while the combined `/picks` page is gone. If/when we're confident no one is hitting these URLs anymore, delete `app/picks/` outright and Next will 404.
 
 ### Phase 2A pages (new as of April 2026)
 
@@ -140,9 +146,9 @@ No rename / reorder / delete — locked like Golf's MyBag. All colors are writte
 
 **Page behavior.** `loadAll` fetches the three source tables + `cooking_skill_items` in parallel and merges them into one normalized list. If the same underlying video exists in both legacy (`saved_videos`) and new (`favorites`) form, the legacy row wins (dedupe by `_item_type:_item_id`). Each row renders via `<VideoItem>` (videos) or `<ExpandableItem>` (AI answers) plus an inline "Move ▾" menu showing the other five buckets as colored chips. Moving upserts into `cooking_skill_items`; removing deletes from the source table AND the `cooking_skill_items` row. All buckets default to **collapsed** on page load; moving an item auto-expands the destination bucket so the user sees where it went. A yellow callout at the top of the page explains that new saves land in The Starter.
 
-## MyCooking buckets (`/picks`)
+## Meal Plan buckets (`/meal-plan`)
 
-MyCooking organizes meal-plan recipes into three buckets and color-codes them consistently across the page (frames + move-to buttons):
+Meal Plan organizes saved recipes into three buckets and color-codes them consistently across the page (frames + move-to buttons):
 
 | Bucket  | Emoji | Meaning                        | Color  |
 | ------- | ----- | ------------------------------ | ------ |
@@ -150,34 +156,19 @@ MyCooking organizes meal-plan recipes into three buckets and color-codes them co
 | Maybe   | 📋     | If you get to them.            | violet |
 | Later   | 🗂     | Still saved, not forgotten.    | sky    |
 
-Borders on bucket frames, section cards, and move buttons use `border-2` with `-400` shade for emphasis. Section tabs default to **closed** on page load.
+Borders use `border-2` with `-400` shade for emphasis. Each item's move buttons show the *other* two bucket colors as cues for where the item would go.
 
-## Plan page sections (`/picks`) — labels & subtitles
+## Shopping List detail (`/shopping-list`)
 
-Under the sticky header, the page shows a two-line **tagline** defining MyCooking as a central hub. Line 1 (semibold gray-700): *"Your central cooking hub."* Line 2 (smaller gray-500): *"Plan, shop, watch, learn, save tips, and create with Chef Jennifer — all in one place."* The tagline is deliberately broad because MyCooking isn't just the week's plan — it's planning, saving, learning, watching, shopping, AI notes, and Chef Jennifer's creations all under one roof.
+- **Grouped by store.** `<ShoppingByStore>` renders items bucketed by `store_id`. Items with a null `store_id` land in a final "📦 Unsorted" group (hidden when empty). Each group shows `{emoji} {name}` + count; stores with a `website_url` show an "Open ↗" button opening it in a new tab. Every row has a small `<select>` to reassign the item to a different store (or Unsorted) via `setItemStore(itemId, storeId)`.
+- **Inline "Manage Stores" editor.** The 🏬 Manage Stores toggle in the card header shows `<StoreEditor>` in place — add (name + emoji + optional website URL), rename, change emoji/URL, or remove. Removing a store soft-detaches items (they drop back to `store_id = null` both in-memory and via the DB's `on delete set null` cascade).
+- **AI cleanup — ✨ Clean Up List.** A purple **✨ Clean Up List** button (next to 🏬 Manage Stores) calls `cleanUpList()` in `app/shopping-list/page.js`, which POSTs the current list + stores to `/api/cleanup-list`. The route asks `claude-haiku-4-5-20251001` to (1) round fractional purchasables up ("1/4 can tomato paste" → "1 can tomato paste"), (2) strip cooking-only measures (tsp/tbsp/pinch/dash/clove/sprig/"to taste"), (3) merge duplicates, and (4) preserve `store_id` when merges agree, setting it to `null` when they conflict. The handler confirms, wipes `shopping_list` for the user, and reinserts cleaned rows (`recipe_title` is intentionally discarded). Server-side, invalid `store_id` values are dropped. Button shows "✨ Cleaning…" and disables while in-flight.
+- **📋 Copy / 🖨️ Print.** `copyShoppingList()` builds a grouped plain-text version via `buildShoppingListText()` — a "Shopping List" header, then each store block (`{emoji} {name}` or `📦 Unsorted`) with `[ ]` / `[x]` checkboxes per row, sorted by `stores.sort_order`. It writes to the clipboard via `navigator.clipboard.writeText` with a toast fallback suggesting Print if blocked. `printShoppingList()` opens a small popup via `window.open('', '_blank')` with the same text inside a styled `<pre>`, triggers `window.print()` after a short delay, and toasts if pop-ups are blocked. Both buttons render only when `shoppingList.length > 0`.
 
-Each collapsible section on the Plan page has a one-line subtitle below the label. Keep the tone cozy and user-facing. Current copy:
+## Chef Jennifer Recipes detail (`/chef-recipes`)
 
-| Section        | Emoji   | Subtitle |
-| -------------- | ------- | -------- |
-| Meal Plan      | 📅      | What you're cooking soon, organized your way. |
-| Shopping List  | 🛒      | Your ingredients, organized and ready to shop. |
-| AI Notes       | 💡      | Tips and answers from Chef Jennifer, saved for later. |
-| Chef Jennifer  | 👨‍🍳   | Your personal AI chef — guiding your cooking and planning. |
-| Saved Skills from Chef TV | 🎬 | Skills you're learning, lessons you've added, and what you're mastering next. |
-
-The ChefJen section is labeled **Chef Jennifer** on the Plan page to match the Kitchen nav. The underlying data key is still `chefjen` and the table is `favorites` with `type='ai_recipe'`.
-
-### Plan page behavior notes
-
-- **Icon tooltips.** Every icon-only button on `/picks` has a `title` attribute so hovering (desktop) or long-pressing (mobile) reveals a plain-English label. This includes the bucket move buttons (⭐ Top Pick, 📋 Maybe, 🗂 Later), × remove buttons across every section, the video play button, and the Chef Jennifer expand / save-to-vault controls.
-- **"Saved Skills from Chef TV" is dual-sourced.** `loadVideos` in `app/picks/page.js` reads **both** the legacy `saved_videos` / `saved_education_videos` tables **and** new Chef TV saves that land in `favorites` with `type in ('video_recipe','video_education')`. Favorites-sourced rows carry a `_favoriteId` marker so `removeVideo` knows to delete from `favorites`; legacy rows still delete from the per-source table. If the same video exists in both places the legacy record wins (dedupe is by `id`).
-- **Chef Jennifer items show measures.** `ChefJenItem` renders each ingredient as `{measure} {name}` — string ingredients still render as-is, and `{name, measure}` objects bold the measure. This fixes older saves that were dropping quantity.
-- **Save to Recipe Vault from Plan.** Each Chef Jennifer item has a 💾 **Save to Recipe Vault** button inside its expanded view. Clicking it calls `saveChefJenToVault(item)`, which inserts into `personal_recipes` with the recipe's title/description/ingredients/instructions/cuisine, `family_notes = "Saved from Chef Jennifer."`, empty `tags` and `photo_url`, and the original `difficulty`. The button disables to `✓ Saved to Recipe Vault` after one successful save (per session — no persisted flag yet).
-- **Shopping list is grouped by store.** The Shopping List section renders items grouped by their `store_id` using `<ShoppingByStore>`. Items with a null `store_id` land in a final "📦 Unsorted" bucket (which is hidden when empty). Each group shows an emoji + name + count header; when the store has a `website_url`, an "Open ↗" button opens it in a new tab. Every row also has a small `<select>` that lets the user reassign the item to a different store (or Unsorted) via `setItemStore(itemId, storeId)`.
-- **Inline "Manage Stores" editor.** The Shopping List header has a 🏬 Manage Stores toggle that shows `<StoreEditor>` in place. Users can add a store (name + emoji + optional website URL), rename, change emoji/URL, or remove. Removing a store soft-detaches items — they drop back to `store_id = null` both in-memory and via the DB's `on delete set null` cascade.
-- **AI cleanup — ✨ Clean Up List.** The Shopping List header has a purple **✨ Clean Up List** button (next to 🏬 Manage Stores) that calls `cleanUpList()` in `app/picks/page.js`. It POSTs the current list + the user's stores to `/api/cleanup-list`, which asks `claude-haiku-4-5-20251001` to (1) round fractional purchasables up (e.g. "1/4 can tomato paste" → "1 can tomato paste"), (2) strip cooking-only measures (tsp/tbsp/pinch/dash/clove/sprig/"to taste"), (3) merge duplicate ingredients, and (4) preserve `store_id` when merges agree, setting it to `null` when they conflict. The handler confirms with the user, then wipes `shopping_list` for the user and reinserts the cleaned rows (no `recipe_title` on cleaned rows). `recipe_title` info is discarded during cleanup — this is expected. Server-side, invalid `store_id` values are dropped. The button shows "✨ Cleaning…" and is disabled while the request is in-flight.
-- **📋 Copy / 🖨️ Print (Shopping List).** Two buttons in the Shopping List header (next to ✨ Clean Up List) let the user move the list into their grocery app of choice. `copyShoppingList()` builds a grouped plain-text version via `buildShoppingListText()` — Shopping List header, then each store block (`{emoji} {name}` or `📦 Unsorted`) with `[ ]` / `[x]` checkboxes per row, sorted by `stores.sort_order`. The text goes onto the clipboard via `navigator.clipboard.writeText`; a toast confirms success or falls back to suggesting Print if the clipboard API is blocked. `printShoppingList()` opens a small `window.open('', '_blank')` popup with the same text inside a styled `<pre>`, triggers `window.print()` after a short delay, and shows a toast if the pop-up is blocked. Both buttons only render when `shoppingList.length > 0`.
+- **ChefJenItem renders measures.** Each ingredient is `{measure} {name}` — string ingredients render as-is, and `{name, measure}` objects bold the measure.
+- **💾 Save to Recipe Vault.** Inside each expanded item, `saveToVault(item)` inserts into `personal_recipes` with the original title/description/ingredients/instructions/difficulty, `family_notes = "Saved from Chef Jennifer."`, and empty `tags` + `photo_url`.
 
 ## Supabase schema (inferred from code — verify before migrations)
 
@@ -269,7 +260,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 - **Mobile-first** layout. Main containers use `max-w-lg` (kitchen/hub) or `max-w-2xl` (content pages) with `mx-auto px-4`.
 - **Sticky headers** with `← Back` button on the left, page title (emoji + name) center-left, and a context action on the right.
 - **Toast**: `fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white …` — 2.5s auto-dismiss.
-- **Color system**: page actions lean orange (`orange-600`), section accents follow MyKitchen palette (amber / pink / orange / purple). MyCooking buckets override with amber/violet/sky.
+- **Color system**: page actions lean orange (`orange-600`), section accents follow MyKitchen palette (amber / pink / orange / purple). Meal Plan buckets override with amber/violet/sky; Skills I Learned buckets use yellow/orange/rose/green/amber/pink.
 - **Borders**: `border-2` with `-300`/`-400` shades on emphasis elements; `border` with `-100`/`-200` for subtle dividers.
 - **Rounded**: cards are `rounded-2xl`; chips/pills are `rounded-full`; buttons `rounded-xl`.
 - **Auth gate**: every authenticated page does a `supabase.auth.getSession()` check in `useEffect` and redirects to `/login` if absent.
@@ -287,27 +278,18 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 
 - `npm run dev` — local dev at `http://localhost:3000`.
 - `git push origin main` — triggers Vercel deploy to `www.mycompanionapps.com`.
-- Commit style: `feat: <page> - <short description>` (e.g., `feat: MyCooking - default tabs closed, fix ChefJen expand`). Body uses `-` bullets for specifics.
-
-## Known pre-existing lint issues in `app/picks/page.js`
-
-- `loadAll` accessed before declared (hoist fix needed).
-- Two `<img>` warnings — should migrate to `next/image`.
-
-Not breaking, but worth cleaning up in a focused pass.
+- Commit style: `feat: <page> - <short description>` (e.g., `feat: Shopping List - AI cleanup button`). Body uses `-` bullets for specifics.
 
 ## Naming canon (current state)
 
 The canonical names in use across the app are:
 
-- **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub.
-- **MyCooking** (`/picks`) — the other "My" we keep, for everything the user is actively making. (Was previously **MyPlan**; renamed in April 2026 because "MyCooking" captures everything the user does there, not just the week's plan. Route stays `/picks` to preserve bookmarks. We'd also briefly tried plain "Plan" even earlier but reverted — users wanted the personal framing.)
-- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Anything** (`/chef`) — simplified, no "My" prefix.
+- **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub. Every other tile has a simple, direct name.
+- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Notes** (`/chef-notes`), **Chef Jennifer Recipes** (`/chef-recipes`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **Skills I Learned** (`/skills`) — simplified, no "My" prefix.
 - Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
-- Chef Jennifer's save buttons read **Save to MyCooking** / **Saved to MyCooking ✓**. Ask Chef Anything's save button matches.
+- `MyCooking` / `MyPlan` (the old combined `/picks` page) was retired in Phase 2C. Its sections now live at dedicated routes; `/picks` is a thin server-side redirect (see "`/picks` redirect" above). Chef Jennifer's save buttons that used to read "Save to MyCooking" should now read "Save to Meal Plan" / "Save to Chef Notes" as appropriate — any lingering "MyCooking" copy is a cleanup candidate.
 
 Swept in recent passes and no longer present:
-- `app/picks/page.js` — MyVault buttons (→ Recipe Vault), MyRecipe Cards button (→ Recipe Cards).
 - `app/login/page.js`, `app/profile/page.js`, `app/about/page.js`, `app/page.js`, `app/notes/page.js` — brand text (→ MyRecipe Companion).
 - `app/manifest.js`, `app/layout.js` — PWA + HTML metadata (→ name "MyRecipe Companion", short_name "MyRecipe").
 - `app/api/chef/route.js` — system prompt persona (→ Chef Jennifer, inside MyRecipe Companion).
