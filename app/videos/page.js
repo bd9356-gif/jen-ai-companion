@@ -23,14 +23,37 @@ const PLAYBOOK_BUCKETS = [
   { key: 'learn', emoji: '🎓', label: 'Learn', activeCls: 'bg-sky-500 text-white border-sky-500' },
 ]
 
-const CHANNELS = [
-  'All Channels',
-  'Chef Jean-Pierre', 'Jamie Oliver', 'Binging with Babish', 'Joshua Weissman',
-  'Gordon Ramsay', 'Ethan Chlebowski', 'Brian Lagerstrom', 'Adam Ragusea',
-  'Pro Home Cooks', 'Internet Shaquille', 'Italia Squisita',
-  "Natasha's Kitchen", 'Preppy Kitchen', 'Inspired Taste',
-  'Tasty', "America's Test Kitchen", 'Serious Eats', 'Food Wishes',
+// Topic chips for the Love tab — dish-type thinking, keyword-matched
+// against the video title. One chip active at a time; "All" = no filter.
+// Keywords are hand-tuned; refine as we learn what titles look like.
+const LOVE_CHIPS = [
+  { key: 'all',    label: 'All' },
+  { key: 'pasta',  label: '🍝 Pasta',  match: /pasta|spaghetti|linguine|fettuccine|ravioli|lasagna|macaroni|noodle|carbonara|bolognese|risotto|gnocchi/i },
+  { key: 'pizza',  label: '🍕 Pizza',  match: /pizza|calzone/i },
+  { key: 'salad',  label: '🥗 Salad',  match: /salad|slaw/i },
+  { key: 'soup',   label: '🍲 Soup',   match: /soup|stew|chili|chowder|ramen|pho|broth/i },
+  { key: 'meat',   label: '🥩 Meat',   match: /steak|beef|burger|brisket|pork|chicken|turkey|lamb|meatball|ribs|bbq|grill/i },
+  { key: 'fish',   label: '🐟 Fish',   match: /fish|salmon|tuna|shrimp|prawn|scallop|seafood|crab|lobster/i },
+  { key: 'bread',  label: '🍞 Bread',  match: /bread|focaccia|sourdough|baguette|brioche|rolls?|buns?|loaf/i },
+  { key: 'sweet',  label: '🍰 Sweet',  match: /cake|cookie|pie|tart|brownie|dessert|cheesecake|chocolate|ice cream|pudding|mousse|muffin|scone|cinnamon roll|donut/i },
 ]
+
+// Topic chips for the Learn tab — technique-first thinking. 'featured'
+// is a special bucket (not a keyword) that shows the top 15 by learnScore
+// so a newcomer lands on "what's good" instead of "what's next." Default
+// chip on the Learn tab.
+const LEARN_CHIPS = [
+  { key: 'featured', label: '⭐ Featured', feature: true },
+  { key: 'all',      label: 'All' },
+  { key: 'knife',    label: '🔪 Knife',   match: /knife|cut|chop|dice|slice|mince|julienne/i },
+  { key: 'eggs',     label: '🥚 Eggs',    match: /\begg\b|eggs|omelet|omelette|scramble|frittata|quiche|poach/i },
+  { key: 'meat',     label: '🥩 Meat',    match: /steak|beef|pork|chicken|butcher|brine|grill|sear|roast|braise/i },
+  { key: 'baking',   label: '🍞 Baking',  match: /bak(e|ed|ing)|bread|cake|cookie|pie|dough|flour|yeast|sourdough|pastry/i },
+  { key: 'season',   label: '🧂 Season',  match: /salt|season|spice|herb|marinade|flavor|umami|sauce/i },
+  { key: 'basics',   label: '📚 Basics',  match: /how to|basics|beginner|fundamentals|essential|must know|mistake|tip/i },
+]
+
+const FEATURED_CAP = 15
 
 // Teaching-weighted channels — technique/method/craft heavy. Used by
 // learnScore() below to float instructional content up the Learn tab.
@@ -130,7 +153,12 @@ export default function VideosPage() {
   // session (via "Save to My Kitchen"). Resets on refresh — re-saving is
   // harmless, just creates another Vault row.
   const [vaultIds, setVaultIds] = useState(new Set())
-  const [channel, setChannel] = useState('All Channels')
+  // Active topic chip. Meaning depends on the current tab:
+  //   love  → one of LOVE_CHIPS keys (default 'all')
+  //   learn → one of LEARN_CHIPS keys (default 'featured')
+  //   all   → ignored (All tab shows no chips — full firehose)
+  // When the tab flips, we reset topic to the tab's sensible default.
+  const [topic, setTopic] = useState('all')
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   // About toggle — matches the 🔍 search pattern. When open, reveals the
@@ -447,39 +475,43 @@ export default function VideosPage() {
     }
   }
 
-  // Filters stack: channel + search + love/learn/all all AND together.
-  // Shorts (under 3 min) are always excluded — no toggle.
+  // Figure out the active chip set for the current tab. Love and Learn each
+  // have their own shortlist; All shows no chips (chipSet = null).
+  const chipSet = filter === 'love' ? LOVE_CHIPS : filter === 'learn' ? LEARN_CHIPS : null
+  const activeChip = chipSet?.find(c => c.key === topic) || null
+
+  // Filters stack: search + love/learn/all + topic chip keyword match, all
+  // AND together. Shorts (under 3 min) are always excluded — no toggle.
   //
   // Sort strategy varies by tab so each view highlights its best content:
   //   love   → loveScore (recipe completeness × popularity)
   //   learn  → learnScore (teaching-channel boost × popularity)
   //   all    → raw view_count desc (neutral firehose)
-  const filtered = videos
+  //
+  // Featured chip (Learn only): after sort, slice the top FEATURED_CAP
+  // entries so newcomers land on "what's good" instead of "what's next."
+  const afterFilter = videos
     .filter(v => {
       const meta = metadata[v.id]
       const hasRecipe = meta?.ingredients?.length > 0
-      const matchChannel = channel === 'All Channels' || v.channel === channel
       const matchSearch = search === '' || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase())
       const matchFilter = filter === 'all' || (filter === 'love' && hasRecipe) || (filter === 'learn' && !hasRecipe)
       const matchShorts = !isShort(v.duration)
-      return matchChannel && matchSearch && matchFilter && matchShorts
+      const matchTopic = !activeChip?.match || activeChip.match.test(v.title)
+      return matchSearch && matchFilter && matchShorts && matchTopic
     })
     .sort((a, b) => {
       if (filter === 'love')  return loveScore(b, metadata[b.id]) - loveScore(a, metadata[a.id])
       if (filter === 'learn') return learnScore(b) - learnScore(a)
       return (b.view_count || 0) - (a.view_count || 0)
     })
+  const filtered = (filter === 'learn' && activeChip?.feature)
+    ? afterFilter.slice(0, FEATURED_CAP)
+    : afterFilter
 
   const totalNonShort = videos.filter(v => !isShort(v.duration)).length
   const recipeCount = videos.filter(v => metadata[v.id]?.ingredients?.length > 0 && !isShort(v.duration)).length
   const summaryCount = totalNonShort - recipeCount
-  // Total videos from the currently-selected channel (ignoring the
-  // Love/Learn/All filter). Used by the "widen the filter" rescue callout
-  // below — tells the user what they'd see if they hit "See all". Null
-  // when no specific channel is selected.
-  const channelTotal = channel === 'All Channels'
-    ? null
-    : videos.filter(v => v.channel === channel && !isShort(v.duration)).length
   const visible = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
 
@@ -550,7 +582,14 @@ export default function VideosPage() {
             ].map(([val, label, activeCls]) => (
               <button
                 key={val}
-                onClick={() => { setFilter(val); setShowCount(12) }}
+                onClick={() => {
+                  setFilter(val)
+                  setShowCount(12)
+                  // Reset chip to each tab's sensible default so chips don't
+                  // persist awkwardly across tab switches. Learn lands on
+                  // Featured (curated top slice); Love and All land on All.
+                  setTopic(val === 'learn' ? 'featured' : 'all')
+                }}
                 className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   filter === val ? activeCls : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
                 }`}
@@ -560,15 +599,35 @@ export default function VideosPage() {
             ))}
           </div>
 
-          {/* Channel — single dropdown, full width */}
-          <select
-            value={channel}
-            onChange={e => { setChannel(e.target.value); setShowCount(12) }}
-            style={{ fontSize: '16px' }}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
-          >
-            {CHANNELS.map(c => <option key={c}>{c}</option>)}
-          </select>
+          {/* Topic chips — dish-types for Love, techniques for Learn.
+              Horizontally scrollable on narrow viewports. Active chip uses
+              the tab's color (rose for Love, sky for Learn); inactive
+              chips are white with a gray border. No chips on the All tab
+              — All is the neutral firehose, no further slicing.
+              Channel dropdown was removed in favor of this; the search
+              input already matches channel text, so chef-specific queries
+              still work via 🔍. */}
+          {chipSet && (
+            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+              {chipSet.map(c => {
+                const isActive = topic === c.key
+                const activeCls = filter === 'love'
+                  ? 'bg-rose-500 text-white border-rose-500'
+                  : 'bg-sky-500 text-white border-sky-500'
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => { setTopic(c.key); setShowCount(12) }}
+                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                      isActive ? activeCls : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </header>
 
@@ -596,45 +655,11 @@ export default function VideosPage() {
               {filtered.length} video{filtered.length === 1 ? '' : 's'} · {totalNonShort} from top YouTube channels
             </p>
 
-            {/* Channel + tab rescue callout. When a specific channel is
-                selected AND the current tab is filtering most of their
-                content out (Love/Learn tabs exclude the opposite content
-                type), we show a friendly "only X from this channel — see
-                all Y" widen-link. Prevents the "feels weak" moment when a
-                great channel happens to have 1 recipe. */}
-            {channelTotal !== null && filter !== 'all' && filtered.length < channelTotal && (
-              <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2.5 flex items-center justify-between gap-3">
-                <p className="text-xs text-orange-800 leading-snug">
-                  Only {filtered.length} {filter === 'love' ? 'recipe' : 'video'}{filtered.length === 1 ? '' : 's'} from <span className="font-semibold">{channel}</span> — they have {channelTotal} total.
-                </p>
-                <button
-                  onClick={() => { setFilter('all'); setShowCount(12) }}
-                  className="shrink-0 text-xs font-semibold px-3 py-1.5 bg-white border border-orange-300 text-orange-700 rounded-full hover:bg-orange-100"
-                >
-                  See all {channelTotal} →
-                </button>
-              </div>
-            )}
-
             {filtered.length === 0 ? (
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
                 <p className="text-4xl mb-2">🔍</p>
                 <p className="text-sm font-semibold text-gray-700">No videos match these filters.</p>
-                {channelTotal !== null && channelTotal > 0 && filter !== 'all' ? (
-                  <>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {channel} has {channelTotal} video{channelTotal === 1 ? '' : 's'}, just none in {filter === 'love' ? '❤️ Love' : '🎓 Learn'}.
-                    </p>
-                    <button
-                      onClick={() => { setFilter('all'); setShowCount(12) }}
-                      className="mt-3 text-xs font-semibold px-4 py-2 bg-orange-600 text-white rounded-full hover:bg-orange-700"
-                    >
-                      See all {channelTotal} from {channel} →
-                    </button>
-                  </>
-                ) : (
-                  <p className="text-xs text-gray-500 mt-1">Try a different channel or clear your search.</p>
-                )}
+                <p className="text-xs text-gray-500 mt-1">Try a different topic or clear your search.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
