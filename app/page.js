@@ -178,13 +178,11 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  {/* Joinery arrows match the Playbook header pattern — three
-                      stages, visually connected, one habit. */}
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow leading-tight tracking-tight">
-                    Save it <span className="text-stone-300">→</span> Plan it <span className="text-stone-300">→</span> Cook it
+                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
+                    Cook with a little help.
                   </h1>
-                  <p className="text-stone-100 text-xs sm:text-sm drop-shadow mt-1">
-                    Your cozy kitchen companion &mdash; recipes, meal plans, and an AI chef.
+                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
+                    Save recipes, plan meals, ask an AI chef anything.
                   </p>
                 </>
               )}
