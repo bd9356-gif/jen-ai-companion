@@ -107,7 +107,7 @@ Each of the four new pages is a focused single-screen experience, matching MyKit
 - **`app/meal-plan/page.js`** — renders three bucket frames (⭐ To Make amber / 📋 Maybe violet / 🗂 Later sky). Data in `my_picks` keyed by `bucket`. Per-item move buttons show the *other* two bucket colors as cues for where the item would go. Empty state offers shortcut buttons to Recipe Cards and Recipe Vault.
 - **`app/shopping-list/page.js`** — uses the shared `<ShoppingByStore>` grid, the shared `<StoreEditor>` (shown inline via `showStoreEditor` toggle), plus a full action bar in the card header: 🏬 Manage Stores, ✨ Clean Up List (calls `/api/cleanup-list`), 📋 Copy (clipboard), 🖨️ Print (popup window). "Clear All" lives on the right. All the existing `/picks` behaviors (grouped-by-store render, unsorted bucket, per-item store reassignment, AI cleanup with `recipe_title` discard, plain-text export sorted by `stores.sort_order`) are preserved because the heavy logic lives in the shared components plus the helpers duplicated here (`buildShoppingListText`, `cleanUpList`).
 - **`app/chef-notes/page.js`** — chronological list of saved AI answers (`favorites` where `type='ai_answer'`). Each row uses `<ExpandableItem>` which opens in place to show the full answer. Header action points at `/chef`. Empty state encourages asking a question and saving it.
-- **`app/chef-recipes/page.js`** — list of Chef Jennifer recipes (`favorites` where `type='ai_recipe'`). Each row uses `<ChefJenItem>`, which expands to show cuisine/difficulty chips, ingredients, instructions, and a 💾 Save to Recipe Vault button. `saveToVault(item)` inserts into `personal_recipes` with `family_notes: 'Saved from Chef Jennifer.'`, normalizing ingredients to `{name, measure}` shape. Header action points at `/topchef`.
+- **`app/chef-recipes/page.js`** — list of Chef Jennifer recipes (`favorites` where `type='ai_recipe'`). Each row uses `<ChefJenItem>`, which expands to show cuisine/difficulty chips, ingredients, numbered instructions (rendered as `<ol>`), and a 💾 Save to Recipe Vault button. `saveToVault(item)` inserts into `personal_recipes` with the recipe's description moved into `family_notes` (prefixed, blank line, then `Saved from Chef Jennifer.`) and an empty `description`, normalizing ingredients to `{name, measure}` shape, and running instructions through `instructionsToString()` so steps land on separate lines. Header action points at `/topchef`.
 
 ### Shared row components (new as of April 2026)
 
@@ -134,7 +134,9 @@ My Playbook replaces course-type buckets with **intent-based** buckets, and cons
 | learn      | 🎓    | Learn       | What you're practicing. (technique / video-only) | sky   |
 | chef_notes | 📝    | Chef Notes  | Saved answers from Chef Jennifer.         | amber |
 
-Header tagline: **"Love it. Learn it. Note it."** Subline: "Everything you've saved — videos and chef answers."
+Header tagline: **"Love it → Learn it → Note it"** (joinery arrows, `text-2xl sm:text-3xl font-bold`). Subline: "All your saved content — from videos to chef guidance." The three pieces are connected stages of the same save habit, not three unrelated tabs — the arrows are the visual shorthand for that.
+
+Below the tagline, a slate callout spells out each surface in Bill's exact wording, one sentence per bucket on its own line so it scans as a legend, not a paragraph: "❤️ **Love** is where you keep the meals you want to try. / 🎓 **Learn** is where you practice and build your skills. / 📝 **Chef Notes** is where you save the answers and guidance you get from Chef Jennifer."
 
 No rename / reorder / delete — locked, like Golf's MyBag. All colors are written as complete literal Tailwind class strings in `app/playbook/page.js` (`COLOR` map for Love/Learn, `NOTES_COLOR` for Chef Notes) and `app/videos/page.js` (`PLAYBOOK_BUCKETS`) so v4's JIT scanner picks them up.
 
@@ -186,7 +188,8 @@ Borders use `border-2` with `-400` shade for emphasis. Each item's move buttons 
 ## Chef Jennifer Recipes detail (`/chef-recipes`)
 
 - **ChefJenItem renders measures.** Each ingredient is `{measure} {name}` — string ingredients render as-is, and `{name, measure}` objects bold the measure.
-- **💾 Save to Recipe Vault.** Inside each expanded item, `saveToVault(item)` inserts into `personal_recipes` with the original title/description/ingredients/instructions/difficulty, `family_notes = "Saved from Chef Jennifer."`, and empty `tags` + `photo_url`.
+- **💾 Save to Recipe Vault.** Inside each expanded item, `saveToVault(item)` inserts into `personal_recipes` with the original title, ingredients (normalized), instructions (normalized via `instructionsToString`), and difficulty. The recipe's description is **moved into `family_notes`** (followed by a blank line + "Saved from Chef Jennifer.") and the Vault `description` is set to empty — Chef Jennifer's descriptions are often full paragraphs that clip badly in the Vault hero overlay, and `family_notes` has room to read them. `tags` and `photo_url` are empty.
+- **Instruction normalization.** Chef Jennifer's prompt occasionally returns instructions as a numbered blob (`"1. Dice onion. 2. Heat pan."`), sometimes as an array, sometimes as a newline string. Both `saveToFavorites` on `/topchef` and `saveToVault` on `/chef-recipes` run the value through `instructionsToString()` from `lib/normalize_instructions.js`, which strips leading numbering, splits on `\n` or `\s\d+[\.\)]\s` boundaries, trims, and rejoins as a clean newline-separated string. `<ChefJenItem>` parses the same way on render and emits an `<ol>` — saved rows and live model output both render as numbered steps on separate lines.
 
 ## Chef TV (`/videos`)
 
@@ -391,6 +394,10 @@ The landing page (`app/page.js`) and About page (`app/about/page.js`) intentiona
 - Footer: two inline links in `text-stone-500` separated by a bullet — **About MyRecipe Companion** and **Tester notes** (see below).
 
 The shift from cream landing → orange MyKitchen reads as an intentional tone change, not a jarring break. Keep MyKitchen orange; keep landing cream.
+
+**Hero tagline (signed-out) matches the Playbook joinery pattern.** The signed-out hero shows **"Save it → Plan it → Cook it"** with arrows in `text-stone-300`, at `text-2xl sm:text-3xl font-bold`, and subline "Your cozy kitchen companion — recipes, meal plans, and an AI chef." The three stages mirror the three main pieces of the app (Vault, Meal Plan, Chef Jennifer) and use the same visual language as Playbook's "Love it → Learn it → Note it" — one connected habit, three stages. Signed-in visitors see the existing personalized greeting ("Welcome back, {name}.") instead.
+
+**Feature tiles are links.** Each entry in `FEATURES` carries a `route` (e.g. `/secret`, `/meal-plan`, `/topchef`); tiles are rendered as `<a>` elements whose `href` is `route` if the visitor is signed in, else `/login`. Signed-out visitors sign in from any tile, not just the header or CTA. Tiles show a small `→` chevron and lift to `border-stone-400` on hover.
 
 ## Tester banner & `/notes` page
 

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { normalizeInstructionsArray, instructionsToString } from '@/lib/normalize_instructions'
 
 const STEPS = {
   MEAL: 'meal',
@@ -240,6 +241,10 @@ export default function MyChefPage() {
   async function saveToFavorites() {
     if (!user) { window.location.href = '/login'; return }
     if (!recipe) return
+    // Normalize instructions to a clean newline-separated string at save time
+    // so downstream renderers (ChefJenItem, Vault) get consistent steps. The
+    // model sometimes returns a numbered blob, sometimes an array, sometimes
+    // a newline string — store the normalized shape, not the raw shape.
     await supabase.from('favorites').insert({
       user_id: user.id,
       type: 'ai_recipe',
@@ -249,7 +254,7 @@ export default function MyChefPage() {
       metadata: {
         description: recipe.description,
         ingredients: recipe.ingredients,
-        instructions: recipe.instructions,
+        instructions: instructionsToString(recipe.instructions),
         difficulty: recipe.difficulty,
         cuisine: recipe.cuisine,
         meal: meal?.value,
@@ -267,28 +272,10 @@ export default function MyChefPage() {
     setTimeout(() => setToast(null), 2500)
   }
 
-  // Tolerant parser: handles array, newline-separated string, OR a single
-  // "1. foo 2. bar" blob (legacy rows). Strips leading "1." / "1)" numbers.
-  const instructions = (() => {
-    const raw = recipe?.instructions
-    if (!raw) return []
-    let parts = []
-    if (Array.isArray(raw)) {
-      parts = raw.map(String)
-    } else if (typeof raw === 'string') {
-      const s = raw.trim()
-      if (s.includes('\n')) {
-        parts = s.split('\n')
-      } else if (/\s\d+[\.\)]\s/.test(s)) {
-        parts = s.split(/\s(?=\d+[\.\)]\s)/)
-      } else {
-        parts = [s]
-      }
-    }
-    return parts
-      .map(p => String(p).trim().replace(/^\s*\d+[\.\)]\s*/, ''))
-      .filter(Boolean)
-  })()
+  // Tolerant parser for display (handles array | newline string | numbered blob).
+  // Shared helper in lib/normalize_instructions.js — saved rows are normalized
+  // at save time, but older rows and live model output still go through here.
+  const instructions = normalizeInstructionsArray(recipe?.instructions)
 
   // Greeting is time-of-day only — no name (email prefixes rarely read well).
 

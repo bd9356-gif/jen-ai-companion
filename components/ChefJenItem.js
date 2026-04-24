@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { normalizeInstructionsArray } from '@/lib/normalize_instructions'
 
 // Chef Jennifer saved recipe row. Title expands to show ingredients,
 // instructions, cuisine/difficulty chips, and a Save-to-Vault button
@@ -14,12 +15,14 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
   const meta = item.metadata || {}
   const description  = meta.description || ''
   const ingredients  = Array.isArray(meta.ingredients) ? meta.ingredients : []
-  const instructions = meta.instructions || ''
+  // Parse tolerantly — older rows stored numbered-blob strings; new rows are
+  // already a clean newline-separated string, both collapse to an array here.
+  const instructionSteps = normalizeInstructionsArray(meta.instructions)
   const difficulty   = meta.difficulty || ''
   const cuisine      = meta.cuisine || ''
   // Fallback: some older saves may have used metadata.answer
   const answer       = meta.answer || ''
-  const hasContent   = description || ingredients.length > 0 || instructions || answer
+  const hasContent   = description || ingredients.length > 0 || instructionSteps.length > 0 || answer
 
   async function handleSaveToVault() {
     if (savedToVault || !onSaveToVault) return
@@ -74,14 +77,18 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
                 </div>
               )}
 
-              {instructions && (
+              {instructionSteps.length > 0 && (
                 <div>
                   <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1">Instructions</h4>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{instructions}</p>
+                  <ol className="list-decimal pl-5 space-y-1.5 text-gray-700 leading-relaxed">
+                    {instructionSteps.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
                 </div>
               )}
 
-              {answer && !description && !instructions && (
+              {answer && !description && instructionSteps.length === 0 && (
                 <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{answer}</p>
               )}
 

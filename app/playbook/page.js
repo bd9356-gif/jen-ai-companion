@@ -248,16 +248,30 @@ export default function PlaybookPage() {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-4 pb-16">
-        <div className="text-center px-2 mb-3">
-          <p className="text-sm font-semibold text-gray-800 leading-snug">Love it. Learn it. Note it.</p>
-          <p className="text-xs text-gray-500 mt-1">Everything you&rsquo;ve saved &mdash; videos and chef answers.</p>
+      <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
+        {/* Heading tagline — joinery arrows ("Love it → Learn it → Note it")
+            signal that the three pieces are connected stages of the same
+            save habit, not three unrelated tabs. Bigger type than before so
+            it reads as a page title, not a caption. */}
+        <div className="text-center px-2 mb-6">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+            Love it <span className="text-gray-400">→</span> Learn it <span className="text-gray-400">→</span> Note it
+          </p>
+          <p className="text-sm text-gray-500 mt-2">All your saved content &mdash; from videos to chef guidance.</p>
         </div>
 
-        {/* Intro callout — explains the 2 buckets and where Chef Notes fit. */}
-        <div className="mb-4 rounded-2xl border-2 border-slate-400 bg-slate-50 p-3">
-          <p className="text-sm text-slate-900 leading-snug">
-            ❤️ <span className="font-bold">Love</span> is meals you want to try. 🎓 <span className="font-bold">Learn</span> is what you&rsquo;re practicing. 📝 <span className="font-bold">Chef Notes</span> holds answers you&rsquo;ve saved from Chef Jennifer.
+        {/* Intro callout — full sentences per surface, Bill's exact wording.
+            Keeps the three saves conceptually separate so users know where
+            each kind of thing lives. */}
+        <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-2">
+          <p className="text-sm text-slate-900 leading-relaxed">
+            ❤️ <span className="font-bold">Love</span> is where you keep the meals you want to try.
+          </p>
+          <p className="text-sm text-slate-900 leading-relaxed">
+            🎓 <span className="font-bold">Learn</span> is where you practice and build your skills.
+          </p>
+          <p className="text-sm text-slate-900 leading-relaxed">
+            📝 <span className="font-bold">Chef Notes</span> is where you save the answers and guidance you get from Chef Jennifer.
           </p>
         </div>
 

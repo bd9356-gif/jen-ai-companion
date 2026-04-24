@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import ChefJenItem from '@/components/ChefJenItem'
+import { instructionsToString } from '@/lib/normalize_instructions'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -47,15 +48,24 @@ export default function ChefRecipesPage() {
       if (typeof ing === 'string') return { name: ing, measure: '' }
       return { name: ing?.name || '', measure: ing?.measure || '' }
     }) : []
+    // Description on Vault's detail view overlays the hero photo and truncates
+    // aggressively — Chef Jennifer's descriptions are often full paragraphs
+    // that get clipped. Move them into family_notes (where there's room to
+    // read) and leave description empty so the hero stays clean. Attribution
+    // line always trails so the "Saved from Chef Jennifer" marker persists.
+    const description = (meta.description || '').trim()
+    const familyNotes = description
+      ? `${description}\n\nSaved from Chef Jennifer.`
+      : 'Saved from Chef Jennifer.'
     const { error } = await supabase.from('personal_recipes').insert({
       user_id: user.id,
       title: item.title,
-      description: meta.description || '',
+      description: '',
       ingredients,
-      instructions: meta.instructions || '',
+      instructions: instructionsToString(meta.instructions),
       category: '',
       tags: [],
-      family_notes: 'Saved from Chef Jennifer.',
+      family_notes: familyNotes,
       photo_url: '',
       difficulty: meta.difficulty || '',
     })

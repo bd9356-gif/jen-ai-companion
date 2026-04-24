@@ -20,31 +20,39 @@ const BANNER = {
   linkLabel: 'Tester notes →',
 }
 
+// Each tile carries the in-app route so signed-in visitors jump straight
+// there; signed-out visitors get routed through /login first. Both paths are
+// computed in render (see `tileHref` below).
 const FEATURES = [
   {
     emoji: '📒',
     title: 'Recipe Vault',
     blurb: 'Your private library of saved recipes, organized and searchable.',
+    route: '/secret',
   },
   {
     emoji: '🗂',
     title: 'Recipe Cards',
     blurb: 'Flip through your recipes like a deck of cozy index cards.',
+    route: '/cards',
   },
   {
     emoji: '📅',
     title: 'Meal Plan',
     blurb: "What you're cooking this week, with a shopping list to match.",
+    route: '/meal-plan',
   },
   {
     emoji: '👨‍🍳',
     title: 'Chef Jennifer',
     blurb: 'An AI chef who builds recipes and answers kitchen questions.',
+    route: '/topchef',
   },
   {
     emoji: '📺',
     title: 'Chef TV',
     blurb: 'Cooking videos for learning skills and finding new ideas.',
+    route: '/videos',
   },
 ]
 
@@ -170,11 +178,13 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
-                    Cook with a little help.
+                  {/* Joinery arrows match the Playbook header pattern — three
+                      stages, visually connected, one habit. */}
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow leading-tight tracking-tight">
+                    Save it <span className="text-stone-300">→</span> Plan it <span className="text-stone-300">→</span> Cook it
                   </h1>
-                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
-                    Save recipes, plan meals, ask an AI chef anything.
+                  <p className="text-stone-100 text-xs sm:text-sm drop-shadow mt-1">
+                    Your cozy kitchen companion &mdash; recipes, meal plans, and an AI chef.
                   </p>
                 </>
               )}
@@ -188,24 +198,30 @@ export default function HomePage() {
           </a>
         </div>
 
-        {/* Feature tiles */}
+        {/* Feature tiles — each links to its in-app page; signed-out visitors
+            route through /login so a tap on any tile becomes a sign-in path. */}
         <section>
           <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-2.5">
-            What's inside
+            What&apos;s inside
           </p>
           <div className="grid gap-2">
-            {FEATURES.map(({ emoji, title, blurb }) => (
-              <div
-                key={title}
-                className="bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 flex items-start gap-3"
-              >
-                <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
-                <div className="text-left min-w-0 flex-1">
-                  <p className="text-stone-800 font-semibold text-sm leading-tight">{title}</p>
-                  <p className="text-stone-600 text-xs leading-snug mt-0.5">{blurb}</p>
-                </div>
-              </div>
-            ))}
+            {FEATURES.map(({ emoji, title, blurb, route }) => {
+              const tileHref = user ? route : '/login'
+              return (
+                <a
+                  key={title}
+                  href={tileHref}
+                  className="bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 flex items-start gap-3 hover:border-stone-400 hover:bg-stone-50 transition-colors"
+                >
+                  <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="text-stone-800 font-semibold text-sm leading-tight">{title}</p>
+                    <p className="text-stone-600 text-xs leading-snug mt-0.5">{blurb}</p>
+                  </div>
+                  <span className="text-stone-400 text-sm shrink-0 mt-0.5" aria-hidden="true">→</span>
+                </a>
+              )
+            })}
           </div>
         </section>
 
