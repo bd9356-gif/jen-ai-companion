@@ -8,27 +8,19 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// Category dropdown grouped by type — cuisines, dishes, proteins, etc.
-// The first entry ("All Categories") sits above the groups.
-const CATEGORY_GROUPS = [
-  { label: 'Cuisines', items: ['Italian', 'Mexican', 'French', 'Asian', 'American'] },
-  { label: 'Dishes',   items: ['Pasta', 'Pizza', 'Bread', 'Sandwich', 'Soup', 'Salad', 'Sauce', 'Appetizer', 'Dessert'] },
-  { label: 'Proteins', items: ['Chicken', 'Beef', 'Seafood', 'Pork', 'Vegetables'] },
-  { label: 'Meals',    items: ['Breakfast', 'Comfort Food'] },
-  { label: 'Style',    items: ['Quick', 'Baking', 'Technique'] },
-]
-
-// My Playbook buckets — a save isn't a save, it's a placement into one of
-// these four intent-based buckets. Tapping a bucket on an unsaved video
-// creates the favorites + cooking_skill_items rows; tapping the same bucket
-// again removes both; tapping a different bucket updates the bucket in
-// place. Matches /playbook exactly. Full Tailwind class literals per
-// bucket (JIT requirement).
+// My Playbook buckets — 3 intent-based placements for a Chef TV save.
+// Tapping a bucket on an unsaved video inserts favorites + cooking_skill_items;
+// tapping the same bucket again removes both; tapping a different bucket
+// updates the bucket in place. Matches /playbook exactly. Full Tailwind
+// class literals per bucket (JIT requirement).
+//
+// Framing: see → try → improve. Save = stash, Love = want to try, Learn =
+// practicing. Love is the one that captures a recipe URL for ingestion
+// (when the video has a recipe) — see setBucket() below.
 const PLAYBOOK_BUCKETS = [
-  { key: 'save',   emoji: '📥', label: 'Save',   activeCls: 'bg-slate-600 text-white border-slate-600' },
-  { key: 'love',   emoji: '❤️', label: 'Love',   activeCls: 'bg-rose-500 text-white border-rose-500' },
-  { key: 'cooked', emoji: '👩‍🍳', label: 'Cooked', activeCls: 'bg-emerald-600 text-white border-emerald-600' },
-  { key: 'learn',  emoji: '🎓', label: 'Learn',  activeCls: 'bg-sky-500 text-white border-sky-500' },
+  { key: 'save',  emoji: '📥', label: 'Save',  activeCls: 'bg-slate-600 text-white border-slate-600' },
+  { key: 'love',  emoji: '❤️', label: 'Love',  activeCls: 'bg-rose-500 text-white border-rose-500' },
+  { key: 'learn', emoji: '🎓', label: 'Learn', activeCls: 'bg-sky-500 text-white border-sky-500' },
 ]
 
 const CHANNELS = [
@@ -91,29 +83,29 @@ function SkeletonCard() {
 }
 
 export default function VideosPage() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  )
   const [user, setUser] = useState(null)
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
   // savedMap: video.id (string ref_id) → { favId, bucket }.
   // favId is the favorites row UUID (for deletes + bucket upserts).
-  // bucket is the current Playbook bucket (save/love/cooked/learn).
+  // bucket is the current Playbook bucket (save/love/learn).
   // Absence from this map = video is not saved at all.
   const [savedMap, setSavedMap] = useState(new Map())
-  const [category, setCategory] = useState('All Categories')
+  // Set of video.id strings that have been copied into Recipe Vault this
+  // session (via "Save to My Kitchen"). Resets on refresh — re-saving is
+  // harmless, just creates another Vault row.
+  const [vaultIds, setVaultIds] = useState(new Set())
   const [channel, setChannel] = useState('All Channels')
   const [search, setSearch] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   const [playingId, setPlayingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [metadata, setMetadata] = useState({})
   const [showCount, setShowCount] = useState(12)
-  const [filter, setFilter] = useState('all')       // all | recipe | summary
-  const [sortBy, setSortBy] = useState('popular')   // popular | newest | saved
-  const [showShorts, setShowShorts] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
+  const [filter, setFilter] = useState('all')  // all | recipe | summary
+  const [toast, setToast] = useState(null)
+
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -179,12 +171,17 @@ export default function VideosPage() {
   //   1. Video not saved       → insert favorites + cooking_skill_items(bucket)
   //   2. Video in same bucket  → remove (delete favorites + cooking_skill_items)
   //   3. Video in other bucket → upsert cooking_skill_items to new bucket
-  // The favorites row is the single source-of-truth for "is this saved?"; the
-  // cooking_skill_items row carries the bucket placement.
+  //
+  // Love + recipe side-effect: when the target bucket is 'love' AND the
+  // video has a recipe, we also log the YouTube URL into loved_recipe_urls
+  // (ingestion signal). Moving away from love cleans that row up. Pure
+  // backend capture — no user-facing surface for this table.
   async function setBucket(video, bucket) {
     if (!user) return
     const videoId = String(video.id)
     const current = savedMap.get(videoId)
+    const meta = metadata[video.id]
+    const hasRecipe = meta?.ingredients?.length > 0
 
     if (current && current.bucket === bucket) {
       // Case 2: toggle off
@@ -194,6 +191,14 @@ export default function VideosPage() {
         .eq('user_id', user.id)
         .eq('item_type', 'favorite')
         .eq('item_id', current.favId)
+      // favorites delete cascades to loved_recipe_urls via FK, but be
+      // explicit for clarity.
+      if (current.bucket === 'love') {
+        await supabase.from('loved_recipe_urls')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('favorite_id', current.favId)
+      }
       setSavedMap(prev => { const n = new Map(prev); n.delete(videoId); return n })
       return
     }
@@ -208,6 +213,23 @@ export default function VideosPage() {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,item_type,item_id' })
       if (error) return
+      // Love queue sync
+      if (bucket === 'love' && hasRecipe) {
+        await supabase.from('loved_recipe_urls').upsert({
+          user_id: user.id,
+          favorite_id: current.favId,
+          video_id: videoId,
+          youtube_id: video.youtube_id,
+          youtube_url: `https://www.youtube.com/watch?v=${video.youtube_id}`,
+          title: video.title,
+          channel: video.channel,
+        }, { onConflict: 'user_id,favorite_id' })
+      } else if (current.bucket === 'love') {
+        await supabase.from('loved_recipe_urls')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('favorite_id', current.favId)
+      }
       setSavedMap(prev => {
         const n = new Map(prev)
         n.set(videoId, { ...current, bucket })
@@ -217,8 +239,6 @@ export default function VideosPage() {
     }
 
     // Case 1: first save — insert both rows
-    const meta = metadata[video.id]
-    const hasRecipe = meta?.ingredients?.length > 0
     const { data: inserted, error: favErr } = await supabase.from('favorites').insert({
       user_id: user.id,
       type: hasRecipe ? 'video_recipe' : 'video_education',
@@ -242,6 +262,17 @@ export default function VideosPage() {
       item_id: inserted.id,
       bucket,
     })
+    if (bucket === 'love' && hasRecipe) {
+      await supabase.from('loved_recipe_urls').insert({
+        user_id: user.id,
+        favorite_id: inserted.id,
+        video_id: videoId,
+        youtube_id: video.youtube_id,
+        youtube_url: `https://www.youtube.com/watch?v=${video.youtube_id}`,
+        title: video.title,
+        channel: video.channel,
+      })
+    }
     setSavedMap(prev => {
       const n = new Map(prev)
       n.set(videoId, { favId: inserted.id, bucket })
@@ -249,40 +280,58 @@ export default function VideosPage() {
     })
   }
 
+  // "Save to My Kitchen" — copy this Chef TV recipe into the user's
+  // personal Recipe Vault. Only shown in the expanded Recipe view when
+  // the video has ingredients. Distinct from the Playbook save strip:
+  // that saves the video itself, this saves the recipe content.
+  async function saveToKitchen(video) {
+    if (!user) return
+    const meta = metadata[video.id]
+    if (!meta?.ingredients?.length) return
+    const { error } = await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: video.title,
+      description: meta.ai_summary || '',
+      ingredients: meta.ingredients,
+      instructions: meta.instructions || '',
+      category: '',
+      tags: [],
+      family_notes: `Saved from Chef TV — ${video.channel}.`,
+      photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+      difficulty: '',
+      servings: null,
+    })
+    if (error) { showToast('Could not save to Kitchen'); return }
+    setVaultIds(prev => new Set(prev).add(String(video.id)))
+    showToast('Saved to Recipe Vault ✓')
+  }
+
   function toggleExpand(videoId) {
     setExpandedId(expandedId === videoId ? null : videoId)
   }
 
-  function clearFilters() {
-    setCategory('All Categories')
-    setChannel('All Channels')
-    setFilter('all')
-    setSortBy('popular')
-    setShowShorts(false)
-    setShowCount(12)
+  function toggleSearch() {
+    if (showSearch) {
+      setSearch('')
+      setShowSearch(false)
+    } else {
+      setShowSearch(true)
+    }
   }
 
-  // Filters stack: category + channel + search + recipe/summary + shorts all AND together.
+  // Filters stack: channel + search + recipe/summary all AND together.
+  // Shorts (under 3 min) are always excluded — no toggle.
   const filtered = videos
     .filter(v => {
       const meta = metadata[v.id]
       const hasRecipe = meta?.ingredients?.length > 0
-      const tags = meta?.dish_tags || []
-      const matchCategory = category === 'All Categories' || tags.some(t => t.toLowerCase() === category.toLowerCase())
       const matchChannel = channel === 'All Channels' || v.channel === channel
       const matchSearch = search === '' || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase())
       const matchFilter = filter === 'all' || (filter === 'recipe' && hasRecipe) || (filter === 'summary' && !hasRecipe)
-      const matchShorts = showShorts || !isShort(v.duration)
-      const matchSaved  = sortBy !== 'saved' || savedMap.has(String(v.id))
-      return matchCategory && matchChannel && matchSearch && matchFilter && matchShorts && matchSaved
+      const matchShorts = !isShort(v.duration)
+      return matchChannel && matchSearch && matchFilter && matchShorts
     })
-    .sort((a, b) => {
-      if (sortBy === 'newest') {
-        return new Date(b.created_at || 0) - new Date(a.created_at || 0)
-      }
-      // popular (default) and 'saved' fall back to view_count desc
-      return (b.view_count || 0) - (a.view_count || 0)
-    })
+    .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
 
   const totalNonShort = videos.filter(v => !isShort(v.duration)).length
   const recipeCount = videos.filter(v => metadata[v.id]?.ingredients?.length > 0 && !isShort(v.duration)).length
@@ -290,16 +339,12 @@ export default function VideosPage() {
   const visible = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
 
-  // Count how many filters are active (excluding search, which is always visible).
-  const activeFilterCount =
-    (category !== 'All Categories' ? 1 : 0) +
-    (channel !== 'All Channels' ? 1 : 0) +
-    (filter !== 'all' ? 1 : 0) +
-    (sortBy !== 'popular' ? 1 : 0) +
-    (showShorts ? 1 : 0)
-
   return (
     <div className="min-h-screen bg-white">
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">{toast}</div>
+      )}
+
       <header className="bg-white/95 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-2">
@@ -308,105 +353,61 @@ export default function VideosPage() {
               <h1 className="text-lg font-bold text-gray-900">🎬 Chef TV</h1>
             </div>
             <button
-              onClick={() => setShowFilters(s => !s)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-                showFilters || activeFilterCount > 0
-                  ? 'bg-orange-50 border-orange-300 text-orange-700'
-                  : 'bg-white border-gray-200 text-gray-600 hover:border-orange-200'
+              onClick={toggleSearch}
+              aria-label={showSearch ? 'Close search' : 'Open search'}
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                showSearch || search
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
               }`}
             >
-              🎛 Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ''}
+              {showSearch || search ? '✕' : '🔍'}
             </button>
           </div>
 
           <p className="text-xs text-gray-500 mb-3">Watch, learn, save the skills worth mastering.</p>
 
-          <input type="text" placeholder="Search videos or channels..." value={search}
-            onChange={e => { setSearch(e.target.value); setShowCount(12) }}
-            style={{ fontSize: '16px' }}  // prevents iOS Safari auto-zoom
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" />
-
-          {/* Advanced filter panel — hidden by default */}
-          {showFilters && (
-            <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
-              {/* Recipe / Video Only / All — tri-state pill row */}
-              <div className="flex gap-2">
-                {[['all',`All (${totalNonShort})`],['recipe',`🍳 Recipe (${recipeCount})`],['summary',`📝 Video only (${summaryCount})`]].map(([val, label]) => (
-                  <button key={val} onClick={() => { setFilter(val); setShowCount(12) }}
-                    className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                      filter === val
-                        ? val === 'recipe' ? 'bg-green-600 text-white' : val === 'summary' ? 'bg-gray-600 text-white' : 'bg-orange-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-orange-50'}`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Sort, category, channel */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <label className="block">
-                  <span className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1">Sort</span>
-                  <select
-                    value={sortBy}
-                    onChange={e => { setSortBy(e.target.value); setShowCount(12) }}
-                    style={{ fontSize: '16px' }}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  >
-                    <option value="popular">Most popular</option>
-                    <option value="newest">Newest first</option>
-                    <option value="saved">Only saved by me</option>
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1">Category</span>
-                  <select
-                    value={category}
-                    onChange={e => { setCategory(e.target.value); setShowCount(12) }}
-                    style={{ fontSize: '16px' }}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  >
-                    <option>All Categories</option>
-                    {CATEGORY_GROUPS.map(g => (
-                      <optgroup key={g.label} label={g.label}>
-                        {g.items.map(c => <option key={c}>{c}</option>)}
-                      </optgroup>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-500 mb-1">Channel</span>
-                  <select
-                    value={channel}
-                    onChange={e => { setChannel(e.target.value); setShowCount(12) }}
-                    style={{ fontSize: '16px' }}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  >
-                    {CHANNELS.map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </label>
-              </div>
-
-              {/* Shorts toggle + clear */}
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showShorts}
-                    onChange={e => { setShowShorts(e.target.checked); setShowCount(12) }}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-400"
-                  />
-                  Include shorts (under 3 min)
-                </label>
-                {activeFilterCount > 0 && (
-                  <button onClick={clearFilters} className="text-xs font-semibold text-orange-600 hover:text-orange-800">
-                    Clear all
-                  </button>
-                )}
-              </div>
-            </div>
+          {(showSearch || search) && (
+            <input
+              type="text"
+              placeholder="Search videos or channels..."
+              value={search}
+              autoFocus
+              onChange={e => { setSearch(e.target.value); setShowCount(12) }}
+              style={{ fontSize: '16px' }}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
+            />
           )}
+
+          {/* All / Video / Recipe — tri-state pill row. Keeps focus on what
+              kind of content the user wants right now. */}
+          <div className="flex gap-2 mb-3">
+            {[
+              ['all',     `All (${totalNonShort})`,        'bg-orange-600 text-white'],
+              ['summary', `📝 Video (${summaryCount})`,    'bg-gray-600 text-white'],
+              ['recipe',  `🍳 Recipe (${recipeCount})`,    'bg-green-600 text-white'],
+            ].map(([val, label, activeCls]) => (
+              <button
+                key={val}
+                onClick={() => { setFilter(val); setShowCount(12) }}
+                className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  filter === val ? activeCls : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Channel — single dropdown, full width */}
+          <select
+            value={channel}
+            onChange={e => { setChannel(e.target.value); setShowCount(12) }}
+            style={{ fontSize: '16px' }}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-300"
+          >
+            {CHANNELS.map(c => <option key={c}>{c}</option>)}
+          </select>
         </div>
       </header>
 
@@ -425,7 +426,7 @@ export default function VideosPage() {
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
                 <p className="text-4xl mb-2">🔍</p>
                 <p className="text-sm font-semibold text-gray-700">No videos match these filters.</p>
-                <p className="text-xs text-gray-500 mt-1">Try adjusting or clearing your filters above.</p>
+                <p className="text-xs text-gray-500 mt-1">Try a different channel or clear your search.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -435,6 +436,7 @@ export default function VideosPage() {
                   const hasRecipe = meta?.ingredients?.length > 0
                   const videoId = String(video.id)
                   const savedEntry = savedMap.get(videoId)  // { favId, bucket } | undefined
+                  const isInVault = vaultIds.has(videoId)
                   const steps = parseInstructions(meta?.instructions)
                   return (
                     <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 hover:shadow-sm transition-all">
@@ -543,6 +545,26 @@ export default function VideosPage() {
                                         </div>
                                       </div>
                                     )}
+                                    {/* Save to My Kitchen — only inside the Recipe view,
+                                        only on recipe-bearing videos. Education-first:
+                                        user has to look at the recipe before being
+                                        offered to pull it into their Vault. */}
+                                    <div className="mt-5 pt-4 border-t border-gray-100">
+                                      <button
+                                        onClick={() => saveToKitchen(video)}
+                                        disabled={isInVault}
+                                        className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                                          isInVault
+                                            ? 'bg-emerald-100 text-emerald-700 cursor-default'
+                                            : 'bg-orange-600 text-white hover:bg-orange-700'
+                                        }`}
+                                      >
+                                        {isInVault ? '✓ Saved to My Kitchen' : '💾 Save to My Kitchen'}
+                                      </button>
+                                      <p className="text-[11px] text-gray-500 text-center mt-2">
+                                        Adds this recipe to your Recipe Vault, with the video for reference.
+                                      </p>
+                                    </div>
                                   </>
                                 )}
                                 {!hasRecipe && !meta.ai_summary && (

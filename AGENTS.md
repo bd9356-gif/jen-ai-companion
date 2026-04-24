@@ -35,7 +35,7 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
 | Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
-| My Playbook            | `/playbook`   | Saved Chef TV videos, bucketed by intent (Save/Love/Cooked/Learn).  |
+| My Playbook            | `/playbook`   | Saved Chef TV videos, bucketed by intent (Save/Love/Learn).         |
 | Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes.                         |
 | Chef Notes             | `/chef-notes` | Saved AI answers, chronological.                                    |
 | Chef Jennifer Recipes  | `/chef-recipes` | Recipes Chef Jennifer made for you; save-to-vault from here.      |
@@ -126,27 +126,38 @@ Factored out of `app/picks/page.js` so both `/picks` and the Phase 2A pages rend
 
 **Pivot from Skills I Learned (April 2026).** The original Skills I Learned used six course-type buckets (Starter / Breakfast / Mains / Sides & Veg / Baking / Desserts). Bill's read: sorting cooking videos that way is impossible because videos don't cleanly fit course types — a single video is often a main AND a technique AND a weeknight thing. The buckets asked *what kind of food is it?*, but the question the user can actually answer at save time is *what do I want to do with this?*
 
-My Playbook replaces course-type buckets with four **intent-based** buckets. It's also video-only now — saved AI answers land in Chef Notes (`/chef-notes`), not here, giving Chef TV and Ask Chef Jennifer each their own destination tile under the Learn section.
+My Playbook replaces course-type buckets with **intent-based** buckets. It's also video-only — saved AI answers land in Chef Notes (`/chef-notes`), not here, giving Chef TV and Ask Chef Jennifer each their own destination tile under the Learn section.
 
-| Key    | Emoji | Bucket | Meaning                    | Color    |
-| ------ | ----- | ------ | -------------------------- | -------- |
-| save   | 📥    | Save   | Quick stash, no thinking.  | slate    |
-| love   | ❤️    | Love   | Meals you want to make.    | rose     |
-| cooked | 👩‍🍳  | Cooked | What you've made.          | emerald  |
-| learn  | 🎓    | Learn  | What you're working on.    | sky      |
+**4 → 3 bucket collapse (April 2026).** First shipped with four buckets (Save/Love/Cooked/Learn); Bill flagged that Cooked overlapped too much with Love ("I want to make this") and Learn ("I'm practicing this"). Dropped Cooked. The three remaining buckets map cleanly to how home cooks actually learn: **see → try → improve**.
+
+| Key   | Emoji | Bucket | Meaning                      | Color |
+| ----- | ----- | ------ | ---------------------------- | ----- |
+| save  | 📥    | Save   | Keep videos that inspire you. (see)    | slate |
+| love  | ❤️    | Love   | Meals you want to try. (try)           | rose  |
+| learn | 🎓    | Learn  | What you're working on. (improve)      | sky   |
+
+Header tagline: **"Save it today. Love it tomorrow. Learn it for life."**
 
 No rename / reorder / delete — locked, like Golf's MyBag. All colors are written as complete literal Tailwind class strings in `app/playbook/page.js` (`COLOR` map) and `app/videos/page.js` (`PLAYBOOK_BUCKETS`) so v4's JIT scanner picks them up.
 
-**Save-at-source UX (important).** Chef TV video cards no longer have a single heart-shaped save button. Instead, each card shows a **4-button save strip** under the thumbnail — 📥 Save / ❤️ Love / 👩‍🍳 Cooked / 🎓 Learn. One tap places the video directly into that bucket (no default "Starter" limbo). Tapping the same bucket again removes the save. Tapping a different bucket moves it between buckets. Labels are hidden on mobile (`sm:inline`) to fit 4 buttons side-by-side; desktop shows emoji + label. Per-bucket active state uses `activeCls` with a filled colored background; inactive buttons are white with gray border.
+**Save-at-source UX (important).** Chef TV video cards no longer have a single heart-shaped save button. Instead, each card shows a **3-button save strip** under the thumbnail — 📥 Save / ❤️ Love / 🎓 Learn. One tap places the video directly into that bucket. Tapping the same bucket again removes the save. Tapping a different bucket moves it between buckets. Labels are hidden on mobile (`sm:inline`) to fit three buttons; desktop shows emoji + label. Per-bucket active state uses `activeCls` with a filled colored background; inactive buttons are white with gray border.
 
-**Data model.** Same `cooking_skill_items` table as before. `supabase/003_playbook_buckets.sql` migrated the old course-type buckets: dropped the CHECK constraint by definition lookup, collapsed every existing row from `starter`/`breakfast`/`mains`/`sides`/`baking`/`desserts` → `save`, changed the default to `save`, installed a new CHECK allowing only `save`/`love`/`cooked`/`learn`. Safe to re-run.
+**Love + recipe → ingestion capture (important).** When a user hits ❤️ Love on a video that has a recipe (`video_metadata.ingredients` non-empty), `setBucket()` also writes a row to `loved_recipe_urls` (user_id, favorite_id, video_id, youtube_id, youtube_url, title, channel). Moving away from Love deletes that row. Toggling Love off deletes it. Pure backend signal capture — no user-facing surface. The table is for curation: which recipes are resonating so we can improve metadata or add them to the curated pool.
 
-`item_type` values (unchanged from Phase 2B):
+**Data model.** Same `cooking_skill_items` table. Migration history:
+- `supabase/002_cooking_skill_items.sql` — created the table with six course-type buckets.
+- `supabase/003_playbook_buckets.sql` — collapsed the six into `save`, installed CHECK for `save/love/cooked/learn`, default `save`.
+- `supabase/004_playbook_3buckets.sql` — dropped the CHECK, collapsed `cooked` rows into `save`, installed CHECK for `save/love/learn`.
+- `supabase/005_loved_recipe_urls.sql` — new `loved_recipe_urls` table for the Love+recipe capture. `favorite_id` FK cascades on delete. RLS scoped to `user_id = auth.uid()`.
+
+All migrations are idempotent — safe to re-run.
+
+`item_type` values on `cooking_skill_items`:
 - `cooking_video` — `item_id` = `cooking_videos.id` (legacy Chef TV save)
 - `education_video` — `item_id` = `education_videos.id` (legacy education save)
 - `favorite` — `item_id` = `favorites.id`. Covers all favorites-sourced items. The source's `favorites.type` still discriminates — but `/playbook` only loads `video_recipe` and `video_education` (videos); `ai_answer` favorites are intentionally excluded and live only in Chef Notes.
 
-**Page behavior.** `loadAll` fetches the three source tables + `cooking_skill_items` in parallel and merges them. If the same underlying video exists in both legacy (`saved_videos`) and new (`favorites`) form, the legacy row wins (dedupe by `_item_type:_item_id`). Each row renders via `<VideoItem>` plus an inline "Move ▾" menu showing the other three buckets as colored chips. Moving upserts into `cooking_skill_items`; removing deletes from the source table AND the `cooking_skill_items` row. All buckets default to **collapsed** on page load; moving an item auto-expands the destination bucket so the user sees where it went. A slate callout at the top of the page explains the four buckets.
+**Page behavior.** `loadAll` fetches the three source tables + `cooking_skill_items` in parallel and merges them. If the same underlying video exists in both legacy (`saved_videos`) and new (`favorites`) form, the legacy row wins (dedupe by `_item_type:_item_id`). Each row renders via `<VideoItem>` plus an inline "Move ▾" menu showing the other two buckets as colored chips. Moving upserts into `cooking_skill_items`; removing deletes from the source table AND the `cooking_skill_items` row. All buckets default to **collapsed** on page load; moving an item auto-expands the destination bucket so the user sees where it went. A slate callout at the top of the page explains the three buckets.
 
 **Back-compat.** `/skills` is now a server-side `redirect()` → `/playbook`. Old bookmarks survive.
 
@@ -174,6 +185,31 @@ Borders use `border-2` with `-400` shade for emphasis. Each item's move buttons 
 - **ChefJenItem renders measures.** Each ingredient is `{measure} {name}` — string ingredients render as-is, and `{name, measure}` objects bold the measure.
 - **💾 Save to Recipe Vault.** Inside each expanded item, `saveToVault(item)` inserts into `personal_recipes` with the original title/description/ingredients/instructions/difficulty, `family_notes = "Saved from Chef Jennifer."`, and empty `tags` + `photo_url`.
 
+## Chef TV (`/videos`)
+
+**Education-first framing (April 2026).** Chef TV is for learning, not shopping. Of the ~700 curated videos, only ~160 carry recipe metadata. The page is designed so users default to *watching and learning*; recipe content is secondary and surfaces only when the user opts in.
+
+**Simplified filter strip.** Previously had category chips (cuisines/dishes/proteins/meals/style), sort dropdown, shorts toggle, and channel — plus a `🎛 Filters` panel toggle. All of that was pared down to what home cooks actually use:
+
+- **🔍 Search toggle.** A single circular button in the header. Tapped, it reveals a full-width search input (auto-focus). Tapped again (or ✕), input clears and hides. Matches the Recipe Vault / Cards pattern. Input uses `style={{ fontSize: '16px' }}` to block iOS Safari auto-zoom.
+- **All / Video / Recipe tri-state pill row.** Three equal-width buttons. `All` (orange) shows everything, `📝 Video` (gray) shows only non-recipe videos, `🍳 Recipe` (green) shows only the ~160 with ingredients. Counts in parens.
+- **Channel dropdown.** Full-width `<select>` with the canonical `CHANNELS` list. Single row below the pill.
+
+Dropped entirely: category chips (`CATEGORY_GROUPS`), sort dropdown (hardcoded to view_count desc), shorts toggle (always filters out <3 min).
+
+**Playbook save strip.** Under the thumbnail on every card: `📥 Save / ❤️ Love / 🎓 Learn`. See "Save-at-source UX" under My Playbook above. The strip is identical on recipe and non-recipe videos — the save is about the video, not the recipe.
+
+**💾 Save to My Kitchen (recipe videos only).** Inside the expanded Recipe view (`isExpanded && hasRecipe`), after the Ingredients and Instructions blocks, an orange button `💾 Save to My Kitchen` calls `saveToKitchen(video)` which inserts into `personal_recipes`:
+- `title = video.title`, `description = meta.ai_summary || ''`
+- `ingredients = meta.ingredients` (already `{name, measure}` shape), `instructions = meta.instructions`
+- `family_notes = "Saved from Chef TV — {channel}."`
+- `photo_url = <YouTube hqdefault thumbnail>`
+- `category: ''`, `tags: []`, `difficulty: ''`, `servings: null`
+
+After click, button swaps to `✓ Saved to My Kitchen` (emerald) and disables. Tracking is session-level (`vaultIds: Set<string>`) — refresh resets the button, and re-saving creates another Vault row (no dedupe). Small print under the button: "Adds this recipe to your Recipe Vault, with the video for reference." This button is intentionally gated behind opening the Recipe view — user has to look at the recipe before pulling it into their Vault. Education-first.
+
+**❤️ Love → ingestion capture.** See "Love + recipe" under My Playbook. When `setBucket(video, 'love')` fires and the video has `meta.ingredients.length > 0`, a row is written to `loved_recipe_urls` (user_id, favorite_id, video_id, youtube_id, youtube_url, title, channel). Moving away from Love cleans it up. Not surfaced in the UI.
+
 ## Supabase schema (inferred from code — verify before migrations)
 
 Tables referenced in the app:
@@ -190,6 +226,8 @@ Tables referenced in the app:
 - **`education_videos`** — `id, title, channel, youtube_id, …`
 - **`education_video_metadata`** — per-video educational metadata, joined by `video_id`
 - **`video_metadata`** — `id, video_id, ingredients (jsonb[]), instructions` — populated by ingestion scripts.
+- **`cooking_skill_items`** — `id, user_id, item_type, item_id, bucket ('save'|'love'|'learn'), created_at, updated_at` — Playbook bucket placement for saved videos. Unique on `(user_id, item_type, item_id)`. RLS scoped to owner. Migration trail: `002_cooking_skill_items.sql` → `003_playbook_buckets.sql` → `004_playbook_3buckets.sql`.
+- **`loved_recipe_urls`** — `id, user_id, favorite_id (fk → favorites, cascade), video_id, youtube_id, youtube_url, title, channel, created_at` — Love+recipe ingestion signal capture. Unique on `(user_id, favorite_id)`. RLS scoped to owner. Written from `/videos` when user hits ❤️ Love on a video with ingredients; deleted when they move away from Love. Not surfaced in the UI — for curation/ingestion pipeline only. Migration: `supabase/005_loved_recipe_urls.sql`.
 
 ## Chef Jennifer "Make my recipe more..." preferences
 

@@ -8,11 +8,17 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// My Playbook — four intent-based buckets (locked).
-// Retired the course-type buckets from Skills I Learned (April 2026): home
-// cooks couldn't sort cooking videos by course cleanly. Save/Love/Cooked/
-// Learn asks "what do I want to do with this?" instead of "what kind of
-// food is it?" — a question the user can actually answer at save time.
+// My Playbook — three intent-based buckets, matching how home cooks
+// actually learn: see → try → improve.
+//
+//   save   📥  Keep videos that inspire you. (see)
+//   love   ❤️  Meals you want to make.        (try)
+//   learn  🎓  What you're working on.         (improve)
+//
+// Pivoted from 6 course-type buckets (Skills I Learned) → 4 intent buckets
+// → 3 (April 2026, migrations 002, 003, 004). Cooked was dropped because
+// it overlapped too much with Love ("I want to make this") and Learn
+// ("I'm practicing this"). Three buckets, three taps.
 //
 // Only videos land here. Saved AI answers (favorites.type='ai_answer') live
 // in Chef Notes (/chef-notes), which is driven by Ask Chef Jennifer.
@@ -24,18 +30,16 @@ const supabase = createClient(
 //   - saved_education_videos → education_videos (item_type='education_video') (legacy)
 //   - favorites where type in ('video_recipe','video_education') (item_type='favorite')
 const BUCKETS = [
-  { key: 'save',   emoji: '📥', label: 'Save',   hint: 'Quick stash, no thinking.' },
-  { key: 'love',   emoji: '❤️', label: 'Love',   hint: 'Meals you want to make.' },
-  { key: 'cooked', emoji: '👩‍🍳', label: 'Cooked', hint: "What you've made." },
-  { key: 'learn',  emoji: '🎓', label: 'Learn',  hint: "What you're working on." },
+  { key: 'save',  emoji: '📥', label: 'Save',  hint: 'Keep videos that inspire you.' },
+  { key: 'love',  emoji: '❤️', label: 'Love',  hint: 'Meals you want to try.' },
+  { key: 'learn', emoji: '🎓', label: 'Learn', hint: "What you're working on." },
 ]
 
 // Full Tailwind class literals per bucket — v4 JIT requires complete strings.
 const COLOR = {
-  save:   { border: 'border-2 border-slate-400',   header: 'bg-slate-100',   body: 'bg-slate-50',   title: 'text-slate-800',   pill: 'bg-slate-200 text-slate-900',     btnCls: 'border-slate-400 text-slate-800' },
-  love:   { border: 'border-2 border-rose-400',    header: 'bg-rose-100',    body: 'bg-rose-50',    title: 'text-rose-800',    pill: 'bg-rose-200 text-rose-900',       btnCls: 'border-rose-400 text-rose-800' },
-  cooked: { border: 'border-2 border-emerald-400', header: 'bg-emerald-100', body: 'bg-emerald-50', title: 'text-emerald-800', pill: 'bg-emerald-200 text-emerald-900', btnCls: 'border-emerald-400 text-emerald-800' },
-  learn:  { border: 'border-2 border-sky-400',     header: 'bg-sky-100',     body: 'bg-sky-50',     title: 'text-sky-800',     pill: 'bg-sky-200 text-sky-900',         btnCls: 'border-sky-400 text-sky-800' },
+  save:  { border: 'border-2 border-slate-400', header: 'bg-slate-100', body: 'bg-slate-50', title: 'text-slate-800', pill: 'bg-slate-200 text-slate-900', btnCls: 'border-slate-400 text-slate-800' },
+  love:  { border: 'border-2 border-rose-400',  header: 'bg-rose-100',  body: 'bg-rose-50',  title: 'text-rose-800',  pill: 'bg-rose-200 text-rose-900',   btnCls: 'border-rose-400 text-rose-800' },
+  learn: { border: 'border-2 border-sky-400',   header: 'bg-sky-100',   body: 'bg-sky-50',   title: 'text-sky-800',   pill: 'bg-sky-200 text-sky-900',     btnCls: 'border-sky-400 text-sky-800' },
 }
 
 export default function PlaybookPage() {
@@ -199,14 +203,15 @@ export default function PlaybookPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-4 pb-16">
         <div className="text-center px-2 mb-3">
-          <p className="text-sm text-gray-600 leading-snug">What you save, make, and improve — one place for videos you don't want to lose.</p>
+          <p className="text-sm font-semibold text-gray-800 leading-snug">Save it today. Love it tomorrow. Learn it for life.</p>
+          <p className="text-xs text-gray-500 mt-1">See → try → improve.</p>
         </div>
 
-        {/* Intro callout — explains how to use the 4 buckets */}
+        {/* Intro callout — explains how to use the 3 buckets */}
         <div className="mb-4 rounded-2xl border-2 border-slate-400 bg-slate-50 p-3">
           <p className="text-sm text-slate-900 leading-snug">
             <span className="font-bold">Tap a bucket on any Chef TV video.</span>{' '}
-            📥 Save if you're not sure yet, ❤️ Love if you want to make it, 👩‍🍳 Cooked once you've made it, 🎓 Learn while you're working on it.
+            📥 Save keeps what inspires you, ❤️ Love is for meals you want to try, 🎓 Learn is what you're practicing.
           </p>
         </div>
 
