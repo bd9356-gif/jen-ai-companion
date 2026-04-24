@@ -140,28 +140,32 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Entry box: hero image + CTA wrapped as one unit */}
+        {/* Entry box: hero image + CTA wrapped as one unit. Hero is
+            intentionally tall (220px) and the headline large and bold so
+            the page grabs before the user reads anything else. The
+            gradient is heavier at the bottom so white text has contrast
+            against any food photo in rotation. */}
         <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm mb-5">
-          <div className="w-full relative" style={{ height: '150px' }}>
+          <div className="w-full relative" style={{ height: '220px' }}>
             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/85 via-stone-900/35 to-stone-900/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/50 to-stone-900/20" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
               {userName ? (
                 <>
-                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow leading-tight tracking-tight">
                     Welcome back, {userName}.
                   </h1>
-                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
+                  <p className="text-stone-100 text-sm drop-shadow mt-1">
                     Your kitchen is right where you left it.
                   </p>
                 </>
               ) : (
                 <>
-                  <h1 className="text-xl font-bold text-white drop-shadow leading-tight">
-                    Cook with a little help.
+                  <h1 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg leading-[1.05] tracking-tight">
+                    Cooking, figured out.
                   </h1>
-                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
-                    Save recipes, plan meals, ask an AI chef anything.
+                  <p className="text-stone-100 text-sm sm:text-base drop-shadow mt-2 max-w-sm">
+                    Recipes, meal plans, and an AI chef &mdash; one cozy kitchen.
                   </p>
                 </>
               )}
@@ -169,7 +173,7 @@ export default function HomePage() {
           </div>
           <a
             href={user ? '/kitchen' : '/login'}
-            className="block w-full py-3.5 bg-stone-800 text-white text-center text-base font-semibold hover:bg-stone-900 transition-colors"
+            className="block w-full py-4 bg-stone-800 text-white text-center text-base font-semibold hover:bg-stone-900 transition-colors"
           >
             {user ? 'Enter your kitchen →' : 'Get started →'}
           </a>
