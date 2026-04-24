@@ -20,41 +20,19 @@ const BANNER = {
   linkLabel: 'Tester notes →',
 }
 
-// Landing "What's inside" mirrors the MyKitchen hub exactly — same four
-// sections, same tiles, same emoji + title + one-liner. When the hub
-// structure changes, update this to match so the landing preview never
-// drifts from the real thing. Each tile carries its in-app route:
-// signed-in visitors jump straight there, signed-out visitors route
-// through /login first (see `tileHref` below).
-const SECTIONS = [
-  {
-    name: 'Your Recipes',
-    items: [
-      { emoji: '🔐', title: 'Recipe Vault',          blurb: 'Your saved recipes, organized.',       route: '/secret' },
-      { emoji: '🃏', title: 'Recipe Cards',          blurb: 'Flip through your collection.',        route: '/cards' },
-      { emoji: '✨', title: 'Chef Jennifer Recipes', blurb: 'Recipes Jennifer made for you.',       route: '/chef-recipes' },
-    ],
-  },
-  {
-    name: 'Plan & Shop',
-    items: [
-      { emoji: '📅', title: 'Meal Plan',     blurb: "What you're cooking soon.",             route: '/meal-plan' },
-      { emoji: '🛒', title: 'Shopping List', blurb: 'Ingredients, organized to shop.',       route: '/shopping-list' },
-    ],
-  },
-  {
-    name: 'Learn',
-    items: [
-      { emoji: '🎬', title: 'Chef TV',     blurb: 'Cooking videos, one tap away.', route: '/videos' },
-      { emoji: '📘', title: 'My Playbook', blurb: 'Saved videos + chef notes.',    route: '/playbook' },
-    ],
-  },
-  {
-    name: 'Chef Jennifer',
-    items: [
-      { emoji: '👨‍🍳', title: 'Chef Jennifer', blurb: 'Create a new recipe, tailored to you.', route: '/topchef' },
-    ],
-  },
+// Landing "What's inside" is a compact preview of the MyKitchen hub —
+// the hub's four groups (Your Recipes, Plan & Shop, Learn, Chef Jennifer)
+// rendered as four small cards in a 2×2 grid rather than the hub's full
+// 8-tile list. Each card shows the group name, a short blurb, and the
+// emojis of the tiles inside as a visual peek. Tapping a card becomes
+// the sign-in path for signed-out visitors and routes to /kitchen for
+// signed-in visitors — the hub is where the full tile layout lives, so
+// the landing doesn't need to repeat it.
+const GROUPS = [
+  { name: 'Your Recipes', blurb: "Vault, Cards, and Jennifer's creations.", emojis: ['🔐', '🃏', '✨'] },
+  { name: 'Plan & Shop',  blurb: 'Meal plans and shopping lists.',          emojis: ['📅', '🛒'] },
+  { name: 'Learn',        blurb: 'Chef TV and your saved playbook.',        emojis: ['🎬', '📘'] },
+  { name: 'Chef Jennifer', blurb: 'Your personal AI chef.',                 emojis: ['👨‍🍳'] },
 ]
 
 const FOOD_IMAGES = [
@@ -197,42 +175,31 @@ export default function HomePage() {
           </a>
         </div>
 
-        {/* What's inside — mirrors the MyKitchen hub (4 sections, 8 tiles).
-            Each tile links to its in-app page; signed-out visitors route
-            through /login so a tap on any tile becomes a sign-in path.
-            Section headers use the same small uppercase label as the
-            page-level "What's inside" so the grouping reads as structure,
-            not a second column of labels. */}
+        {/* What's inside — compact 2×2 grid of group cards. Each card
+            previews one of the hub's four groups (Your Recipes / Plan &
+            Shop / Learn / Chef Jennifer). Keeps the landing short —
+            the hub itself is where the full tile layout lives. Signed-out
+            visitors route through /login; signed-in visitors land on
+            /kitchen to pick their tile. */}
         <section>
-          <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-3">
+          <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-2.5">
             What&apos;s inside
           </p>
-          <div className="space-y-4">
-            {SECTIONS.map(({ name, items }) => (
-              <div key={name}>
-                <p className="text-[10px] text-stone-500 uppercase tracking-[0.15em] font-semibold mb-1.5">
-                  {name}
-                </p>
-                <div className="grid gap-2">
-                  {items.map(({ emoji, title, blurb, route }) => {
-                    const tileHref = user ? route : '/login'
-                    return (
-                      <a
-                        key={title}
-                        href={tileHref}
-                        className="bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 flex items-start gap-3 hover:border-stone-400 hover:bg-stone-50 transition-colors"
-                      >
-                        <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
-                        <div className="text-left min-w-0 flex-1">
-                          <p className="text-stone-800 font-semibold text-sm leading-tight">{title}</p>
-                          <p className="text-stone-600 text-xs leading-snug mt-0.5">{blurb}</p>
-                        </div>
-                        <span className="text-stone-400 text-sm shrink-0 mt-0.5" aria-hidden="true">→</span>
-                      </a>
-                    )
-                  })}
+          <div className="grid grid-cols-2 gap-2">
+            {GROUPS.map(({ name, blurb, emojis }) => (
+              <a
+                key={name}
+                href={user ? '/kitchen' : '/login'}
+                className="bg-white border border-stone-200 rounded-xl p-3 flex flex-col gap-1.5 hover:border-stone-400 hover:bg-stone-50 transition-colors"
+              >
+                <div className="flex items-center gap-1 text-lg leading-none">
+                  {emojis.map((e, i) => (
+                    <span key={i}>{e}</span>
+                  ))}
                 </div>
-              </div>
+                <p className="text-stone-800 font-semibold text-sm leading-tight">{name}</p>
+                <p className="text-stone-600 text-xs leading-snug">{blurb}</p>
+              </a>
             ))}
           </div>
         </section>
