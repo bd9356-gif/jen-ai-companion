@@ -401,7 +401,7 @@ The shift from cream landing → orange MyKitchen reads as an intentional tone c
 
 **Hero tagline (signed-out).** The signed-out hero shows **"Cook with a little help."** at `text-xl font-bold` with subline "Save recipes, plan meals, ask an AI chef anything." An earlier variant ("Save it → Plan it → Cook it" with joinery arrows, mirroring the Playbook header) was tried and reverted — it read as busy next to the feature tiles, and the landing needs to stay calm. Signed-in visitors see the personalized greeting ("Welcome back, {name}.") instead.
 
-**Feature tiles are links.** Each entry in `FEATURES` carries a `route` (e.g. `/secret`, `/meal-plan`, `/topchef`); tiles are rendered as `<a>` elements whose `href` is `route` if the visitor is signed in, else `/login`. Signed-out visitors sign in from any tile, not just the header or CTA. Tiles show a small `→` chevron and lift to `border-stone-400` on hover.
+**What's inside mirrors MyKitchen.** The landing page's "What's inside" preview replicates the hub's 4 sections and 8 tiles exactly — same grouping (Your Recipes / Plan & Shop / Learn / Chef Jennifer), same emoji, same title, same one-liner. The source is `SECTIONS` at the top of `app/page.js`; keep it in sync with `app/kitchen/page.js` so the preview never drifts from the real hub. Section names render as small stone-500 uppercase labels above their tile group. Each tile is an `<a>` whose `href` is the in-app route for signed-in visitors and `/login` for signed-out visitors — a tap on any tile becomes a sign-in path. Tiles show a small `→` chevron and lift to `border-stone-400` on hover.
 
 ## Tester banner & `/notes` page
 

@@ -20,39 +20,40 @@ const BANNER = {
   linkLabel: 'Tester notes →',
 }
 
-// Each tile carries the in-app route so signed-in visitors jump straight
-// there; signed-out visitors get routed through /login first. Both paths are
-// computed in render (see `tileHref` below).
-const FEATURES = [
+// Landing "What's inside" mirrors the MyKitchen hub exactly — same four
+// sections, same tiles, same emoji + title + one-liner. When the hub
+// structure changes, update this to match so the landing preview never
+// drifts from the real thing. Each tile carries its in-app route:
+// signed-in visitors jump straight there, signed-out visitors route
+// through /login first (see `tileHref` below).
+const SECTIONS = [
   {
-    emoji: '📒',
-    title: 'Recipe Vault',
-    blurb: 'Your private library of saved recipes, organized and searchable.',
-    route: '/secret',
+    name: 'Your Recipes',
+    items: [
+      { emoji: '🔐', title: 'Recipe Vault',          blurb: 'Your saved recipes, organized.',       route: '/secret' },
+      { emoji: '🃏', title: 'Recipe Cards',          blurb: 'Flip through your collection.',        route: '/cards' },
+      { emoji: '✨', title: 'Chef Jennifer Recipes', blurb: 'Recipes Jennifer made for you.',       route: '/chef-recipes' },
+    ],
   },
   {
-    emoji: '🗂',
-    title: 'Recipe Cards',
-    blurb: 'Flip through your recipes like a deck of cozy index cards.',
-    route: '/cards',
+    name: 'Plan & Shop',
+    items: [
+      { emoji: '📅', title: 'Meal Plan',     blurb: "What you're cooking soon.",             route: '/meal-plan' },
+      { emoji: '🛒', title: 'Shopping List', blurb: 'Ingredients, organized to shop.',       route: '/shopping-list' },
+    ],
   },
   {
-    emoji: '📅',
-    title: 'Meal Plan',
-    blurb: "What you're cooking this week, with a shopping list to match.",
-    route: '/meal-plan',
+    name: 'Learn',
+    items: [
+      { emoji: '🎬', title: 'Chef TV',     blurb: 'Cooking videos, one tap away.', route: '/videos' },
+      { emoji: '📘', title: 'My Playbook', blurb: 'Saved videos + chef notes.',    route: '/playbook' },
+    ],
   },
   {
-    emoji: '👨‍🍳',
-    title: 'Chef Jennifer',
-    blurb: 'An AI chef who builds recipes and answers kitchen questions.',
-    route: '/topchef',
-  },
-  {
-    emoji: '📺',
-    title: 'Chef TV',
-    blurb: 'Cooking videos for learning skills and finding new ideas.',
-    route: '/videos',
+    name: 'Chef Jennifer',
+    items: [
+      { emoji: '👨‍🍳', title: 'Chef Jennifer', blurb: 'Create a new recipe, tailored to you.', route: '/topchef' },
+    ],
   },
 ]
 
@@ -196,30 +197,43 @@ export default function HomePage() {
           </a>
         </div>
 
-        {/* Feature tiles — each links to its in-app page; signed-out visitors
-            route through /login so a tap on any tile becomes a sign-in path. */}
+        {/* What's inside — mirrors the MyKitchen hub (4 sections, 8 tiles).
+            Each tile links to its in-app page; signed-out visitors route
+            through /login so a tap on any tile becomes a sign-in path.
+            Section headers use the same small uppercase label as the
+            page-level "What's inside" so the grouping reads as structure,
+            not a second column of labels. */}
         <section>
-          <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-2.5">
+          <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-3">
             What&apos;s inside
           </p>
-          <div className="grid gap-2">
-            {FEATURES.map(({ emoji, title, blurb, route }) => {
-              const tileHref = user ? route : '/login'
-              return (
-                <a
-                  key={title}
-                  href={tileHref}
-                  className="bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 flex items-start gap-3 hover:border-stone-400 hover:bg-stone-50 transition-colors"
-                >
-                  <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="text-stone-800 font-semibold text-sm leading-tight">{title}</p>
-                    <p className="text-stone-600 text-xs leading-snug mt-0.5">{blurb}</p>
-                  </div>
-                  <span className="text-stone-400 text-sm shrink-0 mt-0.5" aria-hidden="true">→</span>
-                </a>
-              )
-            })}
+          <div className="space-y-4">
+            {SECTIONS.map(({ name, items }) => (
+              <div key={name}>
+                <p className="text-[10px] text-stone-500 uppercase tracking-[0.15em] font-semibold mb-1.5">
+                  {name}
+                </p>
+                <div className="grid gap-2">
+                  {items.map(({ emoji, title, blurb, route }) => {
+                    const tileHref = user ? route : '/login'
+                    return (
+                      <a
+                        key={title}
+                        href={tileHref}
+                        className="bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 flex items-start gap-3 hover:border-stone-400 hover:bg-stone-50 transition-colors"
+                      >
+                        <span className="text-lg leading-none shrink-0 mt-0.5">{emoji}</span>
+                        <div className="text-left min-w-0 flex-1">
+                          <p className="text-stone-800 font-semibold text-sm leading-tight">{title}</p>
+                          <p className="text-stone-600 text-xs leading-snug mt-0.5">{blurb}</p>
+                        </div>
+                        <span className="text-stone-400 text-sm shrink-0 mt-0.5" aria-hidden="true">→</span>
+                      </a>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
