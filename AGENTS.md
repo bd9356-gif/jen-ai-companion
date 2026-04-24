@@ -191,8 +191,14 @@ Borders use `border-2` with `-400` shade for emphasis. Each item's move buttons 
 **Simplified filter strip.** Previously had category chips (cuisines/dishes/proteins/meals/style), sort dropdown, shorts toggle, and channel — plus a `🎛 Filters` panel toggle. All of that was pared down to what home cooks actually use:
 
 - **🔍 Search toggle.** A single circular button in the header. Tapped, it reveals a full-width search input (auto-focus). Tapped again (or ✕), input clears and hides. Matches the Recipe Vault / Cards pattern. Input uses `style={{ fontSize: '16px' }}` to block iOS Safari auto-zoom.
-- **All / Video / Recipe tri-state pill row.** Three equal-width buttons. `All` (orange) shows everything, `📝 Video` (gray) shows only non-recipe videos, `🍳 Recipe` (green) shows only the ~160 with ingredients. Counts in parens.
+- **Love / Learn / All tri-state pill row (default: Love).** Three equal-width buttons. `❤️ Love` (rose) shows only the ~158 recipe-bearing videos; `🎓 Learn` (sky) shows only the ~400 video-only items; `All` (orange) shows everything. Counts in parens. **Love is the default on page load** — the scarcer, higher-signal recipe set leads so the 400 video-only items don't drown it out. The tab vocabulary deliberately matches the Playbook save buckets (❤️ Love / 🎓 Learn) so the filter and the save strip speak the same language.
 - **Channel dropdown.** Full-width `<select>` with the canonical `CHANNELS` list. Single row below the pill.
+
+**Tab-aware sort — each tab highlights its own "best."** The default sort changed from raw view_count to a tab-specific score:
+- Inside **Love** (`loveScore`), videos are sorted by `log10(view_count) × completeness`, where completeness = `1.3× if ingredients+instructions both present` × `1.15× if ai_summary present`. Net effect: fully-documented recipes with decent view counts float up; bare recipes with just ingredients sink even if popular.
+- Inside **Learn** (`learnScore`), videos are sorted by `log10(view_count) × teachBoost`, where `teachBoost = 1.5×` for channels in `TEACHING_CHANNELS` (Ethan Chlebowski, Brian Lagerstrom, ATK, Serious Eats, Food Wishes, Adam Ragusea, Pro Home Cooks, Internet Shaquille). Entertainment-heavy channels are still visible — they just don't lead.
+- Inside **All**, sort stays raw `view_count desc` — the neutral firehose.
+- log10 of view count compresses the long tail so a 10× view count is worth +1 point, not 10× weight — a multiplier on quality can outweigh raw popularity.
 
 Dropped entirely: category chips (`CATEGORY_GROUPS`), sort dropdown (hardcoded to view_count desc), shorts toggle (always filters out <3 min).
 

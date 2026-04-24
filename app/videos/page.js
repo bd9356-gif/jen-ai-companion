@@ -32,6 +32,41 @@ const CHANNELS = [
   'Tasty', "America's Test Kitchen", 'Serious Eats', 'Food Wishes',
 ]
 
+// Teaching-weighted channels — technique/method/craft heavy. Used by
+// learnScore() below to float instructional content up the Learn tab.
+// This is a reorder signal, not exclusion — every channel still shows up,
+// teaching-heavy ones just lead.
+const TEACHING_CHANNELS = new Set([
+  'Ethan Chlebowski',
+  'Brian Lagerstrom',
+  "America's Test Kitchen",
+  'Serious Eats',
+  'Food Wishes',
+  'Adam Ragusea',
+  'Pro Home Cooks',
+  'Internet Shaquille',
+])
+
+// Sort score for the Learn tab (video-only). log10(views) compresses the
+// long tail so a 10× view count is worth +1, not 10×; teaching channels
+// get a 1.5× multiplier so craft beats clicks.
+function learnScore(v) {
+  const base = Math.log10((v.view_count || 0) + 1)
+  const teachBoost = TEACHING_CHANNELS.has(v.channel) ? 1.5 : 1.0
+  return base * teachBoost
+}
+
+// Sort score for the Love tab (recipe-bearing). Same log-compressed view
+// base, but multipliers favor recipe completeness — full ingredients +
+// instructions + AI summary floats to the top; bare-bones recipes sink.
+function loveScore(v, meta) {
+  const base = Math.log10((v.view_count || 0) + 1)
+  const hasFullRecipe = (meta?.ingredients?.length > 0) && !!meta?.instructions
+  const hasSummary = !!meta?.ai_summary
+  const completeness = (hasFullRecipe ? 1.3 : 1.0) * (hasSummary ? 1.15 : 1.0)
+  return base * completeness
+}
+
 function isShort(duration) {
   if (!duration) return true
   const parts = duration.split(':')
@@ -102,7 +137,10 @@ export default function VideosPage() {
   const [expandedId, setExpandedId] = useState(null)
   const [metadata, setMetadata] = useState({})
   const [showCount, setShowCount] = useState(12)
-  const [filter, setFilter] = useState('all')  // all | recipe | summary
+  // Default to 'love' — surface the ~158 recipes first so the actionable
+  // set isn't drowned out by the ~400 video-only items. User can flip to
+  // 'learn' for technique or 'all' for the full firehose.
+  const [filter, setFilter] = useState('love')  // love | learn | all
   const [toast, setToast] = useState(null)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
@@ -404,19 +442,28 @@ export default function VideosPage() {
     }
   }
 
-  // Filters stack: channel + search + recipe/summary all AND together.
+  // Filters stack: channel + search + love/learn/all all AND together.
   // Shorts (under 3 min) are always excluded — no toggle.
+  //
+  // Sort strategy varies by tab so each view highlights its best content:
+  //   love   → loveScore (recipe completeness × popularity)
+  //   learn  → learnScore (teaching-channel boost × popularity)
+  //   all    → raw view_count desc (neutral firehose)
   const filtered = videos
     .filter(v => {
       const meta = metadata[v.id]
       const hasRecipe = meta?.ingredients?.length > 0
       const matchChannel = channel === 'All Channels' || v.channel === channel
       const matchSearch = search === '' || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase())
-      const matchFilter = filter === 'all' || (filter === 'recipe' && hasRecipe) || (filter === 'summary' && !hasRecipe)
+      const matchFilter = filter === 'all' || (filter === 'love' && hasRecipe) || (filter === 'learn' && !hasRecipe)
       const matchShorts = !isShort(v.duration)
       return matchChannel && matchSearch && matchFilter && matchShorts
     })
-    .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+    .sort((a, b) => {
+      if (filter === 'love')  return loveScore(b, metadata[b.id]) - loveScore(a, metadata[a.id])
+      if (filter === 'learn') return learnScore(b) - learnScore(a)
+      return (b.view_count || 0) - (a.view_count || 0)
+    })
 
   const totalNonShort = videos.filter(v => !isShort(v.duration)).length
   const recipeCount = videos.filter(v => metadata[v.id]?.ingredients?.length > 0 && !isShort(v.duration)).length
@@ -464,13 +511,17 @@ export default function VideosPage() {
             />
           )}
 
-          {/* All / Video / Recipe — tri-state pill row. Keeps focus on what
-              kind of content the user wants right now. */}
+          {/* Love / Learn / All — tri-state pill row. The tab vocabulary
+              matches the Playbook save buckets (❤️ Love / 🎓 Learn) so a
+              user browsing Love sees the bucket they'd save to on the card
+              below. Love leads because the ~158 recipes are the scarcer,
+              higher-signal set; the ~400 video-only items live under
+              Learn. All is the escape hatch for browsing everything. */}
           <div className="flex gap-2 mb-3">
             {[
-              ['all',     `All (${totalNonShort})`,        'bg-orange-600 text-white'],
-              ['summary', `📝 Video (${summaryCount})`,    'bg-gray-600 text-white'],
-              ['recipe',  `🍳 Recipe (${recipeCount})`,    'bg-green-600 text-white'],
+              ['love',  `❤️ Love (${recipeCount})`,   'bg-rose-500 text-white'],
+              ['learn', `🎓 Learn (${summaryCount})`, 'bg-sky-500 text-white'],
+              ['all',   `All (${totalNonShort})`,     'bg-orange-600 text-white'],
             ].map(([val, label, activeCls]) => (
               <button
                 key={val}
