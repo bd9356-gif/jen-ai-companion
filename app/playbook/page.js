@@ -76,6 +76,10 @@ export default function PlaybookPage() {
   // scarcer/higher-intent "meals I want to try" set is what users see first
   // — matches the Chef TV page's tab default.
   const [tab, setTab] = useState('love')
+  // Collapsed "what's on this page" tip. Folded into a tiny ℹ️ button next to
+  // Chef TV in the header — keeps the body focused on tabs + content, but
+  // the explainer is one tap away when needed.
+  const [showAbout, setShowAbout] = useState(false)
   const [toast, setToast] = useState(null)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
@@ -245,7 +249,25 @@ export default function PlaybookPage() {
             <h1 className="text-lg font-bold text-gray-900">📘 My Playbook</h1>
             {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
           </div>
-          <button onClick={() => window.location.href='/videos'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Chef TV</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => window.location.href='/videos'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Chef TV</button>
+            {/* About toggle — opens the per-surface explainer without
+                cluttering the body. Stays small (icon-only) so it doesn't
+                compete with the Chef TV action next to it. */}
+            <button
+              onClick={() => setShowAbout(v => !v)}
+              title={showAbout ? 'Hide about' : 'What is each tab?'}
+              aria-label={showAbout ? 'Hide about' : 'About this page'}
+              aria-expanded={showAbout}
+              className={`w-7 h-7 rounded-full border text-xs font-bold flex items-center justify-center transition-colors ${
+                showAbout
+                  ? 'bg-slate-800 text-white border-slate-800'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-orange-300 hover:text-orange-700'
+              }`}
+            >
+              {showAbout ? '✕' : 'ℹ'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -263,18 +285,22 @@ export default function PlaybookPage() {
 
         {/* Intro callout — full sentences per surface, Bill's exact wording.
             Keeps the three saves conceptually separate so users know where
-            each kind of thing lives. */}
-        <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-2">
-          <p className="text-sm text-slate-900 leading-relaxed">
-            ❤️ <span className="font-bold">Love</span> is where you keep the meals you want to try.
-          </p>
-          <p className="text-sm text-slate-900 leading-relaxed">
-            🎓 <span className="font-bold">Learn</span> is where you practice and build your skills.
-          </p>
-          <p className="text-sm text-slate-900 leading-relaxed">
-            📝 <span className="font-bold">Chef Notes</span> is where you save the answers and guidance you get from Chef Jennifer.
-          </p>
-        </div>
+            each kind of thing lives. Collapsed by default and opened via
+            the ℹ️ toggle next to Chef TV in the header so the body stays
+            focused on tabs + content; the explainer is one tap away. */}
+        {showAbout && (
+          <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-2">
+            <p className="text-sm text-slate-900 leading-relaxed">
+              ❤️ <span className="font-bold">Love</span> is where you keep the meals you want to try.
+            </p>
+            <p className="text-sm text-slate-900 leading-relaxed">
+              🎓 <span className="font-bold">Learn</span> is where you practice and build your skills.
+            </p>
+            <p className="text-sm text-slate-900 leading-relaxed">
+              📝 <span className="font-bold">Chef Notes</span> is where you save the answers and guidance you get from Chef Jennifer.
+            </p>
+          </div>
+        )}
 
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading your playbook...</div>
