@@ -504,7 +504,7 @@ export default function VideosPage() {
             </button>
           </div>
 
-          <p className="text-xs text-gray-500 mb-3">Watch, learn, save the skills worth mastering.</p>
+          <p className="text-xs text-gray-500 mb-3">A curated cooking library from top YouTube chefs.</p>
 
           {(showSearch || search) && (
             <input
@@ -561,6 +561,16 @@ export default function VideosPage() {
           </div>
         ) : (
           <>
+            {/* Teaching card — names the two lanes and what saving does.
+                Lives at the top of main (not the sticky header) so users
+                read it once on first land, then scroll past it. Mirrors
+                the explainer callout pattern at the top of /playbook. */}
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4">
+              <p className="text-sm text-amber-900 leading-relaxed">
+                <span className="font-semibold">Two ways in:</span> ❤️ <span className="font-semibold">Love</span> surfaces recipes to try · 🎓 <span className="font-semibold">Learn</span> surfaces techniques to master. Save any video to <span className="font-semibold">My Playbook</span>, or pull a recipe into your <span className="font-semibold">Recipe Vault</span>.
+              </p>
+            </div>
+
             <p className="text-xs text-gray-500 mb-4">
               {filtered.length} video{filtered.length === 1 ? '' : 's'} · {totalNonShort} from top YouTube channels
             </p>
