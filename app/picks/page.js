@@ -5,14 +5,14 @@ import { redirect } from 'next/navigation'
 //   /picks                         → /kitchen
 //   /picks?open=meal_plan          → /meal-plan
 //   /picks?open=shopping_list      → /shopping-list
-//   /picks?open=ai_notes           → /chef-notes
+//   /picks?open=ai_notes           → /playbook   (was /chef-notes; merged April 2026)
 //   /picks?open=chefjen            → /chef-recipes
 //   /picks?open=chef_videos        → /playbook   (was /skills; pivoted April 2026)
 // Any unknown `?open=` value falls through to /kitchen.
 const OPEN_TO_ROUTE = {
   meal_plan: '/meal-plan',
   shopping_list: '/shopping-list',
-  ai_notes: '/chef-notes',
+  ai_notes: '/playbook',
   chefjen: '/chef-recipes',
   chef_videos: '/playbook',
 }

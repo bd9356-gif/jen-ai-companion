@@ -8,20 +8,22 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// My Playbook buckets — 3 intent-based placements for a Chef TV save.
-// Tapping a bucket on an unsaved video inserts favorites + cooking_skill_items;
-// tapping the same bucket again removes both; tapping a different bucket
-// updates the bucket in place. Matches /playbook exactly. Full Tailwind
-// class literals per bucket (JIT requirement).
+// My Playbook buckets — 2 intent-based placements for a Chef TV save.
+// Framing: Love = meals you want to try; Learn = technique you're
+// practicing. Every Chef TV video is one or the other — recipe videos
+// are Love-eligible, video-only items are Learn-eligible.
 //
-// Framing: see → try → improve. Save = stash, Love = want to try, Learn =
-// practicing. Love is the one that captures a recipe URL for ingestion
-// (when the video has a recipe) — see setBucket() below.
-const PLAYBOOK_BUCKETS = [
-  { key: 'save',  emoji: '📥', label: 'Save',  activeCls: 'bg-slate-600 text-white border-slate-600' },
-  { key: 'love',  emoji: '❤️', label: 'Love',  activeCls: 'bg-rose-500 text-white border-rose-500' },
-  { key: 'learn', emoji: '🎓', label: 'Learn', activeCls: 'bg-sky-500 text-white border-sky-500' },
-]
+// The Chef TV card only shows ONE of these buttons, picked by whether the
+// video has a recipe. No more "Save for later" middle ground — the old
+// third bucket (Save) was dropped April 2026 (see migration 006) because
+// forcing a non-committal choice didn't add any real signal.
+//
+// Love is also the bucket that triggers the loved_recipe_urls ingestion
+// capture when the underlying video has ingredients — see setBucket().
+const PLAYBOOK_BUCKETS = {
+  love:  { key: 'love',  emoji: '❤️', label: 'Love',  activeCls: 'bg-rose-500 text-white border-rose-500' },
+  learn: { key: 'learn', emoji: '🎓', label: 'Learn', activeCls: 'bg-sky-500 text-white border-sky-500' },
+}
 
 // Topic chips for the Love tab — dish-type thinking, keyword-matched
 // against the video title. One chip active at a time; "All" = no filter.
@@ -689,30 +691,32 @@ export default function VideosPage() {
                         </button>
                       )}
                       <div className="p-4">
-                        {/* Playbook save strip — tap a bucket to save this video there.
-                            Tap the same bucket again to remove. Tap a different bucket
-                            to move. No separate save button — the strip IS the save UX. */}
-                        <div className="flex gap-1 mb-3">
-                          {PLAYBOOK_BUCKETS.map(b => {
-                            const isActive = savedEntry?.bucket === b.key
-                            return (
+                        {/* Single contextual save button — Love for recipe-bearing
+                            videos, Learn for video-only items. Tap once to save,
+                            tap again to remove. No third "Save for later" bucket
+                            (dropped April 2026) — the choice is binary because
+                            the content is binary. */}
+                        {(() => {
+                          const b = hasRecipe ? PLAYBOOK_BUCKETS.love : PLAYBOOK_BUCKETS.learn
+                          const isActive = savedEntry?.bucket === b.key
+                          return (
+                            <div className="mb-3">
                               <button
-                                key={b.key}
                                 onClick={() => setBucket(video, b.key)}
                                 title={isActive ? `Remove from ${b.label}` : `Save to ${b.label}`}
                                 aria-label={isActive ? `Remove from ${b.label}` : `Save to ${b.label}`}
-                                className={`flex-1 flex items-center justify-center gap-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
+                                className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
                                   isActive
                                     ? b.activeCls
                                     : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
                                 }`}
                               >
                                 <span className="text-sm leading-none">{b.emoji}</span>
-                                <span className="hidden sm:inline">{b.label}</span>
+                                <span>{isActive ? `Saved to ${b.label}` : `Save to ${b.label}`}</span>
                               </button>
-                            )
-                          })}
-                        </div>
+                            </div>
+                          )
+                        })()}
                         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">{video.title}</h3>
                         <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
                         <p className="text-xs text-gray-500 mt-0.5 mb-2">{viewCount(video.view_count)}</p>
