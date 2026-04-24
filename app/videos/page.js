@@ -468,6 +468,13 @@ export default function VideosPage() {
   const totalNonShort = videos.filter(v => !isShort(v.duration)).length
   const recipeCount = videos.filter(v => metadata[v.id]?.ingredients?.length > 0 && !isShort(v.duration)).length
   const summaryCount = totalNonShort - recipeCount
+  // Total videos from the currently-selected channel (ignoring the
+  // Love/Learn/All filter). Used by the "widen the filter" rescue callout
+  // below — tells the user what they'd see if they hit "See all". Null
+  // when no specific channel is selected.
+  const channelTotal = channel === 'All Channels'
+    ? null
+    : videos.filter(v => v.channel === channel && !isShort(v.duration)).length
   const visible = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
 
@@ -558,11 +565,45 @@ export default function VideosPage() {
               {filtered.length} video{filtered.length === 1 ? '' : 's'} · {totalNonShort} from top YouTube channels
             </p>
 
+            {/* Channel + tab rescue callout. When a specific channel is
+                selected AND the current tab is filtering most of their
+                content out (Love/Learn tabs exclude the opposite content
+                type), we show a friendly "only X from this channel — see
+                all Y" widen-link. Prevents the "feels weak" moment when a
+                great channel happens to have 1 recipe. */}
+            {channelTotal !== null && filter !== 'all' && filtered.length < channelTotal && (
+              <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2.5 flex items-center justify-between gap-3">
+                <p className="text-xs text-orange-800 leading-snug">
+                  Only {filtered.length} {filter === 'love' ? 'recipe' : 'video'}{filtered.length === 1 ? '' : 's'} from <span className="font-semibold">{channel}</span> — they have {channelTotal} total.
+                </p>
+                <button
+                  onClick={() => { setFilter('all'); setShowCount(12) }}
+                  className="shrink-0 text-xs font-semibold px-3 py-1.5 bg-white border border-orange-300 text-orange-700 rounded-full hover:bg-orange-100"
+                >
+                  See all {channelTotal} →
+                </button>
+              </div>
+            )}
+
             {filtered.length === 0 ? (
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
                 <p className="text-4xl mb-2">🔍</p>
                 <p className="text-sm font-semibold text-gray-700">No videos match these filters.</p>
-                <p className="text-xs text-gray-500 mt-1">Try a different channel or clear your search.</p>
+                {channelTotal !== null && channelTotal > 0 && filter !== 'all' ? (
+                  <>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {channel} has {channelTotal} video{channelTotal === 1 ? '' : 's'}, just none in {filter === 'love' ? '❤️ Love' : '🎓 Learn'}.
+                    </p>
+                    <button
+                      onClick={() => { setFilter('all'); setShowCount(12) }}
+                      className="mt-3 text-xs font-semibold px-4 py-2 bg-orange-600 text-white rounded-full hover:bg-orange-700"
+                    >
+                      See all {channelTotal} from {channel} →
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Try a different channel or clear your search.</p>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
