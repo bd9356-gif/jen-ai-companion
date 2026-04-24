@@ -389,15 +389,15 @@ Known still-stale spots (future cleanup candidates, low urgency):
 
 ## Landing page palette (decided)
 
-The landing page (`app/page.js`) and About page (`app/about/page.js`) intentionally break from the orange-heavy MyKitchen palette. Current scheme:
+The landing page (`app/page.js`) and About page (`app/about/page.js`) share MyKitchen's neutral base so sign-in → hub feels like one surface, not two. Current scheme:
 
-- Background: `bg-amber-50` (warm cream parchment).
+- Background: `bg-gray-50` (matches MyKitchen exactly).
 - Cards/tiles: white with `border-stone-200`.
 - Primary CTA: `bg-stone-800` warm charcoal, `hover:bg-stone-900`. (We tried `emerald-700` briefly; user felt it was too green.)
 - Section label: `text-stone-500 uppercase tracking-[0.15em]`.
 - Footer: two inline links in `text-stone-500` separated by a bullet — **About MyRecipe Companion** and **Tester notes** (see below).
 
-The shift from cream landing → orange MyKitchen reads as an intentional tone change, not a jarring break. Keep MyKitchen orange; keep landing cream.
+An earlier version used `bg-amber-50` (cream parchment) for the landing + About to contrast MyKitchen's gray; the two-color handoff read as a jarring break rather than a tone shift, so we unified on `bg-gray-50`. The warmth now comes from the hero's image + the CTA's stone-800, not the page background.
 
 **Hero tagline (signed-out).** The signed-out hero shows **"Cook with a little help."** at `text-xl font-bold` with subline "Save recipes, plan meals, ask an AI chef anything." An earlier variant ("Save it → Plan it → Cook it" with joinery arrows, mirroring the Playbook header) was tried and reverted — it read as busy next to the feature tiles, and the landing needs to stay calm. Signed-in visitors see the personalized greeting ("Welcome back, {name}.") instead.
 
