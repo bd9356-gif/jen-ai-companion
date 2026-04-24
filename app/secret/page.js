@@ -40,6 +40,18 @@ function categoryEmoji(recipe) {
   return '🍽️'
 }
 
+// Parse the creator attribution saveToKitchen() writes into family_notes when
+// the user pulls a recipe from Chef TV. Expected format:
+//   "Saved from Chef TV — {channel}." (em dash, from app/videos/page.js)
+// Returns { channel } or null. Surfaced as a visible credit chip on the detail
+// view so the creator is one tap away from the saved recipe — the app never
+// pretends a recipe is ours, and every vault entry still points home.
+function parseChefTVCredit(familyNotes) {
+  if (!familyNotes) return null
+  const m = familyNotes.match(/Saved from Chef TV\s*[—–-]\s*([^.\n]+)\./)
+  return m ? { channel: m[1].trim() } : null
+}
+
 // "Make This Recipe More..." — keep in sync with Chef Jennifer (app/topchef/page.js)
 // and the server-side labels in /api/enhance-recipe.
 const PREFERENCE_OPTIONS = [
@@ -1041,6 +1053,30 @@ export default function MyRecipeVaultPage() {
               </>)}
             </div>
           )}
+
+          {/* Creator credit — promotes the "Saved from Chef TV — {channel}."
+              line in family_notes to a visible link back to the creator's
+              YouTube channel. Retroactive: lights up every recipe the user
+              already pulled from Chef TV without any schema change. Clicking
+              sends traffic to the channel, which is the whole point — the
+              creator still captures the value from their own work. */}
+          {(() => {
+            const credit = parseChefTVCredit(viewing.family_notes)
+            if (!credit) return null
+            return (
+              <div className="mb-5">
+                <a
+                  href={`https://www.youtube.com/results?search_query=${encodeURIComponent(credit.channel)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Visit ${credit.channel}'s channel on YouTube`}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-full px-3 py-1.5 hover:bg-orange-100 transition-colors"
+                >
+                  🎬 Recipe from <span className="underline">{credit.channel}</span> on YouTube ↗
+                </a>
+              </div>
+            )
+          })()}
 
           {viewing.family_notes && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-5">

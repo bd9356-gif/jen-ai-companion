@@ -717,13 +717,18 @@ export default function VideosPage() {
                         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">{video.title}</h3>
                         <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
                         <p className="text-xs text-gray-500 mt-0.5 mb-2">{viewCount(video.view_count)}</p>
+                        {/* Credit link → drives the user back to the creator's
+                            YouTube channel. This is part of the "we're helping
+                            them" positioning: every save-to-vault also keeps
+                            the creator one tap away. */}
                         <a
                           href={`https://www.youtube.com/results?search_query=${encodeURIComponent(video.channel)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-orange-700 mb-3"
+                          title={`Visit ${video.channel}'s channel on YouTube`}
                         >
-                          ↗ Search “{video.channel}” on YouTube
+                          ↗ More from {video.channel} on YouTube
                         </a>
                         <div className="flex items-center flex-wrap gap-2">
                           <button onClick={() => toggleExpand(video.id)} className="text-xs text-orange-600 font-semibold hover:text-orange-800">

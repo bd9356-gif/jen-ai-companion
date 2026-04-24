@@ -225,6 +225,8 @@ After click, button swaps to `✓ Saved to My Kitchen` (emerald) and disables. T
 
 **❤️ Love → ingestion capture.** See "Love + recipe" under My Playbook. When `setBucket(video, 'love')` fires and the video has `meta.ingredients.length > 0`, a row is written to `loved_recipe_urls` (user_id, favorite_id, video_id, youtube_id, youtube_url, title, channel). Moving away from Love cleans it up. Not surfaced in the UI.
 
+**Creator attribution is always one tap away.** Every Chef TV card shows an `↗ More from {channel} on YouTube` credit link under the title (search URL by channel name — the channel card reliably tops YouTube's results). The user's view of a video goes through YouTube's iframe embed, which counts as a real view and serves the creator's ads. When a recipe is pulled into the Vault via `💾 Save to My Kitchen`, the attribution line `"Saved from Chef TV — {channel}."` in `family_notes` isn't just free-text — `/secret` parses it via `parseChefTVCredit(familyNotes)` and renders a visible `🎬 Recipe from {channel} on YouTube ↗` chip on the detail view, above the Family Notes block. The chip is retroactive (works on every previously-saved Chef TV recipe with no migration) and keeps the creator one tap away even inside the user's private vault. This is the legal-posture anchor: we're a discovery/aggregation layer that drives traffic back to creators, not a substitute for their content.
+
 ## Supabase schema (inferred from code — verify before migrations)
 
 Tables referenced in the app:
