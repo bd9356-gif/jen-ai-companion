@@ -399,7 +399,7 @@ The landing page (`app/page.js`) and About page (`app/about/page.js`) intentiona
 
 The shift from cream landing → orange MyKitchen reads as an intentional tone change, not a jarring break. Keep MyKitchen orange; keep landing cream.
 
-**Hero tagline (signed-out) matches the Playbook joinery pattern.** The signed-out hero shows **"Save it → Plan it → Cook it"** with arrows in `text-stone-300`, at `text-2xl sm:text-3xl font-bold`, and subline "Your cozy kitchen companion — recipes, meal plans, and an AI chef." The three stages mirror the three main pieces of the app (Vault, Meal Plan, Chef Jennifer) and use the same visual language as Playbook's "Love it → Learn it → Note it" — one connected habit, three stages. Signed-in visitors see the existing personalized greeting ("Welcome back, {name}.") instead.
+**Hero tagline (signed-out).** The signed-out hero shows **"Cook with a little help."** at `text-xl font-bold` with subline "Save recipes, plan meals, ask an AI chef anything." An earlier variant ("Save it → Plan it → Cook it" with joinery arrows, mirroring the Playbook header) was tried and reverted — it read as busy next to the feature tiles, and the landing needs to stay calm. Signed-in visitors see the personalized greeting ("Welcome back, {name}.") instead.
 
 **Feature tiles are links.** Each entry in `FEATURES` carries a `route` (e.g. `/secret`, `/meal-plan`, `/topchef`); tiles are rendered as `<a>` elements whose `href` is `route` if the visitor is signed in, else `/login`. Signed-out visitors sign in from any tile, not just the header or CTA. Tiles show a small `→` chevron and lift to `border-stone-400` on hover.
 
