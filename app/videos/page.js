@@ -280,10 +280,92 @@ export default function VideosPage() {
     })
   }
 
+  // Idempotent: make sure this video sits in ❤️ Love, regardless of where
+  // (or whether) it was saved before. Used as a side-effect of Save to My
+  // Kitchen — saving a recipe to the Vault means the user wants to try it,
+  // and Love is the "meals I want to try" bucket. No-op if already in Love.
+  // Unlike setBucket(), this never toggles off — it only ensures the Love
+  // placement. Writes the loved_recipe_urls capture row when the video has
+  // a recipe (same semantics as setBucket's Love path).
+  async function ensureInLove(video) {
+    if (!user) return
+    const videoId = String(video.id)
+    const current = savedMap.get(videoId)
+    const meta = metadata[video.id]
+    const hasRecipe = meta?.ingredients?.length > 0
+    if (current?.bucket === 'love') return
+
+    async function writeLovedUrl(favId) {
+      if (!hasRecipe) return
+      await supabase.from('loved_recipe_urls').upsert({
+        user_id: user.id,
+        favorite_id: favId,
+        video_id: videoId,
+        youtube_id: video.youtube_id,
+        youtube_url: `https://www.youtube.com/watch?v=${video.youtube_id}`,
+        title: video.title,
+        channel: video.channel,
+      }, { onConflict: 'user_id,favorite_id' })
+    }
+
+    if (current) {
+      // Move to Love
+      const { error } = await supabase.from('cooking_skill_items').upsert({
+        user_id: user.id,
+        item_type: 'favorite',
+        item_id: current.favId,
+        bucket: 'love',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,item_type,item_id' })
+      if (error) return
+      await writeLovedUrl(current.favId)
+      setSavedMap(prev => {
+        const n = new Map(prev)
+        n.set(videoId, { ...current, bucket: 'love' })
+        return n
+      })
+      return
+    }
+
+    // First save — insert favorites + cooking_skill_items in Love
+    const { data: inserted, error: favErr } = await supabase.from('favorites').insert({
+      user_id: user.id,
+      type: hasRecipe ? 'video_recipe' : 'video_education',
+      ref_id: videoId,
+      title: video.title,
+      thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+      source: hasRecipe ? 'chef' : 'education',
+      metadata: {
+        channel: video.channel,
+        duration: video.duration,
+        youtube_id: video.youtube_id,
+        ingredients: meta?.ingredients || [],
+        instructions: meta?.instructions || '',
+        ai_summary: meta?.ai_summary || '',
+      }
+    }).select('id').single()
+    if (favErr || !inserted) return
+    await supabase.from('cooking_skill_items').insert({
+      user_id: user.id,
+      item_type: 'favorite',
+      item_id: inserted.id,
+      bucket: 'love',
+    })
+    await writeLovedUrl(inserted.id)
+    setSavedMap(prev => {
+      const n = new Map(prev)
+      n.set(videoId, { favId: inserted.id, bucket: 'love' })
+      return n
+    })
+  }
+
   // "Save to My Kitchen" — copy this Chef TV recipe into the user's
-  // personal Recipe Vault. Only shown in the expanded Recipe view when
-  // the video has ingredients. Distinct from the Playbook save strip:
-  // that saves the video itself, this saves the recipe content.
+  // personal Recipe Vault AND place the underlying video in ❤️ Love in My
+  // Playbook. Saving a recipe to the Vault implies the user wants to try
+  // it, and Love is "meals I want to try" — keeping the placement
+  // automatic reinforces the education loop (see → try → improve) without
+  // asking the user to tap twice. Only shown in the expanded Recipe view
+  // when the video has ingredients.
   async function saveToKitchen(video) {
     if (!user) return
     const meta = metadata[video.id]
@@ -303,7 +385,10 @@ export default function VideosPage() {
     })
     if (error) { showToast('Could not save to Kitchen'); return }
     setVaultIds(prev => new Set(prev).add(String(video.id)))
-    showToast('Saved to Recipe Vault ✓')
+    // Auto-place the video in Love — best-effort; don't block the Vault
+    // save on a Playbook write failure.
+    ensureInLove(video).catch(() => {})
+    showToast('Saved to Recipe Vault + ❤️ Love ✓')
   }
 
   function toggleExpand(videoId) {
@@ -562,7 +647,7 @@ export default function VideosPage() {
                                         {isInVault ? '✓ Saved to My Kitchen' : '💾 Save to My Kitchen'}
                                       </button>
                                       <p className="text-[11px] text-gray-500 text-center mt-2">
-                                        Adds this recipe to your Recipe Vault, with the video for reference.
+                                        Adds to your Recipe Vault and drops the video in ❤️ Love.
                                       </p>
                                     </div>
                                   </>
