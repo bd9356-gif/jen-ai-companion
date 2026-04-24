@@ -70,13 +70,15 @@ function defaultBucketFor(item) {
 export default function PlaybookPage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState([])         // normalized video items with _bucket
-  const [notes, setNotes] = useState([])         // ai_answer favorites
-  const [expanded, setExpanded] = useState({})   // { [sectionKey]: bool }
+  const [items, setItems] = useState([])          // normalized video items with _bucket
+  const [notes, setNotes] = useState([])          // ai_answer favorites
+  // Active tab: 'love' | 'learn' | 'chef_notes'. Default to Love so the
+  // scarcer/higher-intent "meals I want to try" set is what users see first
+  // — matches the Chef TV page's tab default.
+  const [tab, setTab] = useState('love')
   const [toast, setToast] = useState(null)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
-  function toggleExpanded(key) { setExpanded(prev => ({ ...prev, [key]: !prev[key] })) }
 
   // Load video saves from all three sources + bucket assignments + the
   // Chef Notes (ai_answer favorites). Merge into: items (videos) and
@@ -185,8 +187,8 @@ export default function PlaybookPage() {
     setItems(prev => prev.map(i =>
       (i._item_type === item._item_type && i._item_id === item._item_id) ? { ...i, _bucket: bucket } : i
     ))
-    // Auto-expand the destination so the user sees where it went.
-    setExpanded(prev => ({ ...prev, [bucket]: true }))
+    // Jump to the destination tab so the user sees where it went.
+    setTab(bucket)
     showToast(`Moved to ${BUCKETS.find(b => b.key === bucket)?.label} ✓`)
   }
 
@@ -229,7 +231,6 @@ export default function PlaybookPage() {
     byBucket[key].push(it)
   }
   const totalCount = items.length + notes.length
-  const notesOpen = expanded.chef_notes || false
 
   return (
     <div className="min-h-screen bg-white">
@@ -288,24 +289,47 @@ export default function PlaybookPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-3">
-            {BUCKETS.map(b => {
-              const list = byBucket[b.key]
-              const c = COLOR[b.key]
-              const open = expanded[b.key] || false
-              return (
-                <div key={b.key} className={`rounded-2xl ${c.border} ${open ? c.body : 'bg-white'} overflow-hidden shadow-sm`}>
-                  <button
-                    onClick={() => toggleExpanded(b.key)}
-                    className={`w-full ${c.header} px-3 py-2.5 flex items-center gap-2 text-left`}
-                  >
-                    <span className="text-lg">{b.emoji}</span>
-                    <span className={`text-sm font-bold ${c.title}`}>{b.label}</span>
-                    <span className={`text-xs font-semibold ${c.pill} px-2 py-0.5 rounded-full`}>{list.length}</span>
-                    {b.hint && <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">{b.hint}</span>}
-                    <span className={`ml-auto text-sm ${c.title}`}>{open ? '▾' : '▸'}</span>
-                  </button>
-                  {open && (
+          <div>
+            {/* Three-way tab pill row — mirrors the Chef TV Love/Learn
+                binary pattern so the two pages speak the same tab
+                vocabulary. Only one tab is active at a time; the active
+                tab shows a filled color (rose / sky / amber) while the
+                others are muted gray. Count pills live on each tab so
+                users see "how much do I have here" at a glance. */}
+            <div className="flex gap-2 mb-4">
+              {[
+                { key: 'love',       label: `❤️ Love (${byBucket.love.length})`,    activeCls: 'bg-rose-500 text-white'  },
+                { key: 'learn',      label: `🎓 Learn (${byBucket.learn.length})`,  activeCls: 'bg-sky-500 text-white'   },
+                { key: 'chef_notes', label: `📝 Notes (${notes.length})`,           activeCls: 'bg-amber-500 text-white' },
+              ].map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                    tab === t.key ? t.activeCls : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Active tab body. Each tab frames its content with its own
+                soft-tint border so a user who scrolled past the pills
+                still sees which bucket they're in. */}
+            {tab === 'love' || tab === 'learn' ? (
+              (() => {
+                const b = BUCKETS.find(x => x.key === tab)
+                const list = byBucket[tab]
+                const c = COLOR[tab]
+                return (
+                  <div className={`rounded-2xl ${c.border} ${c.body} overflow-hidden shadow-sm`}>
+                    <div className={`${c.header} px-3 py-2.5 flex items-center gap-2`}>
+                      <span className="text-lg">{b.emoji}</span>
+                      <span className={`text-sm font-bold ${c.title}`}>{b.label}</span>
+                      <span className={`text-xs font-semibold ${c.pill} px-2 py-0.5 rounded-full`}>{list.length}</span>
+                      {b.hint && <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">{b.hint}</span>}
+                    </div>
                     <div className="divide-y divide-gray-100">
                       {list.length === 0 ? (
                         <p className="text-center text-xs text-gray-400 py-6 px-3">Nothing here yet.</p>
@@ -316,31 +340,25 @@ export default function PlaybookPage() {
                             item={item}
                             onMove={(bucket) => moveToBucket(item, bucket)}
                             onRemove={() => removeItem(item)}
-                            currentBucket={b.key}
+                            currentBucket={tab}
                           />
                         ))
                       )}
                     </div>
-                  )}
+                  </div>
+                )
+              })()
+            ) : (
+              /* Chef Notes tab — saved AI answers from Ask Chef Jennifer.
+                 Not a bucket (no move-between UX), it's a separate kind
+                 of content. Empty state routes users to /chef. */
+              <div className={`rounded-2xl ${NOTES_COLOR.border} ${NOTES_COLOR.body} overflow-hidden shadow-sm`}>
+                <div className={`${NOTES_COLOR.header} px-3 py-2.5 flex items-center gap-2`}>
+                  <span className="text-lg">📝</span>
+                  <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Notes</span>
+                  <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
+                  <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Saved answers from Chef Jennifer.</span>
                 </div>
-              )
-            })}
-
-            {/* Chef Notes section — saved AI answers from Ask Chef Jennifer.
-                Not a bucket (no move-between UX) since it's a different kind
-                of content. Empty state includes a link back to /chef. */}
-            <div className={`rounded-2xl ${NOTES_COLOR.border} ${notesOpen ? NOTES_COLOR.body : 'bg-white'} overflow-hidden shadow-sm`}>
-              <button
-                onClick={() => toggleExpanded('chef_notes')}
-                className={`w-full ${NOTES_COLOR.header} px-3 py-2.5 flex items-center gap-2 text-left`}
-              >
-                <span className="text-lg">📝</span>
-                <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Notes</span>
-                <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
-                <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Saved answers from Chef Jennifer.</span>
-                <span className={`ml-auto text-sm ${NOTES_COLOR.title}`}>{notesOpen ? '▾' : '▸'}</span>
-              </button>
-              {notesOpen && (
                 <div className="divide-y divide-gray-100">
                   {notes.length === 0 ? (
                     <div className="px-3 py-6 text-center">
@@ -358,8 +376,8 @@ export default function PlaybookPage() {
                     ))
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </main>
