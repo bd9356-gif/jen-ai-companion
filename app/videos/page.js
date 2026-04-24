@@ -133,6 +133,11 @@ export default function VideosPage() {
   const [channel, setChannel] = useState('All Channels')
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
+  // About toggle — matches the 🔍 search pattern. When open, reveals the
+  // teaching card at the top of main (Two ways in / Love / Learn / save
+  // destinations). Default hidden so the page isn't cluttered for
+  // returning users; discoverable via the ℹ️ button in the header.
+  const [showAbout, setShowAbout] = useState(false)
   const [playingId, setPlayingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [metadata, setMetadata] = useState({})
@@ -491,17 +496,30 @@ export default function VideosPage() {
               <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
               <h1 className="text-lg font-bold text-gray-900">🎬 Chef TV</h1>
             </div>
-            <button
-              onClick={toggleSearch}
-              aria-label={showSearch ? 'Close search' : 'Open search'}
-              className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                showSearch || search
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
-              }`}
-            >
-              {showSearch || search ? '✕' : '🔍'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAbout(s => !s)}
+                aria-label={showAbout ? 'Close about' : 'About Chef TV'}
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                  showAbout
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
+                }`}
+              >
+                {showAbout ? '✕' : 'ℹ️'}
+              </button>
+              <button
+                onClick={toggleSearch}
+                aria-label={showSearch ? 'Close search' : 'Open search'}
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                  showSearch || search
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
+                }`}
+              >
+                {showSearch || search ? '✕' : '🔍'}
+              </button>
+            </div>
           </div>
 
           <p className="text-xs text-gray-500 mb-3">A curated cooking library from top YouTube chefs.</p>
@@ -562,14 +580,17 @@ export default function VideosPage() {
         ) : (
           <>
             {/* Teaching card — names the two lanes and what saving does.
-                Lives at the top of main (not the sticky header) so users
-                read it once on first land, then scroll past it. Mirrors
-                the explainer callout pattern at the top of /playbook. */}
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4">
-              <p className="text-sm text-amber-900 leading-relaxed">
-                <span className="font-semibold">Two ways in:</span> ❤️ <span className="font-semibold">Love</span> surfaces recipes to try · 🎓 <span className="font-semibold">Learn</span> surfaces techniques to master. Save any video to <span className="font-semibold">My Playbook</span>, or pull a recipe into your <span className="font-semibold">Recipe Vault</span>.
-              </p>
-            </div>
+                Gated on the ℹ️ About toggle in the header so the page is
+                clean by default for returning users; new users tap ℹ️ for
+                orientation. Mirrors the explainer callout pattern at the
+                top of /playbook but on-demand. */}
+            {showAbout && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4">
+                <p className="text-sm text-amber-900 leading-relaxed">
+                  <span className="font-semibold">Two ways in:</span> ❤️ <span className="font-semibold">Love</span> surfaces recipes to try · 🎓 <span className="font-semibold">Learn</span> surfaces techniques to master. Save any video to <span className="font-semibold">My Playbook</span>, or pull a recipe into your <span className="font-semibold">Recipe Vault</span>.
+                </p>
+              </div>
+            )}
 
             <p className="text-xs text-gray-500 mb-4">
               {filtered.length} video{filtered.length === 1 ? '' : 's'} · {totalNonShort} from top YouTube channels
