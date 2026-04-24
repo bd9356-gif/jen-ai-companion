@@ -49,7 +49,7 @@ Other routes: `/education` (learning videos), `/weeklyplan`, `/recipes`, `/brows
 
 ## IA restructure roadmap (April 2026)
 
-MyKitchen moved from a 3-section (Your Cooking Life / AI Kitchen / Explore) layout with 5 tiles to a **4-section, 10-tile** layout. Bill's framing: "Separate cupboards, separate bowls — each thing with its place. It reminds me of my mother's way of cooking."
+MyKitchen moved from a 3-section (Your Cooking Life / AI Kitchen / Explore) layout with 5 tiles to a **4-section, 9-tile** layout. Bill's framing: "Separate cupboards, separate bowls — each thing with its place. It reminds me of my mother's way of cooking."
 
 The rollout is phased so no single commit drops a huge amount of unreviewed code:
 
@@ -63,7 +63,7 @@ Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything stil
 
 ## Kitchen navigation sections
 
-These live in `app/kitchen/page.js`. MyKitchen is **4 sections and 10 tiles** total. All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern. No dash subtitles; each tile shows `title` (bold) + `description` (truncated one-liner).
+These live in `app/kitchen/page.js`. MyKitchen is **4 sections and 9 tiles** total. All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern. No dash subtitles; each tile shows `title` (bold) + `description` (truncated one-liner).
 
 Section headers are small orange uppercase labels with a one-line section subtitle below, followed by the section's tiles.
 
@@ -78,10 +78,9 @@ Section headers are small orange uppercase labels with a one-line section subtit
    - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
-3. **Learn** — "Build your cooking skills." Two sources (Chef TV for videos, Ask Chef Jennifer for AI answers) each have their own destination for saves (My Playbook for videos, Chef Notes for AI answers). Keeping them separate is intentional.
+3. **Learn** — "Build your cooking skills." Chef TV is the video source with My Playbook as its destination. Chef Notes is the destination for AI answers — the source (Ask Chef Jennifer at `/chef`) lives inside the Chef Jennifer section, not here, so Learn stays focused on what you've *saved* and *learned* rather than mixing in the ask-anything entry point.
    - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away." **Source.**
-   - 📘 My Playbook → `/playbook` — "What you save, make, and improve." **Destination for Chef TV saves.**
-   - 💬 Ask Chef Jennifer → `/chef` — "Ask anything. Get clear answers." **Source.**
+   - 📘 My Playbook → `/playbook` — "Save it. Love it. Learn it." **Destination for Chef TV saves.**
    - 📝 Chef Notes → `/chef-notes` — "Saved AI answers, anytime." **Destination for Ask Chef Jennifer saves.**
 
 4. **Chef Jennifer** — "Your personal AI chef."
