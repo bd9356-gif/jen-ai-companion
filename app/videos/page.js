@@ -158,7 +158,6 @@ export default function VideosPage() {
   // Active topic chip. Meaning depends on the current tab:
   //   love  → one of LOVE_CHIPS keys (default 'all')
   //   learn → one of LEARN_CHIPS keys (default 'featured')
-  //   all   → ignored (All tab shows no chips — full firehose)
   // When the tab flips, we reset topic to the tab's sensible default.
   const [topic, setTopic] = useState('all')
   const [search, setSearch] = useState('')
@@ -174,8 +173,9 @@ export default function VideosPage() {
   const [showCount, setShowCount] = useState(12)
   // Default to 'love' — surface the ~158 recipes first so the actionable
   // set isn't drowned out by the ~400 video-only items. User can flip to
-  // 'learn' for technique or 'all' for the full firehose.
-  const [filter, setFilter] = useState('love')  // love | learn | all
+  // 'learn' for technique. No "All" tab; the two tabs together cover
+  // every video (a video either has a recipe or it doesn't).
+  const [filter, setFilter] = useState('love')  // love | learn
   const [toast, setToast] = useState(null)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
@@ -478,17 +478,16 @@ export default function VideosPage() {
   }
 
   // Figure out the active chip set for the current tab. Love and Learn each
-  // have their own shortlist; All shows no chips (chipSet = null).
-  const chipSet = filter === 'love' ? LOVE_CHIPS : filter === 'learn' ? LEARN_CHIPS : null
+  // have their own shortlist.
+  const chipSet = filter === 'love' ? LOVE_CHIPS : LEARN_CHIPS
   const activeChip = chipSet?.find(c => c.key === topic) || null
 
-  // Filters stack: search + love/learn/all + topic chip keyword match, all
+  // Filters stack: search + love/learn + topic chip keyword match, all
   // AND together. Shorts (under 3 min) are always excluded — no toggle.
   //
   // Sort strategy varies by tab so each view highlights its best content:
   //   love   → loveScore (recipe completeness × popularity)
   //   learn  → learnScore (teaching-channel boost × popularity)
-  //   all    → raw view_count desc (neutral firehose)
   //
   // Featured chip (Learn only): after sort, slice the top FEATURED_CAP
   // entries so newcomers land on "what's good" instead of "what's next."
@@ -497,15 +496,14 @@ export default function VideosPage() {
       const meta = metadata[v.id]
       const hasRecipe = meta?.ingredients?.length > 0
       const matchSearch = search === '' || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase())
-      const matchFilter = filter === 'all' || (filter === 'love' && hasRecipe) || (filter === 'learn' && !hasRecipe)
+      const matchFilter = (filter === 'love' && hasRecipe) || (filter === 'learn' && !hasRecipe)
       const matchShorts = !isShort(v.duration)
       const matchTopic = !activeChip?.match || activeChip.match.test(v.title)
       return matchSearch && matchFilter && matchShorts && matchTopic
     })
     .sort((a, b) => {
-      if (filter === 'love')  return loveScore(b, metadata[b.id]) - loveScore(a, metadata[a.id])
-      if (filter === 'learn') return learnScore(b) - learnScore(a)
-      return (b.view_count || 0) - (a.view_count || 0)
+      if (filter === 'love') return loveScore(b, metadata[b.id]) - loveScore(a, metadata[a.id])
+      return learnScore(b) - learnScore(a)
     })
   const filtered = (filter === 'learn' && activeChip?.feature)
     ? afterFilter.slice(0, FEATURED_CAP)
@@ -570,17 +568,17 @@ export default function VideosPage() {
             />
           )}
 
-          {/* Love / Learn / All — tri-state pill row. The tab vocabulary
-              matches the Playbook save buckets (❤️ Love / 🎓 Learn) so a
-              user browsing Love sees the bucket they'd save to on the card
+          {/* Love / Learn — binary pill row. The tab vocabulary matches
+              the Playbook save buckets (❤️ Love / 🎓 Learn) so a user
+              browsing Love sees the bucket they'd save to on the card
               below. Love leads because the ~158 recipes are the scarcer,
               higher-signal set; the ~400 video-only items live under
-              Learn. All is the escape hatch for browsing everything. */}
+              Learn. No "All" firehose — every video is either a recipe
+              or it's not, and the two tabs together cover everything. */}
           <div className="flex gap-2 mb-3">
             {[
               ['love',  `❤️ Love (${recipeCount})`,   'bg-rose-500 text-white'],
               ['learn', `🎓 Learn (${summaryCount})`, 'bg-sky-500 text-white'],
-              ['all',   `All (${totalNonShort})`,     'bg-orange-600 text-white'],
             ].map(([val, label, activeCls]) => (
               <button
                 key={val}
@@ -589,7 +587,7 @@ export default function VideosPage() {
                   setShowCount(12)
                   // Reset chip to each tab's sensible default so chips don't
                   // persist awkwardly across tab switches. Learn lands on
-                  // Featured (curated top slice); Love and All land on All.
+                  // Featured (curated top slice); Love lands on All.
                   setTopic(val === 'learn' ? 'featured' : 'all')
                 }}
                 className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
@@ -604,8 +602,7 @@ export default function VideosPage() {
           {/* Topic chips — dish-types for Love, techniques for Learn.
               Horizontally scrollable on narrow viewports. Active chip uses
               the tab's color (rose for Love, sky for Learn); inactive
-              chips are white with a gray border. No chips on the All tab
-              — All is the neutral firehose, no further slicing.
+              chips are white with a gray border.
               Channel dropdown was removed in favor of this; the search
               input already matches channel text, so chef-specific queries
               still work via 🔍. */}
