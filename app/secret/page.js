@@ -1004,11 +1004,23 @@ export default function MyRecipeVaultPage() {
 
   const filtered = recipes.filter(r => {
     const matchSearch = searchText === '' || r.title.toLowerCase().includes(searchText.toLowerCase())
-    const matchTag = searchTag === '' || (r.tags || []).includes(searchTag)
+    // searchTag can be '' (all), a specific tag, or the special sentinel
+    // '__custom__' meaning "any tag not in the curated set". The sentinel
+    // is the dropdown's collapsed view of every custom tag at once — see
+    // the <optgroup> structure below.
+    const matchTag =
+      searchTag === ''
+        ? true
+        : searchTag === '__custom__'
+          ? (r.tags || []).some(t => !CURATED_TAGS.includes(t))
+          : (r.tags || []).includes(searchTag)
     return matchSearch && matchTag
   })
 
   const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
+  // Whether the user has any custom tags in their vault — drives the
+  // single "✏️ Custom" option at the bottom of the filter dropdown.
+  const hasCustomTags = allTags.some(t => !CURATED_TAGS.includes(t))
 
   // Top 5 most-used tags for the chip row above search
   const topTags = (() => {
@@ -2089,6 +2101,13 @@ export default function MyRecipeVaultPage() {
             )
           )}
           {allTags.length > topTags.length && (
+            // Filter dropdown — mirrors the form's three groups via
+            // <optgroup>. Each group lists only the curated tags the
+            // user has actually applied to their recipes (so we don't
+            // show empty options). Custom tags collapse to a single
+            // "✏️ Custom" entry at the bottom — picking it filters to
+            // every recipe with any non-curated tag, matching how
+            // custom tags render as one row in the form.
             <select
               value={searchTag}
               onChange={e => setSearchTag(e.target.value)}
@@ -2096,9 +2115,20 @@ export default function MyRecipeVaultPage() {
               title="All tags (overflow)"
             >
               <option value="">All tags…</option>
-              {allTags.map(tag => (
-                <option key={tag} value={tag}>#{tag}</option>
-              ))}
+              {TAG_GROUPS.map(group => {
+                const usedInGroup = group.tags.filter(t => allTags.includes(t))
+                if (usedInGroup.length === 0) return null
+                return (
+                  <optgroup key={group.label} label={`${group.emoji} ${group.label}`}>
+                    {usedInGroup.map(tag => (
+                      <option key={tag} value={tag}>#{tag}</option>
+                    ))}
+                  </optgroup>
+                )
+              })}
+              {hasCustomTags && (
+                <option value="__custom__">✏️ Custom</option>
+              )}
             </select>
           )}
         </div>
