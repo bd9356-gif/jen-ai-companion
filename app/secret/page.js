@@ -1725,7 +1725,10 @@ export default function MyRecipeVaultPage() {
           {importTab === 'paste' && (
             <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
               <label className="text-base font-bold text-gray-800 block">📋 Paste Recipe Text</label>
-              <p className="text-sm text-gray-500">Copy the recipe from the website (Select All is fine — AI filters the noise), then paste here. Works on every site, no matter who blocks what.</p>
+              <div className="text-sm text-gray-500 space-y-2">
+                <p>Copy the recipe from the website — Select All works fine because AI filters out the noise — then paste it here. It works on every site, even the ones that try to block copying.</p>
+                <p>Or use the site&apos;s Print Recipe option. Save it, copy everything when you&apos;re ready, paste it in, and let AI handle the rest. You can add the image anytime with a simple copy-and-paste.</p>
+              </div>
               <textarea ref={importTextRef} placeholder="Paste your recipe here — title, ingredients, instructions, notes…" value={importText} onChange={e => setImportText(e.target.value)}
                 rows={10}
                 style={{ fontSize: '16px' }}
