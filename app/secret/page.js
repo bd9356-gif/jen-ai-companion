@@ -486,6 +486,12 @@ export default function MyRecipeVaultPage() {
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
+  // Clipboard auto-detect — when the user lands on the Import view, peek
+  // at the system clipboard once and (only if it looks like a URL) offer
+  // a one-tap "Use it" prompt above the URL field. Stored as the detected
+  // string so it can be displayed (truncated) and applied on tap. Silent
+  // when the clipboard is empty, blocked, or holds non-URL text.
+  const [clipboardSuggestion, setClipboardSuggestion] = useState('')
   const importTextRef = useRef(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
@@ -523,6 +529,34 @@ export default function MyRecipeVaultPage() {
       loadPicksIds(session.user.id)
     })
   }, [])
+
+  // Clipboard auto-detect: on entry to the Import view, try to read the
+  // system clipboard. If it looks like an http(s) URL and the URL field
+  // is empty, expose it as a one-tap suggestion. readText() requires
+  // HTTPS + a recent user gesture (the tap on "📥 Import" satisfies it
+  // on most browsers); when blocked it rejects silently and we just don't
+  // show the prompt. Cleared whenever the user leaves Import or fills
+  // the URL field manually.
+  useEffect(() => {
+    if (view !== 'import') {
+      setClipboardSuggestion('')
+      return
+    }
+    if (importUrl.trim()) return
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) return
+    let cancelled = false
+    navigator.clipboard.readText().then(text => {
+      if (cancelled) return
+      const trimmed = (text || '').trim()
+      // Conservative URL match: http(s) only, no whitespace, reasonable
+      // length cap so a clipboard full of pasted text never gets offered
+      // as a "URL".
+      if (/^https?:\/\/\S+$/i.test(trimmed) && trimmed.length < 2000) {
+        setClipboardSuggestion(trimmed)
+      }
+    }).catch(() => { /* permission denied / not supported — silent */ })
+    return () => { cancelled = true }
+  }, [view, importUrl])
 
   function showToast(msg) {
     setToastMsg(msg)
@@ -1510,6 +1544,38 @@ export default function MyRecipeVaultPage() {
           <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
             <label className="text-base font-bold text-gray-800 block">🔗 Import by URL</label>
             <p className="text-sm text-gray-500">Works for most recipe sites. Some big sites (Food Network, AllRecipes, Serious Eats, Natasha&apos;s Kitchen) block automated fetches — if that happens, use paste below.</p>
+
+            {/* Clipboard auto-detect prompt — surfaces a URL the user
+                already copied so they don't have to paste manually. Only
+                renders when readText() succeeded with a valid http(s) URL
+                AND the input is still empty. "Use it" fills the field
+                (and the prompt clears via the field-non-empty guard);
+                ✕ dismisses without filling. */}
+            {clipboardSuggestion && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 flex items-center gap-2">
+                <span className="text-base shrink-0">📋</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-orange-900 font-semibold">URL on your clipboard</p>
+                  <p className="text-xs text-orange-800 truncate">{clipboardSuggestion}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setImportUrl(clipboardSuggestion); setClipboardSuggestion('') }}
+                  className="shrink-0 text-xs font-semibold bg-orange-600 text-white rounded-lg px-3 py-1.5 hover:bg-orange-700 transition-colors"
+                >
+                  Use it
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setClipboardSuggestion('')}
+                  aria-label="Dismiss"
+                  className="shrink-0 text-orange-500 hover:text-orange-800 text-base leading-none px-1"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
               style={{ fontSize: '16px' }}
               className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
