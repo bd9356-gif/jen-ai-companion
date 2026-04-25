@@ -19,6 +19,12 @@ export default function ShoppingListPage() {
   const [showStoreEditor, setShowStoreEditor] = useState(false)
   const [cleaningList, setCleaningList] = useState(false)
   const [toast, setToast] = useState(null)
+  // Print uses an in-page hidden container instead of a popup window.
+  // On iOS, popup-based print previews can leave a stranded popup tab
+  // behind the app when the user dismisses the sheet without printing —
+  // and there's no obvious way out from a phone. Printing the current
+  // window with @media print rules avoids the popup entirely.
+  const [printText, setPrintText] = useState('')
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
@@ -131,17 +137,20 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
-    const w = window.open('', '_blank', 'width=520,height=720')
-    if (!w) { showToast('Pop-up blocked — allow pop-ups to print'); return }
-    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    w.document.write(`<!doctype html><html><head><title>Shopping List</title><style>
-      body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; padding: 24px; color: #111; max-width: 520px; margin: 0 auto; }
-      pre { font-family: inherit; white-space: pre-wrap; font-size: 14px; line-height: 1.7; margin: 0; }
-      @media print { body { padding: 0; max-width: none; } }
-    </style></head><body><pre>${escaped}</pre>
-    <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 200); });</script>
-    </body></html>`)
-    w.document.close()
+    setPrintText(text)
+    // One-tick wait so the hidden print container has rendered with the
+    // text before the print dialog opens. afterprint fires whether the
+    // user prints or cancels (in every browser including iOS Safari),
+    // so the container is cleared either way and the page returns to
+    // its normal state.
+    setTimeout(() => {
+      const cleanup = () => { setPrintText(''); window.removeEventListener('afterprint', cleanup) }
+      window.addEventListener('afterprint', cleanup)
+      window.print()
+      // Belt-and-braces fallback in case afterprint never fires
+      // (older mobile browsers occasionally swallow it).
+      setTimeout(() => { setPrintText(''); window.removeEventListener('afterprint', cleanup) }, 5000)
+    }, 50)
   }
 
   // AI cleanup — round fractions, strip cooking-only measures, merge dupes.
@@ -288,6 +297,36 @@ export default function ShoppingListPage() {
           </div>
         )}
       </main>
+
+      {/* Print container — invisible in normal view, becomes the only
+          visible element during print via the @media print rules below.
+          Text comes from buildShoppingListText() which already groups by
+          store and includes [ ] checkboxes. printText is cleared on
+          afterprint so this stays empty between prints. */}
+      <div id="print-shopping-list" aria-hidden="true" style={{ display: printText ? 'block' : 'none' }}>
+        <pre style={{
+          fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+          whiteSpace: 'pre-wrap',
+          fontSize: '14px',
+          lineHeight: '1.7',
+          margin: 0,
+          padding: '24px',
+          color: '#111',
+        }}>{printText}</pre>
+      </div>
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #print-shopping-list, #print-shopping-list * { visibility: visible !important; }
+          #print-shopping-list {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            display: block !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

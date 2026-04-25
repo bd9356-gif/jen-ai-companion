@@ -499,6 +499,13 @@ export default function MyRecipeVaultPage() {
   // the most common case and lets the clipboard prompt surface
   // immediately. Values: 'url' | 'paste' | 'json'.
   const [importTab, setImportTab] = useState('url')
+  // AI Kitchen Helpers tab — matches the Import Recipes tab pattern.
+  // The four helper cards used to stack on the same scroll which made
+  // the page busy on first open. Since they're alternatives (only one
+  // is used per session), the page is now a tab strip with one active
+  // card at a time. Default 'polish' is the most common entry point.
+  // Values: 'polish' | 'resize' | 'info' | 'transform'.
+  const [helperTab, setHelperTab] = useState('polish')
   const importTextRef = useRef(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
@@ -947,10 +954,15 @@ export default function MyRecipeVaultPage() {
       if (data.error) {
         setImportError(data.error)
         setImporting(false)
-        // If the URL was blocked, nudge the user toward the paste textarea
-        // by focusing it — paste is a first-class fallback, not a dead end.
+        // If the URL attempt failed, clear the URL field so the user
+        // isn't left staring at a bad link, flip to the Paste tab, and
+        // focus the textarea — paste is a first-class fallback, not a
+        // dead end. Focus runs in setTimeout because the textarea is
+        // conditionally rendered (only mounts when the tab is 'paste').
         const wasUrlAttempt = importUrl.trim() && !importText.trim()
-        if (wasUrlAttempt && importTextRef.current) {
+        if (wasUrlAttempt) {
+          setImportUrl('')
+          setImportTab('paste')
           setTimeout(() => importTextRef.current?.focus(), 100)
         }
         return
@@ -1024,9 +1036,15 @@ export default function MyRecipeVaultPage() {
                 {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
               </button>
               <button onClick={async () => {
-                await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
-                setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
-                showToast('Added to Meal Plan ✓')
+                if (picksIds.includes(viewing.id)) {
+                  await supabase.from('my_picks').delete().eq('user_id', user.id).eq('recipe_id', viewing.id)
+                  setPicksIds(prev => prev.filter(id => id !== viewing.id))
+                  showToast('Removed from Meal Plan')
+                } else {
+                  await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
+                  setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
+                  showToast('Added to Meal Plan ✓')
+                }
               }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>📅 {picksIds.includes(viewing.id) ? 'In Meal Plan' : 'Meal Plan'}</button>
               <button onClick={() => deleteRecipe(viewing.id)}
                 className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
@@ -1349,11 +1367,42 @@ export default function MyRecipeVaultPage() {
             <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-1">Helping with</p>
             <p className="text-lg font-bold text-gray-900 leading-snug">{viewing.title}</p>
             <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-              Four cozy ways to tune up this recipe. Nothing saves until you tap the green button in each card, so feel free to experiment.
+              Four cozy ways to tune up this recipe. Pick one below — nothing saves until you tap the green button in each card, so feel free to experiment.
             </p>
           </div>
 
+          {/* Tab strip — four helpers, one at a time. Matches the Import
+              Recipes pattern: only one is used per visit, so stacking
+              them all on the page made it long and busy. Active tab fills
+              with orange; inactive tabs are gray. 2-column grid on phones
+              so the labels don't truncate. */}
+          <div className="grid grid-cols-2 gap-1.5 bg-gray-100 rounded-2xl p-1">
+            {[
+              { key: 'polish', label: '🧹 Polish' },
+              { key: 'resize', label: '⚖️ Resize' },
+              { key: 'info', label: '📊 Details' },
+              { key: 'transform', label: '🌿 Make more…' },
+            ].map(t => {
+              const active = helperTab === t.key
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setHelperTab(t.key)}
+                  className={
+                    active
+                      ? 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm'
+                      : 'py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800'
+                  }
+                >
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
+
           {/* 🧹 Polish Recipe — ORANGE */}
+          {helperTab === 'polish' && (
           <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-5">
             <div className="flex items-start gap-3 mb-2">
               <span className="text-2xl">🧹</span>
@@ -1376,8 +1425,10 @@ export default function MyRecipeVaultPage() {
               </div>
             )}
           </div>
+          )}
 
           {/* ⚖️ Resize Servings — SKY */}
+          {helperTab === 'resize' && (
           <div className="rounded-2xl border-2 border-sky-200 bg-sky-50 p-5">
             <div className="flex items-start gap-3 mb-2">
               <span className="text-2xl">⚖️</span>
@@ -1429,8 +1480,10 @@ export default function MyRecipeVaultPage() {
               </div>
             )}
           </div>
+          )}
 
           {/* 📊 Generate Recipe Info — EMERALD */}
+          {helperTab === 'info' && (
           <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 p-5">
             <div className="flex items-start gap-3 mb-2">
               <span className="text-2xl">📊</span>
@@ -1497,8 +1550,10 @@ export default function MyRecipeVaultPage() {
               </div>
             )}
           </div>
+          )}
 
           {/* 🌿 Make This Recipe More... — PURPLE */}
+          {helperTab === 'transform' && (
           <div className="rounded-2xl border-2 border-purple-200 bg-purple-50 p-5">
             <div className="flex items-start gap-3 mb-3">
               <span className="text-2xl">🌿</span>
@@ -1630,6 +1685,7 @@ export default function MyRecipeVaultPage() {
               </div>
             )}
           </div>
+          )}
         </main>
       </div>
     )
