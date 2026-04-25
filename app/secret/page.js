@@ -14,13 +14,13 @@ const supabase = createClient(
 // "what kind of meal? what protein? what mood?" instead of one long
 // flat list. Groups render as labelled chip rows in <TagSelector>.
 // Custom tags are still allowed via the input below the groups — these
-// are just the suggestions. Keep total count modest (~14) so the form
+// are just the suggestions. Keep total count modest (~15) so the form
 // stays scannable on a phone.
 const TAG_GROUPS = [
   {
     label: 'Meal',
     emoji: '🍽',
-    tags: ['breakfast', 'dinner', 'dessert', 'side', 'snack'],
+    tags: ['breakfast', 'lunch', 'dinner', 'dessert', 'side', 'snack'],
   },
   {
     label: 'Protein',
@@ -253,10 +253,14 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
           className={`${fieldBase} resize-y`} />
       </div>
 
-      {/* Category field retired — its job is now done by the Meal /
-          Protein / Style chip groups in <TagSelector>. The local
-          `category` state still flows through onSave so old recipes
-          with categories don't lose them on edit. */}
+      <div>
+        <label className={labelClass}>Category</label>
+        <input value={category} onChange={e => setCategory(e.target.value)}
+          placeholder="e.g. Main Dish, Dessert, Side"
+          style={fieldStyle}
+          className={fieldBase} />
+      </div>
+
       <TagSelector tags={tags} onChange={setTags} />
 
       <div>
@@ -1948,11 +1952,14 @@ export default function MyRecipeVaultPage() {
                 className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
             </div>
 
-            {/* Category field retired — the Meal/Protein/Style chip groups
-                inside <TagSelector> cover what category was meant for, and
-                the list-view chip filter at the top of the Vault already
-                drives navigation off tags. `form.category` stays in state
-                (initialized to '') so legacy fields aren't disturbed. */}
+            <div>
+              <label className="block text-base font-bold text-gray-800 mb-2">Category</label>
+              <input placeholder="e.g. Main Dish, Dessert, Side" value={form.category}
+                onChange={e => setForm(f => ({...f, category: e.target.value}))}
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
+            </div>
+
             <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} />
 
             <div>

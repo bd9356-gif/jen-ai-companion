@@ -212,6 +212,7 @@ Respond with ONLY a valid JSON object, no markdown, no backticks:
 {
   "title": "Recipe name",
   "description": "One short sentence.",
+  "category": "Main Dish | Side | Dessert | Breakfast | Soup | etc.",
   "ingredients": [
     {"name": "ingredient name", "measure": "amount and unit"}
   ],
@@ -221,7 +222,7 @@ Respond with ONLY a valid JSON object, no markdown, no backticks:
   "image": "https://… main recipe image URL if present in the content, otherwise empty string"
 }
 
-For "tags": pick 2–4 short lowercase words from this curated set when they fit the recipe — meal: breakfast, dinner, dessert, side, snack — protein: chicken, beef, fish, veg — style: quick, comfort, healthy, baking, holiday. Don't invent tags outside this list unless the recipe genuinely needs one.
+For "tags": pick 2–4 short lowercase words from this curated set when they fit the recipe — meal: breakfast, lunch, dinner, dessert, side, snack — protein: chicken, beef, fish, veg — style: quick, comfort, healthy, baking, holiday. Don't invent tags outside this list unless the recipe genuinely needs one.
 
 If no recipe is found, return exactly: {"error": "No recipe found"}`
 
