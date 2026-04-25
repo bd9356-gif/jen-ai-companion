@@ -492,6 +492,13 @@ export default function MyRecipeVaultPage() {
   // string so it can be displayed (truncated) and applied on tap. Silent
   // when the clipboard is empty, blocked, or holds non-URL text.
   const [clipboardSuggestion, setClipboardSuggestion] = useState('')
+  // Import view active tab. The page used to stack three full cards
+  // (URL / Paste / JSON) which made it long and busy on first open;
+  // they're alternatives — you use one per import — so a tab strip
+  // collapses the page to the single chosen path. Default 'url' is
+  // the most common case and lets the clipboard prompt surface
+  // immediately. Values: 'url' | 'paste' | 'json'.
+  const [importTab, setImportTab] = useState('url')
   const importTextRef = useRef(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState(null)
@@ -538,7 +545,7 @@ export default function MyRecipeVaultPage() {
   // show the prompt. Cleared whenever the user leaves Import or fills
   // the URL field manually.
   useEffect(() => {
-    if (view !== 'import') {
+    if (view !== 'import' || importTab !== 'url') {
       setClipboardSuggestion('')
       return
     }
@@ -556,7 +563,7 @@ export default function MyRecipeVaultPage() {
       }
     }).catch(() => { /* permission denied / not supported — silent */ })
     return () => { cancelled = true }
-  }, [view, importUrl])
+  }, [view, importTab, importUrl])
 
   function showToast(msg) {
     setToastMsg(msg)
@@ -1537,93 +1544,124 @@ export default function MyRecipeVaultPage() {
             <h1 className="text-lg font-bold text-gray-900">📥 Import Recipe</h1>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-          <p className="text-sm text-gray-600">Paste a recipe URL or the recipe text itself. AI will extract and clean it up.</p>
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+          <p className="text-sm text-gray-600">Pick a way to bring a recipe in. AI will extract and clean it up.</p>
 
-          {/* URL import card */}
-          <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
-            <label className="text-base font-bold text-gray-800 block">🔗 Import by URL</label>
-            <p className="text-sm text-gray-500">Works for most recipe sites. Some big sites (Food Network, AllRecipes, Serious Eats, Natasha&apos;s Kitchen) block automated fetches — if that happens, use paste below.</p>
+          {/* Tab strip — three alternatives, one at a time. The page used
+              to stack all three cards which was long and busy on first
+              open. URL is the default and most common; Paste is the
+              "site blocked the fetch" fallback; JSON is for power-user
+              imports/exports. Active tab fills with orange; inactive tabs
+              are gray. Equal-width grid so labels line up cleanly. */}
+          <div className="grid grid-cols-3 gap-1.5 bg-gray-100 rounded-2xl p-1">
+            {[
+              { key: 'url', label: '🔗 URL' },
+              { key: 'paste', label: '📋 Paste' },
+              { key: 'json', label: '📄 JSON' },
+            ].map(t => {
+              const active = importTab === t.key
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setImportTab(t.key)}
+                  className={
+                    active
+                      ? 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm'
+                      : 'py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800'
+                  }
+                >
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>
 
-            {/* Clipboard auto-detect prompt — surfaces a URL the user
-                already copied so they don't have to paste manually. Only
-                renders when readText() succeeded with a valid http(s) URL
-                AND the input is still empty. "Use it" fills the field
-                (and the prompt clears via the field-non-empty guard);
-                ✕ dismisses without filling. */}
-            {clipboardSuggestion && (
-              <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 flex items-center gap-2">
-                <span className="text-base shrink-0">📋</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-orange-900 font-semibold">URL on your clipboard</p>
-                  <p className="text-xs text-orange-800 truncate">{clipboardSuggestion}</p>
+          {/* URL tab */}
+          {importTab === 'url' && (
+            <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
+              <label className="text-base font-bold text-gray-800 block">🔗 Import by URL</label>
+              <p className="text-sm text-gray-500">Works for most recipe sites. Some big sites (Food Network, AllRecipes, Serious Eats, Natasha&apos;s Kitchen) block automated fetches — if that happens, switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold text-gray-700 hover:text-gray-900">📋 Paste</button>.</p>
+
+              {/* Clipboard auto-detect prompt — surfaces a URL the user
+                  already copied so they don't have to paste manually. Only
+                  renders when readText() succeeded with a valid http(s) URL
+                  AND the input is still empty. "Use it" fills the field
+                  (and the prompt clears via the field-non-empty guard);
+                  ✕ dismisses without filling. */}
+              {clipboardSuggestion && (
+                <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <span className="text-base shrink-0">📋</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-orange-900 font-semibold">URL on your clipboard</p>
+                    <p className="text-xs text-orange-800 truncate">{clipboardSuggestion}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setImportUrl(clipboardSuggestion); setClipboardSuggestion('') }}
+                    className="shrink-0 text-xs font-semibold bg-orange-600 text-white rounded-lg px-3 py-1.5 hover:bg-orange-700 transition-colors"
+                  >
+                    Use it
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClipboardSuggestion('')}
+                    aria-label="Dismiss"
+                    className="shrink-0 text-orange-500 hover:text-orange-800 text-base leading-none px-1"
+                  >
+                    ×
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => { setImportUrl(clipboardSuggestion); setClipboardSuggestion('') }}
-                  className="shrink-0 text-xs font-semibold bg-orange-600 text-white rounded-lg px-3 py-1.5 hover:bg-orange-700 transition-colors"
-                >
-                  Use it
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setClipboardSuggestion('')}
-                  aria-label="Dismiss"
-                  className="shrink-0 text-orange-500 hover:text-orange-800 text-base leading-none px-1"
-                >
-                  ×
-                </button>
-              </div>
-            )}
+              )}
 
-            <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
-              style={{ fontSize: '16px' }}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
-          </div>
+              <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
+            </div>
+          )}
 
-          {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">or</span><div className="flex-1 h-px bg-gray-200" />
-          </div>
+          {/* Paste tab */}
+          {importTab === 'paste' && (
+            <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
+              <label className="text-base font-bold text-gray-800 block">📋 Paste Recipe Text</label>
+              <p className="text-sm text-gray-500">Copy the recipe from the website (Select All is fine — AI filters the noise), then paste here. Works on every site, no matter who blocks what.</p>
+              <textarea ref={importTextRef} placeholder="Paste your recipe here — title, ingredients, instructions, notes…" value={importText} onChange={e => setImportText(e.target.value)}
+                rows={10}
+                style={{ fontSize: '16px' }}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
+            </div>
+          )}
 
-          {/* Paste-text card */}
-          <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
-            <label className="text-base font-bold text-gray-800 block">📋 Paste Recipe Text</label>
-            <p className="text-sm text-gray-500">Copy the recipe from the website (Select All is fine — AI filters the noise), then paste here. Works on every site, no matter who blocks what.</p>
-            <textarea ref={importTextRef} placeholder="Paste your recipe here — title, ingredients, instructions, notes…" value={importText} onChange={e => setImportText(e.target.value)}
-              rows={12}
-              style={{ fontSize: '16px' }}
-              className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
-          </div>
-
-          {/* Inline error banner — replaces the old alert(). */}
-          {importError && (
+          {/* Inline error banner — replaces the old alert(). Shown on
+              URL/Paste tabs (where handleImport is the action). */}
+          {importError && importTab !== 'json' && (
             <div className="border-2 border-red-200 bg-red-50 rounded-2xl p-4 space-y-2">
               <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
               <p className="text-sm text-red-700">{importError}</p>
               <p className="text-sm text-red-700">
-                👇 Copy the recipe text from the page and paste it above — it works on every site.
+                👇 Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">📋 Paste</button> and copy the recipe text from the page — it works on every site.
               </p>
             </div>
           )}
 
-          <button onClick={handleImport} disabled={importing || (!importText.trim() && !importUrl.trim())}
-            style={{ fontSize: '16px' }}
-            className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
-            {importing ? '🤖 Extracting recipe...' : '📥 Import & Clean with AI'}
-          </button>
+          {/* Submit button — only on URL/Paste tabs (JSON has its own). */}
+          {importTab !== 'json' && (
+            <button onClick={handleImport} disabled={importing || (!importText.trim() && !importUrl.trim())}
+              style={{ fontSize: '16px' }}
+              className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
+              {importing ? '🤖 Extracting recipe...' : '📥 Import & Clean with AI'}
+            </button>
+          )}
 
-          {/* JSON Import */}
-          <div className="flex items-center gap-3 pt-2">
-            <div className="flex-1 h-px bg-gray-200" /><span className="text-xs text-gray-500">or import a JSON file</span><div className="flex-1 h-px bg-gray-200" />
-          </div>
-          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">📄</span>
-              <h2 className="text-sm font-bold text-gray-900">Import JSON File</h2>
-            </div>
-            <p className="text-xs text-gray-500 mb-4">Import a recipe exported from this app or any compatible JSON format. Fields: title, description, ingredients, instructions, category, tags.</p>
-            <input type="file" accept=".json,application/json" id="json-import-input" className="hidden"
+          {/* JSON tab */}
+          {importTab === 'json' && (
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">📄</span>
+                <h2 className="text-sm font-bold text-gray-900">Import JSON File</h2>
+              </div>
+              <p className="text-xs text-gray-500 mb-4">Import a recipe exported from this app or any compatible JSON format. Fields: title, description, ingredients, instructions, category, tags.</p>
+              <input type="file" accept=".json,application/json" id="json-import-input" className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
@@ -1659,11 +1697,12 @@ export default function MyRecipeVaultPage() {
                 e.target.value = ''
               }}
             />
-            <button onClick={() => document.getElementById('json-import-input').click()}
-              className="w-full py-3 bg-gray-800 text-white rounded-xl font-semibold text-sm hover:bg-gray-900 transition-colors">
-              📄 Choose JSON File
-            </button>
-          </div>
+              <button onClick={() => document.getElementById('json-import-input').click()}
+                className="w-full py-3 bg-gray-800 text-white rounded-xl font-semibold text-sm hover:bg-gray-900 transition-colors">
+                📄 Choose JSON File
+              </button>
+            </div>
+          )}
         </main>
       </div>
     )
