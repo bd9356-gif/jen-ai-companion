@@ -565,6 +565,35 @@ export default function MyRecipeVaultPage() {
     return () => { cancelled = true }
   }, [view, importTab, importUrl])
 
+  // Detail-view paste listener — when looking at a recipe, Cmd/Ctrl+V
+  // lifts an image off the clipboard straight into the recipe. Skips
+  // when the paste target is a text input/textarea/contenteditable so
+  // it doesn't hijack normal text-paste in the editor. Uses the
+  // synchronous `e.clipboardData.items` API (works without permission
+  // because the paste event itself is a user gesture).
+  useEffect(() => {
+    if (view !== 'detail' || !viewing || !user) return
+    function onPaste(e) {
+      const t = e.target
+      if (t && (t.matches?.('input, textarea, [contenteditable], [contenteditable="true"]'))) return
+      const items = e.clipboardData?.items
+      if (!items) return
+      for (const it of items) {
+        if (it.kind === 'file' && it.type.startsWith('image/')) {
+          const blob = it.getAsFile()
+          if (blob) {
+            e.preventDefault()
+            attachImageBlobToRecipe(blob, viewing.id, user.id)
+          }
+          return
+        }
+      }
+    }
+    document.addEventListener('paste', onPaste)
+    return () => document.removeEventListener('paste', onPaste)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, viewing?.id, user?.id])
+
   function showToast(msg) {
     setToastMsg(msg)
     setTimeout(() => setToastMsg(null), 2000)
@@ -667,6 +696,49 @@ export default function MyRecipeVaultPage() {
       setUploadingPhoto(false)
       return publicUrl
     } catch (err) { alert('Upload error: ' + err.message); setUploadingPhoto(false); return null }
+  }
+
+  // Take a Blob (from clipboard, drag-drop, or anywhere) and run it
+  // through the same uploadPhoto path used for file-picked images, then
+  // patch the recipe row. Centralized so the button handler and the
+  // paste-event handler both go through the same code path.
+  async function attachImageBlobToRecipe(blob, recipeId, userId) {
+    if (!blob) return
+    const mime = blob.type || 'image/png'
+    const ext = (mime.split('/')[1] || 'png').toLowerCase()
+    const file = new File([blob], `pasted-${Date.now()}.${ext}`, { type: mime })
+    const url = await uploadPhoto(file, userId)
+    if (url) {
+      await updateRecipe(recipeId, { photo_url: url })
+      showToast('Photo added ✓')
+    }
+  }
+
+  // Async-clipboard read path — used by the visible "📋 Paste image"
+  // button. navigator.clipboard.read() is HTTPS-gated and needs a
+  // recent user gesture (the tap satisfies it). On failure (no image,
+  // permission denied, unsupported browser) we toast and bail rather
+  // than throw — this is a "shortcut" feature, not the only path.
+  async function pasteImageFromClipboard(recipeId) {
+    if (!user) return
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.read) {
+      showToast('Paste not supported in this browser — use Upload instead')
+      return
+    }
+    try {
+      const items = await navigator.clipboard.read()
+      for (const item of items) {
+        const imgType = item.types.find(t => t.startsWith('image/'))
+        if (imgType) {
+          const blob = await item.getType(imgType)
+          await attachImageBlobToRecipe(blob, recipeId, user.id)
+          return
+        }
+      }
+      showToast('No image on clipboard — copy an image first')
+    } catch {
+      showToast("Couldn't read clipboard — try copying the image again")
+    }
   }
 
   async function saveRecipe() {
@@ -974,14 +1046,18 @@ export default function MyRecipeVaultPage() {
               title="Tap to add a photo"
             >
               <span className="text-5xl sm:text-6xl md:text-7xl opacity-60">{categoryEmoji(viewing)}</span>
-              <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
-                onChange={async e => {
-                  const file = e.target.files?.[0]; if (!file) return
-                  const url = await uploadPhoto(file, user.id)
-                  if (url) await updateRecipe(viewing.id, { photo_url: url })
-                }} />
             </div>
           )}
+          {/* Single hidden file input shared by every "upload photo"
+              affordance on this view (gradient click, 📁 Upload pill,
+              📷 Change pill). Renders once, regardless of state. */}
+          <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
+            onChange={async e => {
+              const file = e.target.files?.[0]; if (!file) return
+              const url = await uploadPhoto(file, user.id)
+              if (url) await updateRecipe(viewing.id, { photo_url: url })
+              e.target.value = ''
+            }} />
           {/* Dark gradient so the title reads on any photo */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent pointer-events-none" />
           {/* Title overlay */}
@@ -993,24 +1069,49 @@ export default function MyRecipeVaultPage() {
               )}
             </div>
           </div>
-          {/* Small "change photo" affordance when a photo is already set */}
-          {viewing.photo_url && (
+          {/* Photo affordances (top-right). Layout differs by state:
+              • No photo → 📁 Upload + 📋 Paste image pills, both visible
+                so users see two ways to add a picture (file picker or
+                clipboard). Cmd/Ctrl+V also works via the document-level
+                paste listener.
+              • Photo set → 📷 Change + 📋 Paste pills so the user can
+                swap it via either path.
+              All buttons stop propagation so they don't also trigger
+              the gradient's tap-to-upload click. While a paste/upload
+              is in flight, both pills disable. */}
+          <div className="absolute top-3 right-3 flex gap-1.5">
+            {!viewing.photo_url && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click() }}
+                disabled={uploadingPhoto}
+                title="Upload from device"
+                className="bg-white/90 hover:bg-white disabled:opacity-60 text-gray-700 text-xs font-semibold rounded-full px-3 py-1.5 shadow-sm"
+              >
+                📁 Upload
+              </button>
+            )}
+            {viewing.photo_url && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click() }}
+                disabled={uploadingPhoto}
+                title="Change photo"
+                className="bg-white/90 hover:bg-white disabled:opacity-60 text-gray-700 text-xs font-semibold rounded-full px-3 py-1.5 shadow-sm"
+              >
+                📷 Change
+              </button>
+            )}
             <button
-              onClick={() => photoInputRef.current?.click()}
-              title="Change photo"
-              className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-700 text-xs font-semibold rounded-full px-3 py-1.5 shadow-sm"
+              type="button"
+              onClick={(e) => { e.stopPropagation(); pasteImageFromClipboard(viewing.id) }}
+              disabled={uploadingPhoto}
+              title="Paste image from clipboard (or just press ⌘/Ctrl+V)"
+              className="bg-white/90 hover:bg-white disabled:opacity-60 text-gray-700 text-xs font-semibold rounded-full px-3 py-1.5 shadow-sm"
             >
-              📷 Change
+              {uploadingPhoto ? '⏳ …' : (viewing.photo_url ? '📋 Paste' : '📋 Paste image')}
             </button>
-          )}
-          {viewing.photo_url && (
-            <input ref={photoInputRef} type="file" accept="image/*,.heic" className="hidden"
-              onChange={async e => {
-                const file = e.target.files?.[0]; if (!file) return
-                const url = await uploadPhoto(file, user.id)
-                if (url) await updateRecipe(viewing.id, { photo_url: url })
-              }} />
-          )}
+          </div>
         </div>
 
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
