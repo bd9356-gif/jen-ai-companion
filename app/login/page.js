@@ -24,6 +24,24 @@ export default function LoginPage() {
     if (error) { setError(error.message); setLoading(false) }
   }
 
+  // Microsoft OAuth — covers Hotmail, Outlook.com, Live, MSN, Office365.
+  // Supabase's provider name is 'azure'; user-facing brand is "Sign in
+  // with Microsoft" per Microsoft brand guidelines. Added as a peer to
+  // Google so Hotmail testers don't have to rely on the magic-link
+  // fallback (which is fragile in mobile email apps' in-app browsers).
+  async function handleMicrosoft() {
+    setError('')
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'azure',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'email openid profile',
+      }
+    })
+    if (error) { setError(error.message); setLoading(false) }
+  }
+
   async function handleMagicLink(e) {
     e.preventDefault()
     setError('')
@@ -68,8 +86,8 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* ─── Option 1: Gmail / Google (primary) ─── */}
-          <div className="mb-5">
+          {/* ─── Option 1: Gmail / Google ─── */}
+          <div className="mb-4">
             <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2 text-center">
               Have a Gmail address?
             </p>
@@ -88,6 +106,29 @@ export default function LoginPage() {
             </button>
             <p className="mt-2 text-xs text-stone-500 text-center leading-snug">
               One tap — uses your Google / Gmail account.
+            </p>
+          </div>
+
+          {/* ─── Option 2: Hotmail / Microsoft ─── */}
+          <div className="mb-5">
+            <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2 text-center">
+              Have a Hotmail or Outlook address?
+            </p>
+            <button
+              onClick={handleMicrosoft}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-stone-800 rounded-xl text-base font-semibold text-stone-800 hover:bg-stone-100 transition-colors shadow-sm"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <rect x="1" y="1" width="10" height="10" fill="#F25022"/>
+                <rect x="13" y="1" width="10" height="10" fill="#7FBA00"/>
+                <rect x="1" y="13" width="10" height="10" fill="#00A4EF"/>
+                <rect x="13" y="13" width="10" height="10" fill="#FFB900"/>
+              </svg>
+              {loading ? 'Signing in…' : 'Sign in with Microsoft'}
+            </button>
+            <p className="mt-2 text-xs text-stone-500 text-center leading-snug">
+              One tap — works for Hotmail, Outlook, Live, or MSN.
             </p>
           </div>
 
@@ -145,7 +186,7 @@ export default function LoginPage() {
           )}
 
           <p className="text-center text-xs text-stone-400 mt-6">
-            New here? Signing in with either option creates your account automatically.
+            New here? Signing in with any option creates your account automatically.
           </p>
         </div>
       </main>

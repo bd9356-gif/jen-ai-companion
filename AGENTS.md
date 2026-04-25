@@ -438,14 +438,17 @@ During the private test period, the landing page carries a small dark **tester b
 - Footer on the landing page has a permanent `Tester notes` link next to `About MyRecipe Companion` so the page stays reachable after the banner is dismissed.
 - When we ship publicly, the quickest retirement is `BANNER.enabled = false` in code and/or deleting the footer link. The `/notes` route can stay or be removed; nothing else depends on it.
 
-## Authentication (Google OAuth + magic link via Resend)
+## Authentication (Google + Microsoft OAuth + magic link via Resend)
 
-Two ways to sign in, both on `/login`:
+Three ways to sign in, all on `/login`:
 
-- **Continue with Google** — `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: '<origin>/auth/callback' } })`.
-- **Email me a sign-in link** — `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '<origin>/auth/callback' } })`. Success state replaces the form with a "Check your email" panel.
+- **Sign in with Gmail** — `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: '<origin>/auth/callback' } })`.
+- **Sign in with Microsoft** — `supabase.auth.signInWithOAuth({ provider: 'azure', options: { redirectTo: '<origin>/auth/callback', scopes: 'email openid profile' } })`. Covers Hotmail, Outlook.com, Live, MSN, Office365 (all share one Microsoft account). Added April 2026 because magic-link sign-in is fragile in mobile email apps' in-app browsers (Outlook on iOS opens links in its own webview that doesn't share localStorage with Safari, so the session "sticks" inside Outlook but the user appears signed-out when they later open the app in Safari). Microsoft OAuth bypasses email entirely for that audience.
+- **Email me a sign-in link** — `supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: '<origin>/auth/callback' } })`. Success state replaces the form with a "Check your email" panel. Kept as the catch-all for any tester whose email isn't covered by the two OAuth buttons (Yahoo, custom-domain, etc.).
 
 Both flows converge on `app/auth/callback/route.js` → forwards the `code` to `app/auth/confirm/page.js` → `exchangeCodeForSession(code)` → `/kitchen`. No callback changes are needed when adding another provider.
+
+**Azure / Microsoft setup.** One shared Azure app registration covers both Recipe and Golf (and any future MyCompanion apps). In Azure Portal → App registrations → New, supported account types = "Personal Microsoft accounts only" (Hotmail/Outlook/Live) or "Personal + work/school" if you want corporate Office365 too; redirect URIs include both Supabase callback URLs (`https://<recipe-supabase-ref>.supabase.co/auth/v1/callback` and `https://<golf-supabase-ref>.supabase.co/auth/v1/callback`). The resulting Application (client) ID + a generated client secret get pasted into each Supabase project under **Authentication → Providers → Azure → enable**. Tenant ID stays at `common` (the default) so both personal and work Microsoft accounts can sign in.
 
 ### SMTP for magic-link deliverability (Resend)
 
