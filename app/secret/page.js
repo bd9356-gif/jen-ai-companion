@@ -1682,7 +1682,7 @@ export default function MyRecipeVaultPage() {
           {importTab === 'url' && (
             <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
               <label className="text-base font-bold text-gray-800 block">🔗 Import by URL</label>
-              <p className="text-sm text-gray-500">Works for most recipe sites. Some big sites (Food Network, AllRecipes, Serious Eats, Natasha&apos;s Kitchen) block automated fetches — if that happens, switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold text-gray-700 hover:text-gray-900">📋 Paste</button>.</p>
+              <p className="text-sm text-gray-500">Copy a recipe link and open the Import screen — the app will detect it automatically and ask if you want to import it. One tap and you&apos;re in. If the link can&apos;t be read, just switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold text-gray-700 hover:text-gray-900">📋 Paste</button>.</p>
 
               {/* Clipboard auto-detect prompt — surfaces a URL the user
                   already copied so they don't have to paste manually. Only
