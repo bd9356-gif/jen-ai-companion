@@ -649,9 +649,15 @@ export default function VideosPage() {
                 orientation. Mirrors the explainer callout pattern at the
                 top of /playbook but on-demand. */}
             {showAbout && (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4 space-y-1.5">
                 <p className="text-sm text-amber-900 leading-relaxed">
-                  <span className="font-semibold">Two ways in:</span> ❤️ <span className="font-semibold">Love</span> surfaces recipes to try · 🎓 <span className="font-semibold">Learn</span> surfaces techniques to master. Save any video to <span className="font-semibold">My Playbook</span>, or pull a recipe into your <span className="font-semibold">Recipe Vault</span>.
+                  ❤️ <span className="font-semibold">Love</span> surfaces recipes to try.
+                </p>
+                <p className="text-sm text-amber-900 leading-relaxed">
+                  🎓 <span className="font-semibold">Learn</span> surfaces techniques to master.
+                </p>
+                <p className="text-sm text-amber-900 leading-relaxed">
+                  Save videos to <span className="font-semibold">My Playbook</span>, or 👉See Detail to save a recipe.
                 </p>
               </div>
             )}
