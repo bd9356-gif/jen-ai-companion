@@ -10,11 +10,30 @@ const supabase = createClient(
 
 
 
-const SUGGESTED_TAGS = [
-  'chicken','beef','pork','fish','seafood','pasta','pizza',
-  'soup','salad','dessert','breakfast','bread','vegetarian',
-  'quick','family','holiday','comfort food','baking','healthy'
+// Curated tag set, organized into three groups so the form scans as
+// "what kind of meal? what protein? what mood?" instead of one long
+// flat list. Groups render as labelled chip rows in <TagSelector>.
+// Custom tags are still allowed via the input below the groups — these
+// are just the suggestions. Keep total count modest (~14) so the form
+// stays scannable on a phone.
+const TAG_GROUPS = [
+  {
+    label: 'Meal',
+    emoji: '🍽',
+    tags: ['breakfast', 'dinner', 'dessert', 'side', 'snack'],
+  },
+  {
+    label: 'Protein',
+    emoji: '🥩',
+    tags: ['chicken', 'beef', 'fish', 'veg'],
+  },
+  {
+    label: 'Style',
+    emoji: '✨',
+    tags: ['quick', 'comfort', 'healthy', 'baking', 'holiday'],
+  },
 ]
+const CURATED_TAGS = TAG_GROUPS.flatMap(g => g.tags)
 
 // Best-guess emoji for recipes without a photo. Used as a visual fallback
 // on vault cards and the detail hero. Order matters — first match wins.
@@ -65,21 +84,15 @@ const PREFERENCE_OPTIONS = [
   { value: 'heart_healthy',    label: 'Heart-healthy',          emoji: '❤️', hint: 'leaner fats, more veg' },
 ]
 
-// ── TAG SELECTOR DROPDOWN ──
+// ── TAG SELECTOR — inline chip groups ──
+// Three labelled chip rows (Meal / Protein / Style) replace the old
+// 19-item dropdown. Tap a chip to toggle. Below the curated groups, a
+// custom-tag input lets the user add anything else (e.g. "Mom's", a
+// kid's name). Custom tags that aren't in CURATED_TAGS render as their
+// own chip row underneath, removable via × — same data model as before
+// (a flat string array on the recipe).
 function TagSelector({ tags, onChange }) {
-  const [open, setOpen] = useState(false)
   const [customInput, setCustomInput] = useState('')
-  const dropdownRef = useRef(null)
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   function toggleTag(tag) {
     if (tags.includes(tag)) {
@@ -97,64 +110,72 @@ function TagSelector({ tags, onChange }) {
     setCustomInput('')
   }
 
+  // Anything in `tags` that isn't a curated suggestion is a custom tag —
+  // render it in its own row so the curated chips stay tidy.
+  const customTags = tags.filter(t => !CURATED_TAGS.includes(t))
+
   return (
     <div>
       <label className="block text-sm font-bold text-gray-700 mb-2">🏷️ Tags</label>
-      <div className="relative" ref={dropdownRef}>
-        <button
-          type="button"
-          onClick={() => setOpen(o => !o)}
-          className="w-full flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 hover:border-orange-300 transition-colors"
-        >
-          <span className="text-gray-500">{tags.length > 0 ? `${tags.length} tag${tags.length > 1 ? 's' : ''} selected` : 'Select tags...'}</span>
-          <span className="text-gray-500 text-xs ml-2">{open ? '▲' : '▼'}</span>
-        </button>
-
-        {open && (
-          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="max-h-52 overflow-y-auto">
-              {SUGGESTED_TAGS.map(tag => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center justify-between hover:bg-orange-50 transition-colors ${
-                    tags.includes(tag) ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-gray-700'
-                  }`}
-                >
-                  <span>#{tag}</span>
-                  {tags.includes(tag) && <span className="text-orange-500 text-xs">✓</span>}
-                </button>
-              ))}
-            </div>
-            <div className="border-t border-gray-100 p-2 flex gap-2">
-              <input
-                placeholder="Add custom tag..."
-                value={customInput}
-                onChange={e => setCustomInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() }}}
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
-              />
-              <button
-                type="button"
-                onClick={addCustom}
-                className="px-3 py-2 bg-orange-600 text-white rounded-lg text-sm font-semibold"
-              >Add</button>
+      <div className="space-y-3">
+        {TAG_GROUPS.map(group => (
+          <div key={group.label}>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+              {group.emoji} {group.label}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {group.tags.map(tag => {
+                const selected = tags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={
+                      selected
+                        ? 'px-3 py-1.5 bg-orange-600 text-white border-2 border-orange-600 rounded-full text-xs font-semibold transition-colors'
+                        : 'px-3 py-1.5 bg-white text-gray-700 border-2 border-gray-200 hover:border-orange-300 rounded-full text-xs font-semibold transition-colors'
+                    }
+                  >
+                    #{tag}
+                  </button>
+                )
+              })}
             </div>
           </div>
-        )}
-      </div>
+        ))}
 
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {tags.map(tag => (
-            <span key={tag} className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-              #{tag}
-              <button type="button" onClick={() => toggleTag(tag)} className="ml-1 text-orange-400 hover:text-orange-700">×</button>
-            </span>
-          ))}
+        <div>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            ✏️ Custom
+          </p>
+          <div className="flex gap-2">
+            <input
+              placeholder="Add your own tag…"
+              value={customInput}
+              onChange={e => setCustomInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() }}}
+              style={{ fontSize: '16px' }}
+              className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-orange-300 transition-colors"
+            />
+            <button
+              type="button"
+              onClick={addCustom}
+              className="px-4 py-2 bg-orange-600 text-white rounded-xl text-sm font-semibold"
+            >Add</button>
+          </div>
+          {customTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {customTags.map(tag => (
+                <span key={tag} className="flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                  #{tag}
+                  <button type="button" onClick={() => toggleTag(tag)} className="ml-1 text-orange-400 hover:text-orange-700" aria-label={`Remove ${tag}`}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -232,14 +253,10 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
           className={`${fieldBase} resize-y`} />
       </div>
 
-      <div>
-        <label className={labelClass}>Category</label>
-        <input value={category} onChange={e => setCategory(e.target.value)}
-          placeholder="e.g. Main Dish, Dessert, Side"
-          style={fieldStyle}
-          className={fieldBase} />
-      </div>
-
+      {/* Category field retired — its job is now done by the Meal /
+          Protein / Style chip groups in <TagSelector>. The local
+          `category` state still flows through onSave so old recipes
+          with categories don't lose them on edit. */}
       <TagSelector tags={tags} onChange={setTags} />
 
       <div>
@@ -1919,14 +1936,11 @@ export default function MyRecipeVaultPage() {
                 className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
             </div>
 
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">Category</label>
-              <input placeholder="e.g. Main Dish, Dessert, Side" value={form.category}
-                onChange={e => setForm(f => ({...f, category: e.target.value}))}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
-            </div>
-
+            {/* Category field retired — the Meal/Protein/Style chip groups
+                inside <TagSelector> cover what category was meant for, and
+                the list-view chip filter at the top of the Vault already
+                drives navigation off tags. `form.category` stays in state
+                (initialized to '') so legacy fields aren't disturbed. */}
             <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} />
 
             <div>

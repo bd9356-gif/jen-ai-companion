@@ -276,6 +276,18 @@ The prompt includes an explicit guard: "Frame every change as a practical home-c
 
 The **same option list** is also reused on the Recipe Vault "Make This Recipe More..." flow (see below). Keep the 8 `value` strings identical across Chef Jennifer (`app/topchef/page.js`), Recipe Vault (`app/secret/page.js`), and the server-side label map in `app/api/enhance-recipe/route.js` so preferences can be shared / compared across screens.
 
+## Recipe Vault tags & category (April 2026 rework)
+
+The Vault used to have two overlapping fields — a free-text `category` input ("e.g. Main Dish, Dessert, Side") and a flat 19-item tag dropdown that mixed proteins, dish types, meal times, diet labels, and mood words into one undifferentiated list. Two problems: the flat list was intimidating for a quick "tag this" action, and the free-text category fragmented data ("Main" vs "Mains" vs "Main Dish" vs "Dinner") so it never drove useful filtering.
+
+**The rework — fewer, smarter, grouped:**
+
+- **Category field is retired** from the Add and Edit forms. The local `category` state still flows through onSave so legacy recipes don't lose their value on edit, and the read-only chip on the detail/list views still renders for any recipe that has a non-empty category. New recipes ship with `category: ''` and just have no chip — graceful phase-out, no migration needed.
+- **Tags are organized into three labelled groups** (`TAG_GROUPS` in `app/secret/page.js`) totaling 14 curated suggestions: **🍽 Meal** (breakfast, dinner, dessert, side, snack), **🥩 Protein** (chicken, beef, fish, veg), **✨ Style** (quick, comfort, healthy, baking, holiday). `CURATED_TAGS` is the flat union, used to separate curated chips from custom tags in the renderer.
+- **Inline chip-grid `<TagSelector>`** replaces the old dropdown. Each group renders as a labelled row of pill buttons; tap to toggle. Selected = orange fill, unselected = white with gray border. Below the curated groups, an "✏️ Custom" row holds the `customInput` field + Add button — anything typed here gets lowercased and pushed onto the same `tags[]` array. Custom tags (anything in `tags` not in `CURATED_TAGS`) render as their own removable chip row underneath the input. No dropdown, no extra tap to "open" the picker — the chips are visible the moment the form opens.
+- **Data shape is unchanged.** `personal_recipes.tags` is still a flat string array. Old recipes' tags survive — they just appear as "custom" chips if they aren't in the curated set (e.g. an older `vegetarian` tag will show up underneath the input alongside whatever the user has typed).
+- **Import API prompt** (`/api/import-recipe/route.js`) drops `category` from the JSON schema it asks Claude to return, and adds a hint that biases `tags` toward the curated set. Free-form tags from AI still pass through (the form treats them as custom tags), so we're nudging without locking down.
+
 ## Recipe Vault presentation notes (`/secret`)
 
 - **Tag chip quick-filter (list view).** The top 5 most-used tags render as pill buttons along with an "All" chip in a horizontally-scrolling row directly under the sticky header. Tapping a chip sets `searchTag` (tapping the same chip twice clears it). The full `<select value={searchTag}>` dropdown still renders below — but only when `allTags.length > topTags.length`, so it's hidden on vaults with ≤ 5 unique tags (chips cover everything). `topTags` is computed by counting tag occurrences across all recipes and sorting desc.
