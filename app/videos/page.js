@@ -554,7 +554,13 @@ export default function VideosPage() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 mb-3">A curated cooking library from top YouTube chefs.</p>
+          {/* Page lede — what Chef TV is, in plain words. Sits right under
+              the title so visitors get the pitch before the filters. The
+              ℹ️ About panel below covers how Love/Learn + saving works;
+              this line stays focused on identity, not mechanics. */}
+          <p className="text-sm text-gray-600 leading-snug mb-3">
+            Watch the latest cooking videos from YouTube chefs. Explore trends, dinner ideas, tips, hacks, and more &mdash; all in one place.
+          </p>
 
           {(showSearch || search) && (
             <input
