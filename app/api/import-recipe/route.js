@@ -222,7 +222,7 @@ Respond with ONLY a valid JSON object, no markdown, no backticks:
   "image": "https://… main recipe image URL if present in the content, otherwise empty string"
 }
 
-For "tags": pick 2–4 short lowercase words from this curated set when they fit the recipe — meal: breakfast, lunch, dinner, dessert, side, snack — protein: chicken, beef, fish, veg — style: quick, comfort, healthy, baking, holiday. Don't invent tags outside this list unless the recipe genuinely needs one.
+For "tags": pick 2–4 short lowercase words from this curated set when they fit the recipe — meal: breakfast, lunch, dinner, dessert, side, snack — food groups: chicken, beef, seafood, pasta, vegetarian — style: quick, comfort, healthy, baking, holiday. Don't invent tags outside this list unless the recipe genuinely needs one.
 
 If no recipe is found, return exactly: {"error": "No recipe found"}`
 

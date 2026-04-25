@@ -23,9 +23,9 @@ const TAG_GROUPS = [
     tags: ['breakfast', 'lunch', 'dinner', 'dessert', 'side', 'snack'],
   },
   {
-    label: 'Protein',
+    label: 'Food Groups',
     emoji: '🥩',
-    tags: ['chicken', 'beef', 'fish', 'veg'],
+    tags: ['chicken', 'beef', 'seafood', 'pasta', 'vegetarian'],
   },
   {
     label: 'Style',
@@ -85,7 +85,7 @@ const PREFERENCE_OPTIONS = [
 ]
 
 // ── TAG SELECTOR — inline chip groups ──
-// Three labelled chip rows (Meal / Protein / Style) replace the old
+// Three labelled chip rows (Meal / Food Groups / Style) replace the old
 // 19-item dropdown. Tap a chip to toggle. Below the curated groups, a
 // custom-tag input lets the user add anything else (e.g. "Mom's", a
 // kid's name). Custom tags that aren't in CURATED_TAGS render as their
