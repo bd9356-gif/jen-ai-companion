@@ -46,48 +46,59 @@ async function seedStarterRecipesOnce(user) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   MyKitchen hub — 3 sections, 9 tiles (April 2026 Cooking School).
+   MyKitchen hub — 2 sections, 8 tiles (April 2026 reframe).
    Every tile uses a unified orange left stripe (brand color)
-   mirroring Golf's green-stripe pattern. Section headers group
-   the tiles but don't change the tile styling — consistency
-   across the whole hub.
+   mirroring Golf's green-stripe pattern.
 
-   Cooking School is the consolidated learn surface: Chef TV and
-   Chef Jennifer are the two classrooms (video instructor + AI
-   instructor), Guides is the library, My Playbook is the user's
-   notebook. Order matters: classrooms first, then library, then
-   notebook.
+   Bill's reframe: the hub used to read as three flat groups
+   (Your Recipes / Plan & Shop / Cooking School). Once Chef
+   Jennifer + Chef TV + Guides + Playbook were all locked together
+   under one Learning section, the symmetry tipped — *all* the
+   cooking-life surfaces (saving + planning + shopping) belong
+   together too. So the hub is two halves of the same story:
+
+     Cooking Life       — what the user does in the kitchen.
+     Learning Journey   — how the user gets better at it.
+
+   Inside Learning Journey, Chef Jennifer leads. She's the AI
+   instructor — the most personal teaching surface in the app —
+   so she's the first thing a user sees in the learning column.
+   Chef TV (video classroom) follows her, then the library
+   (Guides), then the practice book (My Playbook).
 
    Routing note:
    All tiles route to dedicated pages. The /picks combined view
    was retired in Phase 2C; old ?open= bookmarks still redirect
    from /picks for back-compat.
+
+   Title format note:
+   Tiles in Learning Journey use a "Name — Role" title pattern
+   ("Chef Jennifer — Your Instructor") so each tile names what
+   it IS in addition to what it does. This intentionally breaks
+   the Phase-1 "no dash subtitles" rule for Cooking Life tiles
+   (which kept the simpler "Recipe Vault" name) — Learning
+   Journey's role labels carry teaching framing the plain names
+   couldn't.
    ─────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
-    name: 'Your Recipes',
-    subtitle: 'Your saved recipes and collections.',
+    name: 'Cooking Life',
+    subtitle: 'Your recipes, your plan, your essentials.',
     items: [
-      { emoji: '🔐', title: 'Recipe Vault',            description: 'Your saved recipes, organized.',       href: '/secret' },
-      { emoji: '🃏', title: 'Recipe Cards',            description: 'Flip through your collection.',        href: '/cards' },
+      { emoji: '🔐', title: 'Recipe Vault',   description: 'Your saved recipes, organized.',   href: '/secret' },
+      { emoji: '🃏', title: 'Recipe Cards',   description: 'Flip through your collection.',    href: '/cards' },
+      { emoji: '📅', title: 'Meal Plan',      description: 'What you\'re cooking soon.',       href: '/meal-plan' },
+      { emoji: '🛒', title: 'Shopping List',  description: 'Ingredients, organized to shop.',  href: '/shopping-list' },
     ]
   },
   {
-    name: 'Plan & Shop',
-    subtitle: 'Organize what you\'re cooking next.',
+    name: 'Learning Journey',
+    subtitle: 'Your classrooms, your library, your practice book.',
     items: [
-      { emoji: '📅', title: 'Meal Plan',     description: 'What you\'re cooking soon.',        href: '/meal-plan' },
-      { emoji: '🛒', title: 'Shopping List', description: 'Ingredients, organized to shop.',   href: '/shopping-list' },
-    ]
-  },
-  {
-    name: 'Cooking School',
-    subtitle: 'Two classrooms, a library, and your notebook.',
-    items: [
-      { emoji: '🎬',   title: 'Chef TV',        description: 'Cooking videos, one tap away.',         href: '/videos' },
-      { emoji: '👨‍🍳', title: 'Chef Jennifer',  description: 'Ask anything, or get a recipe.',        href: '/chef' },
-      { emoji: '📚',   title: 'Guides',         description: 'Reference reading for the kitchen.',    href: '/guides' },
-      { emoji: '📘',   title: 'My Playbook',    description: 'Saved videos, chef recipes, chef notes.', href: '/playbook' },
+      { emoji: '👨‍🍳', title: 'Chef Jennifer — Your Instructor', description: 'Learn directly from Chef Jennifer — your personal AI cooking teacher.', href: '/chef' },
+      { emoji: '🎬',   title: 'Chef TV — Watch & Learn',         description: 'See every technique, skill, and recipe taught step-by-step.',          href: '/videos' },
+      { emoji: '📚',   title: 'Guides — Your Library',           description: 'Knife skills, substitutions, safety — your quick reference.',          href: '/guides' },
+      { emoji: '📘',   title: 'My Playbook — Your Saved Items',  description: 'Your videos, recipes, and chef notes, organized together.',            href: '/playbook' },
     ]
   },
 ]

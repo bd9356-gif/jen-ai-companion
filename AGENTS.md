@@ -34,10 +34,10 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | MyKitchen              | `/kitchen`    | The hub page. Everything routes from here.                          |
 | Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
 | Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
-| Chef TV                | `/videos`     | Cooking videos (YouTube-backed). Cooking School classroom #1.       |
-| Chef Jennifer          | `/chef`       | AI chef + instructor — 🎓 Teach teaches, 🍳 Practice makes a recipe. Cooking School classroom #2. |
+| Chef TV                | `/videos`     | Cooking videos (YouTube-backed). Learning Journey classroom #2 (video instructor). |
+| Chef Jennifer          | `/chef`       | AI chef + instructor — 🎓 Teach teaches, 🍳 Practice makes a recipe. Learning Journey classroom #1 (AI instructor). |
 | Guides                 | `/guides`     | The Library — curated reference articles by topic.                  |
-| My Playbook            | `/playbook`   | Saved videos (Teach / Practice) + Chef Notes. Your Cooking School notebook. |
+| My Playbook            | `/playbook`   | Saved videos (Teach / Practice) + Chef Recipes + Chef Notes. Your Learning Journey practice book. |
 | Chef Notes             | `/playbook`   | Saved AI answers — a section on Playbook. `/chef-notes` redirects.  |
 | Chef Jennifer Recipes  | `/playbook` (✨ Recipes tab) | Recipes Chef Jennifer made for you; save-to-vault from here. `/chef-recipes` redirects. |
 | Meal Plan              | `/meal-plan`  | 3 buckets of "what you're cooking soon".                            |
@@ -64,27 +64,27 @@ Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything stil
 
 ## Kitchen navigation sections
 
-These live in `app/kitchen/page.js`. MyKitchen is **3 sections and 9 tiles** total (after the April 2026 Cooking School pivot). All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern. No dash subtitles; each tile shows `title` (bold) + `description` (truncated one-liner).
+These live in `app/kitchen/page.js`. MyKitchen is **2 sections and 8 tiles** total (after the April 2026 Cooking Life / Learning Journey reframe). All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern.
 
 Section headers are small orange uppercase labels with a one-line section subtitle below, followed by the section's tiles.
 
 ### Section structure
 
-1. **Your Recipes** — "Your saved recipes and collections."
+1. **Cooking Life** — "Your recipes, your plan, your essentials." Everything the user *does* in the kitchen — saving recipes, planning meals, shopping for them. Plain tile names ("Recipe Vault", "Meal Plan").
    - 🔐 Recipe Vault → `/secret` — "Your saved recipes, organized."
    - 🃏 Recipe Cards → `/cards` — "Flip through your collection."
-
-2. **Plan & Shop** — "Organize what you're cooking next."
    - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
-3. **Cooking School** — "Two classrooms, a library, and your notebook." Chef TV is the video classroom (source for cooking videos), Chef Jennifer is the AI classroom (a single chat-first surface at `/chef` with a 🎓 Teach / 🍳 Practice pill row — Teach teaches and answers questions, Practice makes recipes), Guides is the Library (curated reference articles), and My Playbook is the user's notebook (saved videos in Teach/Practice buckets + Chef Recipes from Practice-mode chats + Chef Notes from Teach-mode chats). Order matters — classrooms first so the user is steered into *learning* before the personal-saves surface, then the library, then their own notes.
-   - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away." **Classroom #1 — video instructor.**
-   - 👨‍🍳 Chef Jennifer → `/chef` — "Ask, learn, or make a recipe." **Classroom #2 — AI instructor.**
-   - 📚 Guides → `/guides` — "Reference reading for the kitchen." **The Library.**
-   - 📘 My Playbook → `/playbook` — "Saved videos, chef recipes, chef notes." **The user's notebook — destination for all saves.**
+2. **Learning Journey** — "Your classrooms, your library, your practice book." Everything that helps the user *get better* in the kitchen — two classrooms (AI + video), a library, and a practice book. Tile names use a "Name — Role" pattern so each tile names what it IS in addition to what it does. Order locked: Chef Jennifer leads (the AI instructor — the most personal teaching surface), then Chef TV (video classroom), then Guides (the library), then My Playbook (the user's practice book).
+   - 👨‍🍳 Chef Jennifer — Your Instructor → `/chef` — "Learn directly from Chef Jennifer — your personal AI cooking teacher." **Classroom #1 — AI instructor.**
+   - 🎬 Chef TV — Watch & Learn → `/videos` — "See every technique, skill, and recipe taught step-by-step." **Classroom #2 — video instructor.**
+   - 📚 Guides — Your Library → `/guides` — "Knife skills, substitutions, safety — your quick reference." **The Library.**
+   - 📘 My Playbook — Your Saved Items → `/playbook` — "Your videos, recipes, and chef notes, organized together." **The practice book — destination for all saves.**
 
-The standalone "Chef Jennifer" section that used to live as section 4 is gone — Chef Jennifer is no longer "the AI section beside Learn," she's *part of* the school. This is the single most important framing of the April 2026 pivot: tile placement encodes that the AI is an instructor, not a separate product.
+**Reframe history (April 2026).** The hub used to read as three flat groups (Your Recipes / Plan & Shop / Cooking School). Once Chef Jennifer + Chef TV + Guides + Playbook were all locked together under one Learning section, the symmetry tipped — *all* the cooking-life surfaces (saving + planning + shopping) belong together too. So the hub is now two halves of the same story: **Cooking Life** (what the user does) and **Learning Journey** (how the user gets better). Inside Learning Journey, Chef Jennifer was promoted from second tile (after Chef TV) to first — she's the AI instructor and the most personal teaching surface, so she leads the column.
+
+**Title format note.** The "no dash subtitles" rule from earlier hub iterations applies to Cooking Life only. Learning Journey tiles intentionally use the "Name — Role" pattern ("Chef Jennifer — Your Instructor", "Guides — Your Library") so each tile names what it IS in addition to what it does — the role label carries teaching framing the plain names couldn't. Cooking Life tiles keep the simpler plain names ("Recipe Vault", "Meal Plan") because *what they are* and *what they do* collapse to the same thing.
 
 ### `/picks` redirect
 
@@ -565,7 +565,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 The canonical names in use across the app are:
 
 - **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub. Every other tile has a simple, direct name.
-- **Cooking School** is a *section name on MyKitchen*, not a route. It groups Chef TV + Chef Jennifer + Guides + My Playbook and frames them as one connected learning experience ("two classrooms, a library, and your notebook"). There is no `/cooking-school` URL and there shouldn't be — the hub already does the framing.
+- **Cooking Life** and **Learning Journey** are *section names on MyKitchen*, not routes. Cooking Life groups Recipe Vault + Recipe Cards + Meal Plan + Shopping List ("Your recipes, your plan, your essentials."). Learning Journey groups Chef Jennifer + Chef TV + Guides + My Playbook ("Your classrooms, your library, your practice book."). The previous **Cooking School** label was the Learning Journey predecessor (April 2026 reframe); it's gone — but the rationale lives on in Learning Journey's tile order (Chef Jennifer first, then Chef TV, then Guides, then Playbook). There are no `/cooking-life` or `/learning-journey` URLs and there shouldn't be — the hub already does the framing.
 - **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/chef` — single chat-first surface with 🎓 Teach / 🍳 Practice modes), **Guides** (`/guides`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **My Playbook** (`/playbook`) — simplified, no "My" prefix except Playbook (which keeps it because it's the personal saves surface and it mirrors Golf's "MyBag"). **Chef Notes** and **Chef Jennifer Recipes** are still concept names but both live inside `/playbook` as tabs (📝 Notes and ✨ Recipes), not their own routes — `/chef-notes` and `/chef-recipes` both redirect to `/playbook`. The "Ask Chef Jennifer" / "Ask Chef Anything" name was retired Phase 2A — there's just **Chef Jennifer** at `/chef` now. **The Library** is the in-page tagline for `/guides` (header H2), not the route name.
 - Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
 - **Vocabulary canon — Teach / Practice (April 2026 rename).** Across Chef TV (filter pill row), Chef Jennifer (mode pill row), and Playbook (tab strip), the same two words mean the same two things: **🎓 Teach** = techniques to master / video-only / Q&A teaching; **🍳 Practice** = recipes to cook / recipe videos / generated recipes. Visual order is locked **Teach first, Practice second** on every surface. Practice uses orange (the brand color) because it's the user's primary action; Teach uses sky. The previous "❤️ Love / 🎓 Learn" vocabulary was retired — Love read as favorites/saved/liked when the actual meaning is "cook this", and the visual order was wrong (instruction comes first, cooking comes after). Database table `loved_recipe_urls` and the historical `favorites.type` strings (`ai_recipe`, `ai_answer`, `video_recipe`, `video_education`) are unchanged — they describe content type, not mode, and they're never user-visible.
@@ -595,7 +595,7 @@ An earlier version used `bg-amber-50` (cream parchment) for the landing + About 
 
 **Hero tagline (signed-out).** The signed-out hero shows **"Cooking, figured out."** at `text-3xl sm:text-4xl font-bold` with subline "Recipes, meal plans, and an AI chef — one cozy kitchen." The hero container is 220px tall so the photo + headline read as the first thing on the page, not an afterthought. Signed-in visitors see a personalized greeting ("Welcome back, {name}.") at the same large size. Earlier variants tried and reverted: "Cook with a little help." (too quiet; didn't grab), "Save it → Plan it → Cook it" with joinery arrows (busy next to the feature tiles; the arrow pattern only fits a single linear story, not a 2×2 group grid).
 
-**What's inside — compact grid of group cards.** The landing preview is built around MyKitchen's three groups (Your Recipes / Plan & Shop / Cooking School), rendered as compact cards in a `grid-cols-2` grid rather than the full hub tile list. Each card shows the group name, a short blurb, and a horizontal strip of the emojis of the tiles inside as a visual peek (e.g. Your Recipes → 🔐 🃏 ✨, Cooking School → 🎬 👨‍🍳 📚 📘). Keeps the landing short — the hub itself is the full tile layout, so the landing doesn't need to repeat it. The source is `GROUPS` at the top of `app/page.js`; update when MyKitchen's grouping changes. Every card is an `<a>` whose `href` is `/kitchen` for signed-in visitors and `/login` for signed-out visitors — a tap on any card becomes a sign-in path. Cards lift to `border-stone-400` on hover. An earlier version listed the 8 individual tiles under small section labels; it doubled the page length and was replaced by this group preview (April 2026).
+**What's inside — compact grid of group cards.** The landing preview is built around MyKitchen's two groups (Cooking Life / Learning Journey), rendered as compact cards in a `grid-cols-2` grid rather than the full hub tile list. Each card shows the group name, a short blurb, and a horizontal strip of the emojis of the tiles inside as a visual peek (Cooking Life → 🔐 🃏 📅 🛒, Learning Journey → 👨‍🍳 🎬 📚 📘). Keeps the landing short — the hub itself is the full tile layout, so the landing doesn't need to repeat it. The source is `GROUPS` at the top of `app/page.js`; update when MyKitchen's grouping changes (kept in sync by hand — there's no shared source). Every card is an `<a>` whose `href` is `/kitchen` for signed-in visitors and `/login` for signed-out visitors — a tap on any card becomes a sign-in path. Cards lift to `border-stone-400` on hover. An earlier version listed the 8 individual tiles under small section labels; it doubled the page length and was replaced by this group preview (April 2026). The grid was three groups (Your Recipes / Plan & Shop / Cooking School) before the hub itself collapsed to two — the landing followed.
 
 ## Tester banner & `/notes` page
 
