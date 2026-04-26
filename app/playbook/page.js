@@ -11,28 +11,18 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// My Playbook — four save surfaces, organized as a 2×2 of source × mode.
-// Tabs are labeled with the cell name (Skills / Notes / Recipe Videos /
-// Homework) instead of the bare mode words so each tab says what it IS,
-// not just what mode it lives in.
+// My Playbook — two intent-based buckets for saved videos plus two AI
+// content sections (Chef Recipes + Chef Notes). Everything you've saved
+// in one place.
 //
-//                | 🎓 Teach side (learn)   | 🍳 Practice side (cook) |
-//   Chef TV      | 🎓 Skills               | 🍳 Recipe Videos        |
-//   Chef Jen     | 📝 Notes                | ✨ Homework             |
+//   teach          🎓  Videos that teach you a technique.   (technique / video-only)
+//   practice       🍳  Recipes you want to cook.            (recipe-bearing videos)
+//   chef_recipes   ✨  Recipes Chef Jennifer made for you.  (favorites.type='ai_recipe')
+//   chef_notes     📝  Saved answers from Chef Jennifer.    (favorites.type='ai_answer')
 //
-// DB-side keys are unchanged (`teach`, `practice`, `chef_recipes`,
-// `chef_notes`) so URLs, migrations, and cooking_skill_items.bucket
-// values still work — only the user-facing labels moved. Same vocabulary
-// (Teach / Practice) still rules on Chef TV's filter pills and Chef
-// Jennifer's mode pills; Playbook is the surface where it pays off to
-// say what each cell IS, since you have to discriminate between two
-// Teach-side things (Skills vs Notes) and two Practice-side things
-// (Recipe Videos vs Homework).
-//
-// Order is locked Skills → Notes → Recipe Videos → Homework. The
-// first two are the Teach side (learn-it surfaces); the last two
-// are the Practice side (cook-it surfaces). The school metaphor
-// reads left-to-right: classroom first, kitchen lab second.
+// Order is locked Teach → Practice everywhere — same vocabulary as
+// Chef TV's filter tabs and Chef Jennifer's mode pills, so the same two
+// words mean the same two things across the app.
 //
 // Pivot history (April 2026):
 //   - Skills I Learned had 6 course-type buckets (mig 002).
@@ -60,8 +50,8 @@ const supabase = createClient(
 // Neither of those lives in cooking_skill_items — they aren't bucketed,
 // they're separate kinds of save with no move-between UX.
 const BUCKETS = [
-  { key: 'teach',    emoji: '🎓', label: 'Skills',        hint: 'Videos that teach you a technique.' },
-  { key: 'practice', emoji: '🍳', label: 'Recipe Videos', hint: 'Recipe videos to cook.' },
+  { key: 'teach',    emoji: '🎓', label: 'Teach',    hint: 'Videos that teach you.' },
+  { key: 'practice', emoji: '🍳', label: 'Practice', hint: 'Recipes to cook.' },
 ]
 
 // Full Tailwind class literals per bucket — v4 JIT requires complete strings.
@@ -373,15 +363,16 @@ export default function PlaybookPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-        {/* Heading tagline — names the four save surfaces by the cell
-            (Skills / Notes / Recipe Videos / Homework) so the page
-            title matches the tab vocabulary below. Bigger type than
-            before so it reads as a page title, not a caption. */}
+        {/* Heading tagline — joinery arrows tie the four save surfaces
+            into a single habit: learn (Teach), cook from videos (Practice),
+            cook from Chef Jennifer (Chef Recipes), save what you learned
+            (Notes). Bigger type than before so it reads as a page title,
+            not a caption. */}
         <div className="text-center px-2 mb-6">
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
             Everything you&rsquo;ve saved
           </p>
-          <p className="text-sm text-gray-500 mt-2">Skills, notes, recipe videos, and homework &mdash; all in one place.</p>
+          <p className="text-sm text-gray-500 mt-2">Videos, chef recipes, and chef notes &mdash; all in one place.</p>
         </div>
 
         {/* Intro callout — full sentences per surface, Bill's exact wording.
@@ -392,16 +383,16 @@ export default function PlaybookPage() {
         {showAbout && (
           <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-2">
             <p className="text-sm text-slate-900 leading-relaxed">
-              🎓 <span className="font-bold">Skills</span> is where you keep Chef TV videos that teach you a technique.
+              🎓 <span className="font-bold">Teach</span> is where you keep the videos that teach you a technique.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              📝 <span className="font-bold">Notes</span> is where you save the answers and guidance you get from Chef Jennifer.
+              🍳 <span className="font-bold">Practice</span> is where you keep the recipes you want to cook.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              🍳 <span className="font-bold">Recipe Videos</span> is where you keep Chef TV recipes you want to cook.
+              ✨ <span className="font-bold">Chef Recipes</span> is where you keep the recipes Chef Jennifer made for you.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              ✨ <span className="font-bold">Homework</span> is where the recipes Chef Jennifer assigns you land &mdash; cook them when you&rsquo;re ready.
+              📝 <span className="font-bold">Chef Notes</span> is where you save the answers and guidance you get from Chef Jennifer.
             </p>
           </div>
         )}
@@ -420,26 +411,21 @@ export default function PlaybookPage() {
           </div>
         ) : (
           <div>
-            {/* Four-way tab pill row — Teach side first (Skills + Notes),
-                Practice side second (Recipe Videos + Homework). Order is
-                locked Skills → Notes → Recipe Videos → Homework so the
-                page reads classroom-then-kitchen, matching the school
-                metaphor that runs through Chef Jennifer (Teach assigns →
-                Homework lands here) and Chef TV (Teach pill / Practice
-                pill). Only one tab is active at a time; the active tab
-                shows a filled color (sky / amber / orange / rose) while
-                the others are muted gray. Count pills on each tab so
-                users see "how much do I have here" at a glance. Tab
-                labels are the cell name (Skills / Notes / Recipe Videos
-                / Homework) — saying what each tab IS, not just what mode
-                it lives in — and they're shortened on mobile so all
-                four pills fit on a phone. */}
+            {/* Four-way tab pill row — Teach / Practice (videos) on the left
+                pair; Chef Recipes / Chef Notes (AI saves) on the right pair.
+                Order is locked Teach → Practice → Recipes → Notes. Only one
+                tab is active at a time; the active tab shows a filled color
+                (sky / orange / rose / amber) while the others are muted
+                gray. Count pills live on each tab so users see "how much do
+                I have here" at a glance. The labels intentionally drop the
+                "Chef" prefix on Recipes/Notes so the four tabs fit on a
+                phone — the emojis carry the meaning. */}
             <div className="flex gap-1.5 mb-4">
               {[
-                { key: 'teach',        label: `🎓 Skills (${byBucket.teach.length})`,           activeCls: 'bg-sky-500 text-white'    },
-                { key: 'chef_notes',   label: `📝 Notes (${notes.length})`,                     activeCls: 'bg-amber-500 text-white'  },
-                { key: 'practice',     label: `🍳 Recipes (${byBucket.practice.length})`,       activeCls: 'bg-orange-500 text-white' },
-                { key: 'chef_recipes', label: `✨ Homework (${recipes.length})`,                activeCls: 'bg-rose-500 text-white'   },
+                { key: 'teach',        label: `🎓 Teach (${byBucket.teach.length})`,        activeCls: 'bg-sky-500 text-white'    },
+                { key: 'practice',     label: `🍳 Practice (${byBucket.practice.length})`,  activeCls: 'bg-orange-500 text-white' },
+                { key: 'chef_recipes', label: `✨ Recipes (${recipes.length})`,             activeCls: 'bg-rose-500 text-white'   },
+                { key: 'chef_notes',   label: `📝 Notes (${notes.length})`,                 activeCls: 'bg-amber-500 text-white'  },
               ].map(t => (
                 <button
                   key={t.key}
@@ -488,20 +474,17 @@ export default function PlaybookPage() {
                 )
               })()
             ) : tab === 'chef_recipes' ? (
-              /* Homework tab — Chef-Jennifer-generated recipes
+              /* Chef Recipes tab — Chef-Jennifer-generated recipes
                  (favorites.type='ai_recipe'). Not a bucket (no
                  move-between UX). ChefJenItem renders the row + the
                  in-place 💾 Save to Recipe Vault button. Empty state
-                 routes users to /chef in 🍳 Practice mode. The "Homework"
-                 framing reinforces the Teach → Practice loop on /chef:
-                 the homework chip there assigns a recipe, and the
-                 saved recipe lands in this tab. */
+                 routes users to /chef in 🍳 Practice mode. */
               <div className={`rounded-2xl ${RECIPES_COLOR.border} ${RECIPES_COLOR.body} overflow-hidden shadow-sm`}>
                 <div className={`${RECIPES_COLOR.header} px-3 py-2.5 flex items-center gap-2`}>
                   <span className="text-lg">✨</span>
-                  <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Homework</span>
+                  <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Recipes</span>
                   <span className={`text-xs font-semibold ${RECIPES_COLOR.pill} px-2 py-0.5 rounded-full`}>{recipes.length}</span>
-                  <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Recipes Chef Jennifer assigned you to cook.</span>
+                  <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Recipes Chef Jennifer made for you.</span>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {recipes.length === 0 ? (
@@ -522,13 +505,13 @@ export default function PlaybookPage() {
                 </div>
               </div>
             ) : (
-              /* Notes tab — saved AI answers from Ask Chef Jennifer.
+              /* Chef Notes tab — saved AI answers from Ask Chef Jennifer.
                  Not a bucket (no move-between UX), it's a separate kind
                  of content. Empty state routes users to /chef. */
               <div className={`rounded-2xl ${NOTES_COLOR.border} ${NOTES_COLOR.body} overflow-hidden shadow-sm`}>
                 <div className={`${NOTES_COLOR.header} px-3 py-2.5 flex items-center gap-2`}>
                   <span className="text-lg">📝</span>
-                  <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Notes</span>
+                  <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Notes</span>
                   <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
                   <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Saved answers from Chef Jennifer.</span>
                 </div>
