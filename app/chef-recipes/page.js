@@ -97,7 +97,7 @@ export default function ChefRecipesPage() {
             <h1 className="text-lg font-bold text-gray-900">✨ Chef Jennifer Recipes</h1>
             {recipes.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{recipes.length}</span>}
           </div>
-          <button onClick={() => window.location.href='/topchef'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Create New</button>
+          <button onClick={() => window.location.href='/chef'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Create New</button>
         </div>
       </header>
 
@@ -112,8 +112,8 @@ export default function ChefRecipesPage() {
           <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
             <p className="text-4xl mb-2">👨‍🍳</p>
             <p className="text-gray-500 font-medium">No Chef Jennifer recipes yet</p>
-            <p className="text-sm text-gray-400 mt-1">Have her create one tailored to your mood, meal, and protein.</p>
-            <button onClick={() => window.location.href='/topchef'} className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-semibold">Create a Recipe →</button>
+            <p className="text-sm text-gray-400 mt-1">Tap ❤️ Love on Chef Jennifer and tell her what to cook.</p>
+            <button onClick={() => window.location.href='/chef'} className="mt-4 px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold">Ask Chef Jennifer →</button>
           </div>
         ) : (
           <div className="border-2 border-gray-300 rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-50">

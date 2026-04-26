@@ -86,7 +86,7 @@ const SECTIONS = [
     subtitle: 'Two classrooms, a library, and your notebook.',
     items: [
       { emoji: '🎬',   title: 'Chef TV',        description: 'Cooking videos, one tap away.',         href: '/videos' },
-      { emoji: '👨‍🍳', title: 'Chef Jennifer',  description: 'Create a new recipe, tailored to you.', href: '/topchef' },
+      { emoji: '👨‍🍳', title: 'Chef Jennifer',  description: 'Ask, learn, or make a recipe.',         href: '/chef' },
       { emoji: '📚',   title: 'Guides',         description: 'Reference reading for the kitchen.',    href: '/guides' },
       { emoji: '📘',   title: 'My Playbook',    description: 'Saved videos + chef notes.',            href: '/playbook' },
     ]

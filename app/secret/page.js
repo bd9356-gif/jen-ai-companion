@@ -71,7 +71,7 @@ function parseChefTVCredit(familyNotes) {
   return m ? { channel: m[1].trim() } : null
 }
 
-// "Make This Recipe More..." — keep in sync with Chef Jennifer (app/topchef/page.js)
+// "Make This Recipe More..." — keep in sync with Chef Jennifer (app/chef/page.js)
 // and the server-side labels in /api/enhance-recipe.
 const PREFERENCE_OPTIONS = [
   { value: 'carb_aware',       label: 'Carb-aware',             emoji: '🌾', hint: 'lower carbs where sensible' },

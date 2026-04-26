@@ -9,7 +9,7 @@ export async function POST(request) {
     const difficulty = body.difficulty || 'Intermediate'
     const prompt = body.prompt || `Create a ${difficulty} level ${cuisine} recipe that would impress dinner guests.`
     const message = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-haiku-4-5-20251001',
           max_tokens: 1500,
           messages: [{ role: 'user', content: `${prompt}\n\nRespond with ONLY JSON in this exact shape — no prose, no markdown fences:\n{"title":"","description":"","cuisine":"${cuisine}","difficulty":"${difficulty}","ingredients":[{"name":"","measure":""}],"instructions":["step 1 as a full sentence","step 2 as a full sentence","..."]}\n\nRules for instructions: return an ARRAY of strings (not one paragraph, not numbered "1." prefixes). Each array item is ONE step — short, clear, complete sentence. Aim for 6–12 steps.` }]
     })

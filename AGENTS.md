@@ -35,10 +35,9 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
 | Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed). Cooking School classroom #1.       |
-| Chef Jennifer          | `/topchef`    | AI chef who generates recipes tailored to mood/meal/protein. Cooking School classroom #2. |
+| Chef Jennifer          | `/chef`       | AI chef + instructor — ❤️ Love makes a recipe, 🎓 Learn teaches. Cooking School classroom #2. |
 | Guides                 | `/guides`     | The Library — curated reference articles by topic.                  |
 | My Playbook            | `/playbook`   | Saved videos (Love / Learn) + Chef Notes. Your Cooking School notebook. |
-| Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes (on Playbook).           |
 | Chef Notes             | `/playbook`   | Saved AI answers — a section on Playbook. `/chef-notes` redirects.  |
 | Chef Jennifer Recipes  | `/chef-recipes` | Recipes Chef Jennifer made for you; save-to-vault from here.      |
 | Meal Plan              | `/meal-plan`  | 3 buckets of "what you're cooking soon".                            |
@@ -80,9 +79,9 @@ Section headers are small orange uppercase labels with a one-line section subtit
    - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
-3. **Cooking School** — "Two classrooms, a library, and your notebook." Chef TV is the video classroom (source for cooking videos), Chef Jennifer is the AI classroom (creates recipes on demand and answers any question via `/chef`), Guides is the Library (curated reference articles), and My Playbook is the user's notebook (saved videos in Love/Learn buckets + Chef Notes from `/chef`). Order matters — classrooms first so the user is steered into *learning* before the personal-saves surface, then the library, then their own notes.
+3. **Cooking School** — "Two classrooms, a library, and your notebook." Chef TV is the video classroom (source for cooking videos), Chef Jennifer is the AI classroom (a single chat-first surface at `/chef` with a ❤️ Love / 🎓 Learn pill row — Love makes recipes, Learn teaches and answers questions), Guides is the Library (curated reference articles), and My Playbook is the user's notebook (saved videos in Love/Learn buckets + Chef Notes from Learn-mode chats). Order matters — classrooms first so the user is steered into *learning* before the personal-saves surface, then the library, then their own notes.
    - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away." **Classroom #1 — video instructor.**
-   - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you." **Classroom #2 — AI instructor.**
+   - 👨‍🍳 Chef Jennifer → `/chef` — "Ask, learn, or make a recipe." **Classroom #2 — AI instructor.**
    - 📚 Guides → `/guides` — "Reference reading for the kitchen." **The Library.**
    - 📘 My Playbook → `/playbook` — "Saved videos + chef notes." **The user's notebook — destination for all saves.**
 
@@ -110,7 +109,7 @@ Each of the four new pages is a focused single-screen experience, matching MyKit
 - **`app/meal-plan/page.js`** — renders three bucket frames (⭐ To Make amber / 📋 Maybe violet / 🗂 Later sky). Data in `my_picks` keyed by `bucket`. Per-item move buttons show the *other* two bucket colors as cues for where the item would go. Empty state offers shortcut buttons to Recipe Cards and Recipe Vault.
 - **`app/shopping-list/page.js`** — uses the shared `<ShoppingByStore>` grid, the shared `<StoreEditor>` (shown inline via `showStoreEditor` toggle), plus a full action bar in the card header: 🏬 Manage Stores, ✨ Clean Up List (calls `/api/cleanup-list`), 📋 Copy (clipboard), 🖨️ Print (popup window). "Clear All" lives on the right. All the existing `/picks` behaviors (grouped-by-store render, unsorted bucket, per-item store reassignment, AI cleanup with `recipe_title` discard, plain-text export sorted by `stores.sort_order`) are preserved because the heavy logic lives in the shared components plus the helpers duplicated here (`buildShoppingListText`, `cleanUpList`).
 - **`app/chef-notes/page.js`** — chronological list of saved AI answers (`favorites` where `type='ai_answer'`). Each row uses `<ExpandableItem>` which opens in place to show the full answer. Header action points at `/chef`. Empty state encourages asking a question and saving it.
-- **`app/chef-recipes/page.js`** — list of Chef Jennifer recipes (`favorites` where `type='ai_recipe'`). Each row uses `<ChefJenItem>`, which expands to show cuisine/difficulty chips, ingredients, numbered instructions (rendered as `<ol>`), and a 💾 Save to Recipe Vault button. `saveToVault(item)` inserts into `personal_recipes` with the recipe's description moved into `family_notes` (prefixed, blank line, then `Saved from Chef Jennifer.`) and an empty `description`, normalizing ingredients to `{name, measure}` shape, and running instructions through `instructionsToString()` so steps land on separate lines. Header action points at `/topchef`.
+- **`app/chef-recipes/page.js`** — list of Chef Jennifer recipes (`favorites` where `type='ai_recipe'`). Each row uses `<ChefJenItem>`, which expands to show cuisine/difficulty chips, ingredients, numbered instructions (rendered as `<ol>`), and a 💾 Save to Recipe Vault button. `saveToVault(item)` inserts into `personal_recipes` with the recipe's description moved into `family_notes` (prefixed, blank line, then `Saved from Chef Jennifer.`) and an empty `description`, normalizing ingredients to `{name, measure}` shape, and running instructions through `instructionsToString()` so steps land on separate lines. Header action points at `/chef`.
 
 ### Shared row components (new as of April 2026)
 
@@ -241,7 +240,7 @@ Borders use `border-2` with `-400` shade for emphasis. Each item's move buttons 
 
 - **ChefJenItem renders measures.** Each ingredient is `{measure} {name}` — string ingredients render as-is, and `{name, measure}` objects bold the measure.
 - **💾 Save to Recipe Vault.** Inside each expanded item, `saveToVault(item)` inserts into `personal_recipes` with the original title, ingredients (normalized), instructions (normalized via `instructionsToString`), and difficulty. The recipe's description is **moved into `family_notes`** (followed by a blank line + "Saved from Chef Jennifer.") and the Vault `description` is set to empty — Chef Jennifer's descriptions are often full paragraphs that clip badly in the Vault hero overlay, and `family_notes` has room to read them. `tags` and `photo_url` are empty.
-- **Instruction normalization.** Chef Jennifer's prompt occasionally returns instructions as a numbered blob (`"1. Dice onion. 2. Heat pan."`), sometimes as an array, sometimes as a newline string. Both `saveToFavorites` on `/topchef` and `saveToVault` on `/chef-recipes` run the value through `instructionsToString()` from `lib/normalize_instructions.js`, which strips leading numbering, splits on `\n` or `\s\d+[\.\)]\s` boundaries, trims, and rejoins as a clean newline-separated string. `<ChefJenItem>` parses the same way on render and emits an `<ol>` — saved rows and live model output both render as numbered steps on separate lines.
+- **Instruction normalization.** Chef Jennifer's prompt occasionally returns instructions as a numbered blob (`"1. Dice onion. 2. Heat pan."`), sometimes as an array, sometimes as a newline string. Both `saveRecipe` on `/chef` (Love mode) and `saveToVault` on `/chef-recipes` run the value through `instructionsToString()` from `lib/normalize_instructions.js`, which strips leading numbering, splits on `\n` or `\s\d+[\.\)]\s` boundaries, trims, and rejoins as a clean newline-separated string. `<ChefJenItem>` parses the same way on render and emits an `<ol>` — saved rows and live model output both render as numbered steps on separate lines.
 
 ## Chef TV (`/videos`)
 
@@ -302,11 +301,36 @@ Tables referenced in the app:
 - **`loved_recipe_urls`** — `id, user_id, favorite_id (fk → favorites, cascade), video_id, youtube_id, youtube_url, title, channel, created_at` — Love+recipe ingestion signal capture. Unique on `(user_id, favorite_id)`. RLS scoped to owner. Written from `/videos` when user hits ❤️ Love on a video with ingredients; deleted when they move away from Love. Not surfaced in the UI — for curation/ingestion pipeline only. Migration: `supabase/005_loved_recipe_urls.sql`.
 - **`recipe_articles`** — `id, title, summary, content, topic ('knife_skills'|'techniques'|'cooking_times'|'pantry'|'safety'|'equipment'), read_time_minutes, created_at` — global content for the Guides Library. RLS read for any authenticated user; writes go through the service role only (the app never inserts directly). Indexes on topic + created_at desc. Unique index on title (added by 008) so the seed migration is idempotent. Migrations: `supabase/007_recipe_articles.sql` (table + RLS), `supabase/008_seed_recipe_articles.sql` (12 starter articles).
 
-## Chef Jennifer "Make my recipe more..." preferences
+## Chef Jennifer (`/chef`) — Love / Learn chat (April 2026 pivot)
 
-On `/topchef` the flow is: **Meal → Mood → Protein → Preferences → Cooking → Result.**
+**Phase 2A.** Chef Jennifer is now a single chat-first surface at `/chef` with a Love / Learn pill row at the top. The old wizard at `/topchef` (Meal → Mood → Protein → Preferences → Cooking → Result) is retired — `app/topchef/page.js` is a server-side `redirect('/chef')` so any old bookmark lands on the new surface. The bridge to the wizard from `/chef` (the "Or just ask" card on STEP 1) is gone with the wizard.
 
-Preferences are **multi-select, per-generation** cooking-style adjustments (not medical advice). They get woven into the prompt sent to `/api/topchef` and snapshotted into `metadata.preferences` on save.
+**Why the pivot.** Bill's read after using the app: Chef Jennifer was generating recipes but not *teaching*. He wanted her to be the AI instructor inside Cooking School, not a separate recipe button next to it. The fix: borrow Chef TV's Love/Learn vocabulary (recipe content vs technique content) and use it as Chef Jennifer's two modes. Same two words, same two meanings, across Chef TV, Chef Jennifer, and Playbook saves.
+
+**The two modes.**
+
+| Mode | Color | Backend | Saves to |
+| ---- | ----- | ------- | -------- |
+| ❤️ Love  | rose | `POST /api/topchef` (recipe JSON) | `favorites.type='ai_recipe'` → Chef Jennifer Recipes |
+| 🎓 Learn | sky  | `POST /api/chef` (chat reply)      | `favorites.type='ai_answer'` → Chef Notes (on Playbook) |
+
+**Default mode is 🎓 Learn.** That's the new behavior we want to surface. Mode persists across the conversation; the user can switch any time and the next message uses the new mode. Conversation history is shared — switching mode mid-thread doesn't wipe what's there.
+
+**Empty-state suggested prompts.** When `messages.length === 0`, a mode-aware list of 6 suggested prompts shows below the empty state — `LOVE_PROMPTS` ("A cozy weeknight dinner with chicken", "A 30-minute pasta with bold flavors"...) or `LEARN_PROMPTS` ("How do I know when oil is hot enough?", "What's a good substitute for buttermilk?"...). Tapping a chip sends the message immediately. This is the wizard's replacement — instead of forcing the user through Meal/Mood/Protein, we give them a low-friction starting point in plain English. They can also just type whatever they want.
+
+**Love mode under the hood.** The user's free text is wrapped in a thin prompt (`Create a recipe based on this request from a home cook: "<text>". Keep it approachable...`) and POSTed to `/api/topchef`. The route hasn't changed — it still asks the model for a JSON recipe and inserts a row into `chef_recipes` for analytics. The recipe lands as an assistant message rendered with `<RecipeMessage>` (rose-tinted card with title, difficulty/cuisine pills, description, ingredients chips, numbered instructions, and a 💾 Save to Chef Jennifer Recipes button). Save flow inserts into `favorites` with `type='ai_recipe'` and the same metadata shape the old wizard wrote (no `meal/mood/protein/preferences` fields — those don't exist in Love-mode anymore, just `prompt`).
+
+**Learn mode under the hood.** Standard chat — the route `/api/chef` got a tightened system prompt that instructs Claude to teach, not dump recipes. The system prompt explicitly tells Claude to suggest switching to ❤️ Love when a question is really "give me a recipe". Reply renders in a gray bubble with a "📝 Save to Chef Notes" button.
+
+**Save state per message.** Saved messages are tracked by `keyFor(msg)` = `${mode}:${question}` so the same question asked in both modes (or asked twice) is dedupe-able and survives across messages without index churn.
+
+**Models.** Both `/api/chef` and `/api/topchef` use `claude-haiku-4-5-20251001`.
+
+**Phase 2B (next).** A library-awareness layer (RAG-ish) for Learn mode: keyword search across `recipe_articles`, `cooking_videos`+`video_metadata`, and `personal_recipes`. High-confidence matches feed Claude's context with a "only cite when you actually used this" rule, and citations render as 📚/🎬/🔐 chips inline with the answer. Phase 2C is polish + threshold tuning.
+
+## Recipe Vault "Make my recipe more..." preferences
+
+The 8-preference list lives on the Recipe Vault detail-view's **🌿 Make more…** tab inside ✨ AI Kitchen Helpers. It's a per-transformation, multi-select cooking-style adjustment (not medical advice). The list got created with the old Chef Jennifer wizard and was retained on the Vault when the wizard was retired in Phase 2A.
 
 Current options (value / label):
 
@@ -323,7 +347,7 @@ Current options (value / label):
 
 The prompt includes an explicit guard: "Frame every change as a practical home-cook tip — do not provide medical advice or make health claims." The UI also shows a small disclaimer under the chips.
 
-The **same option list** is also reused on the Recipe Vault "Make This Recipe More..." flow (see below). Keep the 8 `value` strings identical across Chef Jennifer (`app/topchef/page.js`), Recipe Vault (`app/secret/page.js`), and the server-side label map in `app/api/enhance-recipe/route.js` so preferences can be shared / compared across screens.
+Keep the 8 `value` strings identical across Recipe Vault (`app/secret/page.js`) and the server-side label map in `app/api/enhance-recipe/route.js`. Chef Jennifer no longer exposes a preference picker (Phase 2A free-text chat handles it implicitly via the user's prompt).
 
 ## Recipe Vault tags & category (April 2026 rework)
 
@@ -406,8 +430,8 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 
 ## API routes (`app/api/`)
 
-- `/api/chef` — Ask-AI Anything backend.
-- `/api/topchef` — MY-AI ChefJen recipe generator.
+- `/api/chef` — Chef Jennifer 🎓 Learn-mode chat backend (Q&A / teaching). Uses `claude-haiku-4-5-20251001`.
+- `/api/topchef` — Chef Jennifer ❤️ Love-mode recipe generator (returns JSON recipe). Uses `claude-haiku-4-5-20251001`. The wizard at `/topchef` was retired Phase 2A; the page is now a `redirect('/chef')` and only the API route still carries the `topchef` name.
 - `/api/import-recipe` — parse/ingest external recipes. Accepts `{ url }` or `{ text }`. **YouTube support:** if `url` is a `youtu.be` / `youtube.com/watch` / `youtube.com/shorts` link, the route pulls title/channel/description/thumbnail via the YouTube Data API v3 and captions via `youtube-transcript`, then feeds the combined blob to Claude. Requires `YOUTUBE_API_KEY` in env. Falls back to description-only when captions are unavailable. Thumbnail becomes the recipe image.
 - `/api/enhance-recipe` — AI enrichment of existing recipes. Actions: `enhance`, `resize`, `generate_info`, `transform`.
 
@@ -449,9 +473,9 @@ The canonical names in use across the app are:
 
 - **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub. Every other tile has a simple, direct name.
 - **Cooking School** is a *section name on MyKitchen*, not a route. It groups Chef TV + Chef Jennifer + Guides + My Playbook and frames them as one connected learning experience ("two classrooms, a library, and your notebook"). There is no `/cooking-school` URL and there shouldn't be — the hub already does the framing.
-- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Jennifer Recipes** (`/chef-recipes`), **Guides** (`/guides`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **My Playbook** (`/playbook`) — simplified, no "My" prefix except Playbook (which keeps it because it's the personal saves surface and it mirrors Golf's "MyBag"). **Chef Notes** is still a concept name but lives inside `/playbook` as a section, not its own route (`/chef-notes` redirects to `/playbook`). **The Library** is the in-page tagline for `/guides` (header H2), not the route name.
+- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/chef` — single chat-first surface with ❤️ Love / 🎓 Learn modes), **Chef Jennifer Recipes** (`/chef-recipes`), **Guides** (`/guides`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **My Playbook** (`/playbook`) — simplified, no "My" prefix except Playbook (which keeps it because it's the personal saves surface and it mirrors Golf's "MyBag"). **Chef Notes** is still a concept name but lives inside `/playbook` as a section, not its own route (`/chef-notes` redirects to `/playbook`). The "Ask Chef Jennifer" / "Ask Chef Anything" name was retired Phase 2A — there's just **Chef Jennifer** at `/chef` now. **The Library** is the in-page tagline for `/guides` (header H2), not the route name.
 - Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
-- `MyCooking` / `MyPlan` (the old combined `/picks` page) was retired in Phase 2C. Its sections now live at dedicated routes; `/picks` is a thin server-side redirect (see "`/picks` redirect" above). Save-button labels across the app were updated in the follow-up Phase 2C.1 sweep — "Save to MyCooking" now reads "Save to Chef Jennifer Recipes" on `/topchef`, "Save to Chef Notes" on `/chef`, "Meal Plan" on `/cards` and `/secret`, and the landing/about/notes tiles were retitled "Meal Plan". The single heart-save on Chef TV evolved from the 4-button My Playbook strip to a 3-button strip (Save/Love/Learn) and finally to a single contextual button (Love for recipe videos, Learn for video-only) — see "My Playbook" above.
+- `MyCooking` / `MyPlan` (the old combined `/picks` page) was retired in Phase 2C. Its sections now live at dedicated routes; `/picks` is a thin server-side redirect (see "`/picks` redirect" above). Save-button labels across the app were updated in the follow-up Phase 2C.1 sweep — "Save to MyCooking" now reads "Save to Chef Jennifer Recipes" (on `/chef` ❤️ Love mode), "Save to Chef Notes" on `/chef` 🎓 Learn mode, "Meal Plan" on `/cards` and `/secret`, and the landing/about/notes tiles were retitled "Meal Plan". The single heart-save on Chef TV evolved from the 4-button My Playbook strip to a 3-button strip (Save/Love/Learn) and finally to a single contextual button (Love for recipe videos, Learn for video-only) — see "My Playbook" above.
 
 Swept in recent passes and no longer present:
 - `app/login/page.js`, `app/profile/page.js`, `app/about/page.js`, `app/page.js`, `app/notes/page.js` — brand text (→ MyRecipe Companion).
@@ -460,7 +484,6 @@ Swept in recent passes and no longer present:
 - `../my-companion-apps/app/page.tsx` — hub landing tile + footer link (→ MyRecipe Companion / "MyRecipe").
 
 Known still-stale spots (future cleanup candidates, low urgency):
-- `app/topchef/page.js` — internal function name `MyChefPage` (harmless, internal only).
 - `app/saved/page.js` — uses "MyFavorites" in the header and in a `family_notes` DB string. The page isn't in the main MyKitchen nav and the DB string is historical; leaving as-is unless the page is brought back into the main nav.
 
 ## Landing page palette (decided)
