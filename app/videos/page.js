@@ -500,8 +500,10 @@ export default function VideosPage() {
   //   teach    → teachScore (teaching-channel boost × popularity)
   //   practice → practiceScore (recipe completeness × popularity)
   //
-  // Featured chip (Teach only): after sort, slice the top FEATURED_CAP
-  // entries so newcomers land on "what's good" instead of "what's next."
+  // Featured chip (Teach only): hand-curated rows first, then top up to
+  // FEATURED_CAP from the automatic teachScore slice so newcomers always
+  // land on "what's good" — even before the curator has picked anything.
+  // Curator rows go to /admin/featured → flips cooking_videos.is_featured.
   const afterFilter = videos
     .filter(v => {
       const meta = metadata[v.id]
@@ -516,9 +518,19 @@ export default function VideosPage() {
       if (filter === 'practice') return practiceScore(b, metadata[b.id]) - practiceScore(a, metadata[a.id])
       return teachScore(b) - teachScore(a)
     })
-  const filtered = (filter === 'teach' && activeChip?.feature)
-    ? afterFilter.slice(0, FEATURED_CAP)
-    : afterFilter
+  let filtered = afterFilter
+  if (filter === 'teach' && activeChip?.feature) {
+    const featuredRows = afterFilter.filter(v => v.is_featured)
+    if (featuredRows.length >= FEATURED_CAP) {
+      filtered = featuredRows.slice(0, FEATURED_CAP)
+    } else {
+      // Not enough curated picks yet — append automatic slice rows that
+      // aren't already in the curated set, until we reach FEATURED_CAP.
+      const featuredIds = new Set(featuredRows.map(v => v.id))
+      const fillers = afterFilter.filter(v => !featuredIds.has(v.id))
+      filtered = [...featuredRows, ...fillers].slice(0, FEATURED_CAP)
+    }
+  }
 
   // Used by the ℹ️ About panel — total real (non-Shorts) videos in the
   // library so visitors can see the catalog size at a glance.

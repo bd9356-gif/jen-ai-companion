@@ -329,7 +329,7 @@ Tables referenced in the app:
   - For `type='ai_answer'`, `metadata.answer` holds the AI response text.
 - **`saved_videos`** — `user_id, video_id` (join to `cooking_videos.id`)
 - **`saved_education_videos`** — `user_id, video_id` (join to `education_videos.id`)
-- **`cooking_videos`** — `id, title, channel, youtube_id, …`
+- **`cooking_videos`** — `id, title, channel, youtube_id, view_count, is_featured, …`. `is_featured` (added in `supabase/010_chef_tv_featured.sql`) is the human override for the ⭐ Featured chip on Chef TV's Teach tab — flipped from `/admin/featured`. Not user-editable. Default `false`. Partial index `cooking_videos_is_featured_idx` on `is_featured = true`.
 - **`education_videos`** — `id, title, channel, youtube_id, …`
 - **`education_video_metadata`** — per-video educational metadata, joined by `video_id`
 - **`video_metadata`** — `id, video_id, ingredients (jsonb[]), instructions` — populated by ingestion scripts.
@@ -561,6 +561,23 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 - `/api/topchef` — Chef Jennifer 🍳 Practice-mode recipe generator (returns JSON recipe). Uses `claude-haiku-4-5-20251001`. The wizard at `/topchef` was retired Phase 2A; the page is now a `redirect('/chef')` and only the API route still carries the `topchef` name. **DB-first cache layer (April 2026)** — the route tries `findCachedRecipe` from `lib/chef_recipe_cache.js` before generating fresh; on a hit it sends the matched row + the user's prompt to haiku for an adapt pass and bumps `times_served` + `last_served_at` on the base. On miss it falls through to fresh generation and INSERTs into `chef_recipes`. Response includes `source: 'cache' | 'fresh'` so we can watch the hit rate climb as the corpus fills. See "Chef Jennifer — corpus mining" below.
 - `/api/import-recipe` — parse/ingest external recipes. Accepts `{ url }` or `{ text }`. **YouTube support:** if `url` is a `youtu.be` / `youtube.com/watch` / `youtube.com/shorts` link, the route pulls title/channel/description/thumbnail via the YouTube Data API v3 and captions via `youtube-transcript`, then feeds the combined blob to Claude. Requires `YOUTUBE_API_KEY` in env. Falls back to description-only when captions are unavailable. Thumbnail becomes the recipe image.
 - `/api/enhance-recipe` — AI enrichment of existing recipes. Actions: `enhance`, `resize`, `generate_info`, `transform`.
+- `/api/admin/cooking-videos` (GET) — admin-only list of `cooking_videos` for the Featured curator. Bearer-token gated on `ADMIN_EMAIL` (`bd9356@gmail.com`). Optional `q` (title ilike), `featured=true` (restrict to `is_featured` rows), `limit` (capped at 500). Response sorts featured-first then by `view_count` desc, with each row's `video_metadata` flattened under `_meta`.
+- `/api/admin/video-action` (POST) — admin-only mutation endpoint. Bearer-token gated. Actions: `feature` / `unfeature` only (Recipe doesn't have Golf's `editorial_status` / `primary_bucket` knobs, so the surface is intentionally smaller). Body: `{ videoId, action }`. Mutates `cooking_videos.is_featured`. Returns `{ success: true, video: { id, is_featured } }`. Uses `SUPABASE_SERVICE_ROLE_KEY` (falls back to anon if missing) so it can write regardless of RLS.
+
+## Admin pages (`app/admin/`)
+
+- `/admin/featured` — Featured curator for Chef TV (April 2026). Mirrors Golf's `/admin/featured` pattern but pared down to the only knob Recipe has: flip `cooking_videos.is_featured` on/off. Auth is double-gated — client-side check redirects non-admin to `/kitchen`, and the API routes also re-validate the Bearer token against `ADMIN_EMAIL`. UI: sticky search input (300ms debounce) + "⭐ only" checkbox in the header; row list shows thumbnail, title, channel + view-count, a 🍳 Recipe / 🎓 Teach chip (derived from `video_metadata.ingredients` so the curator can see at a glance what kind of video they're picking), and a single ⭐ Feature / ☆ Unfeature button. No bucket tabs, no Hide button, no Rebucket select — Recipe doesn't carry those columns. Optimistic updates: feature/unfeature flips the in-memory row immediately; when "⭐ only" is on, an unfeature also drops the row from the list. Sorted featured-first then `view_count` desc by the API. Powers the ⭐ Featured chip on `/videos` Teach tab — see below.
+
+## Featured chip on Chef TV (`/videos`)
+
+The ⭐ Featured chip on the Teach tab is curator-additive. The chip's filter logic on `app/videos/page.js`:
+
+1. Pull the current `afterFilter` list (Teach-mode + non-Shorts + active topic + search), already sorted by `teachScore` desc.
+2. Slice off all rows with `is_featured = true` — these are the curator's hand-picks (sorted within by `teachScore`, since they came in pre-sorted).
+3. If there are ≥ `FEATURED_CAP` (15) curated rows, return them.
+4. Otherwise, append the top `teachScore` rows that *weren't* in the curated set, until the list reaches `FEATURED_CAP`.
+
+So the chip never feels empty — when the curator hasn't picked anything yet, it falls back to the automatic top-15 by `teachScore`, and as the curator adds picks they progressively replace the auto-slice rows from the top down. `cooking_videos.is_featured` was added in `supabase/010_chef_tv_featured.sql` (idempotent, partial index on `is_featured = true`).
 
 ## Ingestion scripts (run manually with `node <script>.js`)
 
