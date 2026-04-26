@@ -520,9 +520,6 @@ export default function VideosPage() {
     ? afterFilter.slice(0, FEATURED_CAP)
     : afterFilter
 
-  const totalNonShort = videos.filter(v => !isShort(v.duration)).length
-  const recipeCount = videos.filter(v => metadata[v.id]?.ingredients?.length > 0 && !isShort(v.duration)).length
-  const summaryCount = totalNonShort - recipeCount
   const visible = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
 
@@ -534,12 +531,36 @@ export default function VideosPage() {
 
       <header className="bg-white/95 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900">🎬 Chef TV</h1>
+          {/* Header row — back + title on the left, the Teach/Practice
+              "classroom" toggle inline on the right (mirrors Chef
+              Jennifer's mode pill exactly), and the ℹ️/🔍 utility
+              buttons on the far right. The toggle's segmented-control
+              styling reads as switching from one classroom room to the
+              other (Teach ↔ Practice), not as a filter on a list. */}
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600 shrink-0">← Back</button>
+              <h1 className="text-lg font-bold text-gray-900 truncate">🎬 Chef TV</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="shrink-0 ml-auto flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+              <button
+                onClick={() => { setFilter('teach'); setShowCount(12); setTopic('featured') }}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                  filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🎓 Teach
+              </button>
+              <button
+                onClick={() => { setFilter('practice'); setShowCount(12); setTopic('all') }}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                  filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🍳 Practice
+              </button>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={() => setShowAbout(s => !s)}
                 aria-label={showAbout ? 'Close about' : 'About Chef TV'}
@@ -584,38 +605,6 @@ export default function VideosPage() {
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
             />
           )}
-
-          {/* Teach / Practice — binary pill row. The tab vocabulary
-              matches the Playbook save buckets (🎓 Teach / 🍳 Practice)
-              so a user browsing Teach sees the bucket they'd save to on
-              the card below. Teach leads in the new Teach → Practice
-              ordering — Cooking School framing puts technique videos
-              first, recipes second. No "All" firehose — every video is
-              either a recipe or it's not, and the two tabs together
-              cover everything. */}
-          <div className="flex gap-2 mb-3">
-            {[
-              ['teach',    `🎓 Teach (${summaryCount})`,   'bg-sky-500 text-white'],
-              ['practice', `🍳 Practice (${recipeCount})`, 'bg-orange-500 text-white'],
-            ].map(([val, label, activeCls]) => (
-              <button
-                key={val}
-                onClick={() => {
-                  setFilter(val)
-                  setShowCount(12)
-                  // Reset chip to each tab's sensible default so chips don't
-                  // persist awkwardly across tab switches. Teach lands on
-                  // Featured (curated top slice); Practice lands on All.
-                  setTopic(val === 'teach' ? 'featured' : 'all')
-                }}
-                className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  filter === val ? activeCls : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
 
           {/* Topic chips — techniques for Teach, dish-types for Practice.
               Horizontally scrollable on narrow viewports. Active chip uses
