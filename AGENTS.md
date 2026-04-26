@@ -64,7 +64,7 @@ Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything stil
 
 ## Kitchen navigation sections
 
-These live in `app/kitchen/page.js`. MyKitchen is **2 sections and 9 tiles** total (after the April 2026 Cooking Life / Learning Journey reframe and the Chef TV split). All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern.
+These live in `app/kitchen/page.js`. MyKitchen is **2 sections and 10 tiles** total (after the April 2026 Cooking Life / Learning Journey reframe and the symmetric Chef Jennifer + Chef TV split). All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern.
 
 Section headers are small orange uppercase labels with a one-line section subtitle below, followed by the section's tiles.
 
@@ -76,14 +76,17 @@ Section headers are small orange uppercase labels with a one-line section subtit
    - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
-2. **Learning Journey** — "Your classrooms, your library, your practice book." Everything that helps the user *get better* in the kitchen — two classrooms (AI + video), a library, and a practice book. Tile names use a "Name — Role" pattern so each tile names what it IS in addition to what it does. Order locked: Chef Jennifer leads (the AI instructor — the most personal teaching surface), then Chef TV (video classroom, split into 🎓 Teach + 🍳 Practice tiles), then Guides (the library), then My Playbook (the user's practice book).
-   - 👨‍🍳 Chef Jennifer — Your Instructor → `/chef` — "Your AI cooking teacher." **Classroom #1 — AI instructor.**
+2. **Learning Journey** — "Your classrooms, your library, your practice book." Everything that helps the user *get better* in the kitchen — two classrooms (AI + video) each split into 🎓 Teach + 🍳 Practice sides, a library, and a practice book. Tile names use a "Name — Role" pattern so each tile names what it IS in addition to what it does. Order locked: Chef Jennifer leads (the AI instructor — the most personal teaching surface), Teach before Practice within each classroom, then Chef TV (video classroom), then Guides (the library), then My Playbook (the user's practice book).
+   - 🎓 Chef Jennifer — Teach → `/chef?mode=teach` — "Ask anything kitchen." **Classroom #1a — AI instructor (Q&A teaching).**
+   - 🍳 Chef Jennifer — Practice → `/chef?mode=practice` — "A recipe, made for you." **Classroom #1b — AI instructor (recipe generation).**
    - 🎓 Chef TV — Teach → `/videos?tab=teach` — "Lessons to watch and learn." **Classroom #2a — video instructor (techniques).**
    - 🍳 Chef TV — Practice → `/videos?tab=practice` — "Recipes to watch and cook." **Classroom #2b — video instructor (recipes).**
    - 📚 Guides — Your Library → `/guides` — "Knife skills, subs, safety." **The Library.**
    - 📘 My Playbook — Your Saved Items → `/playbook` — "Videos, recipes, and notes." **The practice book — destination for all saves.**
 
-**Why Chef TV is split but Chef Jennifer isn't.** Chef Jennifer flexes between Teach and Practice modes through conversation — the user types and the AI handles the rest, so one tile is enough at the hub. Chef TV is a fixed library where you're either browsing techniques or browsing recipes — committing to a side at the hub gets the user there in one tap instead of landing on `/videos` and immediately tapping the tab they want. The two tiles deep-link via `?tab=teach` and `?tab=practice`; the page reads the param once on mount and sets the filter accordingly. Mode emojis lead the tile titles (🎓 / 🍳) so each tile is instantly recognizable as Chef TV in that mode — same color cues as the Teach/Practice pills elsewhere.
+**Why both classrooms are split.** Every teacher has a Teach side (instruction) and a Practice side (cooking) — the hub surfaces all four "classroom sides" so the user can land directly on the mode they want in one tap, instead of opening a classroom and then choosing a side. Splitting both classrooms keeps the symmetry across the hub and matches the rest of the app, where Teach/Practice is a primary axis everywhere (Playbook tabs, Chef TV filter, Chef Jennifer mode pill). Mode emojis lead each tile title (🎓 / 🍳) so a glance reads each as "{Teacher} in that mode" — same color cues as the Teach/Practice pills elsewhere. Order within each classroom is locked **Teach first, Practice second** to match the canonical order across every surface.
+
+**Deep-link params.** Chef Jennifer reads `?mode=teach|practice` (mirrors the in-page mode pill); Chef TV reads `?tab=teach|practice` (mirrors the in-page filter pill). Both pages read the param once on mount in a `useEffect`. Param values outside the allowed set are ignored, leaving the page's default ('teach') in place. In-page mode/tab changes are local state only and don't sync back to the URL — refresh returns the user to the linked side, which matches the "I came from a hub tile, refresh shouldn't move me" intuition.
 
 **Tile description rhythm.** Both groups now share the same short-tagline rhythm — ~25–30 chars per description, period at the end, no fluff. The original Learning Journey descriptions (e.g. "Learn directly from Chef Jennifer — your personal AI cooking teacher.") were 58–70 chars and `truncate`'d on iPhone, which defeats the point of having a description at all. The shorter versions fit on a single phone line and read at a glance. Description style mirrors Golf Clubhouse's tile rhythm ("Every lesson, one tap away." / "Notes, tips, tee times.") — short, punchy, scannable.
 
