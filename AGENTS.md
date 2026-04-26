@@ -401,6 +401,22 @@ The library payload is stored on the assistant message in conversation state so 
 
 **Phase 2C (next).** Polish + threshold tuning: validate citation density on real conversations, decide whether to graduate to FTS, possibly add deep-links from article chips into `/guides` (currently lands on the page index — user has to scan), possibly auto-suggest a 🍳 Practice line when the user cites a recipe ("Want to cook your saved Spinach Lasagna?").
 
+## Chef Jennifer — topic guard (April 2026)
+
+Both modes politely refuse non-cooking requests instead of forcing an answer. Bill flagged this on use: "i ask one and it created a recipe" — Practice mode was generating a full recipe for a non-food prompt because the route had no topic gate.
+
+**Practice mode (`/api/topchef`).** The recipe prompt now starts with a one-shot classifier-and-respond rule: "FIRST, decide if this is actually a request for a cooking recipe or food. If it is NOT (jokes, random questions, non-food topics), respond with ONLY `{"refusal":"<one warm sentence in Chef Jennifer's voice>"}`. Otherwise respond with the recipe JSON shape." Same instruction is wired into both the cache-hit *adapt* path and the cache-miss *fresh* path so the gate fires regardless of whether the corpus matched on a keyword.
+
+When a refusal comes back (`recipe.refusal && !recipe.title`), the route short-circuits: it does **NOT** bump `times_served` on the cache base (we didn't actually serve anything) and does **NOT** INSERT the refusal into `chef_recipes` (we don't want refusals showing up as future cache candidates). Response shape: `{ recipe: { refusal: "<text>" }, source: 'refusal' }` — same outer envelope the page already parses, with a new `source` value so we can observe how often it fires.
+
+The fresh-path adapt-failure fallback (return `base` recipe directly when JSON parse fails) is unchanged — it only triggers on parse errors, not on intentional refusals.
+
+**Teach mode (`/api/chef`).** The system prompt grew an "OFF-TOPIC HANDLING" block right above the STYLE section: "If the user's question is clearly NOT about cooking, food, kitchens, ingredients, or eating — for example jokes, current events, math problems, coding, poetry, weather, sports, or anything outside the kitchen — do NOT try to answer it. Instead, warmly redirect them in ONE short sentence to bring it back to the kitchen. Skip the teaching loop, skip the practice line, skip citations." Teach is intentionally broader than Practice (storage, equipment, terminology, meal planning all count) but the off-topic floor still exists.
+
+**Page rendering (`/chef/page.js`).** When `data.recipe.refusal` is set, the Practice branch in `sendMessage()` pushes an assistant message with `content: recipe.refusal, refusal: true` (no `recipe` property), so the conversation renderer falls through past the `mode === 'practice' && msg.recipe` branch into the prose-bubble branch. The prose bubble's emoji label is mode-aware (`{msg.mode === 'practice' ? '🍳' : '🎓'} Chef Jennifer`) so a Practice refusal still reads as Chef Jennifer's Practice voice. The save-button row's render condition picked up `&& !msg.refusal` so refusals don't get a Save to Chef Notes / Save to Chef Jennifer Recipes button — there's nothing meaningful to save.
+
+**What this trades.** Each Practice request still costs one haiku call (the classifier and the recipe come from the same prompt, no extra round-trip). Refusal latency is comparable to a fast recipe gen. False-refusal risk is low because the refusal criterion is "not about food" rather than "about a *good* recipe" — the model defaults to recipe shape unless the prompt is clearly off-topic. We're betting on the corpus staying clean over time as a result.
+
 ## Chef Jennifer — corpus mining (April 2026)
 
 Every Practice-mode tap on `/chef` already INSERTs the generated recipe into `chef_recipes` (title, description, ingredients, instructions, cuisine, difficulty, ai_prompt). That table is a free corpus that grows on its own — over time it becomes a meaningful library of "recipes home cooks have actually asked for". The corpus mining layer taps it before generating fresh.

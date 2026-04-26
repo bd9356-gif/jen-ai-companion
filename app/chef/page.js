@@ -157,6 +157,22 @@ export default function ChefPage() {
         const data = await res.json()
         const recipe = data?.recipe || null
         if (!recipe) throw new Error('no recipe')
+        // Topic-guard refusal — /api/topchef returns `{recipe: {refusal:"…"}}`
+        // when the user's prompt isn't actually a cooking ask (jokes,
+        // random questions, non-food topics). Render it as a prose
+        // bubble (no recipe card, no save button) so Chef Jennifer can
+        // politely redirect the user back to the kitchen instead of
+        // generating a forced recipe for an off-topic prompt.
+        if (recipe.refusal) {
+          setMessages([...newMessages, {
+            role: 'assistant',
+            mode: 'practice',
+            question: trimmed,
+            content: recipe.refusal,
+            refusal: true,
+          }])
+          return
+        }
         setMessages([...newMessages, {
           role: 'assistant',
           mode: 'practice',
@@ -384,12 +400,16 @@ export default function ChefPage() {
             // Teach-mode prose bubble. Parse out the "🎯 Practice this:" line
             // (when present) and render it as a styled homework chip + a
             // 🍳 Cook in Practice → handoff button below the save button.
+            // Practice-mode refusals (msg.refusal === true) also fall
+            // through to this branch — they render as a plain prose bubble
+            // with the 🍳 Practice emoji, no homework chip, no save button.
             const { prose, practice } = parsePractice(msg.content)
+            const proseEmoji = msg.mode === 'practice' ? '🍳' : '🎓'
             return (
               <div key={i} className="flex justify-start">
                 <div className="w-full max-w-[95%]">
                   <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">🎓 Chef Jennifer</p>
+                    <p className="text-xs text-gray-500 font-semibold mb-1">{proseEmoji} Chef Jennifer</p>
                     {renderProseWithCitations(prose, msg.library)}
                     {practice && (
                       <div className="mt-3 pt-3 border-t border-gray-300/70">
@@ -398,7 +418,7 @@ export default function ChefPage() {
                       </div>
                     )}
                   </div>
-                  {msg.question && !msg.error && (
+                  {msg.question && !msg.error && !msg.refusal && (
                     <div className="flex gap-2 mt-2 ml-1 flex-wrap">
                       <button
                         onClick={() => saveAnswer(msg)}

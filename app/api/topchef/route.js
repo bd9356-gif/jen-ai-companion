@@ -55,7 +55,10 @@ ${JSON.stringify({
   instructions: base.instructions,
 }, null, 2)}
 
-Respond with ONLY JSON in this exact shape — no prose, no markdown fences:
+FIRST, decide if the user's request is actually a request for a cooking recipe or food. If the request is NOT about cooking, food, ingredients, or eating — for example a joke, a random non-food question, a request for a poem, code, weather, or anything outside the kitchen — respond with ONLY JSON in this shape and nothing else:
+{"refusal":"<one warm, friendly sentence in Chef Jennifer's voice that politely redirects the user to send a cooking or recipe request instead>"}
+
+Otherwise respond with ONLY JSON in this exact shape — no prose, no markdown fences:
 {"title":"","description":"","cuisine":"${base.cuisine}","difficulty":"${base.difficulty}","ingredients":[{"name":"","measure":""}],"instructions":["step 1 as a full sentence","step 2 as a full sentence","..."]}
 
 Rules: instructions are an ARRAY of strings (not a paragraph, not numbered prefixes). Aim for 6–12 steps.`
@@ -83,6 +86,16 @@ Rules: instructions are an ARRAY of strings (not a paragraph, not numbered prefi
             }
         }
 
+        // Topic-guard refusal path. The adapt prompt instructs the model
+        // to return `{refusal:"…"}` when the user's request isn't really
+        // a cooking ask (e.g. joke, random question). When that happens
+        // we return the refusal as-is, do NOT bump serve count, and do
+        // NOT fall back to the base recipe — the refusal is the right
+        // outcome. The page renders it as a prose bubble.
+        if (recipe && recipe.refusal && !recipe.title) {
+            return Response.json({ recipe: { refusal: recipe.refusal }, source: 'refusal' })
+        }
+
         recipe.instructions = normalizeInstructions(recipe.instructions)
 
         // Bookkeeping — bump the base's serve counter. We deliberately
@@ -96,12 +109,35 @@ Rules: instructions are an ARRAY of strings (not a paragraph, not numbered prefi
     }
 
     // ── Cache miss: original fresh-generation path.
+    // Topic guard is baked into the prompt — model returns a refusal
+    // JSON for non-cooking requests (jokes, random questions, etc.)
+    // and a recipe JSON otherwise. Single-call classifier-and-respond
+    // pattern keeps cost flat. Refusals skip the chef_recipes INSERT
+    // so non-cooking prompts don't pollute the corpus.
+    const freshPrompt = `${prompt}
+
+FIRST, decide if this is actually a request for a cooking recipe or food. If the request is NOT about cooking, food, ingredients, or eating — for example a joke, a random non-food question, a request for a poem, code, weather, or anything outside the kitchen — respond with ONLY JSON in this shape and nothing else:
+{"refusal":"<one warm, friendly sentence in Chef Jennifer's voice that politely redirects the user to send a cooking or recipe request instead>"}
+
+Otherwise respond with ONLY JSON in this exact shape — no prose, no markdown fences:
+{"title":"","description":"","cuisine":"${cuisine}","difficulty":"${difficulty}","ingredients":[{"name":"","measure":""}],"instructions":["step 1 as a full sentence","step 2 as a full sentence","..."]}
+
+Rules for instructions: return an ARRAY of strings (not one paragraph, not numbered "1." prefixes). Each array item is ONE step — short, clear, complete sentence. Aim for 6–12 steps.`
+
     const message = await anthropic.messages.create({
           model: 'claude-haiku-4-5-20251001',
           max_tokens: 1500,
-          messages: [{ role: 'user', content: `${prompt}\n\nRespond with ONLY JSON in this exact shape — no prose, no markdown fences:\n{"title":"","description":"","cuisine":"${cuisine}","difficulty":"${difficulty}","ingredients":[{"name":"","measure":""}],"instructions":["step 1 as a full sentence","step 2 as a full sentence","..."]}\n\nRules for instructions: return an ARRAY of strings (not one paragraph, not numbered "1." prefixes). Each array item is ONE step — short, clear, complete sentence. Aim for 6–12 steps.` }]
+          messages: [{ role: 'user', content: freshPrompt }]
     })
     const recipe = JSON.parse(message.content[0].text.trim().replace(/```json|```/g, '').trim())
+
+    // Refusal short-circuit — same shape the page handles for the
+    // adapt path. Don't INSERT into chef_recipes (we don't want
+    // refusals showing up as cache candidates for future prompts).
+    if (recipe && recipe.refusal && !recipe.title) {
+        return Response.json({ recipe: { refusal: recipe.refusal }, source: 'refusal' })
+    }
+
     recipe.instructions = normalizeInstructions(recipe.instructions)
 
     const { data, error } = await supabase.from('chef_recipes').insert({ title: recipe.title, description: recipe.description, ingredients: recipe.ingredients, instructions: recipe.instructions, difficulty: recipe.difficulty, cuisine: recipe.cuisine, ai_prompt: body.prompt || `${cuisine} ${difficulty}` }).select().single()
