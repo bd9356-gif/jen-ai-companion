@@ -70,7 +70,6 @@ const SECTIONS = [
     items: [
       { emoji: '🔐', title: 'Recipe Vault',            description: 'Your saved recipes, organized.',       href: '/secret' },
       { emoji: '🃏', title: 'Recipe Cards',            description: 'Flip through your collection.',        href: '/cards' },
-      { emoji: '✨', title: 'Chef Jennifer Recipes',   description: 'Recipes Jennifer made for you.',       href: '/chef-recipes' },
     ]
   },
   {
@@ -88,7 +87,7 @@ const SECTIONS = [
       { emoji: '🎬',   title: 'Chef TV',        description: 'Cooking videos, one tap away.',         href: '/videos' },
       { emoji: '👨‍🍳', title: 'Chef Jennifer',  description: 'Ask anything, or get a recipe.',        href: '/chef' },
       { emoji: '📚',   title: 'Guides',         description: 'Reference reading for the kitchen.',    href: '/guides' },
-      { emoji: '📘',   title: 'My Playbook',    description: 'Saved videos + chef notes.',            href: '/playbook' },
+      { emoji: '📘',   title: 'My Playbook',    description: 'Saved videos, chef recipes, chef notes.', href: '/playbook' },
     ]
   },
 ]
