@@ -264,8 +264,13 @@ export default function ChefPage() {
     ? 'Tell Chef Jennifer what to cook…'
     : 'Ask Chef Jennifer anything…'
 
+  // h-dvh + min-h-0 chain — locks the page to the visible viewport
+  // (excluding iOS Safari's bottom URL bar) and lets only the message
+  // list scroll, so the textarea never falls off the bottom of the
+  // screen. min-h-screen used to let the column grow past 100vh, which
+  // on iPhone hid the input behind the browser chrome.
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="h-dvh bg-white flex flex-col">
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">
           {toast}
@@ -317,8 +322,8 @@ export default function ChefPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-2 flex flex-col">
-        <div className="flex-1 overflow-y-auto space-y-3 pb-2">
+      <main className="flex-1 min-h-0 max-w-2xl mx-auto w-full px-4 py-2 flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-2">
 
           {/* Empty state — mode-aware copy + suggested prompts.
               Stripped down so the prompt boxes ride near the top on
@@ -453,8 +458,13 @@ export default function ChefPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Input bar */}
-        <div className="border-t border-gray-100 pt-4">
+        {/* Input bar — pinned to the bottom of the dvh column. The
+            paddingBottom uses env(safe-area-inset-bottom) so iPhone's
+            home indicator doesn't overlap the textarea. */}
+        <div
+          className="border-t border-gray-100 pt-3 pb-2"
+          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+        >
           <div className="flex gap-2">
             <textarea
               value={input}
