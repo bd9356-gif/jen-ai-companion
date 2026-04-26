@@ -63,8 +63,15 @@ async function seedStarterRecipesOnce(user) {
    Inside Learning Journey, Chef Jennifer leads. She's the AI
    instructor — the most personal teaching surface in the app —
    so she's the first thing a user sees in the learning column.
-   Chef TV (video classroom) follows her, then the library
-   (Guides), then the practice book (My Playbook).
+   Chef TV (video classroom) follows her — split into two tiles,
+   one per mode (🎓 Teach for techniques, 🍳 Practice for
+   recipes) — then the library (Guides), then the practice book
+   (My Playbook). Splitting Chef TV is honest: unlike Chef
+   Jennifer (who flexes between modes through conversation),
+   Chef TV is a fixed library where you're either browsing
+   techniques or browsing recipes — committing to a side at the
+   hub gets the user there in one tap. The two tiles deep-link
+   into /videos via ?tab=teach and ?tab=practice.
 
    Routing note:
    All tiles route to dedicated pages. The /picks combined view
@@ -96,7 +103,8 @@ const SECTIONS = [
     subtitle: 'Your classrooms, your library, your practice book.',
     items: [
       { emoji: '👨‍🍳', title: 'Chef Jennifer — Your Instructor', description: 'Your AI cooking teacher.',    href: '/chef' },
-      { emoji: '🎬',   title: 'Chef TV — Watch & Learn',         description: 'Every lesson, on video.',     href: '/videos' },
+      { emoji: '🎓',   title: 'Chef TV — Teach',                 description: 'Lessons to watch and learn.', href: '/videos?tab=teach' },
+      { emoji: '🍳',   title: 'Chef TV — Practice',              description: 'Recipes to watch and cook.',  href: '/videos?tab=practice' },
       { emoji: '📚',   title: 'Guides — Your Library',           description: 'Knife skills, subs, safety.', href: '/guides' },
       { emoji: '📘',   title: 'My Playbook — Your Saved Items',  description: 'Videos, recipes, and notes.', href: '/playbook' },
     ]
