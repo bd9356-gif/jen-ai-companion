@@ -383,6 +383,14 @@ export default function PlaybookPage() {
             Everything you&rsquo;ve saved
           </p>
           <p className="text-sm text-gray-500 mt-2">Your notebook from Chef Jennifer&rsquo;s classroom and Chef TV&rsquo;s.</p>
+          {/* Three-pair framing line — Bill's tagline for the 2x2 grid
+              below: two teachers, each with two modes, equals four
+              "teaching kitchens" where instruction happens. Sits
+              between the headline and the tab grid so the structure
+              of the 2x2 reads as deliberate, not arbitrary. */}
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-3">
+            Two instructors &middot; Two classrooms &middot; Two teaching kitchens
+          </p>
         </div>
 
         {/* Intro callout — explains the two-classroom framing. Each
