@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { normalizeInstructionsArray, instructionsToString } from '@/lib/normalize_instructions'
+import { searchLibrary } from '@/lib/library_search'
 
 /* ─────────────────────────────────────────────────────────────
    Chef Jennifer — single chat-first surface (Cooking School #2).
@@ -93,6 +94,37 @@ export default function ChefPage() {
     return { prose, practice: m[1].trim() }
   }
 
+  // Phase 2B — render Learn-mode prose with `{cite:type:id}` tokens
+  // replaced inline by clickable 📚/🎬/🔐 chips. Tokens whose IDs aren't
+  // in the message's library payload are dropped silently (model
+  // hallucinated an ID, or the row was deleted between turns).
+  function renderProseWithCitations(prose, library) {
+    if (!prose) return null
+    if (!library) return prose
+    const lookup = {
+      article: Object.fromEntries((library.articles || []).map(a => [a.id, a])),
+      video: Object.fromEntries((library.videos || []).map(v => [v.id, v])),
+      recipe: Object.fromEntries((library.recipes || []).map(r => [r.id, r])),
+    }
+    const re = /\{cite:(article|video|recipe):([a-zA-Z0-9_-]+)\}/g
+    const parts = []
+    let last = 0
+    let m
+    let key = 0
+    while ((m = re.exec(prose)) !== null) {
+      if (m.index > last) parts.push(prose.slice(last, m.index))
+      const [, type, id] = m
+      const item = lookup[type]?.[id]
+      if (item) {
+        parts.push(<CitationChip key={`c-${key++}`} type={type} item={item} />)
+      }
+      // Drop unknown tokens entirely — better silent than ugly.
+      last = m.index + m[0].length
+    }
+    if (last < prose.length) parts.push(prose.slice(last))
+    return parts
+  }
+
   async function sendMessage(text, modeOverride = null) {
     const trimmed = text.trim()
     if (!trimmed || loading) return
@@ -132,10 +164,24 @@ export default function ChefPage() {
         }])
       } else {
         // Learn: chat-style Q&A.
+        // Phase 2B — run a keyword search across Guides, Chef TV, and the
+        // user's Recipe Vault first, then forward the top hits as
+        // citation candidates. The route uses them to build a LIBRARY
+        // CONTEXT block; the model embeds {cite:type:id} tokens inline
+        // when (and only when) a resource is a direct match. Search is
+        // best-effort — any failure falls through with no citations.
+        let library = null
+        if (user) {
+          try {
+            library = await searchLibrary(trimmed, user.id)
+          } catch {
+            library = null
+          }
+        }
         const res = await fetch('/api/chef', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: newMessages })
+          body: JSON.stringify({ messages: newMessages, library })
         })
         const data = await res.json()
         setMessages([...newMessages, {
@@ -143,6 +189,7 @@ export default function ChefPage() {
           mode: 'learn',
           question: trimmed,
           content: data?.reply || 'Sorry — empty reply. Try again.',
+          library,
         }])
       }
     } catch {
@@ -328,7 +375,7 @@ export default function ChefPage() {
                 <div className="w-full max-w-[95%]">
                   <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
                     <p className="text-xs text-gray-500 font-semibold mb-1">🎓 Chef Jennifer</p>
-                    {prose}
+                    {renderProseWithCitations(prose, msg.library)}
                     {practice && (
                       <div className="mt-3 pt-3 border-t border-gray-300/70">
                         <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-700 leading-snug">🎯 Homework — Practice this</p>
@@ -495,5 +542,50 @@ function RecipeMessage({ msg, saved, onSave }) {
         </div>
       </div>
     </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CitationChip — Phase 2B inline chip for {cite:type:id} tokens.
+
+   Three flavors with matching color schemes drawn from each
+   destination page:
+     📚 article  → /guides           (emerald — Guides Library)
+     🎬 video    → youtu.be/<id>     (rose — Chef TV)
+     🔐 recipe   → /secret?recipe=id (orange — Recipe Vault)
+
+   The recipe link uses /secret's existing `?recipe=` deep-link.
+   Article and video deep links don't exist yet, so for v1 we
+   send articles to the Guides page (user can scan for the
+   title) and videos out to YouTube (the most useful single
+   destination). Phase 2C polish can add deep-links later.
+   ─────────────────────────────────────────────────────────── */
+function CitationChip({ type, item }) {
+  let emoji, classes, href, external = false
+  if (type === 'article') {
+    emoji = '📚'
+    classes = 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+    href = '/guides'
+  } else if (type === 'video') {
+    emoji = '🎬'
+    classes = 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+    href = item?.youtube_id ? `https://youtu.be/${item.youtube_id}` : '/videos'
+    external = !!item?.youtube_id
+  } else {
+    emoji = '🔐'
+    classes = 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+    href = `/secret?recipe=${item?.id || ''}`
+  }
+  const title = item?.title || 'Resource'
+  return (
+    <a
+      href={href}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
+      className={`inline-flex items-baseline gap-1 px-2 py-0.5 mx-0.5 rounded-md border text-xs font-semibold align-baseline transition-colors ${classes}`}
+    >
+      <span>{emoji}</span>
+      <span className="truncate max-w-[180px]">{title}</span>
+    </a>
   )
 }

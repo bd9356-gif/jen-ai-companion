@@ -353,7 +353,27 @@ Below the bubble (next to the existing "📝 Save to Chef Notes" button) a secon
 
 **Models.** Both `/api/chef` and `/api/topchef` use `claude-haiku-4-5-20251001`.
 
-**Phase 2B (next).** A library-awareness layer (RAG-ish) for Learn mode: keyword search across `recipe_articles`, `cooking_videos`+`video_metadata`, and `personal_recipes`. High-confidence matches feed Claude's context with a "only cite when you actually used this" rule, and citations render as 📚/🎬/🔐 chips inline with the answer. Phase 2C is polish + threshold tuning.
+**Phase 2B — Library awareness (April 2026).** Learn mode now searches the user's own app content before answering and gives Chef Jennifer the option to cite what it found. Three sources, one helper, inline chips.
+
+The flow:
+
+1. User asks something in 🎓 Learn. The page calls `searchLibrary(question, user.id)` from `lib/library_search.js`.
+2. `searchLibrary` runs three parallel `ilike` queries (no FTS, no migration) across:
+   - `recipe_articles` — title + summary (📚 Guides Library)
+   - `cooking_videos` — title; pulls `video_metadata.ai_summary` via implicit join (🎬 Chef TV)
+   - `personal_recipes` — title + description, scoped by `user_id` (🔐 the user's Recipe Vault)
+3. Each source oversamples 8 candidates, then JS-side scores by counting keyword hits with title-weight-3 / body-weight-1, drops zeroes, keeps the top 3. Stopwords + cooking-noise words ("recipe", "cook", "make") are stripped from the query; keywords cap at 6 unique tokens.
+4. The page POSTs `{ messages, library }` to `/api/chef`. The route appends a `LIBRARY CONTEXT` block to the system prompt listing each candidate with a stable `{cite:type:id}` token plus a short summary, with explicit "cite when / don't cite when" guardrails: cite for direct matches, never for loose-topical matches, never invent IDs.
+5. Claude embeds the tokens inline in its answer where appropriate. The page parses them via `renderProseWithCitations(prose, library)` — regex `/\{cite:(article|video|recipe):([a-zA-Z0-9_-]+)\}/g` — and replaces matched tokens with `<CitationChip type={type} item={item} />` JSX nodes. Tokens whose IDs aren't in the message's library payload are dropped silently (model hallucinated, or the row was deleted between turns).
+6. Chips are clickable: `📚` → `/guides`, `🎬` → `https://youtu.be/<youtube_id>` (target=_blank), `🔐` → `/secret?recipe=<id>` (uses the existing Vault deep-link). Colors mirror the destination page: emerald for articles, rose for videos, orange for recipes.
+
+The library payload is stored on the assistant message in conversation state so chips survive the rest of the session — re-rendering doesn't need to re-search. Search is best-effort: any `searchLibrary` failure falls through with `library = null`, the model gets the base prompt with no LIBRARY CONTEXT block, and chips simply don't render.
+
+**Why ilike, not FTS, for v1.** Postgres `to_tsvector` + GIN indexes would rank better — but the migration adds setup friction and v1 didn't need it to validate the concept. The ilike + JS scoring path covers ~90% of the value with zero schema changes. Phase 2C can graduate to FTS once we see whether ranking actually feels coarse in practice.
+
+**What's deliberately NOT searched (v1).** Recipe `ingredients` (jsonb fan-out is awkward and noisy — every recipe with "salt" would match a query about salting), `family_notes` (long-form, tangential), Chef TV `description` (sometimes auto-generated, often noisy), article `content` (covered by summary). Adding any of these later is a one-line change in `lib/library_search.js`.
+
+**Phase 2C (next).** Polish + threshold tuning: validate citation density on real conversations, decide whether to graduate to FTS, possibly add deep-links from article chips into `/guides` (currently lands on the page index — user has to scan), possibly auto-suggest a Practice line when the user cites a recipe ("Want to cook your saved Spinach Lasagna?").
 
 ## Recipe Vault "Make my recipe more..." preferences
 
