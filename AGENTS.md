@@ -77,10 +77,12 @@ Section headers are small orange uppercase labels with a one-line section subtit
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
 2. **Learning Journey** — "Your classrooms, your library, your practice book." Everything that helps the user *get better* in the kitchen — two classrooms (AI + video), a library, and a practice book. Tile names use a "Name — Role" pattern so each tile names what it IS in addition to what it does. Order locked: Chef Jennifer leads (the AI instructor — the most personal teaching surface), then Chef TV (video classroom), then Guides (the library), then My Playbook (the user's practice book).
-   - 👨‍🍳 Chef Jennifer — Your Instructor → `/chef` — "Learn directly from Chef Jennifer — your personal AI cooking teacher." **Classroom #1 — AI instructor.**
-   - 🎬 Chef TV — Watch & Learn → `/videos` — "See every technique, skill, and recipe taught step-by-step." **Classroom #2 — video instructor.**
-   - 📚 Guides — Your Library → `/guides` — "Knife skills, substitutions, safety — your quick reference." **The Library.**
-   - 📘 My Playbook — Your Saved Items → `/playbook` — "Your videos, recipes, and chef notes, organized together." **The practice book — destination for all saves.**
+   - 👨‍🍳 Chef Jennifer — Your Instructor → `/chef` — "Your AI cooking teacher." **Classroom #1 — AI instructor.**
+   - 🎬 Chef TV — Watch & Learn → `/videos` — "Every lesson, on video." **Classroom #2 — video instructor.**
+   - 📚 Guides — Your Library → `/guides` — "Knife skills, subs, safety." **The Library.**
+   - 📘 My Playbook — Your Saved Items → `/playbook` — "Videos, recipes, and notes." **The practice book — destination for all saves.**
+
+**Tile description rhythm.** Both groups now share the same short-tagline rhythm — ~25–30 chars per description, period at the end, no fluff. The original Learning Journey descriptions (e.g. "Learn directly from Chef Jennifer — your personal AI cooking teacher.") were 58–70 chars and `truncate`'d on iPhone, which defeats the point of having a description at all. The shorter versions fit on a single phone line and read at a glance. Description style mirrors Golf Clubhouse's tile rhythm ("Every lesson, one tap away." / "Notes, tips, tee times.") — short, punchy, scannable.
 
 **Reframe history (April 2026).** The hub used to read as three flat groups (Your Recipes / Plan & Shop / Cooking School). Once Chef Jennifer + Chef TV + Guides + Playbook were all locked together under one Learning section, the symmetry tipped — *all* the cooking-life surfaces (saving + planning + shopping) belong together too. So the hub is now two halves of the same story: **Cooking Life** (what the user does) and **Learning Journey** (how the user gets better). Inside Learning Journey, Chef Jennifer was promoted from second tile (after Chef TV) to first — she's the AI instructor and the most personal teaching surface, so she leads the column.
 

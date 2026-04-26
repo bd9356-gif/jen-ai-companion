@@ -95,10 +95,10 @@ const SECTIONS = [
     name: 'Learning Journey',
     subtitle: 'Your classrooms, your library, your practice book.',
     items: [
-      { emoji: '👨‍🍳', title: 'Chef Jennifer — Your Instructor', description: 'Learn directly from Chef Jennifer — your personal AI cooking teacher.', href: '/chef' },
-      { emoji: '🎬',   title: 'Chef TV — Watch & Learn',         description: 'See every technique, skill, and recipe taught step-by-step.',          href: '/videos' },
-      { emoji: '📚',   title: 'Guides — Your Library',           description: 'Knife skills, substitutions, safety — your quick reference.',          href: '/guides' },
-      { emoji: '📘',   title: 'My Playbook — Your Saved Items',  description: 'Your videos, recipes, and chef notes, organized together.',            href: '/playbook' },
+      { emoji: '👨‍🍳', title: 'Chef Jennifer — Your Instructor', description: 'Your AI cooking teacher.',    href: '/chef' },
+      { emoji: '🎬',   title: 'Chef TV — Watch & Learn',         description: 'Every lesson, on video.',     href: '/videos' },
+      { emoji: '📚',   title: 'Guides — Your Library',           description: 'Knife skills, subs, safety.', href: '/guides' },
+      { emoji: '📘',   title: 'My Playbook — Your Saved Items',  description: 'Videos, recipes, and notes.', href: '/playbook' },
     ]
   },
 ]
