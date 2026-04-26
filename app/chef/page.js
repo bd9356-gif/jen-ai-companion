@@ -398,6 +398,20 @@ export default function ChefPage() {
                         }`}>
                         {saved ? '✓ Saved to Chef Notes' : '📝 Save to Chef Notes'}
                       </button>
+                      {/* Post-save exit cue — same fix as the Practice
+                          recipe bubble. After `saved === true`, surface
+                          a "📘 View in Playbook →" link next to the
+                          greyed save button so the user sees where the
+                          note went and has an obvious next step. Deep-
+                          links to Playbook's 📝 Notes tab. */}
+                      {saved && (
+                        <a
+                          href="/playbook?tab=chef_notes"
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500 bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                        >
+                          📘 View in Playbook →
+                        </a>
+                      )}
                       {practice && !loading && (
                         <button
                           onClick={() => sendMessage(practice, 'practice')}
@@ -531,7 +545,13 @@ function RecipeMessage({ msg, saved, onSave }) {
           )}
         </div>
 
-        <div className="flex gap-2 mt-2 ml-1">
+        {/* Save row + post-save exit cue. Once `saved === true`, the
+            save button greys out and a prominent "📘 View in Playbook →"
+            link appears next to it — without this the page sat idle
+            after a save with no obvious next step (Bill: "the page stays
+            after save need to go back to get out"). The link deep-links
+            into Playbook's ✨ Recipes tab via ?tab=chef_recipes. */}
+        <div className="flex gap-2 mt-2 ml-1 flex-wrap">
           <button
             onClick={onSave}
             disabled={saved}
@@ -542,6 +562,14 @@ function RecipeMessage({ msg, saved, onSave }) {
             }`}>
             {saved ? '✓ Saved to Chef Jennifer Recipes' : '💾 Save to Chef Jennifer Recipes'}
           </button>
+          {saved && (
+            <a
+              href="/playbook?tab=chef_recipes"
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-500 bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+            >
+              📘 View in Playbook →
+            </a>
+          )}
         </div>
       </div>
     </div>

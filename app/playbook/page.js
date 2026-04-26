@@ -104,7 +104,8 @@ export default function PlaybookPage() {
   // Active tab: 'teach' | 'practice' | 'chef_recipes' | 'chef_notes'.
   // Default to Teach so the page leads with the instruction-side that
   // pairs with Chef Jennifer — same first-tab default as the rest of
-  // the app.
+  // the app. Deep-linkable via `?tab=<key>` so /chef can hand off
+  // the user straight to the right surface after saving.
   const [tab, setTab] = useState('teach')
   // Collapsed "what's on this page" tip. Folded into a tiny ℹ️ button next to
   // Chef TV in the header — keeps the body focused on tabs + content, but
@@ -302,6 +303,21 @@ export default function PlaybookPage() {
       setUser(session.user)
       loadAll(session.user.id).finally(() => setLoading(false))
     })
+  }, [])
+
+  // Deep-link `?tab=<key>` support. /chef appends this to its
+  // "📘 View in Playbook →" exit cue after a save so the user lands
+  // on the right surface (chef_recipes after a recipe save,
+  // chef_notes after an answer save). Unknown values fall back to
+  // the Teach default. Read once on mount; subsequent tab changes
+  // are local state only (no URL sync — refresh shouldn't surprise
+  // the user back to a stale link).
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const t = new URLSearchParams(window.location.search).get('tab')
+    if (t && ['teach', 'practice', 'chef_recipes', 'chef_notes'].includes(t)) {
+      setTab(t)
+    }
   }, [])
 
   const byBucket = Object.fromEntries(BUCKETS.map(b => [b.key, []]))

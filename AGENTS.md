@@ -344,6 +344,10 @@ The visual order is locked **Teach first, Practice second** across every surface
 
 **Save state per message.** Saved messages are tracked by `keyFor(msg)` = `${mode}:${question}` so the same question asked in both modes (or asked twice) is dedupe-able and survives across messages without index churn.
 
+**Post-save exit cue — "📘 View in Playbook →" (April 2026).** Originally, after a save the page just sat there: toast briefly appeared, the save button greyed out, and that was it — Bill flagged it ("the page stays after save need to go back to get out"). Once `saved === true`, the save row now also renders a prominent "📘 View in Playbook →" link next to the greyed button, deep-linked to the right Playbook tab via the `?tab=` query param: `/playbook?tab=chef_recipes` for Practice-mode recipe saves (orange button to match Practice's brand color), `/playbook?tab=chef_notes` for Teach-mode answer saves (amber button to match Notes). Symmetric fix on both save rows in `app/chef/page.js`. The link is opt-in navigation, not a redirect — users who want to ask another question can still type into the input bar and stay on `/chef`.
+
+**Playbook `?tab=` deep-link.** `app/playbook/page.js` reads `?tab=<key>` on mount via a `useEffect` that runs once after the auth gate. Valid keys: `'teach' | 'practice' | 'chef_recipes' | 'chef_notes'`. Anything else is ignored and the default ('teach') stands. Tab changes inside Playbook are local-state only and don't sync back to the URL — refreshing the page after navigating tabs returns the user to the linked tab, which matches the "I came here from a save, refresh shouldn't take me somewhere else" intuition.
+
 **Phase 2A.1 — Teaching loop (Teach assigns homework, Practice is the lab).** Bill's reframe after using Phase 2A: *"Practice becomes like homework — teach topics, ask questions, homework go practice."* Teach was answering, but the answers didn't *go* anywhere — the user finished a lesson and the app didn't pick a next step for them. Phase 2A.1 wires the two modes together as a single teaching loop instead of leaving them as parallel tabs.
 
 The system prompt on `/api/chef` is now a 3-step loop:
