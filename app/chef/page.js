@@ -357,7 +357,7 @@ export default function ChefPage() {
                 <p className="text-gray-600 text-base mt-1 leading-snug max-w-md mx-auto">
                   {isPractice
                     ? 'Tell Chef Jennifer what to make — or come from 🎓 Teach to practice what you just learned.'
-                    : 'Ask anything kitchen. Chef Jennifer teaches, then assigns homework you can cook in 🍳 Practice.'}
+                    : 'You\u2019re in the classroom with your chef — ask your question, learn the skill, then head to 🍳 Practice for your homework.'}
                 </p>
               </div>
               <div className="space-y-2">
