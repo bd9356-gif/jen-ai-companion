@@ -520,6 +520,9 @@ export default function VideosPage() {
     ? afterFilter.slice(0, FEATURED_CAP)
     : afterFilter
 
+  // Used by the ℹ️ About panel — total real (non-Shorts) videos in the
+  // library so visitors can see the catalog size at a glance.
+  const totalNonShort = videos.filter(v => !isShort(v.duration)).length
   const visible = filtered.slice(0, showCount)
   const hasMore = filtered.length > showCount
 
