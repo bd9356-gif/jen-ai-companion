@@ -68,19 +68,6 @@ export default function ChefPage() {
     })
   }, [])
 
-  // Read ?mode= once on mount so deep-links from MyKitchen's split
-  // Chef Jennifer tiles land on the right mode. Valid values:
-  // 'teach' | 'practice'. Anything else is ignored — the default
-  // ('teach') stands. Mode changes inside the page are local state
-  // only and don't sync back to the URL, matching the Playbook /
-  // Chef TV ?tab= pattern.
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const m = params.get('mode')
-    if (m === 'teach' || m === 'practice') setMode(m)
-  }, [])
-
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])

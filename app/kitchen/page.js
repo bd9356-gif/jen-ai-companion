@@ -60,17 +60,18 @@ async function seedStarterRecipesOnce(user) {
      Cooking Life       — what the user does in the kitchen.
      Learning Journey   — how the user gets better at it.
 
-   Inside Learning Journey, both classrooms (Chef Jennifer + Chef
-   TV) are split into 🎓 Teach and 🍳 Practice tiles, so the hub
-   surfaces all four "classroom sides" at once. Chef Jennifer
-   leads — she's the AI instructor and the most personal teaching
-   surface — followed by Chef TV (video instructor), the library
-   (Guides), and the practice book (My Playbook). Splitting both
-   classrooms keeps the symmetry: every teacher has a Teach side
-   (instruction) and a Practice side (cooking), and the hub
-   reflects that. The four tiles deep-link via ?mode= (Chef
-   Jennifer) and ?tab= (Chef TV); the underlying pages read the
-   param once on mount and land the user on the right side.
+   Inside Learning Journey, Chef Jennifer leads. She's the AI
+   instructor — the most personal teaching surface in the app —
+   so she's the first thing a user sees in the learning column.
+   Chef TV (video classroom) follows her — split into two tiles,
+   one per mode (🎓 Teach for techniques, 🍳 Practice for
+   recipes) — then the library (Guides), then the practice book
+   (My Playbook). Splitting Chef TV is honest: unlike Chef
+   Jennifer (who flexes between modes through conversation),
+   Chef TV is a fixed library where you're either browsing
+   techniques or browsing recipes — committing to a side at the
+   hub gets the user there in one tap. The two tiles deep-link
+   into /videos via ?tab=teach and ?tab=practice.
 
    Routing note:
    All tiles route to dedicated pages. The /picks combined view
@@ -101,8 +102,7 @@ const SECTIONS = [
     name: 'Learning Journey',
     subtitle: 'Your classrooms, your library, your practice book.',
     items: [
-      { emoji: '🎓',   title: 'Chef Jennifer — Teach',           description: 'Ask anything kitchen.',        href: '/chef?mode=teach' },
-      { emoji: '🍳',   title: 'Chef Jennifer — Practice',        description: 'A recipe, made for you.',      href: '/chef?mode=practice' },
+      { emoji: '👨‍🍳', title: 'Chef Jennifer — Your Instructor', description: 'Your AI cooking teacher.',    href: '/chef' },
       { emoji: '🎓',   title: 'Chef TV — Teach',                 description: 'Lessons to watch and learn.', href: '/videos?tab=teach' },
       { emoji: '🍳',   title: 'Chef TV — Practice',              description: 'Recipes to watch and cook.',  href: '/videos?tab=practice' },
       { emoji: '📚',   title: 'Guides — Your Library',           description: 'Knife skills, subs, safety.', href: '/guides' },
