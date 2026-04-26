@@ -80,17 +80,37 @@ export default function ChefPage() {
     return `${msg.mode}:${msg.question || ''}`
   }
 
-  async function sendMessage(text) {
+  // Parse "🎯 Practice this: <text>" out of a Learn-mode response.
+  // The system prompt instructs Claude to end with this exact format when
+  // the topic has a natural cooking exercise. We strip the line from the
+  // prose body so we can render it as a styled "homework" chip and offer
+  // a `❤️ Practice in Love →` handoff button below the bubble.
+  function parsePractice(content) {
+    if (!content) return { prose: '', practice: null }
+    const m = content.match(/🎯\s*Practice this:\s*([^\n]+?)\s*$/m)
+    if (!m) return { prose: content, practice: null }
+    const prose = content.replace(m[0], '').trimEnd()
+    return { prose, practice: m[1].trim() }
+  }
+
+  async function sendMessage(text, modeOverride = null) {
     const trimmed = text.trim()
     if (!trimmed || loading) return
-    const userMsg = { role: 'user', content: trimmed, mode }
+    // Allow callers (the Practice button) to switch mode and send in one
+    // step. State updates are queued, so we use the local `useMode` value
+    // throughout this fn rather than reading `mode` from state mid-flight.
+    const useMode = modeOverride || mode
+    if (modeOverride && modeOverride !== mode) {
+      setMode(modeOverride)
+    }
+    const userMsg = { role: 'user', content: trimmed, mode: useMode }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setInput('')
     setLoading(true)
 
     try {
-      if (mode === 'love') {
+      if (useMode === 'love') {
         // Love: free-text → recipe JSON. The /api/topchef route appends
         // the JSON-shape instruction onto whatever prompt we pass, so the
         // wrapper here just clarifies "this is a request for a recipe".
@@ -128,7 +148,7 @@ export default function ChefPage() {
     } catch {
       setMessages([...newMessages, {
         role: 'assistant',
-        mode,
+        mode: useMode,
         content: 'Sorry, something went wrong. Please try again.',
         error: true,
       }])
@@ -237,7 +257,9 @@ export default function ChefPage() {
             </button>
           </div>
           <p className="text-[11px] text-gray-400 mt-1.5 text-center">
-            {isLove ? '❤️ Love — Chef Jennifer makes you a recipe.' : '🎓 Learn — Chef Jennifer answers your kitchen questions.'}
+            {isLove
+              ? '❤️ Love — the kitchen lab. Cook a recipe, practice the lesson.'
+              : '🎓 Learn — Chef Jennifer teaches, then assigns homework you can cook in Love.'}
           </p>
         </div>
       </header>
@@ -255,8 +277,8 @@ export default function ChefPage() {
                 </p>
                 <p className="text-gray-400 text-sm mt-1">
                   {isLove
-                    ? 'Describe a meal, mood, or what\'s in the fridge — Chef Jennifer will write a recipe.'
-                    : 'Substitutions, techniques, food safety, "what does X mean" — anything kitchen.'}
+                    ? 'Tell Chef Jennifer what to make — or come here from 🎓 Learn to practice what you just learned.'
+                    : 'Ask anything kitchen. When the topic has a natural exercise, Chef Jennifer will assign a recipe to practice.'}
                 </p>
               </div>
               <p className="text-xs text-gray-400 text-center uppercase tracking-wider font-semibold">Try one of these</p>
@@ -297,15 +319,25 @@ export default function ChefPage() {
               return <RecipeMessage key={i} msg={msg} saved={saved} onSave={() => saveRecipe(msg)} />
             }
 
+            // Learn-mode prose bubble. Parse out the "🎯 Practice this:" line
+            // (when present) and render it as a styled homework chip + a
+            // ❤️ Practice in Love → handoff button below the save button.
+            const { prose, practice } = parsePractice(msg.content)
             return (
               <div key={i} className="flex justify-start">
                 <div className="w-full max-w-[95%]">
                   <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
                     <p className="text-xs text-gray-500 font-semibold mb-1">🎓 Chef Jennifer</p>
-                    {msg.content}
+                    {prose}
+                    {practice && (
+                      <div className="mt-3 pt-3 border-t border-gray-300/70">
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-700 leading-snug">🎯 Homework — Practice this</p>
+                        <p className="text-sm text-gray-800 leading-snug mt-1">{practice}</p>
+                      </div>
+                    )}
                   </div>
                   {msg.question && !msg.error && (
-                    <div className="flex gap-2 mt-2 ml-1">
+                    <div className="flex gap-2 mt-2 ml-1 flex-wrap">
                       <button
                         onClick={() => saveAnswer(msg)}
                         disabled={saved}
@@ -316,6 +348,14 @@ export default function ChefPage() {
                         }`}>
                         {saved ? '✓ Saved to Chef Notes' : '📝 Save to Chef Notes'}
                       </button>
+                      {practice && !loading && (
+                        <button
+                          onClick={() => sendMessage(practice, 'love')}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
+                        >
+                          ❤️ Practice in Love →
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

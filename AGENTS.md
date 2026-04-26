@@ -324,6 +324,33 @@ Tables referenced in the app:
 
 **Save state per message.** Saved messages are tracked by `keyFor(msg)` = `${mode}:${question}` so the same question asked in both modes (or asked twice) is dedupe-able and survives across messages without index churn.
 
+**Phase 2A.1 — Teaching loop (Learn assigns homework, Love is the lab).** Bill's reframe after using Phase 2A: *"Love becomes like homework — teach topics, ask questions, homework go practice."* Learn was answering, but the answers didn't *go* anywhere — the user finished a lesson and the app didn't pick a next step for them. Phase 2A.1 wires the two modes together as a single teaching loop instead of leaving them as parallel tabs.
+
+The system prompt on `/api/chef` is now a 3-step loop:
+1. **Teach.** Lead with the answer, then a short "why" so the user learns the principle.
+2. **Check or invite.** When natural, one small follow-up question — never multiple.
+3. **Assign practice (homework).** When the topic has a natural cooking exercise, end the message with EXACTLY this format on its own line, last thing in the message:
+
+   ```
+   🎯 Practice this: <one-line cooking idea phrased as something a home cook could request as a recipe>
+   ```
+
+   The marker is intentionally a single-line, predictable format so the page can parse it deterministically. Skip the marker entirely when the topic has no natural cooking exercise (food storage / shelf life, equipment FAQs, "what does this term mean", quick conversions) — homework on those topics would feel forced.
+
+`/chef/page.js` parses the marker via `parsePractice(content)`:
+
+```js
+const m = content.match(/🎯\s*Practice this:\s*([^\n]+?)\s*$/m)
+```
+
+The regex captures the practice text and strips the whole marker line from the prose. The Learn-mode renderer shows `prose` in the gray bubble, then — when `practice` is non-null — appends a styled chip inside the same bubble: a top divider, a small rose-700 uppercase "🎯 Homework — Practice this" label, and the practice text below it. So the homework reads as part of Chef Jennifer's answer, not a separate UI element.
+
+Below the bubble (next to the existing "📝 Save to Chef Notes" button) a second button — **❤️ Practice in Love →** — appears whenever `practice` is non-null and the message isn't still loading. Tapping it calls `sendMessage(practice, 'love')` which switches mode to Love AND sends the practice line as the next user message in one tap. The full recipe lands in the Love bubble immediately, and the user can save it to Chef Jennifer Recipes from there.
+
+**modeOverride / useMode.** `sendMessage(text, modeOverride = null)` accepts an optional second argument that takes precedence over the current `mode` state for the duration of that call. The function reads a local `useMode = modeOverride || mode` and uses it for both the user-message tag and the API-route branch. If `modeOverride` differs from `mode` it also fires `setMode(modeOverride)` so the UI catches up. This avoids a React state race — without the override, calling `setMode('love')` then `sendMessage(practice)` in the same handler would still see the old `mode` value because the state update hasn't flushed yet.
+
+**Empty-state and mode-pill copy reflect the loop.** Love empty-state subline: *"Tell Chef Jennifer what to make — or come here from 🎓 Learn to practice what you just learned."* Love mode pill: *"❤️ Love — the kitchen lab. Cook a recipe, practice the lesson."* Learn empty-state subline: *"Ask anything kitchen. When the topic has a natural exercise, Chef Jennifer will assign a recipe to practice."* Learn mode pill: *"🎓 Learn — Chef Jennifer teaches, then assigns homework you can cook in Love."* The two surfaces explicitly reference each other so the loop reads as one experience.
+
 **Models.** Both `/api/chef` and `/api/topchef` use `claude-haiku-4-5-20251001`.
 
 **Phase 2B (next).** A library-awareness layer (RAG-ish) for Learn mode: keyword search across `recipe_articles`, `cooking_videos`+`video_metadata`, and `personal_recipes`. High-confidence matches feed Claude's context with a "only cite when you actually used this" rule, and citations render as 📚/🎬/🔐 chips inline with the answer. Phase 2C is polish + threshold tuning.
