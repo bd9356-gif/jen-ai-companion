@@ -97,6 +97,20 @@ export default function GuidesPage() {
 
   useEffect(() => {
     let cancelled = false
+    // Phase 2C — Chef Jennifer's 📚 article chips deep-link here via
+    // `?article=<id>`. We grab the id once on mount, then after the
+    // articles load we expand its topic, mark it open, and scroll it
+    // into view. If the id doesn't match any article (deleted, typo,
+    // bookmarked-then-removed) we just fall through to the default
+    // collapsed-Library view — no error UI, no toast.
+    const targetArticleId = (() => {
+      if (typeof window === 'undefined') return null
+      try {
+        return new URLSearchParams(window.location.search).get('article')
+      } catch {
+        return null
+      }
+    })()
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (cancelled) return
@@ -109,7 +123,22 @@ export default function GuidesPage() {
       if (!error && data) {
         setArticles(data)
         // All sections collapsed on first open — Library look, scan-first.
-        setCollapsedTopics(new Set(data.map(a => a.topic)))
+        const allTopics = new Set(data.map(a => a.topic))
+        const target = targetArticleId
+          ? data.find(a => a.id === targetArticleId)
+          : null
+        if (target) {
+          // Expand the target's topic + open the article.
+          allTopics.delete(target.topic)
+          setOpenArticleId(target.id)
+          // Defer scroll until after the section renders.
+          setTimeout(() => {
+            if (cancelled) return
+            const el = document.getElementById(`article-${target.id}`)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 80)
+        }
+        setCollapsedTopics(allTopics)
       }
       setLoading(false)
     }
@@ -207,7 +236,8 @@ export default function GuidesPage() {
                         return (
                           <div
                             key={article.id}
-                            className="border border-gray-200 rounded-xl bg-white"
+                            id={`article-${article.id}`}
+                            className="border border-gray-200 rounded-xl bg-white scroll-mt-24"
                           >
                             <button
                               onClick={() => setOpenArticleId(isOpen ? null : article.id)}

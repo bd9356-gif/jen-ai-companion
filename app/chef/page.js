@@ -565,7 +565,7 @@ function CitationChip({ type, item }) {
   if (type === 'article') {
     emoji = '📚'
     classes = 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-    href = '/guides'
+    href = item?.id ? `/guides?article=${item.id}` : '/guides'
   } else if (type === 'video') {
     emoji = '🎬'
     classes = 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
