@@ -539,16 +539,22 @@ export default function VideosPage() {
               Jennifer's mode pill exactly), and the ℹ️/🔍 utility
               buttons on the far right. The toggle's segmented-control
               styling reads as switching from one classroom room to the
-              other (Teach ↔ Practice), not as a filter on a list. */}
+              other (Teach ↔ Practice), not as a filter on a list.
+              Back button is just "←" (no "Back" word) and utility
+              buttons are smaller w-8 — the full-word back + larger
+              buttons clipped the title on iPhone (the toggle pushes
+              content left, leaving only ~40px for the title cluster
+              before things slid off the left edge). Same compact
+              pattern Chef Jennifer's header uses. */}
           <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600 shrink-0">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900 truncate">🎬 Chef TV</h1>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
+              <h1 className="text-base font-bold text-gray-900 truncate">🎬 Chef TV</h1>
             </div>
-            <div className="shrink-0 ml-auto flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+            <div className="shrink-0 flex bg-gray-100 rounded-full p-0.5 gap-0.5">
               <button
                 onClick={() => { setFilter('teach'); setShowCount(12); setTopic('featured') }}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
                   filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -556,7 +562,7 @@ export default function VideosPage() {
               </button>
               <button
                 onClick={() => { setFilter('practice'); setShowCount(12); setTopic('all') }}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
                   filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -567,7 +573,7 @@ export default function VideosPage() {
               <button
                 onClick={() => setShowAbout(s => !s)}
                 aria-label={showAbout ? 'Close about' : 'About Chef TV'}
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                   showAbout
                     ? 'bg-orange-600 text-white'
                     : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
@@ -578,7 +584,7 @@ export default function VideosPage() {
               <button
                 onClick={toggleSearch}
                 aria-label={showSearch ? 'Close search' : 'Open search'}
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                   showSearch || search
                     ? 'bg-orange-600 text-white'
                     : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
@@ -603,7 +609,7 @@ export default function VideosPage() {
             <p className="text-sm text-gray-600 leading-snug">
               {filter === 'teach'
                 ? "You're in the video room — watch skill videos, pick what you want to learn, and they'll save to your Playbook."
-                : "You're in the recipe room — watch a video, open the recipe, and save it. Anything you add to your Kitchen is also added to your Playbook."}
+                : "You're in the recipe room — watch a video, open the recipe, and save it to your Kitchen — it lands in your Playbook too."}
             </p>
           </div>
 
