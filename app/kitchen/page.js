@@ -46,19 +46,22 @@ async function seedStarterRecipesOnce(user) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   MyKitchen hub — 4 sections, 10 tiles.
+   MyKitchen hub — 3 sections, 9 tiles (April 2026 Cooking School).
    Every tile uses a unified orange left stripe (brand color)
    mirroring Golf's green-stripe pattern. Section headers group
    the tiles but don't change the tile styling — consistency
    across the whole hub.
 
+   Cooking School is the consolidated learn surface: Chef TV and
+   Chef Jennifer are the two classrooms (video instructor + AI
+   instructor), Guides is the library, My Playbook is the user's
+   notebook. Order matters: classrooms first, then library, then
+   notebook.
+
    Routing note:
-   All tiles now route to dedicated pages. The /picks combined view
-   is deprecated — its direct sections (Meal Plan, Shopping List,
-   Chef Notes, Chef Jennifer Recipes, Skills I Learned) live at
-   /meal-plan, /shopping-list, /chef-notes, /chef-recipes, and
-   /skills respectively. Old ?open= bookmarks still land on /picks
-   for back-compat until Phase 2C retires that page.
+   All tiles route to dedicated pages. The /picks combined view
+   was retired in Phase 2C; old ?open= bookmarks still redirect
+   from /picks for back-compat.
    ─────────────────────────────────────────────────────────── */
 const SECTIONS = [
   {
@@ -79,18 +82,13 @@ const SECTIONS = [
     ]
   },
   {
-    name: 'Learn',
-    subtitle: 'Build your cooking skills.',
+    name: 'Cooking School',
+    subtitle: 'Two classrooms, a library, and your notebook.',
     items: [
-      { emoji: '🎬', title: 'Chef TV',     description: 'Cooking videos, one tap away.', href: '/videos' },
-      { emoji: '📘', title: 'My Playbook', description: 'Saved videos + chef notes.',    href: '/playbook' },
-    ]
-  },
-  {
-    name: 'Chef Jennifer',
-    subtitle: 'Your personal AI chef.',
-    items: [
-      { emoji: '👨‍🍳', title: 'Chef Jennifer', description: 'Create a new recipe, tailored to you.', href: '/topchef' },
+      { emoji: '🎬',   title: 'Chef TV',        description: 'Cooking videos, one tap away.',         href: '/videos' },
+      { emoji: '👨‍🍳', title: 'Chef Jennifer',  description: 'Create a new recipe, tailored to you.', href: '/topchef' },
+      { emoji: '📚',   title: 'Guides',         description: 'Reference reading for the kitchen.',    href: '/guides' },
+      { emoji: '📘',   title: 'My Playbook',    description: 'Saved videos + chef notes.',            href: '/playbook' },
     ]
   },
 ]

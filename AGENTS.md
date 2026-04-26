@@ -34,14 +34,15 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | MyKitchen              | `/kitchen`    | The hub page. Everything routes from here.                          |
 | Recipe Vault           | `/secret`     | Your permanent, organized recipe collection.                        |
 | Recipe Cards           | `/cards`      | Card-style recipe browser (swipe / pick).                           |
-| Chef TV                | `/videos`     | Cooking videos (YouTube-backed).                                    |
-| My Playbook            | `/playbook`   | Saved videos (Love / Learn) + Chef Notes (saved AI answers).        |
+| Chef TV                | `/videos`     | Cooking videos (YouTube-backed). Cooking School classroom #1.       |
+| Chef Jennifer          | `/topchef`    | AI chef who generates recipes tailored to mood/meal/protein. Cooking School classroom #2. |
+| Guides                 | `/guides`     | The Library — curated reference articles by topic.                  |
+| My Playbook            | `/playbook`   | Saved videos (Love / Learn) + Chef Notes. Your Cooking School notebook. |
 | Ask Chef Jennifer      | `/chef`       | Free-form AI Q&A. Saves land in Chef Notes (on Playbook).           |
 | Chef Notes             | `/playbook`   | Saved AI answers — a section on Playbook. `/chef-notes` redirects.  |
 | Chef Jennifer Recipes  | `/chef-recipes` | Recipes Chef Jennifer made for you; save-to-vault from here.      |
 | Meal Plan              | `/meal-plan`  | 3 buckets of "what you're cooking soon".                            |
 | Shopping List          | `/shopping-list` | Ingredients grouped by store; AI cleanup / copy / print.         |
-| Chef Jennifer          | `/topchef`    | AI chef who generates recipes tailored to mood/meal/protein.        |
 
 All tiles route to dedicated pages. `/picks` is retired as of Phase 2C — it's now a thin server-side redirect that forwards `/picks` → `/kitchen` and old `?open=<key>` bookmarks to their new homes (see the **IA restructure roadmap** below).
 
@@ -58,12 +59,13 @@ The rollout is phased so no single commit drops a huge amount of unreviewed code
 - **Phase 2B (shipped, later pivoted).** Initially shipped Skills I Learned at `/skills` with six course-type buckets (📥 The Starter, 🍳 Breakfast, 🍽️ Mains, 🥕 Sides & Veg, 🥖 Baking, 🍰 Desserts). Bucket assignments live in `cooking_skill_items` (migration `supabase/002_cooking_skill_items.sql`). This was **retired in April 2026** — see "My Playbook pivot" below. `/skills` is now a server-side redirect to `/playbook`; the `cooking_skill_items` table was migrated via `supabase/003_playbook_buckets.sql` to use the new intent-based buckets (Save/Love/Cooked/Learn).
 - **Phase 2C (shipped).** Retire `/picks` entirely. `app/picks/page.js` is now a server-side redirect — it forwards the plain route to `/kitchen` and each of the five old `?open=<key>` bookmarks to the matching dedicated page (see "`/picks` redirect" below). The combined `/picks` UI (and its `loadAll` etc.) is gone; behavior that lived there now lives in `/meal-plan`, `/shopping-list`, `/chef-notes`, `/chef-recipes`, and `/playbook` (formerly `/skills`).
 - **Phase 3 (reverted, reopened).** First attempt folded `/cards` into `/secret` as a list/card view toggle — that was **wrong** (see "Recipe Cards concept" below). A Card is its own object, not a visual mode of a recipe. Reverted in commit `2e211bc`. Still to do: decide whether a separate `/cards` page is the right home going forward or if the Card concept lives as something else. Also still to decide whether to keep `/chef-recipes` as its own page or fold it into Recipe Vault as a filter — picking once there's usage signal.
+- **Phase 4 — Cooking School (April 2026, shipped).** Bill's framing after using the app deeply: Chef Jennifer has been sitting in her own MyKitchen section as a recipe generator, but she's *also* the AI instructor — she belongs *inside* Learn, not next to it. Renamed Learn to **Cooking School** and folded Chef Jennifer in as the second classroom. Added **Guides** (the Library) as a new tile, mirroring Golf's `/guides`. Final structure: 3 sections / 9 tiles. Cooking School order is fixed: Chef TV → Chef Jennifer → Guides → My Playbook ("two classrooms, a library, and your notebook"). Phased rollout — 1A added the `/guides` page + `recipe_articles` table without wiring (so it could land alone), 1B seeded 12 starter articles (2 per topic), 1C did the MyKitchen 4→3 restructure + Guides tile + this AGENTS.md update.
 
 Phase 2 did not do a naming sweep of downstream pages — Ask Chef Anything still says "Ask Chef Anything" in places, for example. Those get swept as each page is touched in later phases.
 
 ## Kitchen navigation sections
 
-These live in `app/kitchen/page.js`. MyKitchen is **4 sections and 9 tiles** total. All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern. No dash subtitles; each tile shows `title` (bold) + `description` (truncated one-liner).
+These live in `app/kitchen/page.js`. MyKitchen is **3 sections and 9 tiles** total (after the April 2026 Cooking School pivot). All tiles use a unified **orange left stripe** (brand color) — `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — mirroring Golf's green-stripe Clubhouse pattern. No dash subtitles; each tile shows `title` (bold) + `description` (truncated one-liner).
 
 Section headers are small orange uppercase labels with a one-line section subtitle below, followed by the section's tiles.
 
@@ -78,12 +80,13 @@ Section headers are small orange uppercase labels with a one-line section subtit
    - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
-3. **Learn** — "Build your cooking skills." Chef TV is the source for cooking videos; My Playbook is the single destination for *everything* the user has saved — videos from Chef TV (organized into Love / Learn buckets) plus Chef Notes (saved AI answers from Ask Chef Jennifer). Consolidating to one Playbook page (April 2026) meant dropping the standalone Chef Notes tile: there's one "stuff I've saved" page now, not two.
-   - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away." **Source.**
-   - 📘 My Playbook → `/playbook` — "Saved videos + chef notes." **Destination for all saves.**
+3. **Cooking School** — "Two classrooms, a library, and your notebook." Chef TV is the video classroom (source for cooking videos), Chef Jennifer is the AI classroom (creates recipes on demand and answers any question via `/chef`), Guides is the Library (curated reference articles), and My Playbook is the user's notebook (saved videos in Love/Learn buckets + Chef Notes from `/chef`). Order matters — classrooms first so the user is steered into *learning* before the personal-saves surface, then the library, then their own notes.
+   - 🎬 Chef TV → `/videos` — "Cooking videos, one tap away." **Classroom #1 — video instructor.**
+   - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you." **Classroom #2 — AI instructor.**
+   - 📚 Guides → `/guides` — "Reference reading for the kitchen." **The Library.**
+   - 📘 My Playbook → `/playbook` — "Saved videos + chef notes." **The user's notebook — destination for all saves.**
 
-4. **Chef Jennifer** — "Your personal AI chef."
-   - 👨‍🍳 Chef Jennifer → `/topchef` — "Create a new recipe, tailored to you."
+The standalone "Chef Jennifer" section that used to live as section 4 is gone — Chef Jennifer is no longer "the AI section beside Learn," she's *part of* the school. This is the single most important framing of the April 2026 pivot: tile placement encodes that the AI is an instructor, not a separate product.
 
 ### `/picks` redirect
 
@@ -167,6 +170,51 @@ All migrations are idempotent — safe to re-run.
 `loadAll` fetches the three video source tables + `cooking_skill_items` + AI-answer favorites in parallel and merges them. If the same underlying video exists in both legacy (`saved_videos`) and new (`favorites`) form, the legacy row wins (dedupe by `_item_type:_item_id`). Each video row renders via `<VideoItem>` plus a single "Move to {other bucket}" button — with only 2 buckets, the target is unambiguous and there's no submenu. Moving upserts into `cooking_skill_items`; removing deletes from the source table AND the `cooking_skill_items` row. Moving an item **auto-switches the active tab** to the destination so the user sees where it went. A slate callout above the tabs explains each surface in one sentence.
 
 **Back-compat.** `/skills` and `/chef-notes` are server-side `redirect()` routes → `/playbook`. Old bookmarks survive.
+
+## Guides — the Library (`/guides`)
+
+The third Cooking School surface, alongside Chef TV (video classroom) and Chef Jennifer (AI classroom). Guides is **the Library** — curated, hand-edited reference articles that stay put. The page tagline reads "The Library / Reference reading for everything in the kitchen." Mirrors Golf's `/guides` layout intentionally — same accordion-by-topic shape so the muscle memory transfers between MyCompanionApps products.
+
+### Topic taxonomy (locked at 6)
+
+| Key             | Label                  | Icon | Stripe color |
+| --------------- | ---------------------- | ---- | ------------ |
+| `knife_skills`  | Knife Skills           | 🔪   | red          |
+| `techniques`    | Techniques             | 🥘   | orange       |
+| `cooking_times` | Cooking Times & Heat   | ⏱️   | amber        |
+| `pantry`        | Pantry & Substitutions | 🥫   | emerald      |
+| `safety`        | Safety & Storage       | 🛡️   | sky          |
+| `equipment`     | Equipment              | 🧰   | stone        |
+
+Adding a 7th topic later requires bumping the CHECK constraint in `supabase/007_recipe_articles.sql`. Six was deliberate — same logic as Golf's six skill topics: enough breadth to cover the kitchen, few enough to fit on one mobile screen as collapsed accordions.
+
+### Page behavior
+
+- All sections start **collapsed** on first open. Tap a header to expand. Inside an expanded section, articles also start collapsed; tap an article row to read it inline. Two-level accordion, scan-first design — same pattern as Golf's `/guides`.
+- Per-topic color appears on the **outer left stripe** (`border-l-8`), the section header background when open, the title text, the count pill, and a soft body tint. All Tailwind classes are written as complete literal strings in `TOPIC_COLORS` so v4's JIT scanner picks them up — no dynamic concat.
+- Header: `← Back` (returns to MyKitchen), `📚 Guides` + count pill, and a `Chef TV` shortcut on the right (the most likely cross-link).
+- Empty state: "📚 The library is being stocked." — only shown if `recipe_articles` is empty (which should never happen post-008 seed).
+
+### Markdown renderer (v1)
+
+`renderMarkdown(text)` in `app/guides/page.js` handles the minimal subset:
+
+- `## Header` → `<h2>` with article-level styling
+- `**bold**` → `<strong>`
+- `\n\n` → paragraph break (`</p><p class="mb-4">`)
+- `\n` → `<br/>`
+
+The whole string is wrapped in `<p class="mb-4">…</p>` at render time. **Lists, links, blockquotes, and code blocks are NOT supported in v1.** Bullet lines authored as `- **Term**: definition` still render readably (the dash carries the visual, the bold survives, line breaks via `<br/>`). When we want real `<ul>/<li>`, upgrade the renderer; don't try to fake it with HTML in the article body.
+
+### Data model
+
+- **Table:** `recipe_articles` (id uuid, title text, summary text, content text, topic text, read_time_minutes int, created_at timestamptz). Migration `supabase/007_recipe_articles.sql` — idempotent, includes the 6-topic CHECK, indexes on topic + created_at desc, RLS read-only for authenticated.
+- **Writes:** the app never inserts directly. Articles are added via service-role-keyed migrations (`supabase/008_seed_recipe_articles.sql` is the initial seed of 12 starter articles, 2 per topic). Future article additions ship as additional `0NN_*.sql` migrations. Editing an existing article ships as an `UPDATE` migration, not by mutating the original seed.
+- **Idempotency on the seed:** 008 adds a unique index on `title` and uses `ON CONFLICT (title) DO NOTHING`, so re-running the seed is a no-op once the rows exist.
+
+### Why Guides exists separately from Chef Jennifer
+
+Chef Jennifer answers questions on demand and creates recipes — she's *generative*. Guides is *curated reference* — the stuff we want every cook to know that doesn't change. When a user asks "how long does pork last in the fridge?" Chef Jennifer can answer, but the user gets a better experience reading the curated leftovers article once and remembering it. Guides is the *durable* learning surface; Chef Jennifer is the *immediate* one. Both belong in Cooking School.
 
 ## Meal Plan buckets (`/meal-plan`)
 
@@ -252,6 +300,7 @@ Tables referenced in the app:
 - **`video_metadata`** — `id, video_id, ingredients (jsonb[]), instructions` — populated by ingestion scripts.
 - **`cooking_skill_items`** — `id, user_id, item_type, item_id, bucket ('save'|'love'|'learn'), created_at, updated_at` — Playbook bucket placement for saved videos. Unique on `(user_id, item_type, item_id)`. RLS scoped to owner. Migration trail: `002_cooking_skill_items.sql` → `003_playbook_buckets.sql` → `004_playbook_3buckets.sql`.
 - **`loved_recipe_urls`** — `id, user_id, favorite_id (fk → favorites, cascade), video_id, youtube_id, youtube_url, title, channel, created_at` — Love+recipe ingestion signal capture. Unique on `(user_id, favorite_id)`. RLS scoped to owner. Written from `/videos` when user hits ❤️ Love on a video with ingredients; deleted when they move away from Love. Not surfaced in the UI — for curation/ingestion pipeline only. Migration: `supabase/005_loved_recipe_urls.sql`.
+- **`recipe_articles`** — `id, title, summary, content, topic ('knife_skills'|'techniques'|'cooking_times'|'pantry'|'safety'|'equipment'), read_time_minutes, created_at` — global content for the Guides Library. RLS read for any authenticated user; writes go through the service role only (the app never inserts directly). Indexes on topic + created_at desc. Unique index on title (added by 008) so the seed migration is idempotent. Migrations: `supabase/007_recipe_articles.sql` (table + RLS), `supabase/008_seed_recipe_articles.sql` (12 starter articles).
 
 ## Chef Jennifer "Make my recipe more..." preferences
 
@@ -399,7 +448,8 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 The canonical names in use across the app are:
 
 - **MyKitchen** (`/kitchen`) — the one "My" we keep for the hub. Every other tile has a simple, direct name.
-- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Jennifer Recipes** (`/chef-recipes`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **My Playbook** (`/playbook`) — simplified, no "My" prefix except Playbook (which keeps it because it's the personal saves surface and it mirrors Golf's "MyBag"). **Chef Notes** is still a concept name but lives inside `/playbook` as a section, not its own route (`/chef-notes` redirects to `/playbook`).
+- **Cooking School** is a *section name on MyKitchen*, not a route. It groups Chef TV + Chef Jennifer + Guides + My Playbook and frames them as one connected learning experience ("two classrooms, a library, and your notebook"). There is no `/cooking-school` URL and there shouldn't be — the hub already does the framing.
+- **Recipe Vault** (`/secret`), **Recipe Cards** (`/cards`), **Chef TV** (`/videos`), **Chef Jennifer** (`/topchef`), **Ask Chef Jennifer** (`/chef`), **Chef Jennifer Recipes** (`/chef-recipes`), **Guides** (`/guides`), **Meal Plan** (`/meal-plan`), **Shopping List** (`/shopping-list`), **My Playbook** (`/playbook`) — simplified, no "My" prefix except Playbook (which keeps it because it's the personal saves surface and it mirrors Golf's "MyBag"). **Chef Notes** is still a concept name but lives inside `/playbook` as a section, not its own route (`/chef-notes` redirects to `/playbook`). **The Library** is the in-page tagline for `/guides` (header H2), not the route name.
 - Brand name in titles, meta, headers, and copy is **MyRecipe Companion**. (We briefly tried "Recipe AI Companion" and reverted — the "My" prefix matches the MyCompanionApps family and reads more personal. Short-name/PWA label is **MyRecipe**.)
 - `MyCooking` / `MyPlan` (the old combined `/picks` page) was retired in Phase 2C. Its sections now live at dedicated routes; `/picks` is a thin server-side redirect (see "`/picks` redirect" above). Save-button labels across the app were updated in the follow-up Phase 2C.1 sweep — "Save to MyCooking" now reads "Save to Chef Jennifer Recipes" on `/topchef`, "Save to Chef Notes" on `/chef`, "Meal Plan" on `/cards` and `/secret`, and the landing/about/notes tiles were retitled "Meal Plan". The single heart-save on Chef TV evolved from the 4-button My Playbook strip to a 3-button strip (Save/Love/Learn) and finally to a single contextual button (Love for recipe videos, Learn for video-only) — see "My Playbook" above.
 
