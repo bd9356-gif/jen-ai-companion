@@ -11,18 +11,27 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// My Playbook — two intent-based buckets for saved videos plus two AI
-// content sections (Chef Recipes + Chef Notes). Everything you've saved
-// in one place.
+// My Playbook — your notebook from two classrooms with two teachers.
+// Each teacher has the same two modes (🎓 Teach + 🍳 Practice), and
+// the page nav reflects that: two stacked pill rows, one per teacher,
+// with the same two pills inside each. Repeating "Teach"/"Practice"
+// is fine because the row label tells you which classroom you're in.
 //
-//   teach          🎓  Videos that teach you a technique.   (technique / video-only)
-//   practice       🍳  Recipes you want to cook.            (recipe-bearing videos)
-//   chef_recipes   ✨  Recipes Chef Jennifer made for you.  (favorites.type='ai_recipe')
-//   chef_notes     📝  Saved answers from Chef Jennifer.    (favorites.type='ai_answer')
+//                | 🎓 Teach (learn-it) | 🍳 Practice (cook-it) |
+//   Chef Jen     | chef_notes (amber)  | chef_recipes (rose)   |
+//   Chef TV      | teach (sky)         | practice (orange)     |
 //
-// Order is locked Teach → Practice everywhere — same vocabulary as
-// Chef TV's filter tabs and Chef Jennifer's mode pills, so the same two
-// words mean the same two things across the app.
+// Tab keys stay the same as before (`teach` / `practice` for Chef TV
+// videos, `chef_notes` / `chef_recipes` for Chef Jen saves) so
+// `?tab=<key>` deep-links from /chef still work — only the visual
+// grouping moved. Same Teach/Practice vocabulary as Chef TV's filter
+// tabs and Chef Jennifer's mode pills, so the same two words mean
+// the same two things across the app.
+//
+// Order: Chef Jen first (top), Chef TV second (below). She's the AI
+// instructor — leads in Learning Journey on MyKitchen, leads in this
+// page nav, and the default landing tab (chef_notes = her Teach
+// surface) so saves from /chef land somewhere familiar.
 //
 // Pivot history (April 2026):
 //   - Skills I Learned had 6 course-type buckets (mig 002).
@@ -102,11 +111,14 @@ export default function PlaybookPage() {
   const [recipes, setRecipes] = useState([])      // ai_recipe favorites
   const [notes, setNotes] = useState([])          // ai_answer favorites
   // Active tab: 'teach' | 'practice' | 'chef_recipes' | 'chef_notes'.
-  // Default to Teach so the page leads with the instruction-side that
-  // pairs with Chef Jennifer — same first-tab default as the rest of
-  // the app. Deep-linkable via `?tab=<key>` so /chef can hand off
+  // Default to chef_notes — the top-left cell in the 2×2 (Chef Jen's
+  // Teach surface). Two reasons: (1) Jen leads in Learning Journey,
+  // so her Teach side reads as the natural landing, and (2) saves
+  // from /chef Teach mode deep-link to chef_notes anyway, so an
+  // untracked entry to /playbook lands on the same surface a fresh
+  // save would. Deep-linkable via `?tab=<key>` so /chef can hand off
   // the user straight to the right surface after saving.
-  const [tab, setTab] = useState('teach')
+  const [tab, setTab] = useState('chef_notes')
   // Collapsed "what's on this page" tip. Folded into a tiny ℹ️ button next to
   // Chef TV in the header — keeps the body focused on tabs + content, but
   // the explainer is one tap away when needed.
@@ -363,36 +375,32 @@ export default function PlaybookPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-        {/* Heading tagline — joinery arrows tie the four save surfaces
-            into a single habit: learn (Teach), cook from videos (Practice),
-            cook from Chef Jennifer (Chef Recipes), save what you learned
-            (Notes). Bigger type than before so it reads as a page title,
-            not a caption. */}
+        {/* Heading tagline — names the two-classroom framing. Each
+            teacher has both 🎓 Teach and 🍳 Practice; the row labels
+            below tell you which classroom each pair belongs to. */}
         <div className="text-center px-2 mb-6">
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
             Everything you&rsquo;ve saved
           </p>
-          <p className="text-sm text-gray-500 mt-2">Videos, chef recipes, and chef notes &mdash; all in one place.</p>
+          <p className="text-sm text-gray-500 mt-2">Your notebook from Chef Jennifer&rsquo;s classroom and Chef TV&rsquo;s.</p>
         </div>
 
-        {/* Intro callout — full sentences per surface, Bill's exact wording.
-            Keeps the four saves conceptually separate so users know where
-            each kind of thing lives. Collapsed by default and opened via
-            the ℹ️ toggle next to Chef TV in the header so the body stays
-            focused on tabs + content; the explainer is one tap away. */}
+        {/* Intro callout — explains the two-classroom framing. Each
+            teacher has both modes (🎓 Teach + 🍳 Practice); the rows
+            below labeled with the teacher's name tell you which
+            classroom each pair belongs to. Collapsed by default and
+            opened via the ℹ️ toggle next to Chef TV in the header so
+            the body stays focused on tabs + content. */}
         {showAbout && (
-          <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-2">
+          <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-3">
             <p className="text-sm text-slate-900 leading-relaxed">
-              🎓 <span className="font-bold">Teach</span> is where you keep the videos that teach you a technique.
+              You have two cooking teachers, and a notebook for each. Both teachers have a 🎓 <span className="font-bold">Teach</span> side and a 🍳 <span className="font-bold">Practice</span> side &mdash; the row label tells you which classroom you&rsquo;re in.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              🍳 <span className="font-bold">Practice</span> is where you keep the recipes you want to cook.
+              👨‍🍳 <span className="font-bold">Chef Jennifer</span> is your AI instructor. Save the answers she teaches you (🎓 Teach) and the recipes she cooks up for you (🍳 Practice).
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              ✨ <span className="font-bold">Chef Recipes</span> is where you keep the recipes Chef Jennifer made for you.
-            </p>
-            <p className="text-sm text-slate-900 leading-relaxed">
-              📝 <span className="font-bold">Chef Notes</span> is where you save the answers and guidance you get from Chef Jennifer.
+              🎬 <span className="font-bold">Chef TV</span> is your video instructor. Save the technique videos that teach you (🎓 Teach) and the recipe videos you want to cook (🍳 Practice).
             </p>
           </div>
         )}
@@ -411,32 +419,64 @@ export default function PlaybookPage() {
           </div>
         ) : (
           <div>
-            {/* Four-way tab pill row — Teach / Practice (videos) on the left
-                pair; Chef Recipes / Chef Notes (AI saves) on the right pair.
-                Order is locked Teach → Practice → Recipes → Notes. Only one
-                tab is active at a time; the active tab shows a filled color
-                (sky / orange / rose / amber) while the others are muted
-                gray. Count pills live on each tab so users see "how much do
-                I have here" at a glance. The labels intentionally drop the
-                "Chef" prefix on Recipes/Notes so the four tabs fit on a
-                phone — the emojis carry the meaning. */}
-            <div className="flex gap-1.5 mb-4">
-              {[
-                { key: 'teach',        label: `🎓 Teach (${byBucket.teach.length})`,        activeCls: 'bg-sky-500 text-white'    },
-                { key: 'practice',     label: `🍳 Practice (${byBucket.practice.length})`,  activeCls: 'bg-orange-500 text-white' },
-                { key: 'chef_recipes', label: `✨ Recipes (${recipes.length})`,             activeCls: 'bg-rose-500 text-white'   },
-                { key: 'chef_notes',   label: `📝 Notes (${notes.length})`,                 activeCls: 'bg-amber-500 text-white'  },
-              ].map(t => (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`flex-1 py-2 rounded-full text-[11px] sm:text-xs font-semibold transition-colors ${
-                    tab === t.key ? t.activeCls : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
+            {/* Two-classroom nav — one stacked row per teacher, two pills
+                inside each (🎓 Teach / 🍳 Practice). The teacher's name
+                labels the row so a repeated "Teach" / "Practice" reads
+                unambiguously: same vocabulary, two different classrooms.
+                Order is locked Chef Jennifer → Chef TV. Only one pill is
+                active across both rows; the active pill fills with the
+                cell's color (amber / rose / sky / orange) while the
+                others are muted gray. */}
+            <div className="space-y-3 mb-4">
+              {/* Chef Jennifer's classroom */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1">
+                  👨‍🍳 Chef Jennifer
+                </p>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setTab('chef_notes')}
+                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                      tab === 'chef_notes' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-amber-50'
+                    }`}
+                  >
+                    🎓 Teach ({notes.length})
+                  </button>
+                  <button
+                    onClick={() => setTab('chef_recipes')}
+                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                      tab === 'chef_recipes' ? 'bg-rose-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-rose-50'
+                    }`}
+                  >
+                    🍳 Practice ({recipes.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Chef TV's classroom */}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1">
+                  🎬 Chef TV
+                </p>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => setTab('teach')}
+                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                      tab === 'teach' ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-sky-50'
+                    }`}
+                  >
+                    🎓 Teach ({byBucket.teach.length})
+                  </button>
+                  <button
+                    onClick={() => setTab('practice')}
+                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                      tab === 'practice' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
+                    }`}
+                  >
+                    🍳 Practice ({byBucket.practice.length})
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Active tab body. Each tab frames its content with its own
@@ -450,8 +490,8 @@ export default function PlaybookPage() {
                 return (
                   <div className={`rounded-2xl ${c.border} ${c.body} overflow-hidden shadow-sm`}>
                     <div className={`${c.header} px-3 py-2.5 flex items-center gap-2`}>
-                      <span className="text-lg">{b.emoji}</span>
-                      <span className={`text-sm font-bold ${c.title}`}>{b.label}</span>
+                      <span className="text-lg">🎬</span>
+                      <span className={`text-sm font-bold ${c.title}`}>Chef TV &middot; {b.emoji} {b.label}</span>
                       <span className={`text-xs font-semibold ${c.pill} px-2 py-0.5 rounded-full`}>{list.length}</span>
                       {b.hint && <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">{b.hint}</span>}
                     </div>
@@ -481,8 +521,8 @@ export default function PlaybookPage() {
                  routes users to /chef in 🍳 Practice mode. */
               <div className={`rounded-2xl ${RECIPES_COLOR.border} ${RECIPES_COLOR.body} overflow-hidden shadow-sm`}>
                 <div className={`${RECIPES_COLOR.header} px-3 py-2.5 flex items-center gap-2`}>
-                  <span className="text-lg">✨</span>
-                  <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Recipes</span>
+                  <span className="text-lg">👨‍🍳</span>
+                  <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Jennifer &middot; 🍳 Practice</span>
                   <span className={`text-xs font-semibold ${RECIPES_COLOR.pill} px-2 py-0.5 rounded-full`}>{recipes.length}</span>
                   <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Recipes Chef Jennifer made for you.</span>
                 </div>
@@ -510,8 +550,8 @@ export default function PlaybookPage() {
                  of content. Empty state routes users to /chef. */
               <div className={`rounded-2xl ${NOTES_COLOR.border} ${NOTES_COLOR.body} overflow-hidden shadow-sm`}>
                 <div className={`${NOTES_COLOR.header} px-3 py-2.5 flex items-center gap-2`}>
-                  <span className="text-lg">📝</span>
-                  <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Notes</span>
+                  <span className="text-lg">👨‍🍳</span>
+                  <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Jennifer &middot; 🎓 Teach</span>
                   <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
                   <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Saved answers from Chef Jennifer.</span>
                 </div>
