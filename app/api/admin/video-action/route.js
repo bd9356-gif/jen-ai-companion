@@ -56,16 +56,53 @@ export async function POST(request) {
       return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  // Diagnostic-first version: check the row exists, then update, then
+  // return rich info if anything looks off. Helps surface RLS / type /
+  // scoping issues that .single() was hiding behind a generic
+  // "Cannot coerce" error.
+  const { data: pre, error: preErr } = await supabase
+    .from('cooking_videos')
+    .select('id, is_featured')
+    .eq('id', videoId)
+    .maybeSingle()
+
+  if (preErr) {
+    return NextResponse.json({
+      error: `pre-select failed: ${preErr.message}`,
+      videoId,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    }, { status: 500 })
+  }
+  if (!pre) {
+    return NextResponse.json({
+      error: 'Row not found by id (pre-select returned 0 rows)',
+      videoId,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    }, { status: 404 })
+  }
+
+  const { data: rows, error } = await supabase
     .from('cooking_videos')
     .update(update)
     .eq('id', videoId)
     .select('id, is_featured')
-    .single()
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({
+      error: `update failed: ${error.message}`,
+      videoId,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    }, { status: 500 })
+  }
+  if (!rows || rows.length === 0) {
+    return NextResponse.json({
+      error: 'Update returned 0 rows — likely RLS blocking the UPDATE despite the row existing. Service role should bypass RLS; check the SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+      videoId,
+      preExists: true,
+      preState: pre,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, video: data })
+  return NextResponse.json({ success: true, video: rows[0] })
 }
