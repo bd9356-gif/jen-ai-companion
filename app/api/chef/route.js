@@ -3,25 +3,25 @@ import Anthropic from '@anthropic-ai/sdk'
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 /* ─────────────────────────────────────────────────────────────
-   /api/chef — Chef Jennifer in 🎓 Learn mode (teaching loop).
+   /api/chef — Chef Jennifer in 🎓 Teach mode (teaching loop).
 
-   Bill's framing for Phase 2A.1: "Love becomes like homework —
-   teach topics, ask questions, homework go practice." So Learn
+   Bill's framing for Phase 2A.1: "Practice becomes like homework —
+   teach topics, ask questions, homework go practice." So Teach
    isn't just Q&A — it's a teaching loop:
      1. teach the concept (lead with the answer, then the why)
      2. check or invite (a small follow-up, when natural)
      3. assign practice (the "homework" → a one-line recipe idea)
 
-   The practice line is the handoff to Love mode. The /chef page
-   parses `🎯 Practice this: <text>` out of the response and
-   renders a `❤️ Practice in Love →` button right below the save
+   The practice line is the handoff to Practice mode. The /chef
+   page parses `🎯 Practice this: <text>` out of the response and
+   renders a `🍳 Cook in Practice →` button right below the save
    button — one tap turns the lesson into a recipe to cook.
 
    Recipe generation lives at /api/topchef.
 
    Phase 2B (April 2026) — library awareness. The /chef page
    runs `searchLibrary(latest_user_message, userId)` before each
-   Learn-mode call and forwards the result on `library`. We
+   Teach-mode call and forwards the result on `library`. We
    inject those candidates as a LIBRARY CONTEXT block at the
    bottom of the system prompt with stable `{cite:type:id}`
    tokens. Claude is told to embed those tokens inline ONLY
@@ -118,7 +118,7 @@ STYLE
 
 - Friendly, plain language — you're talking to a home cook, not a culinary student.
 - 2–4 short paragraphs is usually right. Use line breaks generously.
-- If a question is really "give me a recipe", give a brief teaching answer about the technique or shape of the dish, then close with the practice line so the user can tap into ❤️ Love mode for the full recipe.
+- If a question is really "give me a recipe", give a brief teaching answer about the technique or shape of the dish, then close with the practice line so the user can tap into 🍳 Practice mode for the full recipe.
 - Don't make health claims or give medical advice. Frame nutrition tips as cooking-style choices.`
 
   const system = libraryBlock ? `${baseSystem}\n${libraryBlock}` : baseSystem

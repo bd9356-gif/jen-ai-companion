@@ -21,18 +21,17 @@ const BANNER = {
 }
 
 // Landing "What's inside" is a compact preview of the MyKitchen hub —
-// the hub's four groups (Your Recipes, Plan & Shop, Learn, Chef Jennifer)
-// rendered as four small cards in a 2×2 grid rather than the hub's full
-// 8-tile list. Each card shows the group name, a short blurb, and the
-// emojis of the tiles inside as a visual peek. Tapping a card becomes
-// the sign-in path for signed-out visitors and routes to /kitchen for
+// the hub's three groups (Your Recipes, Plan & Shop, Cooking School)
+// rendered as small cards in a grid rather than the hub's full tile
+// list. Each card shows the group name, a short blurb, and the emojis
+// of the tiles inside as a visual peek. Tapping a card becomes the
+// sign-in path for signed-out visitors and routes to /kitchen for
 // signed-in visitors — the hub is where the full tile layout lives, so
 // the landing doesn't need to repeat it.
 const GROUPS = [
-  { name: 'Your Recipes', blurb: "Vault, Cards, and Jennifer's creations.", emojis: ['🔐', '🃏', '✨'] },
-  { name: 'Plan & Shop',  blurb: 'Meal plans and shopping lists.',          emojis: ['📅', '🛒'] },
-  { name: 'Learn',        blurb: 'Chef TV and your saved playbook.',        emojis: ['🎬', '📘'] },
-  { name: 'Chef Jennifer', blurb: 'Your personal AI chef.',                 emojis: ['👨‍🍳'] },
+  { name: 'Your Recipes',   blurb: "Vault, Cards, and Jennifer's creations.",   emojis: ['🔐', '🃏', '✨'] },
+  { name: 'Plan & Shop',    blurb: 'Meal plans and shopping lists.',            emojis: ['📅', '🛒'] },
+  { name: 'Cooking School', blurb: 'Chef TV, Chef Jennifer, Guides, Playbook.', emojis: ['🎬', '👨‍🍳', '📚', '📘'] },
 ]
 
 const FOOD_IMAGES = [
@@ -179,10 +178,10 @@ export default function HomePage() {
           </a>
         </div>
 
-        {/* What's inside — compact 2×2 grid of group cards. Each card
-            previews one of the hub's four groups (Your Recipes / Plan &
-            Shop / Learn / Chef Jennifer). Keeps the landing short —
-            the hub itself is where the full tile layout lives. Signed-out
+        {/* What's inside — compact grid of group cards. Each card
+            previews one of the hub's three groups (Your Recipes / Plan &
+            Shop / Cooking School). Keeps the landing short — the hub
+            itself is where the full tile layout lives. Signed-out
             visitors route through /login; signed-in visitors land on
             /kitchen to pick their tile. */}
         <section>

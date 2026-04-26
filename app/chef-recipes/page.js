@@ -112,8 +112,8 @@ export default function ChefRecipesPage() {
           <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
             <p className="text-4xl mb-2">👨‍🍳</p>
             <p className="text-gray-500 font-medium">No Chef Jennifer recipes yet</p>
-            <p className="text-sm text-gray-400 mt-1">Tap ❤️ Love on Chef Jennifer and tell her what to cook.</p>
-            <button onClick={() => window.location.href='/chef'} className="mt-4 px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-semibold">Ask Chef Jennifer →</button>
+            <p className="text-sm text-gray-400 mt-1">Tap 🍳 Practice on Chef Jennifer and tell her what to cook.</p>
+            <button onClick={() => window.location.href='/chef'} className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-semibold">Ask Chef Jennifer →</button>
           </div>
         ) : (
           <div className="border-2 border-gray-300 rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-50">

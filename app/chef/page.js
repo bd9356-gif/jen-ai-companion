@@ -8,27 +8,29 @@ import { searchLibrary } from '@/lib/library_search'
    Chef Jennifer — single chat-first surface (Cooking School #2).
 
    Two modes share one URL and one conversation:
-     ❤️ Love  → make me a recipe (calls /api/topchef, JSON recipe)
-     🎓 Learn → teach me / answer (calls /api/chef, prose reply)
+     🎓 Teach    → teach me / answer (calls /api/chef, prose reply)
+     🍳 Practice → cook me a recipe  (calls /api/topchef, JSON recipe)
 
-   Default is Learn — that's the new instructor framing the
-   April 2026 pivot is meant to surface. Vocabulary mirrors
-   Chef TV (Love = recipe content, Learn = technique content)
-   and Playbook (saved Love videos vs saved Learn videos), so
+   Order is locked Teach → Practice everywhere — the loop reads
+   left-to-right: Chef Jennifer teaches, then you go practice.
+   Default is Teach (matches the loop's starting point and the
+   April 2026 instructor framing). Vocabulary mirrors Chef TV
+   (Teach = technique content, Practice = recipe content) and
+   Playbook (saved Teach videos vs saved Practice videos), so
    the same two words mean the same two things across the app.
 
    Saves split by mode:
-     Love  → favorites.type='ai_recipe'  → Chef Jennifer Recipes
-     Learn → favorites.type='ai_answer'  → Chef Notes (on /playbook)
+     Teach    → favorites.type='ai_answer'  → Chef Notes (on /playbook)
+     Practice → favorites.type='ai_recipe'  → Chef Jennifer Recipes
 
    The wizard at /topchef was retired — that route is now a
    server redirect to /chef. The "smart suggested prompts"
    below the empty-state replace the Meal/Mood/Protein flow
-   for the Love case; for Learn they're a fast on-ramp to
+   for the Practice case; for Teach they're a fast on-ramp to
    common questions.
    ─────────────────────────────────────────────────────────── */
 
-const LEARN_PROMPTS = [
+const TEACH_PROMPTS = [
   'How do I know when oil is hot enough for frying?',
   "What's a good substitute for buttermilk?",
   'How do I make pasta not stick together?',
@@ -37,7 +39,7 @@ const LEARN_PROMPTS = [
   'How long does cooked chicken last in the fridge?',
 ]
 
-const LOVE_PROMPTS = [
+const PRACTICE_PROMPTS = [
   'A cozy weeknight dinner with chicken',
   "Something light for lunch with what's in the fridge",
   'A 30-minute pasta with bold flavors',
@@ -52,7 +54,7 @@ export default function ChefPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
   const [user, setUser] = useState(null)
-  const [mode, setMode] = useState('learn')        // 'love' | 'learn'
+  const [mode, setMode] = useState('teach')        // 'teach' | 'practice'
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -81,11 +83,11 @@ export default function ChefPage() {
     return `${msg.mode}:${msg.question || ''}`
   }
 
-  // Parse "🎯 Practice this: <text>" out of a Learn-mode response.
+  // Parse "🎯 Practice this: <text>" out of a Teach-mode response.
   // The system prompt instructs Claude to end with this exact format when
   // the topic has a natural cooking exercise. We strip the line from the
   // prose body so we can render it as a styled "homework" chip and offer
-  // a `❤️ Practice in Love →` handoff button below the bubble.
+  // a `🍳 Cook in Practice →` handoff button below the save button.
   function parsePractice(content) {
     if (!content) return { prose: '', practice: null }
     const m = content.match(/🎯\s*Practice this:\s*([^\n]+?)\s*$/m)
@@ -94,7 +96,7 @@ export default function ChefPage() {
     return { prose, practice: m[1].trim() }
   }
 
-  // Phase 2B — render Learn-mode prose with `{cite:type:id}` tokens
+  // Phase 2B — render Teach-mode prose with `{cite:type:id}` tokens
   // replaced inline by clickable 📚/🎬/🔐 chips. Tokens whose IDs aren't
   // in the message's library payload are dropped silently (model
   // hallucinated an ID, or the row was deleted between turns).
@@ -142,8 +144,8 @@ export default function ChefPage() {
     setLoading(true)
 
     try {
-      if (useMode === 'love') {
-        // Love: free-text → recipe JSON. The /api/topchef route appends
+      if (useMode === 'practice') {
+        // Practice: free-text → recipe JSON. The /api/topchef route appends
         // the JSON-shape instruction onto whatever prompt we pass, so the
         // wrapper here just clarifies "this is a request for a recipe".
         const wrappedPrompt = `Create a recipe based on this request from a home cook: "${trimmed}". Keep it approachable, delicious, and clear for a home kitchen.`
@@ -157,13 +159,13 @@ export default function ChefPage() {
         if (!recipe) throw new Error('no recipe')
         setMessages([...newMessages, {
           role: 'assistant',
-          mode: 'love',
+          mode: 'practice',
           question: trimmed,
           content: recipe.title || 'Here is a recipe for you.',
           recipe,
         }])
       } else {
-        // Learn: chat-style Q&A.
+        // Teach: chat-style Q&A.
         // Phase 2B — run a keyword search across Guides, Chef TV, and the
         // user's Recipe Vault first, then forward the top hits as
         // citation candidates. The route uses them to build a LIBRARY
@@ -186,7 +188,7 @@ export default function ChefPage() {
         const data = await res.json()
         setMessages([...newMessages, {
           role: 'assistant',
-          mode: 'learn',
+          mode: 'teach',
           question: trimmed,
           content: data?.reply || 'Sorry — empty reply. Try again.',
           library,
@@ -250,15 +252,15 @@ export default function ChefPage() {
   }
 
   // Mode-aware styling helpers — fully literal class strings so v4 JIT picks them up.
-  const isLove = mode === 'love'
-  const promptList = isLove ? LOVE_PROMPTS : LEARN_PROMPTS
-  const accentBubble = isLove ? 'bg-rose-600' : 'bg-sky-600'
-  const accentRing  = isLove ? 'focus:ring-rose-300' : 'focus:ring-sky-300'
-  const accentSend  = isLove ? 'bg-rose-600 hover:bg-rose-700' : 'bg-sky-600 hover:bg-sky-700'
-  const accentChip  = isLove
-    ? 'hover:bg-rose-50 hover:border-rose-200 text-gray-700'
+  const isPractice = mode === 'practice'
+  const promptList = isPractice ? PRACTICE_PROMPTS : TEACH_PROMPTS
+  const accentBubble = isPractice ? 'bg-orange-600' : 'bg-sky-600'
+  const accentRing  = isPractice ? 'focus:ring-orange-300' : 'focus:ring-sky-300'
+  const accentSend  = isPractice ? 'bg-orange-600 hover:bg-orange-700' : 'bg-sky-600 hover:bg-sky-700'
+  const accentChip  = isPractice
+    ? 'hover:bg-orange-50 hover:border-orange-200 text-gray-700'
     : 'hover:bg-sky-50 hover:border-sky-200 text-gray-700'
-  const placeholder = isLove
+  const placeholder = isPractice
     ? 'Tell Chef Jennifer what to cook…'
     : 'Ask Chef Jennifer anything…'
 
@@ -283,30 +285,31 @@ export default function ChefPage() {
             </button>
           )}
         </div>
-        {/* Love / Learn pill row — same vocabulary as Chef TV + Playbook. */}
+        {/* Teach / Practice pill row — same vocabulary as Chef TV + Playbook.
+            Order locked Teach → Practice (the loop reads left-to-right). */}
         <div className="max-w-2xl mx-auto px-4 pb-3">
           <div className="grid grid-cols-2 gap-2 bg-gray-100 rounded-2xl p-1">
             <button
-              onClick={() => setMode('learn')}
+              onClick={() => setMode('teach')}
               className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                mode === 'learn' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                mode === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              🎓 Learn
+              🎓 Teach
             </button>
             <button
-              onClick={() => setMode('love')}
+              onClick={() => setMode('practice')}
               className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                mode === 'love' ? 'bg-rose-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                mode === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              ❤️ Love
+              🍳 Practice
             </button>
           </div>
           <p className="text-[11px] text-gray-400 mt-1.5 text-center">
-            {isLove
-              ? '❤️ Love — the kitchen lab. Cook a recipe, practice the lesson.'
-              : '🎓 Learn — Chef Jennifer teaches, then assigns homework you can cook in Love.'}
+            {isPractice
+              ? '🍳 Practice — the kitchen lab. Cook a recipe, practice the lesson.'
+              : '🎓 Teach — Chef Jennifer teaches, then assigns homework you can cook in Practice.'}
           </p>
         </div>
       </header>
@@ -318,13 +321,13 @@ export default function ChefPage() {
           {messages.length === 0 && (
             <div className="space-y-3">
               <div className="text-center py-6">
-                <p className="text-5xl mb-2">{isLove ? '❤️' : '🎓'}</p>
+                <p className="text-5xl mb-2">{isPractice ? '🍳' : '🎓'}</p>
                 <p className="text-gray-800 font-bold text-lg">
-                  {isLove ? 'What should I cook for you?' : 'What can I teach you?'}
+                  {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
                 </p>
                 <p className="text-gray-400 text-sm mt-1">
-                  {isLove
-                    ? 'Tell Chef Jennifer what to make — or come here from 🎓 Learn to practice what you just learned.'
+                  {isPractice
+                    ? 'Tell Chef Jennifer what to make — or come here from 🎓 Teach to practice what you just learned.'
                     : 'Ask anything kitchen. When the topic has a natural exercise, Chef Jennifer will assign a recipe to practice.'}
                 </p>
               </div>
@@ -347,7 +350,7 @@ export default function ChefPage() {
           {messages.map((msg, i) => {
             const k = keyFor(msg)
             const saved = savedKeys.has(k)
-            const userBubbleColor = msg.mode === 'love' ? 'bg-rose-600' : 'bg-sky-600'
+            const userBubbleColor = msg.mode === 'practice' ? 'bg-orange-600' : 'bg-sky-600'
             const userBubble = `${userBubbleColor} text-white`
 
             // USER bubble
@@ -361,14 +364,14 @@ export default function ChefPage() {
               )
             }
 
-            // ASSISTANT — Love (recipe card) vs Learn (prose bubble)
-            if (msg.mode === 'love' && msg.recipe) {
+            // ASSISTANT — Practice (recipe card) vs Teach (prose bubble)
+            if (msg.mode === 'practice' && msg.recipe) {
               return <RecipeMessage key={i} msg={msg} saved={saved} onSave={() => saveRecipe(msg)} />
             }
 
-            // Learn-mode prose bubble. Parse out the "🎯 Practice this:" line
+            // Teach-mode prose bubble. Parse out the "🎯 Practice this:" line
             // (when present) and render it as a styled homework chip + a
-            // ❤️ Practice in Love → handoff button below the save button.
+            // 🍳 Cook in Practice → handoff button below the save button.
             const { prose, practice } = parsePractice(msg.content)
             return (
               <div key={i} className="flex justify-start">
@@ -378,7 +381,7 @@ export default function ChefPage() {
                     {renderProseWithCitations(prose, msg.library)}
                     {practice && (
                       <div className="mt-3 pt-3 border-t border-gray-300/70">
-                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-rose-700 leading-snug">🎯 Homework — Practice this</p>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-orange-700 leading-snug">🎯 Homework — Practice this</p>
                         <p className="text-sm text-gray-800 leading-snug mt-1">{practice}</p>
                       </div>
                     )}
@@ -397,10 +400,10 @@ export default function ChefPage() {
                       </button>
                       {practice && !loading && (
                         <button
-                          onClick={() => sendMessage(practice, 'love')}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
+                          onClick={() => sendMessage(practice, 'practice')}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors"
                         >
-                          ❤️ Practice in Love →
+                          🍳 Cook in Practice →
                         </button>
                       )}
                     </div>
@@ -415,7 +418,7 @@ export default function ChefPage() {
             <div className="flex justify-start">
               <div className="bg-gray-100 rounded-2xl rounded-bl-sm px-4 py-3">
                 <p className="text-xs text-gray-500 font-semibold mb-1">
-                  {isLove ? '👨‍🍳 Chef Jennifer is cooking…' : '🎓 Chef Jennifer is thinking…'}
+                  {isPractice ? '👨‍🍳 Chef Jennifer is cooking…' : '🎓 Chef Jennifer is thinking…'}
                 </p>
                 <div className="flex gap-1">
                   <span className={`w-2 h-2 ${accentBubble} rounded-full animate-bounce`} style={{animationDelay:'0ms'}} />
@@ -452,7 +455,7 @@ export default function ChefPage() {
             </button>
           </div>
           <p className="text-[11px] text-gray-400 mt-2 text-center">
-            {isLove ? 'Recipes save to Chef Jennifer Recipes.' : 'Answers save to Chef Notes (on My Playbook).'}
+            {isPractice ? 'Recipes save to Chef Jennifer Recipes.' : 'Answers save to Chef Notes (on My Playbook).'}
           </p>
         </div>
       </main>
@@ -461,7 +464,7 @@ export default function ChefPage() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   RecipeMessage — assistant message renderer for Love mode.
+   RecipeMessage — assistant message renderer for Practice mode.
 
    Lays the recipe out as a card-shaped bubble inside the chat:
    title + difficulty pill, description, ingredients chips,
@@ -476,16 +479,16 @@ function RecipeMessage({ msg, saved, onSave }) {
   return (
     <div className="flex justify-start">
       <div className="w-full">
-        <div className="rounded-2xl rounded-bl-sm bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 border-2 border-rose-200 overflow-hidden">
+        <div className="rounded-2xl rounded-bl-sm bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 border-2 border-orange-200 overflow-hidden">
           <div className="px-4 pt-3 pb-2">
-            <p className="text-xs text-rose-700 font-semibold mb-1">❤️ Chef Jennifer made you a recipe</p>
+            <p className="text-xs text-orange-700 font-semibold mb-1">🍳 Chef Jennifer made you a recipe</p>
             <h3 className="text-lg font-bold text-gray-900 leading-tight">{r.title || 'Recipe'}</h3>
             <div className="flex flex-wrap gap-1.5 mt-2">
               {r.difficulty && (
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-700 bg-white/80 border border-gray-200 rounded-full px-2 py-0.5">{r.difficulty}</span>
               )}
               {r.cuisine && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-700 bg-white/80 border border-rose-200 rounded-full px-2 py-0.5">{r.cuisine}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-700 bg-white/80 border border-orange-200 rounded-full px-2 py-0.5">{r.cuisine}</span>
               )}
             </div>
             {r.description && (
@@ -498,7 +501,7 @@ function RecipeMessage({ msg, saved, onSave }) {
               <p className="text-[11px] font-bold text-gray-700 uppercase tracking-wide mb-2">Ingredients</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 {ingredients.map((ing, i) => (
-                  <div key={i} className="text-xs text-gray-800 bg-white/70 border border-rose-100 rounded-lg px-2 py-1.5">
+                  <div key={i} className="text-xs text-gray-800 bg-white/70 border border-orange-100 rounded-lg px-2 py-1.5">
                     {typeof ing === 'string' ? (
                       ing
                     ) : (
@@ -519,7 +522,7 @@ function RecipeMessage({ msg, saved, onSave }) {
               <ol className="space-y-2">
                 {steps.map((s, i) => (
                   <li key={i} className="flex gap-2 text-sm text-gray-800">
-                    <span className="shrink-0 w-6 h-6 bg-rose-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span>
+                    <span className="shrink-0 w-6 h-6 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span>
                     <span className="leading-relaxed pt-0.5">{s}</span>
                   </li>
                 ))}
@@ -535,7 +538,7 @@ function RecipeMessage({ msg, saved, onSave }) {
             className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
               saved
                 ? 'bg-gray-100 text-gray-400 border-gray-200'
-                : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'
+                : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50'
             }`}>
             {saved ? '✓ Saved to Chef Jennifer Recipes' : '💾 Save to Chef Jennifer Recipes'}
           </button>
@@ -555,10 +558,8 @@ function RecipeMessage({ msg, saved, onSave }) {
      🔐 recipe   → /secret?recipe=id (orange — Recipe Vault)
 
    The recipe link uses /secret's existing `?recipe=` deep-link.
-   Article and video deep links don't exist yet, so for v1 we
-   send articles to the Guides page (user can scan for the
-   title) and videos out to YouTube (the most useful single
-   destination). Phase 2C polish can add deep-links later.
+   The article link uses /guides' Phase 2C `?article=` deep-link;
+   videos go straight to YouTube (most useful single destination).
    ─────────────────────────────────────────────────────────── */
 function CitationChip({ type, item }) {
   let emoji, classes, href, external = false

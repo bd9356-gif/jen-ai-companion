@@ -9,26 +9,31 @@ const supabase = createClient(
 )
 
 // My Playbook buckets — 2 intent-based placements for a Chef TV save.
-// Framing: Love = meals you want to try; Learn = technique you're
-// practicing. Every Chef TV video is one or the other — recipe videos
-// are Love-eligible, video-only items are Learn-eligible.
+// Framing: Teach = technique you want to learn; Practice = recipe you
+// want to cook. Every Chef TV video is one or the other — video-only
+// items are Teach-eligible, recipe videos are Practice-eligible.
 //
 // The Chef TV card only shows ONE of these buttons, picked by whether the
-// video has a recipe. No more "Save for later" middle ground — the old
-// third bucket (Save) was dropped April 2026 (see migration 006) because
-// forcing a non-committal choice didn't add any real signal.
+// video has a recipe. No "Save for later" middle ground — the old third
+// bucket (Save) was dropped April 2026 (see migration 006) because forcing
+// a non-committal choice didn't add any real signal. The vocabulary pivot
+// from Love/Learn to Practice/Teach landed in migration 009 (April 2026):
+// Love was the wrong word — it implied favorites/saved/liked/emotion. The
+// new words name the *action* the user takes with each save.
 //
-// Love is also the bucket that triggers the loved_recipe_urls ingestion
-// capture when the underlying video has ingredients — see setBucket().
+// Practice is also the bucket that triggers the loved_recipe_urls
+// ingestion capture when the underlying video has ingredients — see
+// setBucket(). The table name is kept (internal-only signal capture, no
+// user-visible reference).
 const PLAYBOOK_BUCKETS = {
-  love:  { key: 'love',  emoji: '❤️', label: 'Love',  activeCls: 'bg-rose-500 text-white border-rose-500' },
-  learn: { key: 'learn', emoji: '🎓', label: 'Learn', activeCls: 'bg-sky-500 text-white border-sky-500' },
+  teach:    { key: 'teach',    emoji: '🎓', label: 'Teach',    activeCls: 'bg-sky-500 text-white border-sky-500' },
+  practice: { key: 'practice', emoji: '🍳', label: 'Practice', activeCls: 'bg-orange-500 text-white border-orange-500' },
 }
 
-// Topic chips for the Love tab — dish-type thinking, keyword-matched
+// Topic chips for the Practice tab — dish-type thinking, keyword-matched
 // against the video title. One chip active at a time; "All" = no filter.
 // Keywords are hand-tuned; refine as we learn what titles look like.
-const LOVE_CHIPS = [
+const PRACTICE_CHIPS = [
   { key: 'all',    label: 'All' },
   { key: 'pasta',  label: '🍝 Pasta',  match: /pasta|spaghetti|linguine|fettuccine|ravioli|lasagna|macaroni|noodle|carbonara|bolognese|risotto|gnocchi/i },
   { key: 'pizza',  label: '🍕 Pizza',  match: /pizza|calzone/i },
@@ -40,11 +45,11 @@ const LOVE_CHIPS = [
   { key: 'sweet',  label: '🍰 Sweet',  match: /cake|cookie|pie|tart|brownie|dessert|cheesecake|chocolate|ice cream|pudding|mousse|muffin|scone|cinnamon roll|donut/i },
 ]
 
-// Topic chips for the Learn tab — technique-first thinking. 'featured'
-// is a special bucket (not a keyword) that shows the top 15 by learnScore
+// Topic chips for the Teach tab — technique-first thinking. 'featured'
+// is a special bucket (not a keyword) that shows the top 15 by teachScore
 // so a newcomer lands on "what's good" instead of "what's next." Default
-// chip on the Learn tab.
-const LEARN_CHIPS = [
+// chip on the Teach tab.
+const TEACH_CHIPS = [
   { key: 'featured', label: '⭐ Featured', feature: true },
   { key: 'all',      label: 'All' },
   { key: 'knife',    label: '🔪 Knife',   match: /knife|cut|chop|dice|slice|mince|julienne/i },
@@ -58,7 +63,7 @@ const LEARN_CHIPS = [
 const FEATURED_CAP = 15
 
 // Teaching-weighted channels — technique/method/craft heavy. Used by
-// learnScore() below to float instructional content up the Learn tab.
+// teachScore() below to float instructional content up the Teach tab.
 // This is a reorder signal, not exclusion — every channel still shows up,
 // teaching-heavy ones just lead.
 const TEACHING_CHANNELS = new Set([
@@ -72,19 +77,19 @@ const TEACHING_CHANNELS = new Set([
   'Internet Shaquille',
 ])
 
-// Sort score for the Learn tab (video-only). log10(views) compresses the
+// Sort score for the Teach tab (video-only). log10(views) compresses the
 // long tail so a 10× view count is worth +1, not 10×; teaching channels
 // get a 1.5× multiplier so craft beats clicks.
-function learnScore(v) {
+function teachScore(v) {
   const base = Math.log10((v.view_count || 0) + 1)
   const teachBoost = TEACHING_CHANNELS.has(v.channel) ? 1.5 : 1.0
   return base * teachBoost
 }
 
-// Sort score for the Love tab (recipe-bearing). Same log-compressed view
-// base, but multipliers favor recipe completeness — full ingredients +
-// instructions + AI summary floats to the top; bare-bones recipes sink.
-function loveScore(v, meta) {
+// Sort score for the Practice tab (recipe-bearing). Same log-compressed
+// view base, but multipliers favor recipe completeness — full ingredients
+// + instructions + AI summary floats to the top; bare-bones recipes sink.
+function practiceScore(v, meta) {
   const base = Math.log10((v.view_count || 0) + 1)
   const hasFullRecipe = (meta?.ingredients?.length > 0) && !!meta?.instructions
   const hasSummary = !!meta?.ai_summary
@@ -148,7 +153,7 @@ export default function VideosPage() {
   const [loading, setLoading] = useState(true)
   // savedMap: video.id (string ref_id) → { favId, bucket }.
   // favId is the favorites row UUID (for deletes + bucket upserts).
-  // bucket is the current Playbook bucket (save/love/learn).
+  // bucket is the current Playbook bucket ('teach' | 'practice').
   // Absence from this map = video is not saved at all.
   const [savedMap, setSavedMap] = useState(new Map())
   // Set of video.id strings that have been copied into Recipe Vault this
@@ -156,14 +161,14 @@ export default function VideosPage() {
   // harmless, just creates another Vault row.
   const [vaultIds, setVaultIds] = useState(new Set())
   // Active topic chip. Meaning depends on the current tab:
-  //   love  → one of LOVE_CHIPS keys (default 'all')
-  //   learn → one of LEARN_CHIPS keys (default 'featured')
+  //   teach    → one of TEACH_CHIPS keys (default 'featured')
+  //   practice → one of PRACTICE_CHIPS keys (default 'all')
   // When the tab flips, we reset topic to the tab's sensible default.
-  const [topic, setTopic] = useState('all')
+  const [topic, setTopic] = useState('featured')
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
   // About toggle — matches the 🔍 search pattern. When open, reveals the
-  // teaching card at the top of main (Two ways in / Love / Learn / save
+  // teaching card at the top of main (Teach / Practice / save
   // destinations). Default hidden so the page isn't cluttered for
   // returning users; discoverable via the ℹ️ button in the header.
   const [showAbout, setShowAbout] = useState(false)
@@ -171,11 +176,12 @@ export default function VideosPage() {
   const [expandedId, setExpandedId] = useState(null)
   const [metadata, setMetadata] = useState({})
   const [showCount, setShowCount] = useState(12)
-  // Default to 'love' — surface the ~158 recipes first so the actionable
-  // set isn't drowned out by the ~400 video-only items. User can flip to
-  // 'learn' for technique. No "All" tab; the two tabs together cover
-  // every video (a video either has a recipe or it doesn't).
-  const [filter, setFilter] = useState('love')  // love | learn
+  // Default to 'teach' — Teach leads in the new Teach → Practice ordering
+  // (matches the Cooking School framing: techniques teach you, recipes
+  // are where you practice them). User can flip to 'practice' for
+  // recipes. No "All" tab; the two tabs together cover every video (a
+  // video either has a recipe or it doesn't).
+  const [filter, setFilter] = useState('teach')  // teach | practice
   const [toast, setToast] = useState(null)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
@@ -216,7 +222,8 @@ export default function VideosPage() {
   async function loadSaved(userId) {
     // Load favorites first (video-only types), then join cooking_skill_items
     // via the favorites UUID to find each save's current Playbook bucket.
-    // Videos not in cooking_skill_items default to 'save'.
+    // Videos not in cooking_skill_items default to 'teach' (matches the
+    // 'teach' default on the column itself per migration 009).
     const { data: favs } = await supabase
       .from('favorites')
       .select('id, ref_id')
@@ -235,7 +242,7 @@ export default function VideosPage() {
     const bucketByFavId = new Map((bucketRows || []).map(r => [r.item_id, r.bucket]))
     const next = new Map()
     for (const f of (favs || [])) {
-      next.set(f.ref_id, { favId: f.id, bucket: bucketByFavId.get(f.id) || 'save' })
+      next.set(f.ref_id, { favId: f.id, bucket: bucketByFavId.get(f.id) || 'teach' })
     }
     setSavedMap(next)
   }
@@ -245,10 +252,12 @@ export default function VideosPage() {
   //   2. Video in same bucket  → remove (delete favorites + cooking_skill_items)
   //   3. Video in other bucket → upsert cooking_skill_items to new bucket
   //
-  // Love + recipe side-effect: when the target bucket is 'love' AND the
-  // video has a recipe, we also log the YouTube URL into loved_recipe_urls
-  // (ingestion signal). Moving away from love cleans that row up. Pure
-  // backend capture — no user-facing surface for this table.
+  // Practice + recipe side-effect: when the target bucket is 'practice'
+  // AND the video has a recipe, we also log the YouTube URL into
+  // loved_recipe_urls (ingestion signal). Moving away from practice cleans
+  // that row up. Pure backend capture — no user-facing surface for this
+  // table. The table name is legacy from the Love/Learn era; the meaning
+  // is the same (which recipes are resonating).
   async function setBucket(video, bucket) {
     if (!user) return
     const videoId = String(video.id)
@@ -266,7 +275,7 @@ export default function VideosPage() {
         .eq('item_id', current.favId)
       // favorites delete cascades to loved_recipe_urls via FK, but be
       // explicit for clarity.
-      if (current.bucket === 'love') {
+      if (current.bucket === 'practice') {
         await supabase.from('loved_recipe_urls')
           .delete()
           .eq('user_id', user.id)
@@ -286,8 +295,8 @@ export default function VideosPage() {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,item_type,item_id' })
       if (error) return
-      // Love queue sync
-      if (bucket === 'love' && hasRecipe) {
+      // Practice queue sync
+      if (bucket === 'practice' && hasRecipe) {
         await supabase.from('loved_recipe_urls').upsert({
           user_id: user.id,
           favorite_id: current.favId,
@@ -297,7 +306,7 @@ export default function VideosPage() {
           title: video.title,
           channel: video.channel,
         }, { onConflict: 'user_id,favorite_id' })
-      } else if (current.bucket === 'love') {
+      } else if (current.bucket === 'practice') {
         await supabase.from('loved_recipe_urls')
           .delete()
           .eq('user_id', user.id)
@@ -335,7 +344,7 @@ export default function VideosPage() {
       item_id: inserted.id,
       bucket,
     })
-    if (bucket === 'love' && hasRecipe) {
+    if (bucket === 'practice' && hasRecipe) {
       await supabase.from('loved_recipe_urls').insert({
         user_id: user.id,
         favorite_id: inserted.id,
@@ -353,20 +362,21 @@ export default function VideosPage() {
     })
   }
 
-  // Idempotent: make sure this video sits in ❤️ Love, regardless of where
-  // (or whether) it was saved before. Used as a side-effect of Save to My
-  // Kitchen — saving a recipe to the Vault means the user wants to try it,
-  // and Love is the "meals I want to try" bucket. No-op if already in Love.
-  // Unlike setBucket(), this never toggles off — it only ensures the Love
-  // placement. Writes the loved_recipe_urls capture row when the video has
-  // a recipe (same semantics as setBucket's Love path).
-  async function ensureInLove(video) {
+  // Idempotent: make sure this video sits in 🍳 Practice, regardless of
+  // where (or whether) it was saved before. Used as a side-effect of Save
+  // to My Kitchen — saving a recipe to the Vault means the user wants to
+  // cook it, and Practice is the "recipes to cook" bucket. No-op if
+  // already in Practice. Unlike setBucket(), this never toggles off — it
+  // only ensures the Practice placement. Writes the loved_recipe_urls
+  // capture row when the video has a recipe (same semantics as
+  // setBucket's Practice path).
+  async function ensureInPractice(video) {
     if (!user) return
     const videoId = String(video.id)
     const current = savedMap.get(videoId)
     const meta = metadata[video.id]
     const hasRecipe = meta?.ingredients?.length > 0
-    if (current?.bucket === 'love') return
+    if (current?.bucket === 'practice') return
 
     async function writeLovedUrl(favId) {
       if (!hasRecipe) return
@@ -382,25 +392,25 @@ export default function VideosPage() {
     }
 
     if (current) {
-      // Move to Love
+      // Move to Practice
       const { error } = await supabase.from('cooking_skill_items').upsert({
         user_id: user.id,
         item_type: 'favorite',
         item_id: current.favId,
-        bucket: 'love',
+        bucket: 'practice',
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,item_type,item_id' })
       if (error) return
       await writeLovedUrl(current.favId)
       setSavedMap(prev => {
         const n = new Map(prev)
-        n.set(videoId, { ...current, bucket: 'love' })
+        n.set(videoId, { ...current, bucket: 'practice' })
         return n
       })
       return
     }
 
-    // First save — insert favorites + cooking_skill_items in Love
+    // First save — insert favorites + cooking_skill_items in Practice
     const { data: inserted, error: favErr } = await supabase.from('favorites').insert({
       user_id: user.id,
       type: hasRecipe ? 'video_recipe' : 'video_education',
@@ -422,21 +432,21 @@ export default function VideosPage() {
       user_id: user.id,
       item_type: 'favorite',
       item_id: inserted.id,
-      bucket: 'love',
+      bucket: 'practice',
     })
     await writeLovedUrl(inserted.id)
     setSavedMap(prev => {
       const n = new Map(prev)
-      n.set(videoId, { favId: inserted.id, bucket: 'love' })
+      n.set(videoId, { favId: inserted.id, bucket: 'practice' })
       return n
     })
   }
 
   // "Save to My Kitchen" — copy this Chef TV recipe into the user's
-  // personal Recipe Vault AND place the underlying video in ❤️ Love in My
-  // Playbook. Saving a recipe to the Vault implies the user wants to try
-  // it, and Love is "meals I want to try" — keeping the placement
-  // automatic reinforces the education loop (see → try → improve) without
+  // personal Recipe Vault AND place the underlying video in 🍳 Practice
+  // in My Playbook. Saving a recipe to the Vault implies the user wants
+  // to cook it, and Practice is "recipes to cook" — keeping the placement
+  // automatic reinforces the teaching loop (see → cook → improve) without
   // asking the user to tap twice. Only shown in the expanded Recipe view
   // when the video has ingredients.
   async function saveToKitchen(video) {
@@ -458,10 +468,10 @@ export default function VideosPage() {
     })
     if (error) { showToast('Could not save to Kitchen'); return }
     setVaultIds(prev => new Set(prev).add(String(video.id)))
-    // Auto-place the video in Love — best-effort; don't block the Vault
-    // save on a Playbook write failure.
-    ensureInLove(video).catch(() => {})
-    showToast('Saved to Recipe Vault + ❤️ Love ✓')
+    // Auto-place the video in Practice — best-effort; don't block the
+    // Vault save on a Playbook write failure.
+    ensureInPractice(video).catch(() => {})
+    showToast('Saved to Recipe Vault + 🍳 Practice ✓')
   }
 
   function toggleExpand(videoId) {
@@ -477,35 +487,36 @@ export default function VideosPage() {
     }
   }
 
-  // Figure out the active chip set for the current tab. Love and Learn each
-  // have their own shortlist.
-  const chipSet = filter === 'love' ? LOVE_CHIPS : LEARN_CHIPS
+  // Figure out the active chip set for the current tab. Teach and
+  // Practice each have their own shortlist.
+  const chipSet = filter === 'practice' ? PRACTICE_CHIPS : TEACH_CHIPS
   const activeChip = chipSet?.find(c => c.key === topic) || null
 
-  // Filters stack: search + love/learn + topic chip keyword match, all
-  // AND together. Shorts (under 3 min) are always excluded — no toggle.
+  // Filters stack: search + teach/practice + topic chip keyword match,
+  // all AND together. Shorts (under 3 min) are always excluded — no
+  // toggle.
   //
   // Sort strategy varies by tab so each view highlights its best content:
-  //   love   → loveScore (recipe completeness × popularity)
-  //   learn  → learnScore (teaching-channel boost × popularity)
+  //   teach    → teachScore (teaching-channel boost × popularity)
+  //   practice → practiceScore (recipe completeness × popularity)
   //
-  // Featured chip (Learn only): after sort, slice the top FEATURED_CAP
+  // Featured chip (Teach only): after sort, slice the top FEATURED_CAP
   // entries so newcomers land on "what's good" instead of "what's next."
   const afterFilter = videos
     .filter(v => {
       const meta = metadata[v.id]
       const hasRecipe = meta?.ingredients?.length > 0
       const matchSearch = search === '' || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase())
-      const matchFilter = (filter === 'love' && hasRecipe) || (filter === 'learn' && !hasRecipe)
+      const matchFilter = (filter === 'practice' && hasRecipe) || (filter === 'teach' && !hasRecipe)
       const matchShorts = !isShort(v.duration)
       const matchTopic = !activeChip?.match || activeChip.match.test(v.title)
       return matchSearch && matchFilter && matchShorts && matchTopic
     })
     .sort((a, b) => {
-      if (filter === 'love') return loveScore(b, metadata[b.id]) - loveScore(a, metadata[a.id])
-      return learnScore(b) - learnScore(a)
+      if (filter === 'practice') return practiceScore(b, metadata[b.id]) - practiceScore(a, metadata[a.id])
+      return teachScore(b) - teachScore(a)
     })
-  const filtered = (filter === 'learn' && activeChip?.feature)
+  const filtered = (filter === 'teach' && activeChip?.feature)
     ? afterFilter.slice(0, FEATURED_CAP)
     : afterFilter
 
@@ -556,7 +567,7 @@ export default function VideosPage() {
 
           {/* Page lede — what Chef TV is, in plain words. Sits right under
               the title so visitors get the pitch before the filters. The
-              ℹ️ About panel below covers how Love/Learn + saving works;
+              ℹ️ About panel below covers how Teach/Practice + saving works;
               this line stays focused on identity, not mechanics. */}
           <p className="text-sm text-gray-600 leading-snug mb-3">
             Watch the latest cooking videos from YouTube chefs. Explore trends, dinner ideas, tips, hacks, and more &mdash; all in one place.
@@ -574,17 +585,18 @@ export default function VideosPage() {
             />
           )}
 
-          {/* Love / Learn — binary pill row. The tab vocabulary matches
-              the Playbook save buckets (❤️ Love / 🎓 Learn) so a user
-              browsing Love sees the bucket they'd save to on the card
-              below. Love leads because the ~158 recipes are the scarcer,
-              higher-signal set; the ~400 video-only items live under
-              Learn. No "All" firehose — every video is either a recipe
-              or it's not, and the two tabs together cover everything. */}
+          {/* Teach / Practice — binary pill row. The tab vocabulary
+              matches the Playbook save buckets (🎓 Teach / 🍳 Practice)
+              so a user browsing Teach sees the bucket they'd save to on
+              the card below. Teach leads in the new Teach → Practice
+              ordering — Cooking School framing puts technique videos
+              first, recipes second. No "All" firehose — every video is
+              either a recipe or it's not, and the two tabs together
+              cover everything. */}
           <div className="flex gap-2 mb-3">
             {[
-              ['love',  `❤️ Love (${recipeCount})`,   'bg-rose-500 text-white'],
-              ['learn', `🎓 Learn (${summaryCount})`, 'bg-sky-500 text-white'],
+              ['teach',    `🎓 Teach (${summaryCount})`,   'bg-sky-500 text-white'],
+              ['practice', `🍳 Practice (${recipeCount})`, 'bg-orange-500 text-white'],
             ].map(([val, label, activeCls]) => (
               <button
                 key={val}
@@ -592,9 +604,9 @@ export default function VideosPage() {
                   setFilter(val)
                   setShowCount(12)
                   // Reset chip to each tab's sensible default so chips don't
-                  // persist awkwardly across tab switches. Learn lands on
-                  // Featured (curated top slice); Love lands on All.
-                  setTopic(val === 'learn' ? 'featured' : 'all')
+                  // persist awkwardly across tab switches. Teach lands on
+                  // Featured (curated top slice); Practice lands on All.
+                  setTopic(val === 'teach' ? 'featured' : 'all')
                 }}
                 className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   filter === val ? activeCls : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
@@ -605,10 +617,10 @@ export default function VideosPage() {
             ))}
           </div>
 
-          {/* Topic chips — dish-types for Love, techniques for Learn.
+          {/* Topic chips — techniques for Teach, dish-types for Practice.
               Horizontally scrollable on narrow viewports. Active chip uses
-              the tab's color (rose for Love, sky for Learn); inactive
-              chips are white with a gray border.
+              the tab's color (sky for Teach, orange for Practice);
+              inactive chips are white with a gray border.
               Channel dropdown was removed in favor of this; the search
               input already matches channel text, so chef-specific queries
               still work via 🔍. */}
@@ -616,8 +628,8 @@ export default function VideosPage() {
             <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
               {chipSet.map(c => {
                 const isActive = topic === c.key
-                const activeCls = filter === 'love'
-                  ? 'bg-rose-500 text-white border-rose-500'
+                const activeCls = filter === 'practice'
+                  ? 'bg-orange-500 text-white border-orange-500'
                   : 'bg-sky-500 text-white border-sky-500'
                 return (
                   <button
@@ -651,10 +663,10 @@ export default function VideosPage() {
             {showAbout && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4 space-y-1.5">
                 <p className="text-sm text-amber-900 leading-relaxed">
-                  ❤️ <span className="font-semibold">Love</span> highlights recipes to try.
+                  🎓 <span className="font-semibold">Teach</span> highlights techniques to master.
                 </p>
                 <p className="text-sm text-amber-900 leading-relaxed">
-                  🎓 <span className="font-semibold">Learn</span> highlights techniques to master.
+                  🍳 <span className="font-semibold">Practice</span> highlights recipes to cook.
                 </p>
                 <p className="text-sm text-amber-900 leading-relaxed">
                   Save videos to <span className="font-semibold">My Playbook</span>, or 👉See Detail to save a recipe.
@@ -700,13 +712,13 @@ export default function VideosPage() {
                         </button>
                       )}
                       <div className="p-4">
-                        {/* Single contextual save button — Love for recipe-bearing
-                            videos, Learn for video-only items. Tap once to save,
-                            tap again to remove. No third "Save for later" bucket
-                            (dropped April 2026) — the choice is binary because
-                            the content is binary. */}
+                        {/* Single contextual save button — Practice for
+                            recipe-bearing videos, Teach for video-only items.
+                            Tap once to save, tap again to remove. No third
+                            "Save for later" bucket (dropped April 2026) — the
+                            choice is binary because the content is binary. */}
                         {(() => {
-                          const b = hasRecipe ? PLAYBOOK_BUCKETS.love : PLAYBOOK_BUCKETS.learn
+                          const b = hasRecipe ? PLAYBOOK_BUCKETS.practice : PLAYBOOK_BUCKETS.teach
                           const isActive = savedEntry?.bucket === b.key
                           return (
                             <div className="mb-3">
@@ -813,7 +825,7 @@ export default function VideosPage() {
                                         {isInVault ? '✓ Saved to My Kitchen' : '💾 Save to My Kitchen'}
                                       </button>
                                       <p className="text-[11px] text-gray-500 text-center mt-2">
-                                        Adds to your Recipe Vault and drops the video in ❤️ Love.
+                                        Adds to your Recipe Vault and drops the video in 🍳 Practice.
                                       </p>
                                     </div>
                                   </>

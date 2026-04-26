@@ -13,9 +13,13 @@ const supabase = createClient(
 // Notes section for saved AI answers. Everything you've saved, in one
 // place.
 //
-//   love        ❤️  Meals you want to make.     (recipe-bearing videos)
-//   learn       🎓  What you're working on.      (technique / video-only)
+//   teach       🎓  Videos that teach you a technique.   (technique / video-only)
+//   practice    🍳  Recipes you want to cook.            (recipe-bearing videos)
 //   chef_notes  📝  Saved answers from Chef Jennifer.
+//
+// Order is locked Teach → Practice everywhere — same vocabulary as
+// Chef TV's filter tabs and Chef Jennifer's mode pills, so the same two
+// words mean the same two things across the app.
 //
 // Pivot history (April 2026):
 //   - Skills I Learned had 6 course-type buckets (mig 002).
@@ -25,6 +29,8 @@ const supabase = createClient(
 //     "undecided" middle and didn't add signal. Chef Notes (AI answers)
 //     merged in at the same time so the Playbook is the single home for
 //     everything the user has saved from Chef TV and Ask Chef Jennifer.
+//   - Renamed Love→Practice, Learn→Teach (mig 009) — Love is the wrong
+//     word; Practice + Teach read as the teaching loop end-to-end.
 //
 // Bucket assignments for videos live in `cooking_skill_items` keyed by
 // (user_id, item_type, item_id). Source data:
@@ -34,17 +40,17 @@ const supabase = createClient(
 // AI answers are favorites.type='ai_answer' — they render in the Chef
 // Notes section, not a bucket, so they don't live in cooking_skill_items.
 const BUCKETS = [
-  { key: 'love',  emoji: '❤️', label: 'Love',  hint: 'Meals you want to try.' },
-  { key: 'learn', emoji: '🎓', label: 'Learn', hint: "What you're working on." },
+  { key: 'teach',    emoji: '🎓', label: 'Teach',    hint: 'Videos that teach you.' },
+  { key: 'practice', emoji: '🍳', label: 'Practice', hint: 'Recipes to cook.' },
 ]
 
 // Full Tailwind class literals per bucket — v4 JIT requires complete strings.
 const COLOR = {
-  love:  { border: 'border-2 border-rose-400', header: 'bg-rose-100', body: 'bg-rose-50', title: 'text-rose-800', pill: 'bg-rose-200 text-rose-900', btnCls: 'border-rose-400 text-rose-800' },
-  learn: { border: 'border-2 border-sky-400',  header: 'bg-sky-100',  body: 'bg-sky-50',  title: 'text-sky-800',  pill: 'bg-sky-200 text-sky-900',   btnCls: 'border-sky-400 text-sky-800' },
+  teach:    { border: 'border-2 border-sky-400',    header: 'bg-sky-100',    body: 'bg-sky-50',    title: 'text-sky-800',    pill: 'bg-sky-200 text-sky-900',       btnCls: 'border-sky-400 text-sky-800' },
+  practice: { border: 'border-2 border-orange-400', header: 'bg-orange-100', body: 'bg-orange-50', title: 'text-orange-900', pill: 'bg-orange-200 text-orange-900', btnCls: 'border-orange-400 text-orange-800' },
 }
 
-// Chef Notes section uses its own color family (amber/indigo) so users
+// Chef Notes section uses its own color family (amber) so users
 // see at a glance that it's a different kind of save (AI answers, not
 // videos) and there's no bucket/move UX to worry about.
 const NOTES_COLOR = {
@@ -57,14 +63,14 @@ const NOTES_COLOR = {
 
 // Given a video-item record (has _item_type, metadata on favorites, etc.),
 // pick a sensible default bucket for rows that don't have an explicit
-// cooking_skill_items placement yet. Recipe-bearing content → love; all
-// else → learn. Mirrors the server-side default from migration 006 so
+// cooking_skill_items placement yet. Recipe-bearing content → practice;
+// all else → teach. Mirrors the server-side default from migration 009 so
 // the UI reads consistently even before a user ever taps a bucket.
 function defaultBucketFor(item) {
-  if (item._item_type === 'cooking_video') return 'love'
-  if (item._item_type === 'education_video') return 'learn'
-  if (item._item_type === 'favorite') return item._favType === 'video_recipe' ? 'love' : 'learn'
-  return 'learn'
+  if (item._item_type === 'cooking_video') return 'practice'
+  if (item._item_type === 'education_video') return 'teach'
+  if (item._item_type === 'favorite') return item._favType === 'video_recipe' ? 'practice' : 'teach'
+  return 'teach'
 }
 
 export default function PlaybookPage() {
@@ -72,10 +78,10 @@ export default function PlaybookPage() {
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState([])          // normalized video items with _bucket
   const [notes, setNotes] = useState([])          // ai_answer favorites
-  // Active tab: 'love' | 'learn' | 'chef_notes'. Default to Love so the
-  // scarcer/higher-intent "meals I want to try" set is what users see first
-  // — matches the Chef TV page's tab default.
-  const [tab, setTab] = useState('love')
+  // Active tab: 'teach' | 'practice' | 'chef_notes'. Default to Teach so
+  // the page leads with the instruction-side that pairs with Chef
+  // Jennifer — same first-tab default as the rest of the app.
+  const [tab, setTab] = useState('teach')
   // Collapsed "what's on this page" tip. Folded into a tiny ℹ️ button next to
   // Chef TV in the header — keeps the body focused on tabs + content, but
   // the explainer is one tap away when needed.
@@ -86,8 +92,8 @@ export default function PlaybookPage() {
 
   // Load video saves from all three sources + bucket assignments + the
   // Chef Notes (ai_answer favorites). Merge into: items (videos) and
-  // notes (answers). Items land in love or learn; Chef Notes renders in
-  // its own section below.
+  // notes (answers). Items land in teach or practice; Chef Notes renders
+  // in its own section below.
   //
   // Each video item carries:
   //   _item_type   : 'cooking_video' | 'education_video' | 'favorite'
@@ -231,7 +237,7 @@ export default function PlaybookPage() {
 
   const byBucket = Object.fromEntries(BUCKETS.map(b => [b.key, []]))
   for (const it of items) {
-    const key = byBucket[it._bucket] ? it._bucket : 'learn'
+    const key = byBucket[it._bucket] ? it._bucket : 'teach'
     byBucket[key].push(it)
   }
   const totalCount = items.length + notes.length
@@ -272,13 +278,13 @@ export default function PlaybookPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-        {/* Heading tagline — joinery arrows ("Love it → Learn it → Note it")
+        {/* Heading tagline — joinery arrows ("Teach it → Practice it → Note it")
             signal that the three pieces are connected stages of the same
             save habit, not three unrelated tabs. Bigger type than before so
             it reads as a page title, not a caption. */}
         <div className="text-center px-2 mb-6">
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
-            Love it <span className="text-gray-400">→</span> Learn it <span className="text-gray-400">→</span> Note it
+            Teach it <span className="text-gray-400">→</span> Practice it <span className="text-gray-400">→</span> Note it
           </p>
           <p className="text-sm text-gray-500 mt-2">All your saved content &mdash; from videos to chef guidance.</p>
         </div>
@@ -291,10 +297,10 @@ export default function PlaybookPage() {
         {showAbout && (
           <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-2">
             <p className="text-sm text-slate-900 leading-relaxed">
-              ❤️ <span className="font-bold">Love</span> is where you keep the meals you want to try.
+              🎓 <span className="font-bold">Teach</span> is where you keep the videos that teach you a technique.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              🎓 <span className="font-bold">Learn</span> is where you practice and build your skills.
+              🍳 <span className="font-bold">Practice</span> is where you keep the recipes you want to cook.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
               📝 <span className="font-bold">Chef Notes</span> is where you save the answers and guidance you get from Chef Jennifer.
@@ -316,17 +322,18 @@ export default function PlaybookPage() {
           </div>
         ) : (
           <div>
-            {/* Three-way tab pill row — mirrors the Chef TV Love/Learn
+            {/* Three-way tab pill row — mirrors the Chef TV Teach/Practice
                 binary pattern so the two pages speak the same tab
-                vocabulary. Only one tab is active at a time; the active
-                tab shows a filled color (rose / sky / amber) while the
-                others are muted gray. Count pills live on each tab so
-                users see "how much do I have here" at a glance. */}
+                vocabulary. Order is locked Teach → Practice → Notes. Only
+                one tab is active at a time; the active tab shows a filled
+                color (sky / orange / amber) while the others are muted gray.
+                Count pills live on each tab so users see "how much do I
+                have here" at a glance. */}
             <div className="flex gap-2 mb-4">
               {[
-                { key: 'love',       label: `❤️ Love (${byBucket.love.length})`,    activeCls: 'bg-rose-500 text-white'  },
-                { key: 'learn',      label: `🎓 Learn (${byBucket.learn.length})`,  activeCls: 'bg-sky-500 text-white'   },
-                { key: 'chef_notes', label: `📝 Notes (${notes.length})`,           activeCls: 'bg-amber-500 text-white' },
+                { key: 'teach',      label: `🎓 Teach (${byBucket.teach.length})`,        activeCls: 'bg-sky-500 text-white'    },
+                { key: 'practice',   label: `🍳 Practice (${byBucket.practice.length})`,  activeCls: 'bg-orange-500 text-white' },
+                { key: 'chef_notes', label: `📝 Notes (${notes.length})`,                 activeCls: 'bg-amber-500 text-white'  },
               ].map(t => (
                 <button
                   key={t.key}
@@ -343,7 +350,7 @@ export default function PlaybookPage() {
             {/* Active tab body. Each tab frames its content with its own
                 soft-tint border so a user who scrolled past the pills
                 still sees which bucket they're in. */}
-            {tab === 'love' || tab === 'learn' ? (
+            {tab === 'teach' || tab === 'practice' ? (
               (() => {
                 const b = BUCKETS.find(x => x.key === tab)
                 const list = byBucket[tab]

@@ -5,10 +5,15 @@ import { redirect } from 'next/navigation'
 
    The Meal/Mood/Protein/Preferences wizard was retired in
    April 2026 and folded into a single chat-first surface at
-   /chef with a Love/Learn pill row at the top:
+   /chef with a Teach/Practice pill row at the top:
 
-     ❤️ Love  → Chef Jennifer makes you a recipe
-     🎓 Learn → Chef Jennifer answers your kitchen questions
+     🎓 Teach    → Chef Jennifer answers your kitchen questions
+     🍳 Practice → Chef Jennifer makes you a recipe
+
+   The vocabulary pivoted from Love/Learn to Practice/Teach in
+   migration 009 (April 2026): Love was the wrong word — it
+   implied favorites/saved/liked/emotion. The new words name
+   the *action* the user takes with each save.
 
    Old bookmarks still land somewhere useful — this redirect
    keeps them working without keeping the wizard alive.

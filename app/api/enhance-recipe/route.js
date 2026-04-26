@@ -5,7 +5,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 // "Make This Recipe More..." — keep in sync with PREFERENCE_OPTIONS on the
 // Recipe Vault (app/secret/page.js). The Chef Jennifer page (app/chef/page.js)
 // no longer exposes the preference picker — Phase 2A simplified Chef Jennifer
-// to a free-text Love/Learn chat — but this server-side label map still backs
+// to a free-text Teach/Practice chat — but this server-side label map still backs
 // the Vault's "Make This Recipe More..." flow.
 const PREFERENCE_LABELS = {
   carb_aware: 'Carb-aware',
