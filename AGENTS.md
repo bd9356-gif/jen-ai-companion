@@ -395,6 +395,28 @@ The library payload is stored on the assistant message in conversation state so 
 
 **Phase 2C (next).** Polish + threshold tuning: validate citation density on real conversations, decide whether to graduate to FTS, possibly add deep-links from article chips into `/guides` (currently lands on the page index — user has to scan), possibly auto-suggest a 🍳 Practice line when the user cites a recipe ("Want to cook your saved Spinach Lasagna?").
 
+## Chef Jennifer — corpus mining (April 2026)
+
+Every Practice-mode tap on `/chef` already INSERTs the generated recipe into `chef_recipes` (title, description, ingredients, instructions, cuisine, difficulty, ai_prompt). That table is a free corpus that grows on its own — over time it becomes a meaningful library of "recipes home cooks have actually asked for". The corpus mining layer taps it before generating fresh.
+
+**Stage 1 (shipped) — instrument.** Two columns on `chef_recipes`:
+- `times_served int default 1` — increments every time a row is served (fresh insert starts at 1, cache hits bump it).
+- `last_served_at timestamptz default now()` — recency for future cold-rotation.
+
+**Stage 2 (shipped) — DB-first lookup + adapt.** `lib/chef_recipe_cache.js` exposes `findCachedRecipe(prompt, cuisine)` which keyword-extracts the prompt (mirrors `lib/library_search.js`'s stopword + length filter), runs an `ilike` OR over `title + description + ai_prompt` on `chef_recipes`, optionally filters by cuisine when one is specified (skips the filter for the generic "International" default), pulls the 20 lowest-`times_served` matching rows, scores them in JS (title 3× / ai_prompt 2× / description 1×), and returns a random pick from the top 5. Random rotation prevents the same prompt from always handing back the identical row before per-user dedup is added.
+
+`/api/topchef` calls `findCachedRecipe` at the top of POST. On a hit it builds an adapt prompt (base recipe JSON + user request + "vary 2–4 ingredients, adjust title, rewrite description") and sends it to haiku, then `bumpServeCount`s the base. On a miss it falls through to the original fresh-generation path which still INSERTs the new row. Either way the response includes `source: 'cache' | 'fresh'` so we can observe hit rate. **The adapted recipe is NOT inserted** — it shares structure with the base and re-saving would double-count popularity and bloat the corpus.
+
+If the adapt call fails (parse error, model timeout), the route falls through to returning the base recipe directly — never an error, worst case a less-varied result.
+
+**Cost note.** Stage 2 alone is roughly cost-neutral per call (input tokens go up because we ship the base recipe, output stays similar). The architectural win is that it sets up Stage 3, where rows above a `times_served` threshold can be returned with no AI call at all.
+
+**Stage 3 (next, not shipped) — pure cache pulls + per-user dedup.** Once a row has been served N times (e.g. ≥ 3) it's "hot" — proven to fit a class of prompts. Hot rows can be returned directly with no model call. To avoid serving the same person the same recipe twice, add a per-user impressions table or a JSONB array on the user row tracking which `chef_recipes.id`s they've seen, and filter those out of the lookup. That's where the actual cost reduction lands.
+
+**Why we keep the adapt layer instead of pure-cache-only.** Variety. The user just remarked that the same prompt giving a different recipe every time is a feature, not a bug — and that's a temperature artifact of fresh generation. Pure cache pulls would lose that. The adapt layer preserves the "fresh feeling" by riffing on the base, while still benefiting from the corpus as a structural prior.
+
+**What's deliberately NOT searched.** `chef_recipes.ingredients` and `instructions` (jsonb / long text — noisy match signal). Adding either is a one-line change in `chef_recipe_cache.js`.
+
 ## Recipe Vault "Make my recipe more..." preferences
 
 The 8-preference list lives on the Recipe Vault detail-view's **🌿 Make more…** tab inside ✨ AI Kitchen Helpers. It's a per-transformation, multi-select cooking-style adjustment (not medical advice). The list got created with the old Chef Jennifer wizard and was retained on the Vault when the wizard was retired in Phase 2A.
@@ -498,7 +520,7 @@ API: `POST /api/enhance-recipe` with `{ recipe, action: 'transform', preferences
 ## API routes (`app/api/`)
 
 - `/api/chef` — Chef Jennifer 🎓 Teach-mode chat backend (Q&A / teaching). Uses `claude-haiku-4-5-20251001`.
-- `/api/topchef` — Chef Jennifer 🍳 Practice-mode recipe generator (returns JSON recipe). Uses `claude-haiku-4-5-20251001`. The wizard at `/topchef` was retired Phase 2A; the page is now a `redirect('/chef')` and only the API route still carries the `topchef` name.
+- `/api/topchef` — Chef Jennifer 🍳 Practice-mode recipe generator (returns JSON recipe). Uses `claude-haiku-4-5-20251001`. The wizard at `/topchef` was retired Phase 2A; the page is now a `redirect('/chef')` and only the API route still carries the `topchef` name. **DB-first cache layer (April 2026)** — the route tries `findCachedRecipe` from `lib/chef_recipe_cache.js` before generating fresh; on a hit it sends the matched row + the user's prompt to haiku for an adapt pass and bumps `times_served` + `last_served_at` on the base. On miss it falls through to fresh generation and INSERTs into `chef_recipes`. Response includes `source: 'cache' | 'fresh'` so we can watch the hit rate climb as the corpus fills. See "Chef Jennifer — corpus mining" below.
 - `/api/import-recipe` — parse/ingest external recipes. Accepts `{ url }` or `{ text }`. **YouTube support:** if `url` is a `youtu.be` / `youtube.com/watch` / `youtube.com/shorts` link, the route pulls title/channel/description/thumbnail via the YouTube Data API v3 and captions via `youtube-transcript`, then feeds the combined blob to Claude. Requires `YOUTUBE_API_KEY` in env. Falls back to description-only when captions are unavailable. Thumbnail becomes the recipe image.
 - `/api/enhance-recipe` — AI enrichment of existing recipes. Actions: `enhance`, `resize`, `generate_info`, `transform`.
 
