@@ -195,22 +195,6 @@ export default function VideosPage() {
     })
   }, [])
 
-  // Read ?tab= once on mount so deep-links from MyKitchen's split Chef TV
-  // tiles land on the right side. Valid values: 'teach' | 'practice'.
-  // Anything else is ignored — the default ('teach') stands. Tab changes
-  // inside the page are local state only and don't sync back to the URL,
-  // matching the Playbook ?tab= pattern: refresh returns the user to the
-  // linked tab, which is what someone arriving from the hub expects.
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const t = params.get('tab')
-    if (t === 'teach' || t === 'practice') {
-      setFilter(t)
-      setTopic(t === 'teach' ? 'featured' : 'all')
-    }
-  }, [])
-
   async function loadVideos() {
     const [{ data: cooking }, { data: education }] = await Promise.all([
       supabase.from('cooking_videos').select('*').order('view_count', { ascending: false }),
