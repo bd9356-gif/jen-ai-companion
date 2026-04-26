@@ -12,26 +12,20 @@
 -- teaches → user practices. Same vocabulary across Chef Jennifer's mode
 -- pills, Chef TV's filter tabs, and Playbook's saved buckets.
 --
--- Migration:
--- 1. UPDATE existing rows: 'love' → 'practice', 'learn' → 'teach'.
--- 2. Drop the old CHECK (which restricted to love/learn).
+-- Migration order matters — the existing CHECK only permits love/learn,
+-- so it has to come off BEFORE the UPDATEs:
+-- 1. Drop the old CHECK on bucket (name may vary across environments).
+-- 2. UPDATE existing rows: 'love' → 'practice', 'learn' → 'teach'.
 -- 3. Add a new CHECK restricted to ('practice','teach').
 -- 4. Change default from 'learn' to 'teach'.
 --
--- Idempotent: safe to re-run. UPDATEs are no-ops after the first run; the
--- CHECK swap uses DROP-by-definition-match so naming drift doesn't break
--- reruns.
+-- Idempotent: safe to re-run. The constraint-drop loop is name-agnostic
+-- (matches any CHECK whose definition mentions "bucket"), and the
+-- UPDATEs are no-ops after the first run.
 
--- Step 1: rename the values on existing rows.
-update public.cooking_skill_items
-set bucket = 'practice', updated_at = now()
-where bucket = 'love';
-
-update public.cooking_skill_items
-set bucket = 'teach', updated_at = now()
-where bucket = 'learn';
-
--- Step 2: drop any existing CHECK on the bucket column (name may vary).
+-- Step 1: drop any existing CHECK on the bucket column (name may vary).
+-- Has to happen before the UPDATEs — the old constraint rejects 'practice'
+-- and 'teach' as values.
 do $$
 declare
   c record;
@@ -47,6 +41,15 @@ begin
   end loop;
 end
 $$;
+
+-- Step 2: rename the values on existing rows. Now safe — no CHECK in place.
+update public.cooking_skill_items
+set bucket = 'practice', updated_at = now()
+where bucket = 'love';
+
+update public.cooking_skill_items
+set bucket = 'teach', updated_at = now()
+where bucket = 'learn';
 
 -- Step 3: install the new CHECK.
 alter table public.cooking_skill_items
