@@ -317,30 +317,28 @@ export default function ChefPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-4 flex flex-col">
-        <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-2 flex flex-col">
+        <div className="flex-1 overflow-y-auto space-y-3 pb-2">
 
           {/* Empty state — mode-aware copy + suggested prompts.
-              Compacted (pt-2 pb-3, was py-6) so the prompt list is
-              visible above the fold on iPhone without scrolling. The
-              subtitle is text-base gray-600 (was text-sm gray-400) —
-              the previous size was too small to read at a glance, and
-              this paragraph also absorbs the role of the dropped
-              header tagline so users still see what each mode does. */}
+              Stripped down so the prompt boxes ride near the top on
+              iPhone: dropped the 4xl emoji (it's already in the header),
+              dropped the "Try one of these" label (the cards are
+              self-evidently tappable), and tightened to a single
+              heading + readable subtitle. Subtitle stays at text-base
+              gray-600 — that's the readable size. */}
           {messages.length === 0 && (
-            <div className="space-y-3">
-              <div className="text-center pt-2 pb-3">
-                <p className="text-4xl mb-1.5">{isPractice ? '🍳' : '🎓'}</p>
+            <div className="space-y-2">
+              <div className="text-center pt-1 pb-1">
                 <p className="text-gray-900 font-bold text-xl leading-tight">
                   {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
                 </p>
-                <p className="text-gray-600 text-base mt-2 leading-snug max-w-md mx-auto">
+                <p className="text-gray-600 text-base mt-1 leading-snug max-w-md mx-auto">
                   {isPractice
                     ? 'Tell Chef Jennifer what to make — or come from 🎓 Teach to practice what you just learned.'
                     : 'Ask anything kitchen. Chef Jennifer teaches, then assigns homework you can cook in 🍳 Practice.'}
                 </p>
               </div>
-              <p className="text-xs text-gray-400 text-center uppercase tracking-wider font-semibold">Try one of these</p>
               <div className="space-y-2">
                 {promptList.map(q => (
                   <button
