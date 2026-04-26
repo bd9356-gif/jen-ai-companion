@@ -272,26 +272,29 @@ export default function ChefPage() {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header — single compact row with the Teach/Practice toggle
+          inline on the right. The previous layout had three rows (title
+          row, full-width pill row, tagline caption) which ate ~120px of
+          vertical real estate before the suggested prompts could even
+          start. By inlining the toggle and dropping the standalone
+          tagline (its meaning is folded into the empty-state subtitle
+          below), the prompt list rises into view on iPhone without
+          scrolling. Toggle order is locked Teach → Practice (the loop
+          reads left-to-right) and pill colors match (sky / orange). */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600 shrink-0">← Back</button>
-            <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">👨‍🍳 Chef Jennifer</h1>
-          </div>
-          {messages.length > 0 && (
-            <button onClick={() => setMessages([])} className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded-lg px-3 py-1 shrink-0">
-              Clear
-            </button>
-          )}
-        </div>
-        {/* Teach / Practice pill row — same vocabulary as Chef TV + Playbook.
-            Order locked Teach → Practice (the loop reads left-to-right). */}
-        <div className="max-w-2xl mx-auto px-4 pb-3">
-          <div className="grid grid-cols-2 gap-2 bg-gray-100 rounded-2xl p-1">
+        <div className="max-w-2xl mx-auto px-3 py-2.5 flex items-center gap-2">
+          <button
+            onClick={() => window.location.href='/kitchen'}
+            aria-label="Back to MyKitchen"
+            className="text-base text-gray-500 hover:text-gray-700 shrink-0 px-1"
+          >
+            ←
+          </button>
+          <h1 className="text-base font-bold text-gray-900 truncate min-w-0">👨‍🍳 Chef Jennifer</h1>
+          <div className="shrink-0 ml-auto flex bg-gray-100 rounded-full p-0.5 gap-0.5">
             <button
               onClick={() => setMode('teach')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
                 mode === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -299,36 +302,42 @@ export default function ChefPage() {
             </button>
             <button
               onClick={() => setMode('practice')}
-              className={`px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
                 mode === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               🍳 Practice
             </button>
           </div>
-          <p className="text-[11px] text-gray-400 mt-1.5 text-center">
-            {isPractice
-              ? '🍳 Practice — the kitchen lab. Cook a recipe, practice the lesson.'
-              : '🎓 Teach — Chef Jennifer teaches, then assigns homework you can cook in Practice.'}
-          </p>
+          {messages.length > 0 && (
+            <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
+              Clear
+            </button>
+          )}
         </div>
       </header>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-4 flex flex-col">
         <div className="flex-1 overflow-y-auto space-y-4 pb-4">
 
-          {/* Empty state — mode-aware copy + suggested prompts */}
+          {/* Empty state — mode-aware copy + suggested prompts.
+              Compacted (pt-2 pb-3, was py-6) so the prompt list is
+              visible above the fold on iPhone without scrolling. The
+              subtitle is text-base gray-600 (was text-sm gray-400) —
+              the previous size was too small to read at a glance, and
+              this paragraph also absorbs the role of the dropped
+              header tagline so users still see what each mode does. */}
           {messages.length === 0 && (
             <div className="space-y-3">
-              <div className="text-center py-6">
-                <p className="text-5xl mb-2">{isPractice ? '🍳' : '🎓'}</p>
-                <p className="text-gray-800 font-bold text-lg">
+              <div className="text-center pt-2 pb-3">
+                <p className="text-4xl mb-1.5">{isPractice ? '🍳' : '🎓'}</p>
+                <p className="text-gray-900 font-bold text-xl leading-tight">
                   {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
                 </p>
-                <p className="text-gray-400 text-sm mt-1">
+                <p className="text-gray-600 text-base mt-2 leading-snug max-w-md mx-auto">
                   {isPractice
-                    ? 'Tell Chef Jennifer what to make — or come here from 🎓 Teach to practice what you just learned.'
-                    : 'Ask anything kitchen. When the topic has a natural exercise, Chef Jennifer will assign a recipe to practice.'}
+                    ? 'Tell Chef Jennifer what to make — or come from 🎓 Teach to practice what you just learned.'
+                    : 'Ask anything kitchen. Chef Jennifer teaches, then assigns homework you can cook in 🍳 Practice.'}
                 </p>
               </div>
               <p className="text-xs text-gray-400 text-center uppercase tracking-wider font-semibold">Try one of these</p>
