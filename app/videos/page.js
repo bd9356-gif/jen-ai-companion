@@ -589,13 +589,23 @@ export default function VideosPage() {
             </div>
           </div>
 
-          {/* Page lede — what Chef TV is, in plain words. Sits right under
-              the title so visitors get the pitch before the filters. The
-              ℹ️ About panel below covers how Teach/Practice + saving works;
-              this line stays focused on identity, not mechanics. */}
-          <p className="text-sm text-gray-600 leading-snug mb-3">
-            Watch the latest cooking videos from YouTube chefs. Explore trends, dinner ideas, tips, hacks, and more &mdash; all in one place.
-          </p>
+          {/* Mode-aware lede — reinforces the "two rooms" framing of the
+              header toggle. The question changes based on which room
+              the user is in (Teach = video room, Practice = recipe
+              room) and the subline tells them what to do here and
+              where their saves end up. Replaces the old generic lede
+              ("Watch the latest cooking videos…") which didn't reflect
+              the room context. */}
+          <div className="mb-3">
+            <h2 className={`text-base font-bold mb-1 ${filter === 'teach' ? 'text-sky-700' : 'text-orange-700'}`}>
+              {filter === 'teach' ? 'What do you want to learn?' : 'What should we cook?'}
+            </h2>
+            <p className="text-sm text-gray-600 leading-snug">
+              {filter === 'teach'
+                ? "You're in the video room — watch skill videos, pick what you want to learn, and they'll save to your Playbook."
+                : "You're in the recipe room — watch a video, open the recipe, and save it. Anything you add to your Kitchen is also added to your Playbook."}
+            </p>
+          </div>
 
           {(showSearch || search) && (
             <input
