@@ -37,9 +37,9 @@ The hub still uses **MyKitchen** (it's the one "My" we kept). All other nav labe
 | Chef TV                | `/videos`     | Cooking videos (YouTube-backed). Learning Journey classroom #2 (video instructor). |
 | Chef Jennifer          | `/chef`       | AI chef + instructor — 🎓 Teach teaches, 🍳 Practice makes a recipe. Learning Journey classroom #1 (AI instructor). |
 | Guides                 | `/guides`     | The Library — curated reference articles by topic.                  |
-| My Playbook            | `/playbook`   | Four save tabs (🎓 Skills · 📝 Notes · 🍳 Recipe Videos · ✨ Homework). Your Learning Journey practice book. |
-| Chef Notes             | `/playbook` (📝 Notes tab) | Saved AI answers from Chef Jennifer. `/chef-notes` redirects.       |
-| Chef Jennifer Recipes  | `/playbook` (✨ Homework tab) | Recipes Chef Jennifer assigns you; save-to-vault from here. `/chef-recipes` redirects. |
+| My Playbook            | `/playbook`   | Saved videos (Teach / Practice) + Chef Recipes + Chef Notes. Your Learning Journey practice book. |
+| Chef Notes             | `/playbook`   | Saved AI answers — a section on Playbook. `/chef-notes` redirects.  |
+| Chef Jennifer Recipes  | `/playbook` (✨ Recipes tab) | Recipes Chef Jennifer made for you; save-to-vault from here. `/chef-recipes` redirects. |
 | Meal Plan              | `/meal-plan`  | 3 buckets of "what you're cooking soon".                            |
 | Shopping List          | `/shopping-list` | Ingredients grouped by store; AI cleanup / copy / print.         |
 
@@ -248,16 +248,7 @@ The standalone `/chef-recipes` page was retired and the recipes Chef Jennifer ma
 
 **Color choice — rose for the Recipes tab.** Practice (cooking-video saves) is orange because it's the user's primary Chef-TV cooking action; Chef Recipes (AI-generated recipes) needed its own color so a quick glance tells the user which kind of recipe surface they're looking at. Two recipe surfaces, two colors.
 
-**Tab pill row is 4-up, named by cell (April 2026 rename).** The four tabs map to a 2×2 of source × mode — Chef TV teaches and gives recipe videos; Chef Jennifer teaches and assigns homework. Tab labels are the cell name (what each tab IS), not the bare mode word, so users can disambiguate the two Teach-side tabs (Skills vs Notes) and the two Practice-side tabs (Recipe Videos vs Homework) at a glance:
-
-|              | 🎓 Teach side (learn)     | 🍳 Practice side (cook)     |
-| ------------ | ------------------------- | --------------------------- |
-| Chef TV      | 🎓 Skills (sky)           | 🍳 Recipe Videos (orange)   |
-| Chef Jennifer| 📝 Notes (amber)          | ✨ Homework (rose)          |
-
-Order is locked Skills → Notes → Recipe Videos → Homework — Teach side first, Practice side second. The classroom-then-kitchen rhythm matches the rest of the app (Chef Jennifer's Teach pill leads, Chef TV's Teach pill leads, etc.). The "Homework" rename specifically ties Playbook to /chef's `🎯 Practice this:` chip: Chef Jennifer assigns homework on Teach mode, and the saved recipe lands in this tab end-to-end. Pill labels are shortened on mobile ("Recipes" instead of "Recipe Videos") so all four still fit on a phone — the body header inside each tab uses the full name. The row uses `gap-1.5` with `text-[11px] sm:text-xs`. Each tab's body uses a color-matched framed border (`border-2` + soft tint header) so a user who scrolled past the pills still sees which bucket they're in. DB-side keys are unchanged (`teach` / `practice` / `chef_notes` / `chef_recipes`) so `?tab=<key>` deep-links from /chef still work — the rename is label-only.
-
-**Naming history.** Earlier vocabulary on this row was 🎓 Teach / 🍳 Practice / ✨ Recipes / 📝 Notes — bare mode words borrowed from Chef TV's filter pills and Chef Jennifer's mode pills. That worked when there were two tabs, broke down with four: "Teach" said which side a tab was on but not which cell. The cell-named version (Skills / Notes / Recipe Videos / Homework) makes each tab self-descriptive while keeping the Teach/Practice vocabulary alive on Chef TV and Chef Jennifer where it disambiguates a binary choice.
+**Tab pill row is now 4-up.** Order: 🎓 Teach (sky) → 🍳 Practice (orange) → ✨ Recipes (rose) → 📝 Notes (amber). Tab labels are shortened ("Recipes" / "Notes" instead of "Chef Recipes" / "Chef Notes") and the row uses `gap-1.5` with `text-[11px] sm:text-xs` so all four pills fit on a phone. Each tab's body uses a color-matched framed border (`border-2` + soft tint header) so a user who scrolled past the pills still sees which bucket they're in.
 
 **Recipes tab body.** Renders `<ChefJenItem>` rows (same component used by the old `/chef-recipes` page). Props/handlers ported into `app/playbook/page.js` as `removeRecipe(item)` and `saveRecipeToVault(item)` — the latter inserts into `personal_recipes` with ingredients normalized to `{name, measure}` shape, instructions through `instructionsToString()`, and the recipe's description moved into `family_notes` (prefixed, blank line, then "Saved from Chef Jennifer.") with the Vault `description` set to empty. Same logic as the original `/chef-recipes` saveToVault.
 
@@ -267,7 +258,7 @@ Order is locked Skills → Notes → Recipe Videos → Homework — Teach side f
 
 **Data fetch.** `loadAll` on `/playbook` now fetches AI-recipe favorites in the same parallel `Promise.all` as the video tables, articles, and AI-answer favorites: `supabase.from('favorites').select('*').eq('user_id', userId).eq('type', 'ai_recipe').order('created_at', { ascending: false })`. Result is held in a `recipes` state slot independent of `byBucket` (recipes aren't a bucket — they're a separate kind of save, like Chef Notes).
 
-**Header tagline rework.** With four kinds of saves, the "Teach it → Practice it → Note it" tagline doesn't cover the surface anymore. Tagline is now "Everything you've saved" with subline "Skills, notes, recipe videos, and homework — all in one place." (matching the tab vocabulary). The slate callout below names each of the four cells in tab order — 🎓 Skills, 📝 Notes, 🍳 Recipe Videos, ✨ Homework — so a user who taps the ℹ button gets a one-sentence definition of each tab.
+**Header tagline rework.** With four kinds of saves, the "Teach it → Practice it → Note it" tagline doesn't cover the surface anymore. Tagline is now "Everything you've saved" with subline "Videos, chef recipes, and chef notes — all in one place." The slate callout below adds a fourth paragraph for ✨ Chef Recipes alongside the existing Teach/Practice/Notes lines.
 
 **`/chef-recipes` redirect.** `app/chef-recipes/page.js` now contains a single `redirect('/playbook')` plus a comment header explaining the fold-in. Old bookmarks survive.
 
