@@ -580,25 +580,21 @@ export default function MyRecipeVaultPage() {
     if (importUrl.trim()) return
     if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) return
     let cancelled = false
-    // iOS Safari (and standalone PWA mode) sometimes only allows
-    // readText() right after a user tap. Opening Import IS a tap, but
-    // the effect runs in the next paint — so we delay slightly to keep
-    // the gesture window open. Failures stay silent here because this
-    // is auto-detect, not an explicit user action.
-    const timer = setTimeout(() => {
+    // Run readText() synchronously in the effect — on iOS Safari the
+    // gesture window from the tap-into-Import is consumed within the
+    // same animation frame, so any setTimeout (even 0ms) moves the
+    // call OUT of the gesture context and the promise rejects.
+    navigator.clipboard.readText().then(text => {
       if (cancelled) return
-      navigator.clipboard.readText().then(text => {
-        if (cancelled) return
-        const trimmed = (text || '').trim()
-        // Conservative URL match: http(s) only, no whitespace, reasonable
-        // length cap so a clipboard full of pasted text never gets offered
-        // as a "URL".
-        if (/^https?:\/\/\S+$/i.test(trimmed) && trimmed.length < 2000) {
-          setClipboardSuggestion(trimmed)
-        }
-      }).catch(() => { /* permission denied / not supported — silent */ })
-    }, 50)
-    return () => { cancelled = true; clearTimeout(timer) }
+      const trimmed = (text || '').trim()
+      // Conservative URL match: http(s) only, no whitespace, reasonable
+      // length cap so a clipboard full of pasted text never gets offered
+      // as a "URL".
+      if (/^https?:\/\/\S+$/i.test(trimmed) && trimmed.length < 2000) {
+        setClipboardSuggestion(trimmed)
+      }
+    }).catch(() => { /* permission denied / not supported — silent */ })
+    return () => { cancelled = true }
   }, [view, importTab, importUrl])
 
   // Detail-view paste listener — when looking at a recipe, Cmd/Ctrl+V
