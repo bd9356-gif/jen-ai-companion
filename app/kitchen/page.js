@@ -8,6 +8,7 @@ import {
   STARTER_CHEF_NOTES_VERSION,
   FAVORITE_STARTER_TITLES,
   STARTER_BACKFILL_VERSION,
+  STARTER_PHOTO_BACKFILL_VERSION,
 } from '@/lib/starter_recipes'
 import { KITCHEN_SECTIONS } from '@/lib/kitchen_sections'
 
@@ -98,6 +99,46 @@ async function backfillStarterFavoritesOnce(user) {
   // retry storm. The Meal Plan seeder below filters by title list (not
   // is_favorite) so it self-heals regardless of what happened here.
   if (!error) localStorage.setItem(flagKey, '1')
+}
+
+// Backfill photo_url on existing starter rows that were seeded before
+// images were added to STARTER_RECIPES. Why this exists: the original
+// starter seed shipped with empty photo_url strings (we hadn't picked
+// images yet). Adding photos to STARTER_RECIPES doesn't help existing
+// users because the seeder only runs on fresh signups — their rows
+// already exist with photo_url = ''. This backfill walks each starter
+// title, looks up its current photo_url from STARTER_RECIPES, and
+// UPDATEs the user's matching row.
+//
+// Defensive matching:
+//   - title must match a known starter title
+//   - family_notes must start with "Welcome —" (the app-seeded marker)
+//   - existing photo_url must be empty (so we never overwrite a photo
+//     the user set themselves)
+//
+// Gated by STARTER_PHOTO_BACKFILL_VERSION so we don't hammer the DB on
+// every load — only the first visit per version. Bump the version
+// constant to re-run (e.g. if starter photos change later).
+async function backfillStarterPhotosOnce(user) {
+  if (typeof window === 'undefined' || !user?.id) return
+  const flagKey = `recipe_ai_starter_photos_${STARTER_PHOTO_BACKFILL_VERSION}_${user.id}`
+  if (localStorage.getItem(flagKey)) return
+
+  const updates = STARTER_RECIPES
+    .filter(r => r.photo_url)
+    .map(r =>
+      supabase
+        .from('personal_recipes')
+        .update({ photo_url: r.photo_url })
+        .eq('user_id', user.id)
+        .eq('title', r.title)
+        .eq('photo_url', '')
+        .ilike('family_notes', `${STARTER_FAMILY_NOTES_PREFIX}%`)
+    )
+
+  const results = await Promise.all(updates)
+  const anyError = results.some(({ error }) => error)
+  if (!anyError) localStorage.setItem(flagKey, '1')
 }
 
 // NOTE: The Meal Plan seeder was removed (April 2026). It used to
@@ -200,10 +241,12 @@ export default function KitchenPage() {
         //
         // Order matters in this chain:
         //   1. Recipes — insert the 5 starters into personal_recipes
-        //   2. Backfill — flag favorite-titled starters as is_favorite
-        //      (catches any tester whose first-seed write missed the
-        //      column due to PostgREST schema-cache lag right after
-        //      migration 011)
+        //   2. Favorites backfill — flag favorite-titled starters as
+        //      is_favorite (catches any tester whose first-seed write
+        //      missed the column due to PostgREST schema-cache lag
+        //      right after migration 011)
+        //   3. Photos backfill — set photo_url on starter rows seeded
+        //      before images were added to STARTER_RECIPES
         //
         // Meal Plan intentionally is NOT auto-seeded — favoriting and
         // meal-planning are two separate user gestures. See the long
@@ -213,6 +256,8 @@ export default function KitchenPage() {
         seedStarterRecipesOnce(session.user)
           .catch(() => {})
           .then(() => backfillStarterFavoritesOnce(session.user))
+          .catch(() => {})
+          .then(() => backfillStarterPhotosOnce(session.user))
           .catch(() => {})
         seedChefNotesOnce(session.user).catch(() => {})
       }
