@@ -282,12 +282,14 @@ export default function KitchenPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
+      {/* Header — matches the landing's header rhythm (text-lg brand,
+          [11px] subtitle, py-3) so cresting from /  to /kitchen feels
+          continuous, not like jumping into a roomier page. */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-      <div className="px-5 py-4 flex items-center justify-between max-w-lg mx-auto">
+      <div className="px-5 py-3 flex items-center justify-between max-w-lg mx-auto">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
+          <h1 className="text-lg font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
+          <p className="text-[11px] text-gray-500 mt-0.5">Everything you need — all in one place.</p>
         </div>
         <button onClick={() => window.location.href='/profile'}
           className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold">
@@ -296,30 +298,36 @@ export default function KitchenPage() {
       </div>
       </div>
 
-      {/* Sections */}
-      <main className="px-4 pt-6 pb-10 max-w-lg mx-auto space-y-8">
+      {/* Sections — tightened so all 8 tiles + both section labels
+          sit on a phone screen without scrolling. Tile descriptions
+          stay (this is the hub — descriptions help with destination
+          choice; on the landing they were dropped because the hub
+          itself ships the long-form copy). */}
+      <main className="px-4 pt-3 pb-6 max-w-lg mx-auto space-y-5">
         {KITCHEN_SECTIONS.map(section => (
           <div key={section.name}>
             {/* Section header */}
-            <div className="mb-3 px-1">
-              <h2 className="text-xs font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
-              {section.subtitle && <p className="text-sm text-gray-500 mt-1 leading-snug">{section.subtitle}</p>}
+            <div className="mb-2 px-1">
+              <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
+              {section.subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
             </div>
-            {/* Section items */}
-            <div className="space-y-2.5">
+            {/* Section items — px-3 py-2.5 rounded-xl, 22px emoji,
+                text-sm title, text-xs description. Same rhythm as
+                the landing's tiles so the two pages read identically. */}
+            <div className="space-y-2">
               {section.items.map(item => (
                 <a
                   key={item.title}
                   href={item.href}
-                  className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl px-4 py-3 transition-all active:scale-[0.98]"
+                  className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-xl px-3 py-2.5 transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-3">
-                    <span style={{fontSize:'26px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
+                    <span style={{fontSize:'22px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-base text-gray-900 leading-tight">{item.title}</h3>
-                      <p className="text-sm text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
+                      <h3 className="font-bold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
+                      <p className="text-xs text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
                     </div>
-                    <span className="text-gray-300 text-xl font-light shrink-0">›</span>
+                    <span className="text-gray-300 text-lg font-light shrink-0">›</span>
                   </div>
                 </a>
               ))}
