@@ -72,14 +72,14 @@ Section headers are small orange uppercase labels with a one-line section subtit
 
 1. **Cooking Life** — "Your recipes, your plan, your essentials." Everything the user *does* in the kitchen — saving recipes, planning meals, shopping for them. Plain tile names ("Recipe Vault", "Meal Plan").
    - 🔐 Recipe Vault → `/secret` — "Your saved recipes, organized."
-   - 🃏 Recipe Cards → `/cards` — "Flip through your collection."
+   - 🃏 Recipe Cards → `/cards` — "Your mom's style cards."
    - 📅 Meal Plan → `/meal-plan` — "What you're cooking soon."
    - 🛒 Shopping List → `/shopping-list` — "Ingredients, organized to shop."
 
 2. **Learning Journey** — "Your classrooms, your library, your practice book." Everything that helps the user *get better* in the kitchen — two classrooms (AI + video), a library, and a practice book. Tile names use a "Name — Role" pattern so each tile names what it IS in addition to what it does. Order locked: Chef Jennifer leads (the AI instructor — the most personal teaching surface), then Chef TV (video classroom), then Guides (the library), then My Playbook (the user's practice book).
    - 👨‍🍳 Chef Jennifer — Your Instructor → `/chef` — "Your AI cooking teacher." **Classroom #1 — AI instructor.**
    - 🎬 Chef TV — Watch & Learn → `/videos` — "Every lesson, on video." **Classroom #2 — video instructor.**
-   - 📚 Guides — Your Library → `/guides` — "Knife skills, subs, safety." **The Library.**
+   - 📚 Guides — Your Library → `/guides` — "Knife skills, techniques, and tips." **The Library.**
    - 📘 My Playbook — Your Saved Items → `/playbook` — "Videos, recipes, and notes." **The practice book — destination for all saves.**
 
 **Tile description rhythm.** Both groups now share the same short-tagline rhythm — ~25–30 chars per description, period at the end, no fluff. The original Learning Journey descriptions (e.g. "Learn directly from Chef Jennifer — your personal AI cooking teacher.") were 58–70 chars and `truncate`'d on iPhone, which defeats the point of having a description at all. The shorter versions fit on a single phone line and read at a glance. Description style mirrors Golf Clubhouse's tile rhythm ("Every lesson, one tap away." / "Notes, tips, tee times.") — short, punchy, scannable.
