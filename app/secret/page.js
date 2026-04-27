@@ -637,8 +637,29 @@ export default function MyRecipeVaultPage() {
 
   function showToast(msg) {
     setToastMsg(msg)
-    setTimeout(() => setToastMsg(null), 2000)
+    // Diagnostic / error toasts (anything that mentions "Clipboard",
+    // "No image", "Could not", or "failed") stay up longer so the user
+    // can actually read them — short success toasts auto-dismiss in 2s.
+    const isDiagnostic = typeof msg === 'string' && /clipboard|no image|could not|failed|error/i.test(msg)
+    setTimeout(() => setToastMsg(null), isDiagnostic ? 6000 : 2500)
   }
+
+  // Shared toast element. Rendered at the bottom of every view return
+  // so messages from showToast (success + diagnostic) actually appear.
+  // Without this the showToast() calls were no-ops — that's why "Photo
+  // added", "Added to Meal Plan", "Clipboard NotAllowedError", and the
+  // "No image found — clipboard types: …" diagnostics were all firing
+  // silently. Tap-to-dismiss for the longer diagnostic toasts.
+  const toastEl = toastMsg ? (
+    <div
+      onClick={() => setToastMsg(null)}
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] max-w-[92%] bg-gray-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm cursor-pointer break-words text-center"
+      role="status"
+      aria-live="polite"
+    >
+      {toastMsg}
+    </div>
+  ) : null
 
   async function addToShoppingList(ing) {
     if (!user) return
@@ -1164,6 +1185,7 @@ export default function MyRecipeVaultPage() {
 
     return (
       <div className="min-h-screen bg-white">
+        {toastEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }}
@@ -1484,6 +1506,7 @@ export default function MyRecipeVaultPage() {
     }).join('\n')
     return (
       <div className="min-h-screen bg-white">
+        {toastEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('detail')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
@@ -1503,6 +1526,7 @@ export default function MyRecipeVaultPage() {
   if (view === 'enhance' && viewing) {
     return (
       <div className="min-h-screen bg-white">
+        {toastEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null); setTransformResult(null); setTransformPrefs([]) }}
@@ -1844,6 +1868,7 @@ export default function MyRecipeVaultPage() {
   if (view === 'import') {
     return (
       <div className="min-h-screen bg-white">
+        {toastEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
@@ -2054,6 +2079,7 @@ export default function MyRecipeVaultPage() {
   if (view === 'add') {
     return (
       <div className="min-h-screen bg-white">
+        {toastEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
@@ -2165,6 +2191,7 @@ export default function MyRecipeVaultPage() {
   // ── LIST VIEW ──
   return (
     <div className="min-h-screen bg-white">
+      {toastEl}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
