@@ -202,35 +202,32 @@ export default function HomePage() {
             same section headers + orange-stripe tile pattern. The tile
             hrefs are overridden with `tileHref` so signed-out visitors
             land on /login on any tap; signed-in visitors land on
-            /kitchen and pick from there. The data itself (sections,
-            titles, descriptions, emojis) comes from KITCHEN_SECTIONS so
-            the landing and the hub never drift. */}
-        <div className="space-y-5">
+            /kitchen and pick from there.
+
+            Density note (April 2026): the landing intentionally renders
+            tiles WITHOUT descriptions or section subtitles. The hub
+            ships the long-form copy; here the goal is "see the shape
+            of the app on one phone screen". The section name plus the
+            emoji + title is enough to telegraph what's inside. */}
+        <div className="space-y-3">
           {KITCHEN_SECTIONS.map(section => (
             <div key={section.name}>
-              {/* Section header */}
-              <div className="mb-2 px-1">
-                <h2 className="text-xs font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
-                {section.subtitle && (
-                  <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>
-                )}
+              {/* Section header — label only, no subtitle. */}
+              <div className="mb-1.5 px-1">
+                <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
               </div>
-              {/* Section items — kept compact (py-2.5) to fit all 8 on
-                  a phone screen. Emoji is 22px (was 26px) for the same
-                  reason. */}
-              <div className="space-y-2">
+              {/* Section items — single-line tiles (emoji + title +
+                  chevron). py-2 instead of py-2.5; no description row. */}
+              <div className="space-y-1.5">
                 {section.items.map(item => (
                   <a
                     key={item.title}
                     href={tileHref}
-                    className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-xl px-3 py-2.5 transition-all active:scale-[0.98]"
+                    className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-xl px-3 py-2 transition-all active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-3">
-                      <span style={{fontSize:'22px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
-                        <p className="text-xs text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
-                      </div>
+                      <span style={{fontSize:'20px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
+                      <h3 className="flex-1 min-w-0 font-semibold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
                       <span className="text-gray-300 text-lg font-light shrink-0">›</span>
                     </div>
                   </a>
