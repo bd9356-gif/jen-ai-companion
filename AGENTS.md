@@ -680,16 +680,30 @@ Supabase's default SMTP is rate-limited and gets spam-flagged by Hotmail/Outlook
 
 Rotating / revoking the Resend API key is a Supabase SMTP-fields update only; no app-code change.
 
-## New-user seeding (starter recipes)
+## New-user seeding (starter content)
 
-First-time users get a small set of starter recipes loaded into their Recipe Vault automatically, so the app never feels empty on day one.
+First-time users get a small set of starter content loaded across **three** surfaces — Recipe Vault, Meal Plan, and Chef Notes — so the app feels lived-in on day one instead of greeting them with three empty pages. All seeders fire from `app/kitchen/page.js` inside the auth `useEffect`, are idempotent, and swallow errors so a single Supabase hiccup never blocks the hub.
 
-- Recipe data lives in `lib/starter_recipes.js` as a hand-curated array of 5 recipes — one quick weeknight (Aglio e Olio), one one-pan weeknight (Sheet-Pan Lemon Chicken), one comfort (Tomato Soup + Grilled Cheese), one healthy/modern (Honey-Soy Salmon Bowl), one project bake (Brown Butter Chocolate Chip Cookies). Each carries `family_notes: "A starter recipe — swap, edit, or delete anytime."` so users can tell they're examples.
-- Seeding fires from `app/kitchen/page.js` via `seedStarterRecipesOnce(user)` inside the auth `useEffect`. It is idempotent in two ways:
-  1. It checks a `localStorage` flag `recipe_ai_seeded_${STARTER_RECIPES_VERSION}_${user.id}`. If set, no work happens.
-  2. If unflagged, it counts the user's `personal_recipes`. If count > 0 (returning user, or already seeded on another device), it sets the flag without inserting.
-- Only when both checks indicate a brand-new vault does the function bulk-insert the starter rows. Insert errors do not set the flag, so the next visit retries.
-- `STARTER_RECIPES_VERSION` is in the import path so we can ship a future v2 of the starter set without re-seeding existing users (just bump the const).
+### Recipe Vault — `seedStarterRecipesOnce`
+
+- Recipe data lives in `lib/starter_recipes.js` as a hand-curated array of 5 recipes — one quick weeknight (Aglio e Olio), one one-pan weeknight (Sheet-Pan Lemon Chicken), one comfort (Tomato Soup + Grilled Cheese), one healthy/modern (Honey-Soy Salmon Bowl), one project bake (Brown Butter Chocolate Chip Cookies). Each carries `family_notes: "Welcome — this starter's here to get you cooking. Yours to make your own."` — the warm-welcome wording doubles as the app-seeded marker so users know these are examples, not personal saves.
+- Two recipes (Aglio e Olio + Brown Butter Cookies) are flagged `is_favorite: true` so the new user lands in the Vault with the ❤️ Favorites filter chip already populated.
+- Idempotent in two ways:
+  1. `localStorage` flag `recipe_ai_seeded_${STARTER_RECIPES_VERSION}_${user.id}` — if set, no work happens.
+  2. Counts the user's `personal_recipes` first; if > 0 (returning user, or already seeded on another device), sets the flag without inserting.
+- After insert, the function `.select()`s back the new row IDs and pre-populates Meal Plan ⭐ To Make from any starter where `is_favorite = true`. The Meal Plan write is best-effort — failure is non-fatal so the Vault seed (the user-visible "starter" thing) always sticks.
+- `STARTER_RECIPES_VERSION` is in the import path so we can ship a future content rev without re-seeding existing users (just bump the const). Currently at `'v2'` (the family_notes rewording + is_favorite flag + Meal Plan wiring landed under v2).
+
+### Chef Notes — `seedChefNotesOnce`
+
+Independent of the recipe seeder, gated on its own `STARTER_CHEF_NOTES_VERSION` flag and its own emptiness check (`favorites where type='ai_answer'`), so existing v1-seeded users still pick up notes here without a redundant recipe re-seed.
+
+- Two starter notes live in `lib/starter_recipes.js` as `STARTER_CHEF_NOTES`. Content mirrors two of the empty-state suggested prompts on `/chef` ("How do I know when oil is hot enough?" / "What's a good substitute for buttermilk?") so the surfaces feel connected — tap that prompt later, see your saved note already there.
+- Each note becomes a `favorites` row with `type='ai_answer'`, `metadata: { question, answer }` — same shape `/chef`'s save flow writes — so they render via `<ExpandableItem>` on `/playbook` (📝 Chef Notes section) without any special-casing.
+
+### Why three surfaces, why this order
+
+The day-one Vault, Meal Plan ⭐ To Make, and ❤️ Favorites filter all show the same two recipes — three connected views of the same data. That's the lesson: tap a chip in one place and you can see your whole day take shape, not three disconnected empty inboxes. Chef Notes adds a fourth surface to make Playbook's 📝 tab non-empty and to telegraph that AI answers are saveable.
 
 ## PWA
 
