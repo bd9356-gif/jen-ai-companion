@@ -906,18 +906,21 @@ export default function MyRecipeVaultPage() {
     setPortfolioNotes(data || [])
   }
 
-  // Remove a note from the Portfolio view (does NOT delete the underlying
-  // saved note — it just unflips is_in_vault so the note stays in Playbook
-  // but drops out of the Vault's Portfolio surface).
+  // Un-file a note: send it back to the Chef Notes inbox in Playbook.
+  // Does NOT delete the underlying saved note — flips is_in_vault to false
+  // so the note disappears from this Portfolio surface and reappears as
+  // an unfiled row on /playbook → 📝 Chef Notes (where × hard-deletes).
+  // Matches Bill's metaphor: Portfolio is the filed keepers, Chef Notes
+  // is the inbox; un-filing is the safe escape from Portfolio.
   async function removeFromPortfolio(note) {
     if (!user) return
     const { error } = await supabase
       .from('favorites')
       .update({ is_in_vault: false })
       .eq('id', note.id)
-    if (error) { showToast('Could not remove from Portfolio'); return }
+    if (error) { showToast('Could not un-file note'); return }
     setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
-    showToast('Removed from Portfolio')
+    showToast('↩ Returned to Chef Notes')
   }
 
   async function loadRecipes(userId) {
@@ -2580,15 +2583,15 @@ export default function MyRecipeVaultPage() {
                 <span>💎</span><span>Chef Portfolio</span>
               </p>
               <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                Your keep-forever Chef Notes. Promote any saved answer from <strong>My Playbook → 📝 Chef Notes</strong> with the <strong>💎 Add to Portfolio</strong> button.
+                Your filed keepers. File any saved answer from <strong>My Playbook → 📝 Chef Notes</strong> with the <strong>💎 File to Portfolio</strong> button — it moves out of the inbox and into the right group below. Tap × on a row to send it back to Chef Notes.
               </p>
             </div>
             <p className="text-sm text-gray-500 mb-3">{portfolioNotes.length} {portfolioNotes.length === 1 ? 'note' : 'notes'} in your Portfolio</p>
             {portfolioNotes.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
                 <p className="text-4xl mb-3">💎</p>
-                <p className="text-gray-700 font-semibold mb-1">Nothing in your Portfolio yet</p>
-                <p className="text-gray-500 text-sm mb-5 px-6">Open My Playbook → 📝 Chef Notes and tap <strong>💎 Add to Portfolio</strong> on any note worth keeping forever.</p>
+                <p className="text-gray-700 font-semibold mb-1">Nothing filed yet</p>
+                <p className="text-gray-500 text-sm mb-5 px-6">Open My Playbook → 📝 Chef Notes, zip through the inbox, and tap <strong>💎 File to Portfolio</strong> on the keepers.</p>
                 <button onClick={() => window.location.href='/playbook?tab=chef_notes'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open Chef Notes →</button>
               </div>
             ) : (
@@ -2637,6 +2640,7 @@ export default function MyRecipeVaultPage() {
                                   key={note.id}
                                   item={note}
                                   emoji="💎"
+                                  removeTitle="Return to Chef Notes inbox (un-file)"
                                   onRemove={() => removeFromPortfolio(note)}
                                 />
                               ))}

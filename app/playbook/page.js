@@ -220,7 +220,12 @@ export default function PlaybookPage() {
 
     setItems([...legacyCooking, ...legacyEducation, ...favItems])
     setRecipes(recipeFavs || [])
-    setNotes(answerFavs || [])
+    // Chef Notes is the inbox of UNFILED notes. Once the user taps
+    // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
+    // the row), the note is moved to /secret?view=portfolio and
+    // disappears from this list. Filing = move (not copy), matching
+    // Bill's "zip through, file the keepers, delete the rest" workflow.
+    setNotes((answerFavs || []).filter(n => !n.is_in_vault))
   }
 
   async function moveToBucket(item, bucket) {
@@ -266,20 +271,21 @@ export default function PlaybookPage() {
     showToast('Note removed')
   }
 
-  // Promote / demote a note in the user's Recipe Vault Portfolio.
+  // File a Chef Note out of the inbox into the Recipe Vault Portfolio.
   // Uses the existing `favorites.is_in_vault` flag — no migration needed.
-  // Portfolio is a curated subset (the keep-forever shelf); the note stays
-  // here in Playbook regardless. Toggle is optimistic with toast feedback.
+  // Filing is a MOVE (not a copy): the note disappears from this Chef Notes
+  // inbox after filing, matching Bill's "zip through, file keepers, delete
+  // the rest" workflow. To un-file, tap × on the row in the Portfolio view —
+  // the note returns here as unfiled.
   async function togglePortfolio(note) {
     if (!user) return
-    const next = !note.is_in_vault
     const { error } = await supabase
       .from('favorites')
-      .update({ is_in_vault: next })
+      .update({ is_in_vault: true })
       .eq('id', note.id)
-    if (error) { showToast('Could not update portfolio'); return }
-    setNotes(prev => prev.map(n => n.id === note.id ? { ...n, is_in_vault: next } : n))
-    showToast(next ? '💎 Added to Portfolio' : 'Removed from Portfolio')
+    if (error) { showToast('Could not file note'); return }
+    setNotes(prev => prev.filter(n => n.id !== note.id))
+    showToast('💎 Filed to Portfolio')
   }
 
   async function removeRecipe(item) {
@@ -344,6 +350,7 @@ export default function PlaybookPage() {
     if (typeof window === 'undefined') return
     const t = new URLSearchParams(window.location.search).get('tab')
     if (t && ['teach', 'practice', 'chef_recipes', 'chef_notes'].includes(t)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reading URL params on mount; no SSR alternative
       setTab(t)
     }
   }, [])
@@ -577,12 +584,12 @@ export default function PlaybookPage() {
                   <span className="text-lg">👨‍🍳</span>
                   <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Jennifer &middot; 🎓 Teach</span>
                   <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
-                  <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Saved answers from Chef Jennifer.</span>
+                  <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Inbox — file the keepers, × the rest.</span>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {notes.length === 0 ? (
                     <div className="px-3 py-6 text-center">
-                      <p className="text-xs text-gray-400">No saved notes yet.</p>
+                      <p className="text-xs text-gray-400">Inbox is empty — nothing waiting to be filed.</p>
                       <button onClick={() => window.location.href='/chef'} className="mt-3 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold">Ask Chef Jennifer →</button>
                     </div>
                   ) : (
