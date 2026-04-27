@@ -95,12 +95,15 @@ export async function POST(request) {
     }, { status: 500 })
   }
   if (!rows || rows.length === 0) {
+    const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    const keyPrefix = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(0, 12)
     return NextResponse.json({
-      error: 'Update returned 0 rows — likely RLS blocking the UPDATE despite the row existing. Service role should bypass RLS; check the SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+      error: `Update returned 0 rows — RLS is blocking. hasServiceKey=${hasKey} keyPrefix="${keyPrefix}" (anon key would start "eyJ", legacy service_role also "eyJ", new sb_secret starts "sb_secret_"). If hasServiceKey=false, the env var isn't set in Vercel.`,
       videoId,
       preExists: true,
       preState: pre,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasServiceKey: hasKey,
+      keyPrefix,
     }, { status: 500 })
   }
 
