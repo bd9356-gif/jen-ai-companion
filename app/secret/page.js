@@ -858,6 +858,26 @@ export default function MyRecipeVaultPage() {
     setView('list'); setViewing(null)
   }
 
+  // Toggle ❤️ favorite on a recipe — used by the detail-view header
+  // button and the heart icons on list / grid rows. Optimistic: flips
+  // local state immediately, then persists. We deliberately don't
+  // touch `showVideo` or call updateRecipe() so this never disturbs
+  // the player state when toggled from the detail view.
+  async function toggleFavorite(recipe) {
+    if (!recipe || !user) return
+    const next = !recipe.is_favorite
+    setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: next } : r))
+    if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: next } : prev)
+    showToast(next ? 'Added to Favorites ❤️' : 'Removed from Favorites')
+    const { error } = await supabase.from('personal_recipes').update({ is_favorite: next }).eq('id', recipe.id)
+    if (error) {
+      // Revert on failure so the heart doesn't lie about the DB state.
+      setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: !next } : r))
+      if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: !next } : prev)
+      showToast('Could not save favorite — try again')
+    }
+  }
+
   async function handleEnhance(action) {
     setEnhancing(true); setEnhanceResult(null); setGeneratedInfo(null)
     try {
@@ -1052,18 +1072,22 @@ export default function MyRecipeVaultPage() {
 
   const filtered = recipes.filter(r => {
     const matchSearch = searchText === '' || r.title.toLowerCase().includes(searchText.toLowerCase())
-    // searchTag can be '' (all), a specific tag, or the special sentinel
-    // '__custom__' meaning "any tag not in the curated set". The sentinel
-    // is the dropdown's collapsed view of every custom tag at once — see
-    // the <optgroup> structure below.
+    // searchTag can be '' (all), a specific tag, or one of two sentinels:
+    //   '__favorites__' — only ❤️ favorited recipes
+    //   '__custom__'    — any recipe with a non-curated tag (the dropdown's
+    //                     collapsed view of every custom tag at once)
     const matchTag =
       searchTag === ''
         ? true
-        : searchTag === '__custom__'
-          ? (r.tags || []).some(t => !CURATED_TAGS.includes(t))
-          : (r.tags || []).includes(searchTag)
+        : searchTag === '__favorites__'
+          ? !!r.is_favorite
+          : searchTag === '__custom__'
+            ? (r.tags || []).some(t => !CURATED_TAGS.includes(t))
+            : (r.tags || []).includes(searchTag)
     return matchSearch && matchTag
   })
+
+  const favoritesCount = recipes.filter(r => r.is_favorite).length
 
   const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
   // Whether the user has any custom tags in their vault — drives the
@@ -1107,6 +1131,12 @@ export default function MyRecipeVaultPage() {
                 className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
               <button onClick={() => setView('enhance')}
                 className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI</button>
+              <button onClick={() => toggleFavorite(viewing)}
+                title={viewing.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
+                  viewing.is_favorite ? 'bg-rose-500 text-white border-rose-500' : 'text-rose-500 border-rose-200 hover:bg-rose-50'}`}>
+                {viewing.is_favorite ? '❤️ Favorite' : '🤍 Favorite'}
+              </button>
               <button onClick={() => toggleCardPin(viewing.id)}
                 className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
                   pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200'}`}>
@@ -2158,7 +2188,7 @@ export default function MyRecipeVaultPage() {
               style={{ fontSize: '16px' }}
               className="w-full border-2 border-orange-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200 mb-2" />
           ) : (
-            topTags.length > 0 && (
+            (topTags.length > 0 || favoritesCount > 0) && (
               <div className="flex gap-2 overflow-x-auto pb-1 mb-2 -mx-1 px-1 scrollbar-thin">
                 <button
                   onClick={() => setSearchTag('')}
@@ -2169,6 +2199,19 @@ export default function MyRecipeVaultPage() {
                 >
                   All
                 </button>
+                {favoritesCount > 0 && (
+                  <button
+                    onClick={() => setSearchTag(searchTag === '__favorites__' ? '' : '__favorites__')}
+                    title="Show only favorited recipes"
+                    className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
+                      searchTag === '__favorites__'
+                        ? 'bg-rose-500 text-white border-rose-500'
+                        : 'bg-white text-rose-500 border-rose-200 hover:bg-rose-50'
+                    }`}
+                  >
+                    ❤️ Favorites ({favoritesCount})
+                  </button>
+                )}
                 {topTags.map(tag => (
                   <button
                     key={tag}
@@ -2249,24 +2292,42 @@ export default function MyRecipeVaultPage() {
                      detail view (not the Card detail). */
                   <div className="grid grid-cols-2 gap-3">
                     {regularRecipes.map(recipe => (
-                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
-                        className="text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
-                        <div className="bg-red-600 h-1.5" />
-                        <div className="px-3 pt-3 pb-1">
-                          <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
-                        </div>
-                        <div className="px-3 pb-3">
-                          {recipe.photo_url ? (
-                            <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
-                              <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
-                            </div>
-                          ) : (
-                            <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
-                              <span style={{fontSize:'32px'}}>{categoryEmoji(recipe)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </button>
+                      <div key={recipe.id} className="relative">
+                        {/* Heart overlay — absolute-positioned so it sits
+                            on top of the card without nesting a <button>
+                            inside the outer <button>. stopPropagation keeps
+                            the tap from also opening the recipe. */}
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleFavorite(recipe) } }}
+                          title={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                          className={`absolute top-2 right-2 z-10 text-lg leading-none w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors ${
+                            recipe.is_favorite ? 'text-rose-500' : 'text-gray-300 hover:text-rose-400'
+                          }`}
+                        >
+                          {recipe.is_favorite ? '❤️' : '🤍'}
+                        </span>
+                        <button onClick={() => { setViewing(recipe); setView('detail') }}
+                          className="w-full text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
+                          <div className="bg-red-600 h-1.5" />
+                          <div className="px-3 pt-3 pb-1">
+                            <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
+                          </div>
+                          <div className="px-3 pb-3">
+                            {recipe.photo_url ? (
+                              <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
+                                <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+                                <span style={{fontSize:'32px'}}>{categoryEmoji(recipe)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -2292,6 +2353,22 @@ export default function MyRecipeVaultPage() {
                               ))}
                             </div>
                           </div>
+                          {/* Heart toggle — taps don't bubble up to the
+                              outer card click, so users can favorite without
+                              opening the recipe. Keeps a visible 🤍 even when
+                              empty so the affordance is always discoverable. */}
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe) }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleFavorite(recipe) } }}
+                            title={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                            className={`self-center text-lg leading-none px-2 py-1 rounded-lg transition-colors ${
+                              recipe.is_favorite ? 'text-rose-500' : 'text-gray-300 hover:text-rose-400'
+                            }`}
+                          >
+                            {recipe.is_favorite ? '❤️' : '🤍'}
+                          </span>
                           <span className="text-gray-400 text-xl self-center">→</span>
                         </div>
                       </button>
