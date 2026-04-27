@@ -2184,7 +2184,7 @@ export default function MyRecipeVaultPage() {
                   }
                 }}
                 title={(showSearch || searchText) ? 'Close search' : 'Search by name'}
-                className={`text-xs font-semibold border rounded-lg px-2 py-1.5 ${
+                className={`text-base font-semibold border rounded-lg px-2.5 py-1.5 ${
                   (showSearch || searchText)
                     ? 'bg-orange-600 text-white border-orange-600'
                     : 'text-gray-500 border-gray-200'
@@ -2217,7 +2217,7 @@ export default function MyRecipeVaultPage() {
                       if (opt.key === 'portfolio' && user) loadPortfolioNotes(user.id)
                     }}
                     title={opt.title}
-                    className={`text-xs font-semibold px-2 py-1.5 ${
+                    className={`text-base font-semibold px-2.5 py-1.5 ${
                       listStyle === opt.key
                         ? 'bg-orange-600 text-white'
                         : 'text-gray-500 bg-white hover:bg-gray-50'
@@ -2227,8 +2227,8 @@ export default function MyRecipeVaultPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setView('import')} title="Import a recipe" className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-2 py-1.5">📥</button>
-              <button onClick={() => setView('add')} title="Add a recipe" className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-2 py-1.5">+</button>
+              <button onClick={() => setView('import')} title="Import a recipe" className="text-base font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5">📥</button>
+              <button onClick={() => setView('add')} title="Add a recipe" className="text-base font-bold text-white bg-orange-600 rounded-lg px-2.5 py-1.5">+</button>
             </div>
           </div>
           {/* Row below the header swaps between the chip scroller and the
