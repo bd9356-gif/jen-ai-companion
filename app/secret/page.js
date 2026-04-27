@@ -580,17 +580,25 @@ export default function MyRecipeVaultPage() {
     if (importUrl.trim()) return
     if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) return
     let cancelled = false
-    navigator.clipboard.readText().then(text => {
+    // iOS Safari (and standalone PWA mode) sometimes only allows
+    // readText() right after a user tap. Opening Import IS a tap, but
+    // the effect runs in the next paint — so we delay slightly to keep
+    // the gesture window open. Failures stay silent here because this
+    // is auto-detect, not an explicit user action.
+    const timer = setTimeout(() => {
       if (cancelled) return
-      const trimmed = (text || '').trim()
-      // Conservative URL match: http(s) only, no whitespace, reasonable
-      // length cap so a clipboard full of pasted text never gets offered
-      // as a "URL".
-      if (/^https?:\/\/\S+$/i.test(trimmed) && trimmed.length < 2000) {
-        setClipboardSuggestion(trimmed)
-      }
-    }).catch(() => { /* permission denied / not supported — silent */ })
-    return () => { cancelled = true }
+      navigator.clipboard.readText().then(text => {
+        if (cancelled) return
+        const trimmed = (text || '').trim()
+        // Conservative URL match: http(s) only, no whitespace, reasonable
+        // length cap so a clipboard full of pasted text never gets offered
+        // as a "URL".
+        if (/^https?:\/\/\S+$/i.test(trimmed) && trimmed.length < 2000) {
+          setClipboardSuggestion(trimmed)
+        }
+      }).catch(() => { /* permission denied / not supported — silent */ })
+    }, 50)
+    return () => { cancelled = true; clearTimeout(timer) }
   }, [view, importTab, importUrl])
 
   // Detail-view paste listener — when looking at a recipe, Cmd/Ctrl+V
@@ -747,8 +755,16 @@ export default function MyRecipeVaultPage() {
   // recent user gesture (the tap satisfies it). On failure (no image,
   // permission denied, unsupported browser) we toast and bail rather
   // than throw — this is a "shortcut" feature, not the only path.
+  //
+  // Diagnostic note: iOS Safari (especially in standalone/PWA mode)
+  // sometimes silently rejects `clipboard.read()` even with a tap
+  // gesture. We surface the actual error name in the toast so we can
+  // tell what's failing without a console.
   async function pasteImageFromClipboard(recipeId) {
-    if (!user) return
+    if (!user) {
+      showToast('Not signed in — refresh the page')
+      return
+    }
     if (typeof navigator === 'undefined' || !navigator.clipboard?.read) {
       showToast('Paste not supported in this browser — use Upload instead')
       return
@@ -764,8 +780,12 @@ export default function MyRecipeVaultPage() {
         }
       }
       showToast('No image on clipboard — copy an image first')
-    } catch {
-      showToast("Couldn't read clipboard — try copying the image again")
+    } catch (err) {
+      // Surface the actual error so we can tell permission-denied
+      // (NotAllowedError) from missing-API from something else.
+      const tag = err?.name || 'Error'
+      const msg = err?.message ? `: ${err.message}` : ''
+      showToast(`Clipboard ${tag}${msg}`)
     }
   }
 
@@ -1804,9 +1824,42 @@ export default function MyRecipeVaultPage() {
                 </div>
               )}
 
-              <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
+              <div className="flex gap-2">
+                <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
+                  style={{ fontSize: '16px' }}
+                  className="flex-1 min-w-0 border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
+                {/* Explicit paste button — iOS PWA mode often blocks the
+                    passive auto-detect above, but readText() called from
+                    a direct tap-handler usually succeeds. Surfaces the
+                    actual error in a toast on failure so we can diagnose. */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) {
+                      showToast('Paste not supported in this browser')
+                      return
+                    }
+                    try {
+                      const text = await navigator.clipboard.readText()
+                      const trimmed = (text || '').trim()
+                      if (!trimmed) {
+                        showToast('Clipboard is empty')
+                        return
+                      }
+                      setImportUrl(trimmed)
+                      setClipboardSuggestion('')
+                    } catch (err) {
+                      const tag = err?.name || 'Error'
+                      const msg = err?.message ? `: ${err.message}` : ''
+                      showToast(`Clipboard ${tag}${msg}`)
+                    }
+                  }}
+                  className="shrink-0 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl px-3 py-3 transition-colors"
+                  title="Paste from clipboard"
+                >
+                  📋 Paste
+                </button>
+              </div>
             </div>
           )}
 
