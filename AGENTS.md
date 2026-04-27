@@ -632,21 +632,25 @@ Swept in recent passes and no longer present:
 Known still-stale spots (future cleanup candidates, low urgency):
 - `app/saved/page.js` — uses "MyFavorites" in the header and in a `family_notes` DB string. The page isn't in the main MyKitchen nav and the DB string is historical; leaving as-is unless the page is brought back into the main nav.
 
-## Landing page palette (decided)
+## Landing page (April 2026 — match-the-hub redesign)
 
-The landing page (`app/page.js`) and About page (`app/about/page.js`) share MyKitchen's neutral base so sign-in → hub feels like one surface, not two. Current scheme:
+The landing page (`app/page.js`) is a hub-shaped front door for cold visitors. Visual story matches MyKitchen exactly so signing in feels like stepping through a door, not switching apps:
 
-- Background: `bg-gray-50` (matches MyKitchen exactly).
-- Cards/tiles: white with `border-stone-200`.
-- Primary CTA: `bg-stone-800` warm charcoal, `hover:bg-stone-900`. (We tried `emerald-700` briefly; user felt it was too green.)
-- Section label: `text-stone-500 uppercase tracking-[0.15em]`.
-- Footer: two inline links in `text-stone-500` separated by a bullet — **About MyRecipe Companion** and **Tester notes** (see below).
+- **Background:** `bg-gray-50` (same as MyKitchen).
+- **Container:** `max-w-lg` (was `max-w-2xl` — narrowed to match the hub).
+- **Header:** brand left ("🍽️ MyRecipe Companion" + small subtitle "Your AI guide to better cooking."), action pill right. Pill is `bg-orange-50 text-orange-600` to mirror MyKitchen's Profile pill — same warm orange chip in the same corner. Sticky like MyKitchen's header.
+- **Section labels:** `text-orange-600 uppercase tracking-wider font-extrabold` (matches the hub).
+- **Tiles:** `border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl` — identical to MyKitchen's tiles, including hover state and the › arrow. 26px emoji, bold black title, gray description (truncated to one line).
+- **Primary CTA:** `bg-orange-600 hover:bg-orange-700` warm orange (was `bg-stone-800`). The CTA color matches the tile-stripe color, so signing in and tapping into a tile read as the same gesture.
+- **Footer:** two inline links in `text-stone-500` separated by a bullet — **About MyRecipe Companion** and **Tester notes**, hover to `text-orange-600`.
 
-An earlier version used `bg-amber-50` (cream parchment) for the landing + About to contrast MyKitchen's gray; the two-color handoff read as a jarring break rather than a tone shift, so we unified on `bg-gray-50`. The warmth now comes from the hero's image + the CTA's stone-800, not the page background.
+The food-photo hero stays. It's the only thing the landing has that the hub doesn't, and it's the right grab for cold visitors — gradient + white headline still reads against any photo in rotation.
+
+**Color history.** Earlier iteration was a neutral stone palette (`bg-stone-800` CTA, `text-stone-500` labels, `border-stone-200` cards) — it kept the page legible but the handoff to MyKitchen's orange-stripe tiles felt like a tone change. April 2026 redesign unified the two pages on MyKitchen's brand orange. An earlier-still iteration used `bg-amber-50` (cream parchment) for the landing + About to contrast MyKitchen's gray; the two-color handoff read as a jarring break and was reverted (we kept `bg-gray-50` shared).
 
 **Hero tagline (signed-out).** The signed-out hero shows **"Cooking, figured out."** at `text-3xl sm:text-4xl font-bold` with subline "Recipes, meal plans, and an AI chef — one cozy kitchen." The hero container is 220px tall so the photo + headline read as the first thing on the page, not an afterthought. Signed-in visitors see a personalized greeting ("Welcome back, {name}.") at the same large size. Earlier variants tried and reverted: "Cook with a little help." (too quiet; didn't grab), "Save it → Plan it → Cook it" with joinery arrows (busy next to the feature tiles; the arrow pattern only fits a single linear story, not a 2×2 group grid).
 
-**What's inside — compact grid of group cards.** The landing preview is built around MyKitchen's two groups (Cooking Life / Learning Journey), rendered as compact cards in a `grid-cols-2` grid rather than the full hub tile list. Each card shows the group name, a short blurb, and a horizontal strip of the emojis of the tiles inside as a visual peek (Cooking Life → 🔐 🃏 📅 🛒, Learning Journey → 👨‍🍳 🎬 📚 📘). Keeps the landing short — the hub itself is the full tile layout, so the landing doesn't need to repeat it. The source is `GROUPS` at the top of `app/page.js`; update when MyKitchen's grouping changes (kept in sync by hand — there's no shared source). Every card is an `<a>` whose `href` is `/kitchen` for signed-in visitors and `/login` for signed-out visitors — a tap on any card becomes a sign-in path. Cards lift to `border-stone-400` on hover. An earlier version listed the 8 individual tiles under small section labels; it doubled the page length and was replaced by this group preview (April 2026). The grid was three groups (Your Recipes / Plan & Shop / Cooking School) before the hub itself collapsed to two — the landing followed.
+**What's inside — full hub preview from a shared source.** The landing's "What's inside" block renders the same two sections (Cooking Life / Learning Journey) and the same 8 tiles as MyKitchen, with the same orange uppercase section headers and the same orange-stripe tile rows. The data lives in **`lib/kitchen_sections.js`** (`KITCHEN_SECTIONS`). Both `app/kitchen/page.js` and `app/page.js` import from there, so the two pages can never drift — when you add/rename/remove a section or tile, you only edit `kitchen_sections.js`. Tile hrefs in the data are deliberately ignored on the landing: every tile's `<a href>` is overridden to `/kitchen` for signed-in visitors and `/login` for signed-out visitors. The hub is where individual tiles route to their pages; on the landing every tile is a sign-in path or a hub entry. Earlier iterations of this block (each one named in a one-line comment): a flat 8-tile list under small section labels (too long), then a compact `grid-cols-2` group-card preview with just emoji strips (felt abstract — emoji strips weren't legible enough), then this April 2026 hub-mirror version.
 
 ## Tester banner & `/notes` page
 

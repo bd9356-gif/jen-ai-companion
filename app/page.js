@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { KITCHEN_SECTIONS } from '@/lib/kitchen_sections'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -20,20 +21,10 @@ const BANNER = {
   linkLabel: 'Tester notes →',
 }
 
-// Landing "What's inside" is a compact preview of the MyKitchen hub —
-// the hub's two groups (Cooking Life, Learning Journey) rendered as
-// small cards in a grid rather than the hub's full tile list. Each
-// card shows the group name, a short blurb, and the emojis of the
-// tiles inside as a visual peek. Tapping a card becomes the sign-in
-// path for signed-out visitors and routes to /kitchen for signed-in
-// visitors — the hub is where the full tile layout lives, so the
-// landing doesn't need to repeat it. Match MyKitchen's grouping when
-// it changes (kept in sync by hand — there's no shared source).
-const GROUPS = [
-  { name: 'Cooking Life',     blurb: 'Recipes, meal plans, and shopping.',           emojis: ['🔐', '🃏', '📅', '🛒'] },
-  { name: 'Learning Journey', blurb: 'Chef Jennifer, Chef TV, Guides, Playbook.',    emojis: ['👨‍🍳', '🎬', '📚', '📘'] },
-]
-
+/* ─────────────────────────────────────────────────────────────
+   Daily food image — rotates by day-of-year so the hero feels
+   fresh on repeat visits without flipping every reload.
+   ─────────────────────────────────────────────────────────── */
 const FOOD_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80&fit=crop', name: 'Fresh & Delicious' },
   { url: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80&fit=crop', name: 'Home Cooking' },
@@ -57,6 +48,27 @@ function firstNameFromUser(user) {
   return null
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Landing page (April 2026 redesign — match MyKitchen).
+
+   Visual story matches the hub exactly so signing in feels like
+   stepping through a door, not switching apps:
+     • bg-gray-50 page, max-w-lg container (same as /kitchen)
+     • orange accents (brand color from MyKitchen)
+     • the same two sections (Cooking Life / Learning Journey)
+       with the same orange uppercase headers and the same
+       orange-stripe tiles, sourced from KITCHEN_SECTIONS so the
+       two pages can never drift
+     • food photo hero on top — only thing the landing has that
+       MyKitchen doesn't, since the landing is the front door
+       for cold visitors
+
+   Tile hrefs on the landing are overridden: signed-in visitors
+   route to /kitchen (let the real hub take it from there), and
+   signed-out visitors route to /login. The KITCHEN_SECTIONS hrefs
+   are deliberately ignored on the landing — every tile becomes a
+   sign-in path or a hub entry.
+   ─────────────────────────────────────────────────────────── */
 export default function HomePage() {
   const [user, setUser] = useState(null)
   const [bannerVisible, setBannerVisible] = useState(false)
@@ -90,23 +102,27 @@ export default function HomePage() {
 
   const userName = firstNameFromUser(user)
   const image = getDailyImage()
+  const tileHref = user ? '/kitchen' : '/login'
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
 
-      {/* Header */}
-      <header className="bg-white border-b border-stone-200">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🍽️</span>
-            <span className="text-stone-900 text-lg font-bold tracking-tight">MyRecipe Companion</span>
+      {/* Header — mirrors MyKitchen's pattern: brand left, action pill
+          right. Profile pill on /kitchen is bg-orange-50 text-orange-600;
+          here the entry pill picks up the same orange so the two pages
+          read as siblings. */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">🍽️ MyRecipe Companion</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Your AI guide to better cooking.</p>
           </div>
           {user ? (
-            <a href="/kitchen" className="text-stone-800 text-sm font-medium border border-stone-300 bg-white rounded-full px-3 py-1 hover:bg-stone-100 transition-colors">
+            <a href="/kitchen" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
               MyKitchen →
             </a>
           ) : (
-            <a href="/login" className="text-stone-700 text-sm font-medium border border-stone-300 rounded-full px-3 py-1 hover:bg-stone-100 transition-colors">
+            <a href="/login" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
               Sign in
             </a>
           )}
@@ -114,9 +130,11 @@ export default function HomePage() {
       </header>
 
       {/* Main */}
-      <main className="flex-1 max-w-2xl mx-auto w-full px-5 pt-2 pb-6 flex flex-col">
+      <main className="flex-1 max-w-lg mx-auto w-full px-4 pt-3 pb-8 flex flex-col">
 
-        {/* Tester banner (dismissible) */}
+        {/* Tester banner (dismissible) — kept as the dark stone-900 strip
+            so it reads as a temporary callout against the warm orange
+            accents below. */}
         {BANNER.enabled && bannerVisible && (
           <div className="mb-3 bg-stone-900 text-white rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
             <span className="text-sm leading-snug flex-1 min-w-0">
@@ -140,29 +158,29 @@ export default function HomePage() {
         )}
 
         {/* Entry box: hero image + CTA wrapped as one unit. Hero is
-            intentionally tall (220px) and the headline large and bold so
-            the page grabs before the user reads anything else. The
-            gradient is heavier at the bottom so white text has contrast
-            against any food photo in rotation. */}
-        <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm mb-5">
+            intentionally tall and the headline large/bold so the page
+            grabs before the user reads anything else. CTA uses
+            bg-orange-600 (MyKitchen's brand color) so signing in feels
+            like crossing the same threshold as a tile tap on the hub. */}
+        <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm mb-6">
           <div className="w-full relative" style={{ height: '220px' }}>
             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/50 to-stone-900/20" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
               {userName ? (
                 <>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow leading-tight tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow leading-tight tracking-tight">
                     Welcome back, {userName}.
-                  </h1>
+                  </h2>
                   <p className="text-stone-100 text-sm drop-shadow mt-1">
                     Your kitchen is right where you left it.
                   </p>
                 </>
               ) : (
                 <>
-                  <h1 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg leading-[1.05] tracking-tight">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg leading-[1.05] tracking-tight">
                     Cooking, figured out.
-                  </h1>
+                  </h2>
                   <p className="text-stone-100 text-sm sm:text-base drop-shadow mt-2 max-w-sm">
                     Recipes, meal plans, and an AI chef &mdash; one cozy kitchen.
                   </p>
@@ -171,49 +189,60 @@ export default function HomePage() {
             </div>
           </div>
           <a
-            href={user ? '/kitchen' : '/login'}
-            className="block w-full py-4 bg-stone-800 text-white text-center text-base font-semibold hover:bg-stone-900 transition-colors"
+            href={tileHref}
+            className="block w-full py-4 bg-orange-600 text-white text-center text-base font-semibold hover:bg-orange-700 transition-colors"
           >
             {user ? 'Enter your kitchen →' : 'Get started →'}
           </a>
         </div>
 
-        {/* What's inside — compact grid of group cards. Each card
-            previews one of the hub's two groups (Cooking Life and
-            Learning Journey). Keeps the landing short — the hub itself
-            is where the full tile layout lives. Signed-out visitors
-            route through /login; signed-in visitors land on /kitchen
-            to pick their tile. */}
-        <section>
-          <p className="text-[11px] text-stone-500 uppercase tracking-[0.15em] font-semibold text-center mb-2.5">
-            What&apos;s inside
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {GROUPS.map(({ name, blurb, emojis }) => (
-              <a
-                key={name}
-                href={user ? '/kitchen' : '/login'}
-                className="bg-white border border-stone-200 rounded-xl p-3 flex flex-col gap-1.5 hover:border-stone-400 hover:bg-stone-50 transition-colors"
-              >
-                <div className="flex items-center gap-1 text-lg leading-none">
-                  {emojis.map((e, i) => (
-                    <span key={i}>{e}</span>
-                  ))}
-                </div>
-                <p className="text-stone-800 font-semibold text-sm leading-tight">{name}</p>
-                <p className="text-stone-600 text-xs leading-snug">{blurb}</p>
-              </a>
-            ))}
-          </div>
-        </section>
+        {/* What's inside — a preview of MyKitchen, rendered with the
+            same section headers + orange-stripe tile pattern. The tile
+            hrefs are overridden with `tileHref` so signed-out visitors
+            land on /login on any tap; signed-in visitors land on
+            /kitchen and pick from there. The data itself (sections,
+            titles, descriptions, emojis) comes from KITCHEN_SECTIONS so
+            the landing and the hub never drift. */}
+        <div className="space-y-7">
+          {KITCHEN_SECTIONS.map(section => (
+            <div key={section.name}>
+              {/* Section header */}
+              <div className="mb-3 px-1">
+                <h2 className="text-xs font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
+                {section.subtitle && (
+                  <p className="text-sm text-gray-500 mt-1 leading-snug">{section.subtitle}</p>
+                )}
+              </div>
+              {/* Section items */}
+              <div className="space-y-2.5">
+                {section.items.map(item => (
+                  <a
+                    key={item.title}
+                    href={tileHref}
+                    className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl px-4 py-3 transition-all active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span style={{fontSize:'26px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base text-gray-900 leading-tight">{item.title}</h3>
+                        <p className="text-sm text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
+                      </div>
+                      <span className="text-gray-300 text-xl font-light shrink-0">›</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {/* Footer */}
-        <footer className="mt-5 text-center flex items-center justify-center gap-3">
-          <a href="/about" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">
+        <footer className="mt-8 text-center flex items-center justify-center gap-3">
+          <a href="/about" className="text-[11px] text-stone-500 hover:text-orange-600 transition-colors">
             About MyRecipe Companion
           </a>
           <span className="text-[11px] text-stone-300">•</span>
-          <a href="/notes" className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors">
+          <a href="/notes" className="text-[11px] text-stone-500 hover:text-orange-600 transition-colors">
             Tester notes
           </a>
         </footer>

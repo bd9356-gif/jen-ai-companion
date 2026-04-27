@@ -10,6 +10,7 @@ import {
   FAVORITE_STARTER_TITLES,
   STARTER_BACKFILL_VERSION,
 } from '@/lib/starter_recipes'
+import { KITCHEN_SECTIONS } from '@/lib/kitchen_sections'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -238,29 +239,11 @@ async function seedChefNotesOnce(user) {
    (which kept the simpler "Recipe Vault" name) — Learning
    Journey's role labels carry teaching framing the plain names
    couldn't.
+
+   The section/tile data lives in lib/kitchen_sections.js so
+   the landing page (app/page.js) renders the same structure
+   without drift.
    ─────────────────────────────────────────────────────────── */
-const SECTIONS = [
-  {
-    name: 'Cooking Life',
-    subtitle: 'Your recipes, your plan, your essentials.',
-    items: [
-      { emoji: '🔐', title: 'Recipe Vault',   description: 'Your saved recipes, organized.',   href: '/secret' },
-      { emoji: '🃏', title: 'Recipe Cards',   description: 'Flip through your collection.',    href: '/cards' },
-      { emoji: '📅', title: 'Meal Plan',      description: 'What you\'re cooking soon.',       href: '/meal-plan' },
-      { emoji: '🛒', title: 'Shopping List',  description: 'Ingredients, organized to shop.',  href: '/shopping-list' },
-    ]
-  },
-  {
-    name: 'Learning Journey',
-    subtitle: 'Your classrooms, your library, your practice book.',
-    items: [
-      { emoji: '👨‍🍳', title: 'Chef Jennifer — Your Instructor', description: 'Your AI cooking teacher.',    href: '/chef' },
-      { emoji: '🎬',   title: 'Chef TV — Watch & Learn',         description: 'Every lesson, on video.',     href: '/videos' },
-      { emoji: '📚',   title: 'Guides — Your Library',           description: 'Knife skills, subs, safety.', href: '/guides' },
-      { emoji: '📘',   title: 'My Playbook — Your Saved Items',  description: 'Videos, recipes, and notes.', href: '/playbook' },
-    ]
-  },
-]
 
 export default function KitchenPage() {
   const [user, setUser] = useState(null)
@@ -315,7 +298,7 @@ export default function KitchenPage() {
 
       {/* Sections */}
       <main className="px-4 pt-6 pb-10 max-w-lg mx-auto space-y-8">
-        {SECTIONS.map(section => (
+        {KITCHEN_SECTIONS.map(section => (
           <div key={section.name}>
             {/* Section header */}
             <div className="mb-3 px-1">
