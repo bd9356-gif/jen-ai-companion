@@ -13,9 +13,17 @@ import { NextResponse } from 'next/server'
 // because the FK between the two tables doesn't have a discoverable name
 // in our migrations. We do the same here — slightly chattier but
 // guaranteed to work without inspecting Postgres directly.
+// Supabase's new dual-key system uses lowercase env var names by convention
+// (`supabase_service_role_key`). We try lowercase first, then fall back to the
+// legacy uppercase name, then to the anon key as a last resort.
+const SERVICE_KEY =
+  process.env.supabase_service_role_key ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  SERVICE_KEY
 )
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'bd9356@gmail.com'

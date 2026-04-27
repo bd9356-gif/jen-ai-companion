@@ -7,9 +7,29 @@ import { NextResponse } from 'next/server'
 // pattern but pared down to the only column Recipe needs to mutate
 // today (is_featured) — Recipe doesn't have editorial_status or
 // per-channel pros to manage, so the action surface is simpler.
+//
+// Supabase's new dual-key system uses lowercase env var names by
+// convention (`supabase_service_role_key`). We try lowercase first,
+// then fall back to the legacy uppercase name, then to the anon key
+// as a last resort.
+const SERVICE_KEY =
+  process.env.supabase_service_role_key ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+const HAS_SERVICE_KEY = !!(
+  process.env.supabase_service_role_key ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+const KEY_PREFIX = (
+  process.env.supabase_service_role_key ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  ''
+).slice(0, 12)
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  SERVICE_KEY
 )
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'bd9356@gmail.com'
@@ -70,14 +90,14 @@ export async function POST(request) {
     return NextResponse.json({
       error: `pre-select failed: ${preErr.message}`,
       videoId,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasServiceKey: HAS_SERVICE_KEY,
     }, { status: 500 })
   }
   if (!pre) {
     return NextResponse.json({
       error: 'Row not found by id (pre-select returned 0 rows)',
       videoId,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasServiceKey: HAS_SERVICE_KEY,
     }, { status: 404 })
   }
 
@@ -91,19 +111,17 @@ export async function POST(request) {
     return NextResponse.json({
       error: `update failed: ${error.message}`,
       videoId,
-      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasServiceKey: HAS_SERVICE_KEY,
     }, { status: 500 })
   }
   if (!rows || rows.length === 0) {
-    const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
-    const keyPrefix = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').slice(0, 12)
     return NextResponse.json({
-      error: `Update returned 0 rows — RLS is blocking. hasServiceKey=${hasKey} keyPrefix="${keyPrefix}" (anon key would start "eyJ", legacy service_role also "eyJ", new sb_secret starts "sb_secret_"). If hasServiceKey=false, the env var isn't set in Vercel.`,
+      error: `Update returned 0 rows — RLS is blocking. hasServiceKey=${HAS_SERVICE_KEY} keyPrefix="${KEY_PREFIX}" (anon key would start "eyJ", legacy service_role also "eyJ", new sb_secret starts "sb_secret_"). If hasServiceKey=false, the env var isn't set in Vercel.`,
       videoId,
       preExists: true,
       preState: pre,
-      hasServiceKey: hasKey,
-      keyPrefix,
+      hasServiceKey: HAS_SERVICE_KEY,
+      keyPrefix: KEY_PREFIX,
     }, { status: 500 })
   }
 
