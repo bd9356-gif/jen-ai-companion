@@ -2583,7 +2583,7 @@ export default function MyRecipeVaultPage() {
                 <span>💎</span><span>Chef Portfolio</span>
               </p>
               <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                Your place to store the <strong>My Playbook</strong> notes you want to keep from your cooking questions. It&apos;s simply where you choose to send your saved answers so everything stays organized. Your Portfolio.
+                Your place to store the <strong>My Playbook</strong>{' '}notes you want to keep from your cooking questions. It&apos;s simply where you choose to send your saved answers so everything stays organized. Your Portfolio.
               </p>
               <p className="text-xs text-amber-800 mt-2 leading-relaxed">
                 Tap <strong>×</strong> to send it back.
