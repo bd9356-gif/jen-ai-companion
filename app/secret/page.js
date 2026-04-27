@@ -541,6 +541,13 @@ export default function MyRecipeVaultPage() {
   const [pinnedCards, setPinnedCards] = useState([])
   const [picksIds, setPicksIds] = useState([])
   const [toastMsg, setToastMsg] = useState(null)
+  // When navigator.clipboard.read() can't see the image (iOS Photos +
+  // some Windows sources put images in legacy formats the async API
+  // doesn't surface), we fall back to a tiny modal with a focused
+  // paste-target — the synchronous `paste` event has access to
+  // formats clipboard.read() can't read. `pasteTarget` holds the
+  // recipe id we should attach the pasted image to.
+  const [pasteTarget, setPasteTarget] = useState(null)
   const [addedToList, setAddedToList] = useState(new Set())
   // Recipe detail view — collapsible section state. Defaults to expanded.
   const [detailCollapsed, setDetailCollapsed] = useState({
@@ -658,6 +665,73 @@ export default function MyRecipeVaultPage() {
       aria-live="polite"
     >
       {toastMsg}
+    </div>
+  ) : null
+
+  // Manual paste-target modal — fallback for when
+  // navigator.clipboard.read() can't see the image (iOS Photos / some
+  // Windows clipboard formats). Renders a focused contenteditable +
+  // a regular paste handler. The synchronous `paste` event has
+  // access to formats the async API hides, so this works in cases
+  // where the auto-paste path returns "no image".
+  const pasteTargetEl = pasteTarget ? (
+    <div
+      className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
+      onClick={() => setPasteTarget(null)}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl"
+      >
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">📋 Paste your image</h3>
+            <p className="text-sm text-gray-600 mt-1">The browser couldn&apos;t read the clipboard directly. Paste your image here instead:</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPasteTarget(null)}
+            aria-label="Close"
+            className="text-gray-400 hover:text-gray-700 text-2xl leading-none px-1"
+          >
+            ×
+          </button>
+        </div>
+        <div
+          contentEditable
+          suppressContentEditableWarning
+          autoFocus
+          ref={(el) => { if (el) setTimeout(() => el.focus(), 50) }}
+          onPaste={async (e) => {
+            const items = e.clipboardData?.items
+            if (!items) return
+            for (const it of items) {
+              if (it.kind === 'file' && it.type.startsWith('image/')) {
+                const blob = it.getAsFile()
+                if (blob && user) {
+                  e.preventDefault()
+                  const targetId = pasteTarget
+                  setPasteTarget(null)
+                  await attachImageBlobToRecipe(blob, targetId, user.id)
+                }
+                return
+              }
+            }
+            // Paste happened but no image item — keep the modal open
+            // so the user can try again.
+            showToast('That paste didn\'t contain an image — try copying again')
+          }}
+          className="border-2 border-dashed border-orange-300 rounded-xl p-6 min-h-[120px] text-center text-gray-500 text-sm bg-orange-50 focus:outline-none focus:border-orange-500 focus:bg-orange-100"
+        >
+          <span className="pointer-events-none select-none">
+            Tap and hold here, then choose <strong>Paste</strong> from the menu
+            <br /><span className="text-xs text-gray-400">(or press Ctrl/⌘+V)</span>
+          </span>
+        </div>
+        <p className="text-xs text-gray-500 mt-3 text-center">
+          If paste still doesn&apos;t work, tap <strong>📁 Upload</strong> on the photo to pick from your files.
+        </p>
+      </div>
     </div>
   ) : null
 
@@ -861,16 +935,23 @@ export default function MyRecipeVaultPage() {
           }
         } catch { /* try next item */ }
       }
-      // Diagnostic: list what types iOS *did* expose so we can see why
-      // neither pass matched. Helps tell "clipboard truly has no image"
-      // from "iOS hid the image type from us".
-      const allTypes = items.flatMap(it => it.types || [])
-      const summary = allTypes.length ? allTypes.join(', ') : '(none)'
-      showToast(`No image found — clipboard types: ${summary}`)
+      // Both passes missed — iOS Photos and some Windows clipboard
+      // sources put images on the clipboard in formats that
+      // navigator.clipboard.read() can't see (even though pasting
+      // into Notes / a textarea works). Fall back to the manual
+      // paste-target modal — the synchronous paste-event handler has
+      // access to formats the async API hides.
+      setPasteTarget(recipeId)
     } catch (err) {
-      // Surface the actual error so we can tell permission-denied
-      // (NotAllowedError) from missing-API from something else.
+      // Permission denied (NotAllowedError) or unsupported — fall
+      // back to the manual paste-target modal here too. The modal's
+      // paste handler doesn't need clipboard.read() permission, just
+      // a paste event from the user's long-press → Paste.
       const tag = err?.name || 'Error'
+      if (tag === 'NotAllowedError' || tag === 'AbortError' || tag === 'NotFoundError') {
+        setPasteTarget(recipeId)
+        return
+      }
       const msg = err?.message ? `: ${err.message}` : ''
       showToast(`Clipboard ${tag}${msg}`)
     }
@@ -1186,6 +1267,7 @@ export default function MyRecipeVaultPage() {
     return (
       <div className="min-h-screen bg-white">
         {toastEl}
+        {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }}
@@ -1507,6 +1589,7 @@ export default function MyRecipeVaultPage() {
     return (
       <div className="min-h-screen bg-white">
         {toastEl}
+        {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('detail')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
@@ -1527,6 +1610,7 @@ export default function MyRecipeVaultPage() {
     return (
       <div className="min-h-screen bg-white">
         {toastEl}
+        {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null); setTransformResult(null); setTransformPrefs([]) }}
@@ -1869,6 +1953,7 @@ export default function MyRecipeVaultPage() {
     return (
       <div className="min-h-screen bg-white">
         {toastEl}
+        {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
@@ -2080,6 +2165,7 @@ export default function MyRecipeVaultPage() {
     return (
       <div className="min-h-screen bg-white">
         {toastEl}
+        {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
@@ -2192,6 +2278,7 @@ export default function MyRecipeVaultPage() {
   return (
     <div className="min-h-screen bg-white">
       {toastEl}
+      {pasteTargetEl}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
