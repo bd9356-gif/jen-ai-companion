@@ -6,6 +6,7 @@ import {
   STARTER_RECIPES_VERSION,
   STARTER_CHEF_NOTES,
   STARTER_CHEF_NOTES_VERSION,
+  STARTER_MEAL_PLAN_VERSION,
 } from '@/lib/starter_recipes'
 
 const supabase = createClient(
@@ -13,16 +14,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Recognized prefix on the family_notes line of every app-seeded starter
+// recipe. We use this to tell starter rows apart from a user's own saves
+// when seeding downstream surfaces (Meal Plan), so we never auto-add a
+// user's personally-favorited recipes to ⭐ To Make.
+const STARTER_FAMILY_NOTES_PREFIX = 'Welcome — this starter'
+
 // Seed starter recipes the first time a user lands on MyKitchen.
 // Idempotent: skips if a localStorage flag is set OR if the user already
 // has any recipes in personal_recipes. The localStorage flag prevents
 // re-seeding for someone who deliberately empties their Vault.
-//
-// On a fresh seed we also pre-populate Meal Plan ⭐ To Make from any
-// starter marked is_favorite. Putting the same recipe in two surfaces on
-// day one shows the user the surfaces are connected — the ❤️ Favorite
-// chip on the Vault, the ⭐ in Meal Plan, and the same recipe in both —
-// instead of greeting them with three empty pages.
 async function seedStarterRecipesOnce(user) {
   if (typeof window === 'undefined' || !user?.id) return
   const flagKey = `recipe_ai_seeded_${STARTER_RECIPES_VERSION}_${user.id}`
@@ -53,34 +54,68 @@ async function seedStarterRecipesOnce(user) {
     servings: r.servings ?? null,
     is_favorite: !!r.is_favorite,
   }))
-  // Insert and grab back the IDs so we can wire up Meal Plan from the
-  // favorited starters in the same flow. Failing the meal-plan step is
-  // non-fatal — the Vault seed is the user-visible "starter" thing.
-  const { data: inserted, error: insertError } = await supabase
-    .from('personal_recipes')
-    .insert(rows)
-    .select('id, title, photo_url, is_favorite')
-  if (insertError) return
+  const { error: insertError } = await supabase.from('personal_recipes').insert(rows)
+  if (!insertError) localStorage.setItem(flagKey, '1')
+}
 
-  if (inserted?.length) {
-    const mealPlanRows = inserted
-      .filter(r => r.is_favorite)
-      .map((r, idx) => ({
-        user_id: user.id,
-        recipe_id: r.id,
-        title: r.title,
-        photo_url: r.photo_url || '',
-        bucket: 'top',
-        sort_order: idx,
-      }))
-    if (mealPlanRows.length) {
-      // Best-effort — ignore errors so Meal Plan failure doesn't undo the
-      // Vault seed. Worst case the user sees an empty Meal Plan.
-      await supabase.from('my_picks').insert(mealPlanRows)
-    }
+// Seed Meal Plan ⭐ To Make from the user's favorited starter recipes,
+// the first time we see an empty Meal Plan after starters exist. This
+// runs separately from seedStarterRecipesOnce so it can self-heal: if
+// the recipe seed succeeded but the Meal Plan write was rejected (e.g.
+// a column NOT NULL constraint, RLS hiccup, network blip), the next
+// MyKitchen visit re-tries automatically.
+//
+// Gating logic — only seed when ALL of these are true:
+//   1. our localStorage version flag isn't set yet
+//   2. my_picks is empty for this user (don't disrupt an active plan)
+//   3. user has at least one is_favorite=true row in personal_recipes
+//      whose family_notes starts with the starter "Welcome —" prefix
+//      (so we only seed app-installed starters, never a user's own
+//      personally-favorited recipes)
+//
+// If condition 3 returns nothing, we don't set the flag — that leaves
+// the door open for a later visit to seed once a v2 recipe seed has
+// run (e.g. v1 starters were never favorited).
+async function seedMealPlanOnce(user) {
+  if (typeof window === 'undefined' || !user?.id) return
+  const flagKey = `recipe_ai_meal_plan_seeded_${STARTER_MEAL_PLAN_VERSION}_${user.id}`
+  if (localStorage.getItem(flagKey)) return
+
+  const { count, error: countError } = await supabase
+    .from('my_picks')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+  if (countError) return
+  if ((count || 0) > 0) {
+    localStorage.setItem(flagKey, '1')
+    return
   }
 
-  localStorage.setItem(flagKey, '1')
+  const { data: starters, error: starterErr } = await supabase
+    .from('personal_recipes')
+    .select('id, title, photo_url, category')
+    .eq('user_id', user.id)
+    .eq('is_favorite', true)
+    .ilike('family_notes', `${STARTER_FAMILY_NOTES_PREFIX}%`)
+    .order('created_at', { ascending: true })
+  if (starterErr) return
+  if (!starters?.length) return
+
+  // Match the column shape that production Meal Plan inserts use
+  // (app/secret/page.js, app/cards/page.js) — including `category`,
+  // which the previous version of this seeder dropped and which is
+  // the most likely cause of silent insert failures on some projects.
+  const mealPlanRows = starters.map((r, idx) => ({
+    user_id: user.id,
+    recipe_id: r.id,
+    title: r.title,
+    photo_url: r.photo_url || '',
+    category: r.category || '',
+    bucket: 'top',
+    sort_order: idx,
+  }))
+  const { error: insertErr } = await supabase.from('my_picks').insert(mealPlanRows)
+  if (!insertErr) localStorage.setItem(flagKey, '1')
 }
 
 // Seed two starter Chef Notes the first time a user lands on MyKitchen.
@@ -187,7 +222,17 @@ export default function KitchenPage() {
         // and gated by its own version flag, so they can ship and bump
         // independently. Errors are swallowed — a failed seed should
         // never block the user from using the hub.
-        seedStarterRecipesOnce(session.user).catch(() => {})
+        //
+        // Meal Plan is sequenced AFTER recipes so a brand-new sign-up
+        // gets ⭐ To Make populated on the same visit. The seed is also
+        // self-healing: if it fails on first visit (no favorited
+        // starters yet, RLS hiccup, etc.) it'll retry automatically the
+        // next time MyKitchen loads. Chef Notes runs in parallel since
+        // it doesn't depend on either of the others.
+        seedStarterRecipesOnce(session.user)
+          .catch(() => {})
+          .then(() => seedMealPlanOnce(session.user))
+          .catch(() => {})
         seedChefNotesOnce(session.user).catch(() => {})
       }
     })
