@@ -6,7 +6,6 @@ import {
   STARTER_RECIPES_VERSION,
   STARTER_CHEF_NOTES,
   STARTER_CHEF_NOTES_VERSION,
-  STARTER_MEAL_PLAN_VERSION,
   FAVORITE_STARTER_TITLES,
   STARTER_BACKFILL_VERSION,
 } from '@/lib/starter_recipes'
@@ -101,74 +100,16 @@ async function backfillStarterFavoritesOnce(user) {
   if (!error) localStorage.setItem(flagKey, '1')
 }
 
-// Seed Meal Plan ⭐ To Make from the user's seeded starter recipes,
-// the first time we see an empty Meal Plan after starters exist. This
-// runs separately from seedStarterRecipesOnce so it can self-heal: if
-// the recipe seed succeeded but the Meal Plan write was rejected (e.g.
-// a column NOT NULL constraint, RLS hiccup, network blip), the next
-// MyKitchen visit re-tries automatically.
-//
-// Match-by-title (not by is_favorite). The previous version filtered
-// `.eq('is_favorite', true)`, which broke for any user whose
-// is_favorite column write didn't land during the recipe seed (see
-// backfillStarterFavoritesOnce above for why that happens). This
-// version matches by FAVORITE_STARTER_TITLES + the family_notes prefix
-// instead, so Meal Plan populates correctly even when is_favorite is
-// missing or unwritable on the project.
-//
-// Gating logic — only seed when ALL of these are true:
-//   1. our localStorage version flag isn't set yet
-//   2. my_picks is empty for this user (don't disrupt an active plan)
-//   3. user has at least one row in personal_recipes whose title
-//      matches FAVORITE_STARTER_TITLES AND whose family_notes starts
-//      with the starter "Welcome —" prefix
-//
-// If condition 3 returns nothing, we don't set the flag — that leaves
-// the door open for a later visit to seed once the recipe seed runs.
-async function seedMealPlanOnce(user) {
-  if (typeof window === 'undefined' || !user?.id) return
-  const flagKey = `recipe_ai_meal_plan_seeded_${STARTER_MEAL_PLAN_VERSION}_${user.id}`
-  if (localStorage.getItem(flagKey)) return
-
-  const { count, error: countError } = await supabase
-    .from('my_picks')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-  if (countError) return
-  if ((count || 0) > 0) {
-    localStorage.setItem(flagKey, '1')
-    return
-  }
-
-  // Filter by title list + family_notes prefix instead of is_favorite,
-  // so Meal Plan self-heals even on accounts where the is_favorite
-  // column write never landed.
-  const { data: starters, error: starterErr } = await supabase
-    .from('personal_recipes')
-    .select('id, title, photo_url, category')
-    .eq('user_id', user.id)
-    .in('title', FAVORITE_STARTER_TITLES)
-    .ilike('family_notes', `${STARTER_FAMILY_NOTES_PREFIX}%`)
-    .order('created_at', { ascending: true })
-  if (starterErr) return
-  if (!starters?.length) return
-
-  // Match the column shape that production Meal Plan inserts use
-  // (app/secret/page.js, app/cards/page.js) — including `category`,
-  // which the previous version of this seeder dropped and which is a
-  // common cause of silent insert failures on some projects.
-  const mealPlanRows = starters.map((r, idx) => ({
-    user_id: user.id,
-    recipe_id: r.id,
-    title: r.title,
-    photo_url: r.photo_url || '',
-    category: r.category || '',
-    bucket: 'top',
-    sort_order: idx,
-  }))
-  const { error: insertErr } = await supabase.from('my_picks').insert(mealPlanRows)
-  if (!insertErr) localStorage.setItem(flagKey, '1')
-}
+// NOTE: The Meal Plan seeder was removed (April 2026). It used to
+// auto-populate ⭐ To Make from the favorite-flagged starter recipes,
+// which conflated two separate gestures — clicking ❤️ Favorite is a
+// preference signal, while tapping 📅 Meal Plan is the explicit
+// "I'm cooking this" gesture. Coupling them at seed-time taught the
+// wrong mental model on day one. New users now see an empty Meal Plan
+// and discover the surface by tapping the tile, then fill it via the
+// 📅 Meal Plan button on a Vault recipe (or a Card / Chef Jennifer
+// recipe). Do NOT re-add automatic seeding here without revisiting
+// the product framing.
 
 // Seed two starter Chef Notes the first time a user lands on MyKitchen.
 // Independent of the recipe seeder: gated on its own version flag and its
@@ -263,16 +204,15 @@ export default function KitchenPage() {
         //      (catches any tester whose first-seed write missed the
         //      column due to PostgREST schema-cache lag right after
         //      migration 011)
-        //   3. Meal Plan — populate ⭐ To Make from the favorite-titled
-        //      starters (matches by title list, not by is_favorite, so
-        //      it self-heals even if step 2 didn't write the column)
+        //
+        // Meal Plan intentionally is NOT auto-seeded — favoriting and
+        // meal-planning are two separate user gestures. See the long
+        // comment above seedChefNotesOnce.
         //
         // Chef Notes is independent and runs in parallel.
         seedStarterRecipesOnce(session.user)
           .catch(() => {})
           .then(() => backfillStarterFavoritesOnce(session.user))
-          .catch(() => {})
-          .then(() => seedMealPlanOnce(session.user))
           .catch(() => {})
         seedChefNotesOnce(session.user).catch(() => {})
       }

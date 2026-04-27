@@ -686,17 +686,19 @@ Rotating / revoking the Resend API key is a Supabase SMTP-fields update only; no
 
 ## New-user seeding (starter content)
 
-First-time users get a small set of starter content loaded across **three** surfaces — Recipe Vault, Meal Plan, and Chef Notes — so the app feels lived-in on day one instead of greeting them with three empty pages. All seeders fire from `app/kitchen/page.js` inside the auth `useEffect`, are idempotent, and swallow errors so a single Supabase hiccup never blocks the hub.
+First-time users get a small set of starter content loaded across **two** surfaces — Recipe Vault and Chef Notes — so the app feels lived-in on day one instead of greeting them with empty pages. All seeders fire from `app/kitchen/page.js` inside the auth `useEffect`, are idempotent, and swallow errors so a single Supabase hiccup never blocks the hub.
+
+**Meal Plan is intentionally NOT seeded.** Bill's framing (April 2026): clicking ❤️ Favorite is a preference signal; tapping 📅 Meal Plan is the explicit "I'm cooking this" gesture. They're two separate actions and shouldn't be coupled at seed-time — auto-populating Meal Plan from favorites taught the wrong mental model on day one. New users land on an empty Meal Plan and discover it by tapping the tile, then fill it via the 📅 Meal Plan button on a Vault recipe (or a Card / a Chef Jennifer recipe). Do NOT re-add automatic Meal Plan seeding without revisiting this product framing first.
 
 ### Recipe Vault — `seedStarterRecipesOnce`
 
 - Recipe data lives in `lib/starter_recipes.js` as a hand-curated array of 5 recipes — one quick weeknight (Aglio e Olio), one one-pan weeknight (Sheet-Pan Lemon Chicken), one comfort (Tomato Soup + Grilled Cheese), one healthy/modern (Honey-Soy Salmon Bowl), one project bake (Brown Butter Chocolate Chip Cookies). Each carries `family_notes: "Welcome — this starter's here to get you cooking. Yours to make your own."` — the warm-welcome wording doubles as the app-seeded marker so users know these are examples, not personal saves.
-- Two recipes (Aglio e Olio + Brown Butter Cookies) are flagged `is_favorite: true` so the new user lands in the Vault with the ❤️ Favorites filter chip already populated.
+- Two recipes (Aglio e Olio + Brown Butter Cookies) are flagged `is_favorite: true` so the new user lands in the Vault with the ❤️ Favorites filter chip already populated. Favoriting is a preference signal only — it does not pre-fill any other surface.
 - Idempotent in two ways:
   1. `localStorage` flag `recipe_ai_seeded_${STARTER_RECIPES_VERSION}_${user.id}` — if set, no work happens.
   2. Counts the user's `personal_recipes` first; if > 0 (returning user, or already seeded on another device), sets the flag without inserting.
-- After insert, the function `.select()`s back the new row IDs and pre-populates Meal Plan ⭐ To Make from any starter where `is_favorite = true`. The Meal Plan write is best-effort — failure is non-fatal so the Vault seed (the user-visible "starter" thing) always sticks.
-- `STARTER_RECIPES_VERSION` is in the import path so we can ship a future content rev without re-seeding existing users (just bump the const). Currently at `'v2'` (the family_notes rewording + is_favorite flag + Meal Plan wiring landed under v2).
+- A second pass `backfillStarterFavoritesOnce` runs idempotently on every visit (gated by `STARTER_BACKFILL_VERSION`) to retroactively flag any starter rows whose first-seed `is_favorite` write didn't land — mostly a defense against PostgREST schema-cache lag right after migration 011 added the column. Match is by `FAVORITE_STARTER_TITLES` + the `"Welcome —"` family_notes prefix, so we never touch a user's own recipes.
+- `STARTER_RECIPES_VERSION` is in the localStorage flag so we can ship a future content rev without re-seeding existing users (just bump the const).
 
 ### Chef Notes — `seedChefNotesOnce`
 
@@ -705,9 +707,9 @@ Independent of the recipe seeder, gated on its own `STARTER_CHEF_NOTES_VERSION` 
 - Two starter notes live in `lib/starter_recipes.js` as `STARTER_CHEF_NOTES`. Content mirrors two of the empty-state suggested prompts on `/chef` ("How do I know when oil is hot enough?" / "What's a good substitute for buttermilk?") so the surfaces feel connected — tap that prompt later, see your saved note already there.
 - Each note becomes a `favorites` row with `type='ai_answer'`, `metadata: { question, answer }` — same shape `/chef`'s save flow writes — so they render via `<ExpandableItem>` on `/playbook` (📝 Chef Notes section) without any special-casing.
 
-### Why three surfaces, why this order
+### Why two surfaces
 
-The day-one Vault, Meal Plan ⭐ To Make, and ❤️ Favorites filter all show the same two recipes — three connected views of the same data. That's the lesson: tap a chip in one place and you can see your whole day take shape, not three disconnected empty inboxes. Chef Notes adds a fourth surface to make Playbook's 📝 tab non-empty and to telegraph that AI answers are saveable.
+The Vault gets the recipes, Playbook gets the Chef Notes. Both make their own page non-empty so the user has something concrete to look at, and the ❤️ Favorites filter chip on the Vault is pre-populated to telegraph that the chip exists. Meal Plan, Recipe Cards, and Shopping List all start empty by design — those surfaces are about *the user's* intent, not about content we ship. The discoverability cost (an empty page on first tap) is worth keeping the gestures honest.
 
 ## PWA
 
