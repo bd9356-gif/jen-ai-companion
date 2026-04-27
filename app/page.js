@@ -112,10 +112,10 @@ export default function HomePage() {
           here the entry pill picks up the same orange so the two pages
           read as siblings. */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
+        <div className="max-w-lg mx-auto px-5 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">🍽️ MyRecipe Companion</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Your AI guide to better cooking.</p>
+            <h1 className="text-lg font-bold text-gray-900">🍽️ MyRecipe Companion</h1>
+            <p className="text-[11px] text-gray-500 mt-0.5">Your AI guide to better cooking.</p>
           </div>
           {user ? (
             <a href="/kitchen" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
@@ -157,31 +157,33 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Entry box: hero image + CTA wrapped as one unit. Hero is
-            intentionally tall and the headline large/bold so the page
-            grabs before the user reads anything else. CTA uses
+        {/* Entry box: hero image + CTA wrapped as one unit. The hero is
+            kept short (130px) so the whole landing — hero, both
+            sections, all 8 tiles, footer — fits on a phone screen
+            without scrolling. The headline is sized accordingly so it
+            still reads at a glance against the dark gradient. CTA uses
             bg-orange-600 (MyKitchen's brand color) so signing in feels
             like crossing the same threshold as a tile tap on the hub. */}
-        <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm mb-6">
-          <div className="w-full relative" style={{ height: '220px' }}>
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
+          <div className="w-full relative" style={{ height: '130px' }}>
             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/50 to-stone-900/20" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
               {userName ? (
                 <>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white drop-shadow leading-tight tracking-tight">
+                  <h2 className="text-lg sm:text-xl font-bold text-white drop-shadow leading-tight tracking-tight">
                     Welcome back, {userName}.
                   </h2>
-                  <p className="text-stone-100 text-sm drop-shadow mt-1">
+                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
                     Your kitchen is right where you left it.
                   </p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-3xl sm:text-4xl font-bold text-white drop-shadow-lg leading-[1.05] tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg leading-tight tracking-tight">
                     Cooking, figured out.
                   </h2>
-                  <p className="text-stone-100 text-sm sm:text-base drop-shadow mt-2 max-w-sm">
+                  <p className="text-stone-100 text-xs sm:text-sm drop-shadow mt-1 max-w-sm">
                     Recipes, meal plans, and an AI chef &mdash; one cozy kitchen.
                   </p>
                 </>
@@ -190,7 +192,7 @@ export default function HomePage() {
           </div>
           <a
             href={tileHref}
-            className="block w-full py-4 bg-orange-600 text-white text-center text-base font-semibold hover:bg-orange-700 transition-colors"
+            className="block w-full py-3 bg-orange-600 text-white text-center text-sm font-semibold hover:bg-orange-700 transition-colors"
           >
             {user ? 'Enter your kitchen →' : 'Get started →'}
           </a>
@@ -203,31 +205,33 @@ export default function HomePage() {
             /kitchen and pick from there. The data itself (sections,
             titles, descriptions, emojis) comes from KITCHEN_SECTIONS so
             the landing and the hub never drift. */}
-        <div className="space-y-7">
+        <div className="space-y-5">
           {KITCHEN_SECTIONS.map(section => (
             <div key={section.name}>
               {/* Section header */}
-              <div className="mb-3 px-1">
+              <div className="mb-2 px-1">
                 <h2 className="text-xs font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
                 {section.subtitle && (
-                  <p className="text-sm text-gray-500 mt-1 leading-snug">{section.subtitle}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>
                 )}
               </div>
-              {/* Section items */}
-              <div className="space-y-2.5">
+              {/* Section items — kept compact (py-2.5) to fit all 8 on
+                  a phone screen. Emoji is 22px (was 26px) for the same
+                  reason. */}
+              <div className="space-y-2">
                 {section.items.map(item => (
                   <a
                     key={item.title}
                     href={tileHref}
-                    className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-2xl px-4 py-3 transition-all active:scale-[0.98]"
+                    className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-xl px-3 py-2.5 transition-all active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-3">
-                      <span style={{fontSize:'26px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
+                      <span style={{fontSize:'22px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base text-gray-900 leading-tight">{item.title}</h3>
-                        <p className="text-sm text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
+                        <h3 className="font-bold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
+                        <p className="text-xs text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
                       </div>
-                      <span className="text-gray-300 text-xl font-light shrink-0">›</span>
+                      <span className="text-gray-300 text-lg font-light shrink-0">›</span>
                     </div>
                   </a>
                 ))}
@@ -237,7 +241,7 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-8 text-center flex items-center justify-center gap-3">
+        <footer className="mt-5 text-center flex items-center justify-center gap-3">
           <a href="/about" className="text-[11px] text-stone-500 hover:text-orange-600 transition-colors">
             About MyRecipe Companion
           </a>
