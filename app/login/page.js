@@ -63,7 +63,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b border-stone-200">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <a href="/" className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-stone-200"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-amber-50 px-3 text-xs text-stone-400 uppercase tracking-wide">or</span>
+              <span className="bg-gray-50 px-3 text-xs text-stone-400 uppercase tracking-wide">or</span>
             </div>
           </div>
 
