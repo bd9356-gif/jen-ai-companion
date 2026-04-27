@@ -2583,7 +2583,10 @@ export default function MyRecipeVaultPage() {
                 <span>💎</span><span>Chef Portfolio</span>
               </p>
               <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                Your filed keepers. File any saved answer from <strong>My Playbook → 📝 Chef Notes</strong> with the <strong>💎 File to Portfolio</strong> button — it moves out of the inbox and into the right group below. Tap × on a row to send it back to Chef Notes.
+                Your place to store the <strong>My Playbook</strong> notes you want to keep from your cooking questions. It&apos;s simply where you choose to send your saved answers so everything stays organized. Your Portfolio.
+              </p>
+              <p className="text-xs text-amber-800 mt-2 leading-relaxed">
+                Tap <strong>×</strong> to send it back.
               </p>
             </div>
             <p className="text-sm text-gray-500 mb-3">{portfolioNotes.length} {portfolioNotes.length === 1 ? 'note' : 'notes'} in your Portfolio</p>
