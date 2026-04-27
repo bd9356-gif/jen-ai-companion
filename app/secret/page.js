@@ -1170,14 +1170,22 @@ export default function MyRecipeVaultPage() {
     showToast('Recipe updated ✓')
   }
 
-  async function handleImport() {
-    if (!importText.trim() && !importUrl.trim()) return
+  // Optional `urlOverride` lets the auto-import-on-paste flows fire
+  // handleImport without having to wait for the setImportUrl state
+  // update to flush — pasting a URL via "Use it" / 📋 Paste / direct
+  // input paste sets the field AND immediately starts the import in
+  // the same handler, so the user doesn't have to tap "Import" too.
+  async function handleImport(urlOverride) {
+    const urlToUse = (typeof urlOverride === 'string' ? urlOverride : importUrl).trim()
+    const textToUse = importText.trim()
+    if (!textToUse && !urlToUse) return
+    if (urlOverride && urlToUse) setImportUrl(urlToUse)
     setImporting(true)
     setImportError('')
     try {
       const res = await fetch('/api/import-recipe', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: importText, url: importUrl })
+        body: JSON.stringify({ text: textToUse, url: urlToUse })
       })
       const data = await res.json()
       if (data.error) {
@@ -1188,7 +1196,7 @@ export default function MyRecipeVaultPage() {
         // focus the textarea — paste is a first-class fallback, not a
         // dead end. Focus runs in setTimeout because the textarea is
         // conditionally rendered (only mounts when the tab is 'paste').
-        const wasUrlAttempt = importUrl.trim() && !importText.trim()
+        const wasUrlAttempt = urlToUse && !textToUse
         if (wasUrlAttempt) {
           setImportUrl('')
           setImportTab('paste')
@@ -2014,7 +2022,15 @@ export default function MyRecipeVaultPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => { setImportUrl(clipboardSuggestion); setClipboardSuggestion('') }}
+                    onClick={() => {
+                      const url = clipboardSuggestion
+                      setImportUrl(url)
+                      setClipboardSuggestion('')
+                      // Auto-fire the import — Bill expects "tap Use
+                      // it → recipe imports", not "tap Use it → tap
+                      // Import & Clean".
+                      handleImport(url)
+                    }}
                     className="shrink-0 text-xs font-semibold bg-orange-600 text-white rounded-lg px-3 py-1.5 hover:bg-orange-700 transition-colors"
                   >
                     Use it
@@ -2031,7 +2047,19 @@ export default function MyRecipeVaultPage() {
               )}
 
               <div className="flex gap-2">
-                <input placeholder="https://www.example.com/recipe..." value={importUrl} onChange={e => setImportUrl(e.target.value)}
+                <input placeholder="https://www.example.com/recipe..." value={importUrl}
+                  onChange={e => setImportUrl(e.target.value)}
+                  onPaste={e => {
+                    // Direct paste into the field — auto-fire the
+                    // import too. Read clipboardData synchronously so
+                    // we have the URL value without waiting for state.
+                    const pasted = (e.clipboardData?.getData('text') || '').trim()
+                    if (/^https?:\/\/\S+$/i.test(pasted) && pasted.length < 2000) {
+                      // Let the default-paste fill the field, then
+                      // fire the import with the pasted value.
+                      setTimeout(() => handleImport(pasted), 0)
+                    }
+                  }}
                   style={{ fontSize: '16px' }}
                   className="flex-1 min-w-0 border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
                 {/* Explicit paste button — iOS PWA mode often blocks the
@@ -2054,6 +2082,10 @@ export default function MyRecipeVaultPage() {
                       }
                       setImportUrl(trimmed)
                       setClipboardSuggestion('')
+                      // Auto-fire the import — Bill expects "tap
+                      // Paste → recipe imports", not "tap Paste → tap
+                      // Import & Clean".
+                      handleImport(trimmed)
                     } catch (err) {
                       const tag = err?.name || 'Error'
                       const msg = err?.message ? `: ${err.message}` : ''
