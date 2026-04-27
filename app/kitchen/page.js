@@ -1,7 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { STARTER_RECIPES, STARTER_RECIPES_VERSION } from '@/lib/starter_recipes'
+import {
+  STARTER_RECIPES,
+  STARTER_RECIPES_VERSION,
+  STARTER_CHEF_NOTES,
+  STARTER_CHEF_NOTES_VERSION,
+} from '@/lib/starter_recipes'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -12,6 +17,12 @@ const supabase = createClient(
 // Idempotent: skips if a localStorage flag is set OR if the user already
 // has any recipes in personal_recipes. The localStorage flag prevents
 // re-seeding for someone who deliberately empties their Vault.
+//
+// On a fresh seed we also pre-populate Meal Plan ⭐ To Make from any
+// starter marked is_favorite. Putting the same recipe in two surfaces on
+// day one shows the user the surfaces are connected — the ❤️ Favorite
+// chip on the Vault, the ⭐ in Meal Plan, and the same recipe in both —
+// instead of greeting them with three empty pages.
 async function seedStarterRecipesOnce(user) {
   if (typeof window === 'undefined' || !user?.id) return
   const flagKey = `recipe_ai_seeded_${STARTER_RECIPES_VERSION}_${user.id}`
@@ -40,8 +51,70 @@ async function seedStarterRecipesOnce(user) {
     photo_url: r.photo_url || '',
     difficulty: r.difficulty || '',
     servings: r.servings ?? null,
+    is_favorite: !!r.is_favorite,
   }))
-  const { error: insertError } = await supabase.from('personal_recipes').insert(rows)
+  // Insert and grab back the IDs so we can wire up Meal Plan from the
+  // favorited starters in the same flow. Failing the meal-plan step is
+  // non-fatal — the Vault seed is the user-visible "starter" thing.
+  const { data: inserted, error: insertError } = await supabase
+    .from('personal_recipes')
+    .insert(rows)
+    .select('id, title, photo_url, is_favorite')
+  if (insertError) return
+
+  if (inserted?.length) {
+    const mealPlanRows = inserted
+      .filter(r => r.is_favorite)
+      .map((r, idx) => ({
+        user_id: user.id,
+        recipe_id: r.id,
+        title: r.title,
+        photo_url: r.photo_url || '',
+        bucket: 'top',
+        sort_order: idx,
+      }))
+    if (mealPlanRows.length) {
+      // Best-effort — ignore errors so Meal Plan failure doesn't undo the
+      // Vault seed. Worst case the user sees an empty Meal Plan.
+      await supabase.from('my_picks').insert(mealPlanRows)
+    }
+  }
+
+  localStorage.setItem(flagKey, '1')
+}
+
+// Seed two starter Chef Notes the first time a user lands on MyKitchen.
+// Independent of the recipe seeder: gated on its own version flag and its
+// own emptiness check (favorites where type='ai_answer'), so a user who
+// got the v1 recipe seed without notes still picks up notes here. Mirrors
+// two of the empty-state suggested prompts on /chef so the surfaces feel
+// connected — tap that prompt later, see your saved note already there.
+async function seedChefNotesOnce(user) {
+  if (typeof window === 'undefined' || !user?.id) return
+  const flagKey = `recipe_ai_chef_notes_seeded_${STARTER_CHEF_NOTES_VERSION}_${user.id}`
+  if (localStorage.getItem(flagKey)) return
+
+  const { count, error: countError } = await supabase
+    .from('favorites')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('type', 'ai_answer')
+  if (countError) return
+  if ((count || 0) > 0) {
+    localStorage.setItem(flagKey, '1')
+    return
+  }
+
+  const rows = STARTER_CHEF_NOTES.map(n => ({
+    user_id: user.id,
+    type: 'ai_answer',
+    title: n.title.substring(0, 120),
+    thumbnail_url: '',
+    source: 'ai',
+    is_in_vault: false,
+    metadata: { question: n.title, answer: n.answer },
+  }))
+  const { error: insertError } = await supabase.from('favorites').insert(rows)
   if (!insertError) localStorage.setItem(flagKey, '1')
 }
 
@@ -110,8 +183,12 @@ export default function KitchenPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser(session.user)
-        // Seed starter recipes on first visit (idempotent).
+        // Seed starter content on first visit. Each seeder is idempotent
+        // and gated by its own version flag, so they can ship and bump
+        // independently. Errors are swallowed — a failed seed should
+        // never block the user from using the hub.
         seedStarterRecipesOnce(session.user).catch(() => {})
+        seedChefNotesOnce(session.user).catch(() => {})
       }
     })
   }, [])
