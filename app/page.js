@@ -164,7 +164,7 @@ export default function HomePage() {
             still reads at a glance against the dark gradient. CTA uses
             bg-orange-600 (MyKitchen's brand color) so signing in feels
             like crossing the same threshold as a tile tap on the hub. */}
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-4">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3">
           <div className="w-full relative" style={{ height: '130px' }}>
             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/50 to-stone-900/20" />
@@ -192,7 +192,7 @@ export default function HomePage() {
           </div>
           <a
             href={tileHref}
-            className="block w-full py-3 bg-orange-600 text-white text-center text-sm font-semibold hover:bg-orange-700 transition-colors"
+            className="block w-full py-2 bg-orange-600 text-white text-center text-sm font-semibold hover:bg-orange-700 transition-colors"
           >
             {user ? 'Enter your kitchen →' : 'Get started →'}
           </a>
