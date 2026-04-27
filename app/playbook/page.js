@@ -266,6 +266,22 @@ export default function PlaybookPage() {
     showToast('Note removed')
   }
 
+  // Promote / demote a note in the user's Recipe Vault Portfolio.
+  // Uses the existing `favorites.is_in_vault` flag — no migration needed.
+  // Portfolio is a curated subset (the keep-forever shelf); the note stays
+  // here in Playbook regardless. Toggle is optimistic with toast feedback.
+  async function togglePortfolio(note) {
+    if (!user) return
+    const next = !note.is_in_vault
+    const { error } = await supabase
+      .from('favorites')
+      .update({ is_in_vault: next })
+      .eq('id', note.id)
+    if (error) { showToast('Could not update portfolio'); return }
+    setNotes(prev => prev.map(n => n.id === note.id ? { ...n, is_in_vault: next } : n))
+    showToast(next ? '💎 Added to Portfolio' : 'Removed from Portfolio')
+  }
+
   async function removeRecipe(item) {
     if (!user) return
     await supabase.from('favorites').delete().eq('id', item.id)
@@ -576,6 +592,8 @@ export default function PlaybookPage() {
                         item={note}
                         emoji="💡"
                         onRemove={() => removeNote(note)}
+                        onPortfolio={() => togglePortfolio(note)}
+                        inPortfolio={!!note.is_in_vault}
                       />
                     ))
                   )}

@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
+import ExpandableItem from '@/components/ExpandableItem'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -481,15 +482,22 @@ export default function MyRecipeVaultPage() {
   const [educationVideos, setEducationVideos] = useState([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('list')
-  // listStyle = 'list' | 'grid' — how the vault list-view lays out regular
-  // recipes. 'list' is the long-standing single-column row layout with a thumb
-  // + description; 'grid' is a two-column photo-first layout (cream paper +
-  // red top rule, title + photo tile). Grid is purely a display mode for the
-  // Vault — tapping still opens the normal Vault detail view with full
-  // instructions. Distinct from Recipe Cards (/cards), which is its own
-  // concept (chef card, no instructions). Synced to ?view=grid via
+  // listStyle = 'list' | 'grid' | 'portfolio' — what the Vault list-view
+  // shows. 'list' and 'grid' are display modes for *recipes* (single
+  // column with thumb+description vs. two-column photo-first cream-paper
+  // tiles); both tap-through to the same Vault detail view with full
+  // instructions. 'portfolio' (💎 Chef Portfolio) is a different surface —
+  // it shows the curated Chef Notes the user promoted from Playbook via
+  // "💎 Add to Portfolio". Notes only, no recipes; the Add/Import buttons
+  // don't apply there. Synced to ?view=grid|portfolio via
   // history.replaceState so refresh/share preserves the user's choice.
+  // Distinct from Recipe Cards (/cards), a separate "chef card" concept.
   const [listStyle, setListStyle] = useState('list')
+  // Curated Chef Notes promoted from Playbook into Recipe Vault via the
+  // "💎 Add to Portfolio" button. Backed by `favorites.is_in_vault = true`
+  // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
+  // whenever the user toggles between listStyle modes.
+  const [portfolioNotes, setPortfolioNotes] = useState([])
   const [viewing, setViewing] = useState(null)
   const [showVideo, setShowVideo] = useState(true)
   const [searchTag, setSearchTag] = useState('')
@@ -560,6 +568,7 @@ export default function MyRecipeVaultPage() {
       loadRecipes(session.user.id)
       loadNotes(session.user.id)
       loadEducationVideos(session.user.id)
+      loadPortfolioNotes(session.user.id)
       loadPinnedCards(session.user.id)
       loadPicksIds(session.user.id)
     })
@@ -692,6 +701,35 @@ export default function MyRecipeVaultPage() {
     setEducationVideos(prev => prev.filter(v => v.id !== id))
   }
 
+  // Chef Portfolio — saved AI answers (Chef Notes) the user has promoted
+  // from /playbook into the Recipe Vault as a curated keep-forever subset.
+  // The notes still live on /playbook regardless; is_in_vault just marks
+  // the ones worth keeping in the Vault's Portfolio view.
+  async function loadPortfolioNotes(userId) {
+    const { data } = await supabase
+      .from('favorites')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('type', 'ai_answer')
+      .eq('is_in_vault', true)
+      .order('created_at', { ascending: false })
+    setPortfolioNotes(data || [])
+  }
+
+  // Remove a note from the Portfolio view (does NOT delete the underlying
+  // saved note — it just unflips is_in_vault so the note stays in Playbook
+  // but drops out of the Vault's Portfolio surface).
+  async function removeFromPortfolio(note) {
+    if (!user) return
+    const { error } = await supabase
+      .from('favorites')
+      .update({ is_in_vault: false })
+      .eq('id', note.id)
+    if (error) { showToast('Could not remove from Portfolio'); return }
+    setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
+    showToast('Removed from Portfolio')
+  }
+
   async function loadRecipes(userId) {
     const { data } = await supabase.from('personal_recipes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     setRecipes(data || [])
@@ -703,9 +741,13 @@ export default function MyRecipeVaultPage() {
       const match = data.find(r => r.id === recipeParam)
       if (match) { setViewing(match); setView('detail') }
     }
-    // Honor ?view=grid so a bookmark / shared link preserves the user's
-    // chosen list style. Unknown / missing values leave the default 'list'.
-    if (searchParams.get('view') === 'grid') setListStyle('grid')
+    // Honor ?view=grid|portfolio so a bookmark / shared link preserves
+    // the user's chosen list style. Unknown / missing values leave the
+    // default 'list'. Portfolio (💎) renders curated Chef Notes the user
+    // promoted from Playbook, not recipes.
+    const viewParam = searchParams.get('view')
+    if (viewParam === 'grid') setListStyle('grid')
+    else if (viewParam === 'portfolio') setListStyle('portfolio')
   }
 
   async function uploadPhoto(file, userId) {
@@ -2150,29 +2192,41 @@ export default function MyRecipeVaultPage() {
               >
                 {(showSearch || searchText) ? '✕' : '🔍'}
               </button>
-              {/* List/Grid style toggle. Pure display choice — Grid shows
-                  recipes as photo-first tiles (cream paper, red top rule);
-                  tapping either style opens the same Vault detail view with
-                  full instructions. NOT the same as /cards (a separate
-                  "chef card" concept with no instructions). */}
-              <button
-                onClick={() => {
-                  const next = listStyle === 'grid' ? 'list' : 'grid'
-                  setListStyle(next)
-                  const url = new URL(window.location.href)
-                  if (next === 'grid') url.searchParams.set('view', 'grid')
-                  else url.searchParams.delete('view')
-                  window.history.replaceState({}, '', url.toString())
-                }}
-                title={listStyle === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 ${
-                  listStyle === 'grid'
-                    ? 'bg-orange-600 text-white border-orange-600'
-                    : 'text-gray-500 border-gray-200'
-                }`}
-              >
-                {listStyle === 'grid' ? '📋' : '🖼'}
-              </button>
+              {/* List / Grid / Portfolio segmented toggle. List + Grid are
+                  pure display choices for the recipe collection (Grid shows
+                  recipes as photo-first cream-paper tiles; both tap-through
+                  to the same Vault detail view). Portfolio (💎) is a
+                  *different surface* — it shows curated Chef Notes the user
+                  promoted from Playbook via "💎 Add to Portfolio". Notes,
+                  not recipes — so Add/Import buttons won't apply there.
+                  NOT the same as /cards (a separate "chef card" concept). */}
+              <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+                {[
+                  { key: 'list', icon: '📋', title: 'List view (recipes)' },
+                  { key: 'grid', icon: '🖼', title: 'Grid view (recipes)' },
+                  { key: 'portfolio', icon: '💎', title: 'Chef Portfolio (saved notes)' },
+                ].map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => {
+                      setListStyle(opt.key)
+                      const url = new URL(window.location.href)
+                      if (opt.key === 'list') url.searchParams.delete('view')
+                      else url.searchParams.set('view', opt.key)
+                      window.history.replaceState({}, '', url.toString())
+                      if (opt.key === 'portfolio' && user) loadPortfolioNotes(user.id)
+                    }}
+                    title={opt.title}
+                    className={`text-xs font-semibold px-2.5 py-1.5 ${
+                      listStyle === opt.key
+                        ? 'bg-orange-600 text-white'
+                        : 'text-gray-500 bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    {opt.icon}
+                  </button>
+                ))}
+              </div>
               <button onClick={() => setView('import')} className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">📥 Import</button>
               <button onClick={() => setView('add')} className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5">+ Add</button>
             </div>
@@ -2264,6 +2318,42 @@ export default function MyRecipeVaultPage() {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
+        ) : listStyle === 'portfolio' ? (
+          /* 💎 Chef Portfolio — curated Chef Notes the user has promoted
+             from /playbook. Notes (saved AI answers), not recipes — so
+             this branch replaces the regular recipe list/grid entirely.
+             Tap a row to expand; tap the × to remove from the Portfolio
+             (the underlying note stays in Playbook). */
+          <div>
+            <div className="mb-4 rounded-xl bg-amber-50 border-2 border-amber-200 px-4 py-3">
+              <p className="text-sm font-bold text-amber-900 flex items-center gap-2">
+                <span>💎</span><span>Chef Portfolio</span>
+              </p>
+              <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                Your keep-forever Chef Notes. Promote any saved answer from <strong>My Playbook → 📝 Chef Notes</strong> with the <strong>💎 Add to Portfolio</strong> button.
+              </p>
+            </div>
+            <p className="text-sm text-gray-500 mb-3">{portfolioNotes.length} {portfolioNotes.length === 1 ? 'note' : 'notes'} in your Portfolio</p>
+            {portfolioNotes.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
+                <p className="text-4xl mb-3">💎</p>
+                <p className="text-gray-700 font-semibold mb-1">Nothing in your Portfolio yet</p>
+                <p className="text-gray-500 text-sm mb-5 px-6">Open My Playbook → 📝 Chef Notes and tap <strong>💎 Add to Portfolio</strong> on any note worth keeping forever.</p>
+                <button onClick={() => window.location.href='/playbook?tab=chef_notes'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open Chef Notes →</button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                {portfolioNotes.map(note => (
+                  <ExpandableItem
+                    key={note.id}
+                    item={note}
+                    emoji="💎"
+                    onRemove={() => removeFromPortfolio(note)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         ) : recipes.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-5xl mb-4">🔐</p>
