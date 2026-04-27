@@ -767,6 +767,8 @@ export default function MyRecipeVaultPage() {
     }
     try {
       const items = await navigator.clipboard.read()
+      // Pass 1 — direct image bytes. Works when the clipboard exposes a
+      // proper image MIME type (the desktop / "Copy Photo" path).
       for (const item of items) {
         const imgType = item.types.find(t => t.startsWith('image/'))
         if (imgType) {
@@ -775,7 +777,33 @@ export default function MyRecipeVaultPage() {
           return
         }
       }
-      showToast('No image on clipboard — copy an image first')
+      // Pass 2 — URL fallback. iOS Safari sometimes exposes only
+      // `text/uri-list` or `text/plain` even when a real image is on
+      // the clipboard (e.g. after long-press → Copy on a webpage
+      // image). If the text looks like an http(s) URL, fetch it and
+      // see if the response is an image.
+      for (const item of items) {
+        const textType = item.types.find(t => t === 'text/uri-list' || t === 'text/plain')
+        if (!textType) continue
+        try {
+          const textBlob = await item.getType(textType)
+          const text = (await textBlob.text()).trim().split(/\r?\n/)[0]
+          if (!/^https?:\/\/\S+$/i.test(text)) continue
+          const res = await fetch(text)
+          const ct = res.headers.get('content-type') || ''
+          if (ct.startsWith('image/')) {
+            const imgBlob = await res.blob()
+            await attachImageBlobToRecipe(imgBlob, recipeId, user.id)
+            return
+          }
+        } catch { /* try next item */ }
+      }
+      // Diagnostic: list what types iOS *did* expose so we can see why
+      // neither pass matched. Helps tell "clipboard truly has no image"
+      // from "iOS hid the image type from us".
+      const allTypes = items.flatMap(it => it.types || [])
+      const summary = allTypes.length ? allTypes.join(', ') : '(none)'
+      showToast(`No image found — clipboard types: ${summary}`)
     } catch (err) {
       // Surface the actual error so we can tell permission-denied
       // (NotAllowedError) from missing-API from something else.
