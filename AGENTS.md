@@ -524,7 +524,27 @@ The 💎 Chef Portfolio is a curated subset of saved Chef Notes the user has pro
 
 **Promotion (from Playbook).** `components/ExpandableItem.js` accepts an optional `onPortfolio` callback + `inPortfolio` boolean. When set, the expanded note shows a small toggle button: 💎 Add to Portfolio (orange outline, inactive) ⇄ ✓ In Portfolio (orange filled, active). `app/playbook/page.js` wires `togglePortfolio(note)` on the 📝 Chef Notes section's `<ExpandableItem>` rows — the function flips `is_in_vault` optimistically with toast feedback ("💎 Added to Portfolio" / "Removed from Portfolio"). When `onPortfolio` is omitted (e.g. when the note is rendered *inside* the Portfolio view itself, where the remove × is the right affordance), the button is hidden.
 
-**Render (in the Vault).** `app/secret/page.js` extends `listStyle` from `'list' | 'grid'` to `'list' | 'grid' | 'portfolio'` and renders the third segment as a 💎 icon. When active, the entire recipe list/grid is replaced by the Portfolio view: an amber callout explaining what Portfolio is + how to add notes from Playbook, a count line, and either an empty state with a `Open Chef Notes →` button (deep-links to `/playbook?tab=chef_notes`) or a list of the promoted notes rendered via `<ExpandableItem>` with `emoji="💎"` and `onRemove={() => removeFromPortfolio(note)}`. **Important:** the Portfolio view does NOT pass `onPortfolio` to `<ExpandableItem>` — inside the Portfolio surface the × removes the note from Portfolio (same `removeFromPortfolio` semantics — flips `is_in_vault` to false, doesn't delete the underlying favorites row), so the redundant 💎 button would be misleading.
+**Render (in the Vault).** `app/secret/page.js` extends `listStyle` from `'list' | 'grid'` to `'list' | 'grid' | 'portfolio'` and renders the third segment as a 💎 icon. When active, the entire recipe list/grid is replaced by the Portfolio view: an amber callout explaining what Portfolio is + how to add notes from Playbook, a count line, and either an empty state with a `Open Chef Notes →` button (deep-links to `/playbook?tab=chef_notes`) or a grouped accordion of the promoted notes (see below). **Important:** the Portfolio view does NOT pass `onPortfolio` to `<ExpandableItem>` — inside the Portfolio surface the × removes the note from Portfolio (same `removeFromPortfolio` semantics — flips `is_in_vault` to false, doesn't delete the underlying favorites row), so the redundant 💎 button would be misleading.
+
+**Tag UI is hidden in the Portfolio view.** The 🔍 search button, the chip scroller, the search input, and the tag overflow `<select>` are all gated on `listStyle !== 'portfolio'`. Notes aren't recipes — they don't carry tags or categories — so showing the recipe-filtering UI on the Portfolio view was misleading. The 5-group accordion (below) is the Portfolio's own organization layer.
+
+**5-group "How to..." accordion (April 2026).** Bill's framing: a chronological list of saved Chef Notes is hard to scan once it grows past ~10 entries — the Portfolio should read as a kitchen reference shelf, not a pile. Notes are auto-sorted into 5 fixed buckets, each rendered as a collapsed accordion section that mirrors the Guides/Library color rhythm (border-l-8 stripe, soft-tinted body, count pill). Order is locked. Each section is collapsed by default — tap a header to expand. Empty groups are hidden so the user only sees what they've actually saved against.
+
+| Key       | Emoji | Label                  | Stripe color |
+| --------- | ----- | ---------------------- | ------------ |
+| `prep`    | 🔪    | How to Prep            | orange       |
+| `cook`    | 🔥    | How to Cook            | red          |
+| `season`  | 🧂    | How to Season          | amber        |
+| `improve` | ✨    | How to Improve a Dish  | emerald      |
+| `shop`    | 🛒    | How to Shop            | sky          |
+
+**Categorization is regex-on-content.** `categorizeChefNote(note)` walks `PORTFOLIO_GROUPS` top-down and returns the first group whose regex matches the haystack `${note.title} ${note.metadata.answer} ${note.metadata.question}`. Patterns scan case-insensitively and match cooking vocabulary specific to each bucket (Prep: chop/dice/peel/julienne/zest/etc.; Cook: bake/sear/braise/simmer/etc.; Season: salt/spice/marinade/umami/etc.; Improve: too salty/burned/balance/rescue/etc.; Shop: buy/select/store/substitute/etc.). Order matters — the more specific groups (Prep, Cook, Season, Shop) get a chance before the catch-all Improve bucket.
+
+**Catch-all is `improve`.** Notes that don't match any pattern fall through to the last group ("How to Improve a Dish") so nothing is orphaned. Empirically, generic "how do I make this better" notes that don't fit Prep/Cook/Season/Shop tend to be improvement advice anyway, so the fallback reads naturally rather than being a "Misc" dumping ground.
+
+**No migration, no DB column.** Categorization runs at render time — pure JS over data already loaded into `portfolioNotes`. If we want to graduate to LLM-classified categories or user-pickable groups later, the data model doesn't move; only the helper changes.
+
+**Why fixed groups instead of free-text tagging.** Tags would force the user into a second cataloging gesture every time they save (already a 2-tap path: save → promote). Fixed groups + auto-sorting let the user keep the single-tap "💎 keeper" gesture and still get a structured Portfolio. Cost: occasional miscategorization. Benefit: zero friction.
 
 **Loading.** `loadPortfolioNotes(userId)` runs in the auth chain on `/secret` mount alongside `loadRecipes` etc., and re-runs whenever the user taps the 💎 segment in the toggle (so notes promoted in another tab show up without a hard refresh). State: `portfolioNotes` in `app/secret/page.js`.
 

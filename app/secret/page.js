@@ -36,6 +36,97 @@ const TAG_GROUPS = [
 ]
 const CURATED_TAGS = TAG_GROUPS.flatMap(g => g.tags)
 
+// Chef Portfolio — keep-forever Chef Notes get auto-grouped into 5 fixed
+// "How to..." buckets so the Portfolio reads as a kitchen reference shelf
+// instead of a chronological pile. Order is locked. Each group carries its
+// own color stripe (mirrors Guides/Library color rhythm) and is rendered
+// as a collapsed accordion by default. Notes that don't match any pattern
+// fall back to the last group ("How to Improve a Dish") so nothing is
+// orphaned. Patterns scan title + answer body case-insensitively; the
+// first match wins (top-down) so more specific groups (Prep, Cook, Season,
+// Shop) get a chance before the catch-all Improve bucket.
+//
+// Class strings are written out in full (no dynamic concat) because
+// Tailwind v4's JIT scanner needs literal class names.
+const PORTFOLIO_GROUPS = [
+  {
+    key: 'prep',
+    emoji: '🔪',
+    label: 'How to Prep',
+    pattern: /\b(prep|prepare|chop|dice|slice|cut|peel|wash|clean|measure|mince|julienne|blanch|knife|board|trim|core|seed|deseed|pit|zest|grate|shred)\b/i,
+    border: 'border-orange-300',
+    headerBg: 'bg-orange-50',
+    headerText: 'text-orange-800',
+    countBg: 'bg-orange-100',
+    countText: 'text-orange-700',
+    bodyBg: 'bg-orange-50/30',
+    stripe: 'border-l-orange-500',
+  },
+  {
+    key: 'cook',
+    emoji: '🔥',
+    label: 'How to Cook',
+    pattern: /\b(cook|bake|roast|sear|saut[eé]|simmer|boil|grill|fry|steam|braise|oven|stovetop|temperature|done|doneness|heat|preheat|reduce|deglaze|render|caramelize)\b/i,
+    border: 'border-red-300',
+    headerBg: 'bg-red-50',
+    headerText: 'text-red-800',
+    countBg: 'bg-red-100',
+    countText: 'text-red-700',
+    bodyBg: 'bg-red-50/30',
+    stripe: 'border-l-red-500',
+  },
+  {
+    key: 'season',
+    emoji: '🧂',
+    label: 'How to Season',
+    pattern: /\b(season|salt|pepper|spice|herb|marinate|marinade|flavor|taste|umami|aromat|brine|rub|paste|vinaigrette)\b/i,
+    border: 'border-amber-300',
+    headerBg: 'bg-amber-50',
+    headerText: 'text-amber-800',
+    countBg: 'bg-amber-100',
+    countText: 'text-amber-700',
+    bodyBg: 'bg-amber-50/30',
+    stripe: 'border-l-amber-500',
+  },
+  {
+    key: 'improve',
+    emoji: '✨',
+    label: 'How to Improve a Dish',
+    pattern: /\b(improve|better|fix|save|balance|enhance|rescue|elevate|too salty|too sweet|too bland|too sour|too spicy|burned|burnt|overcooked|undercooked|tough|dry|watery)\b/i,
+    border: 'border-emerald-300',
+    headerBg: 'bg-emerald-50',
+    headerText: 'text-emerald-800',
+    countBg: 'bg-emerald-100',
+    countText: 'text-emerald-700',
+    bodyBg: 'bg-emerald-50/30',
+    stripe: 'border-l-emerald-500',
+  },
+  {
+    key: 'shop',
+    emoji: '🛒',
+    label: 'How to Shop',
+    pattern: /\b(shop|buy|pick|choose|select|store|keep fresh|ripe|grocery|grocer|market|produce|aisle|substitut|swap|replace|brand|quality)\b/i,
+    border: 'border-sky-300',
+    headerBg: 'bg-sky-50',
+    headerText: 'text-sky-800',
+    countBg: 'bg-sky-100',
+    countText: 'text-sky-700',
+    bodyBg: 'bg-sky-50/30',
+    stripe: 'border-l-sky-500',
+  },
+]
+
+// Walk the groups top-down and return the first whose pattern matches the
+// note's question + answer body. Falls through to "improve" (the catch-all
+// last group) so every note lands somewhere — never null.
+function categorizeChefNote(note) {
+  const haystack = `${note?.title || ''} ${note?.metadata?.answer || ''} ${note?.metadata?.question || ''}`
+  for (const g of PORTFOLIO_GROUPS) {
+    if (g.pattern.test(haystack)) return g.key
+  }
+  return 'improve'
+}
+
 // Best-guess emoji for recipes without a photo. Used as a visual fallback
 // on vault cards and the detail hero. Order matters — first match wins.
 function categoryEmoji(recipe) {
@@ -498,6 +589,10 @@ export default function MyRecipeVaultPage() {
   // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
   // whenever the user toggles between listStyle modes.
   const [portfolioNotes, setPortfolioNotes] = useState([])
+  // Which of the 5 Chef Portfolio "How to..." groups are expanded.
+  // Defaults to all collapsed (matches Guides/Library accordion pattern) so
+  // the Portfolio opens as a 5-row scannable index — tap a row to drill in.
+  const [portfolioOpenGroups, setPortfolioOpenGroups] = useState(() => new Set())
   const [viewing, setViewing] = useState(null)
   const [showVideo, setShowVideo] = useState(true)
   const [searchTag, setSearchTag] = useState('')
@@ -2319,25 +2414,29 @@ export default function MyRecipeVaultPage() {
               <h1 className="text-lg font-bold text-gray-900">Recipe Vault</h1>
             </div>
             <div className="flex gap-1.5">
-              <button
-                onClick={() => {
-                  if (showSearch || searchText) {
-                    // Close: clear any active query AND collapse back to chips
-                    setSearchText('')
-                    setShowSearch(false)
-                  } else {
-                    setShowSearch(true)
-                  }
-                }}
-                title={(showSearch || searchText) ? 'Close search' : 'Search by name'}
-                className={`text-base font-semibold border rounded-lg px-2.5 py-1.5 ${
-                  (showSearch || searchText)
-                    ? 'bg-orange-600 text-white border-orange-600'
-                    : 'text-gray-500 border-gray-200'
-                }`}
-              >
-                {(showSearch || searchText) ? '✕' : '🔍'}
-              </button>
+              {/* Search 🔍 — hidden on Portfolio view (notes have no
+                  searchable title; tags don't apply). */}
+              {listStyle !== 'portfolio' && (
+                <button
+                  onClick={() => {
+                    if (showSearch || searchText) {
+                      // Close: clear any active query AND collapse back to chips
+                      setSearchText('')
+                      setShowSearch(false)
+                    } else {
+                      setShowSearch(true)
+                    }
+                  }}
+                  title={(showSearch || searchText) ? 'Close search' : 'Search by name'}
+                  className={`text-base font-semibold border rounded-lg px-2.5 py-1.5 ${
+                    (showSearch || searchText)
+                      ? 'bg-orange-600 text-white border-orange-600'
+                      : 'text-gray-500 border-gray-200'
+                  }`}
+                >
+                  {(showSearch || searchText) ? '✕' : '🔍'}
+                </button>
+              )}
               {/* List / Grid / Portfolio segmented toggle. List + Grid are
                   pure display choices for the recipe collection (Grid shows
                   recipes as photo-first cream-paper tiles; both tap-through
@@ -2380,8 +2479,11 @@ export default function MyRecipeVaultPage() {
           {/* Row below the header swaps between the chip scroller and the
               full-width search input. The search toggle lives up in the
               header (see 🔍/✕ button above), so the input takes 100% of
-              this row and never has to share horizontal space. */}
-          {(showSearch || searchText) ? (
+              this row and never has to share horizontal space.
+              Hidden entirely on the Portfolio view — tags are recipe
+              metadata, not note metadata, so the chips/dropdown don't
+              apply when the page is showing Chef Notes. */}
+          {listStyle === 'portfolio' ? null : (showSearch || searchText) ? (
             <input type="text" placeholder="Search recipes..." value={searchText}
               autoFocus
               onChange={e => setSearchText(e.target.value)}
@@ -2427,7 +2529,9 @@ export default function MyRecipeVaultPage() {
               </div>
             )
           )}
-          {allTags.length > topTags.length && (
+          {/* Tag overflow dropdown — also hidden on Portfolio view.
+              Tags don't apply to Chef Notes. */}
+          {listStyle !== 'portfolio' && allTags.length > topTags.length && (
             // Filter dropdown — mirrors the form's three groups via
             // <optgroup>. Each group lists only the curated tags the
             // user has actually applied to their recipes (so we don't
@@ -2488,16 +2592,62 @@ export default function MyRecipeVaultPage() {
                 <button onClick={() => window.location.href='/playbook?tab=chef_notes'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open Chef Notes →</button>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
-                {portfolioNotes.map(note => (
-                  <ExpandableItem
-                    key={note.id}
-                    item={note}
-                    emoji="💎"
-                    onRemove={() => removeFromPortfolio(note)}
-                  />
-                ))}
-              </div>
+              /* Group portfolio notes into the 5 fixed "How to..." buckets and
+                 render each as a collapsed accordion section. Empty groups are
+                 hidden so the page only shows what the user has actually saved
+                 against. Tap a header to expand; tap × on a row to remove from
+                 the Portfolio (note still lives in Playbook). */
+              (() => {
+                const grouped = {}
+                for (const g of PORTFOLIO_GROUPS) grouped[g.key] = []
+                for (const note of portfolioNotes) {
+                  const key = categorizeChefNote(note)
+                  if (grouped[key]) grouped[key].push(note)
+                }
+                return (
+                  <div className="space-y-3">
+                    {PORTFOLIO_GROUPS.map(g => {
+                      const items = grouped[g.key]
+                      if (!items.length) return null
+                      const isOpen = portfolioOpenGroups.has(g.key)
+                      return (
+                        <div key={g.key} className={`bg-white rounded-2xl border-2 ${g.border} border-l-8 ${g.stripe} overflow-hidden`}>
+                          <button
+                            onClick={() => {
+                              setPortfolioOpenGroups(prev => {
+                                const next = new Set(prev)
+                                if (next.has(g.key)) next.delete(g.key)
+                                else next.add(g.key)
+                                return next
+                              })
+                            }}
+                            className={`w-full flex items-center justify-between px-4 py-3 ${isOpen ? g.headerBg : 'bg-white'} hover:${g.headerBg} transition-colors`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{g.emoji}</span>
+                              <span className={`font-bold ${g.headerText}`}>{g.label}</span>
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${g.countBg} ${g.countText}`}>{items.length}</span>
+                            </div>
+                            <span className={`text-xl ${g.headerText}`}>{isOpen ? '▾' : '▸'}</span>
+                          </button>
+                          {isOpen && (
+                            <div className={`${g.bodyBg} divide-y divide-gray-100`}>
+                              {items.map(note => (
+                                <ExpandableItem
+                                  key={note.id}
+                                  item={note}
+                                  emoji="💎"
+                                  onRemove={() => removeFromPortfolio(note)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()
             )}
           </div>
         ) : recipes.length === 0 ? (
