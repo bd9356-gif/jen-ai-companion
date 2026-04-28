@@ -450,24 +450,27 @@ export default function PlaybookPage() {
           </div>
         ) : (
           <div>
-            {/* Two-classroom nav — one stacked row per teacher, two pills
-                inside each (🎓 Teach / 🍳 Practice). The teacher's name
-                labels the row so a repeated "Teach" / "Practice" reads
-                unambiguously: same vocabulary, two different classrooms.
-                Order is locked Chef Jennifer → Chef TV. Only one pill is
-                active across both rows; the active pill fills with the
-                cell's color (amber / rose / sky / orange) while the
-                others are muted gray. */}
-            <div className="space-y-3 mb-4">
-              {/* Chef Jennifer's classroom */}
+            {/* Two-classroom nav — side-by-side columns, one per teacher.
+                Each column has the teacher name on top, then 🎓 Teach
+                and 🍳 Practice stacked vertically below. Reading the page
+                left-to-right names the two teachers; reading top-to-bottom
+                inside a column names that teacher's two modes. Same
+                Teach/Practice vocabulary repeats across columns — the
+                column header tells you which classroom you're in.
+                Order is locked Chef Jennifer (left) → Chef TV (right).
+                Only one pill is active across the whole grid; the active
+                pill fills with its cell color (amber / rose / sky /
+                orange) while the others are muted gray. */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {/* Chef Jennifer's column */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1 text-center">
                   👨‍🍳 Chef Jennifer
                 </p>
-                <div className="flex gap-1.5">
+                <div className="space-y-1.5">
                   <button
                     onClick={() => setTab('chef_notes')}
-                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                    className={`w-full py-2 rounded-full text-xs font-semibold transition-colors ${
                       tab === 'chef_notes' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-amber-50'
                     }`}
                   >
@@ -475,7 +478,7 @@ export default function PlaybookPage() {
                   </button>
                   <button
                     onClick={() => setTab('chef_recipes')}
-                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                    className={`w-full py-2 rounded-full text-xs font-semibold transition-colors ${
                       tab === 'chef_recipes' ? 'bg-rose-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-rose-50'
                     }`}
                   >
@@ -484,15 +487,15 @@ export default function PlaybookPage() {
                 </div>
               </div>
 
-              {/* Chef TV's classroom */}
+              {/* Chef TV's column */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1 text-center">
                   🎬 Chef TV
                 </p>
-                <div className="flex gap-1.5">
+                <div className="space-y-1.5">
                   <button
                     onClick={() => setTab('teach')}
-                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                    className={`w-full py-2 rounded-full text-xs font-semibold transition-colors ${
                       tab === 'teach' ? 'bg-sky-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-sky-50'
                     }`}
                   >
@@ -500,7 +503,7 @@ export default function PlaybookPage() {
                   </button>
                   <button
                     onClick={() => setTab('practice')}
-                    className={`flex-1 py-2 rounded-full text-xs font-semibold transition-colors ${
+                    className={`w-full py-2 rounded-full text-xs font-semibold transition-colors ${
                       tab === 'practice' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-orange-50'
                     }`}
                   >
