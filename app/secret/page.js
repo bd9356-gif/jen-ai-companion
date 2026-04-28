@@ -941,6 +941,32 @@ export default function MyRecipeVaultPage() {
     const viewParam = searchParams.get('view')
     if (viewParam === 'grid') setListStyle('grid')
     else if (viewParam === 'portfolio') setListStyle('portfolio')
+    // ?import=<encoded-url> deep-link — the entry point used by the
+    // iOS Share-Sheet Shortcut (and any other "send a URL to MyRecipe"
+    // flow). Switches to the import view, prefills the URL field, and
+    // immediately fires the existing import pipeline. handleImport
+    // accepts an explicit override so we don't have to wait for the
+    // setImportUrl state flush before kicking it off. The recipe lands
+    // on the standard Add form for the user to review/save, exactly
+    // the same path as a manual Import 📥 → URL → Import tap.
+    const importParam = searchParams.get('import')
+    if (importParam) {
+      const decoded = decodeURIComponent(importParam).trim()
+      if (decoded) {
+        setView('import')
+        setImportTab('url')
+        setImportUrl(decoded)
+        // Strip the param from the URL so a refresh doesn't re-trigger.
+        try {
+          const u = new URL(window.location.href)
+          u.searchParams.delete('import')
+          window.history.replaceState({}, '', u.pathname + (u.search ? u.search : '') + u.hash)
+        } catch { /* noop */ }
+        // Defer to next tick so React has flushed the view switch before
+        // the import network call kicks off — keeps the loading UI in sync.
+        setTimeout(() => handleImport(decoded), 0)
+      }
+    }
   }
 
   async function uploadPhoto(file, userId) {
