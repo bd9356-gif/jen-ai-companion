@@ -11,7 +11,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 A **cozy, modern cooking companion** that blends a personal recipe vault, guided learning, and an AI chef who's always ready to help. For **home cooks** who want a simple, confidence-building way to save recipes, learn skills, and get AI help in the kitchen.
 
 Repo: `bd9356-gif/jen-ai-companion`
-Deploy: Vercel → `www.mycompanionapps.com` (production). The original Vercel URL `jen-ai-companion.vercel.app` is kept allow-listed during the transition.
+Deploy: Vercel → **`recipe.mycompanionapps.com`** (production — the Recipe-specific subdomain). `www.mycompanionapps.com` is a *separate* Next site (the MyCompanionApps hub at `/sessions/epic-upbeat-ritchie/mnt/my-companion-apps/`), which lists Recipe + Golf + NET as tiles. Do not confuse the two — `www` does NOT serve the Recipe app and never has. The original Vercel URL `jen-ai-companion.vercel.app` is kept allow-listed during the transition.
 Mobile-first (`max-w-lg` / `max-w-2xl` container widths throughout).
 
 ## Stack
@@ -660,7 +660,7 @@ So the chip never feels empty — when the curator hasn't picked anything yet, i
 ## Workflow
 
 - `npm run dev` — local dev at `http://localhost:3000`.
-- `git push origin main` — triggers Vercel deploy to `www.mycompanionapps.com`.
+- `git push origin main` — triggers Vercel deploy to `recipe.mycompanionapps.com`.
 - Commit style: `feat: <page> - <short description>` (e.g., `feat: Shopping List - AI cleanup button`). Body uses `-` bullets for specifics.
 
 ## Naming canon (current state)
@@ -731,7 +731,7 @@ Supabase's default SMTP is rate-limited and gets spam-flagged by Hotmail/Outlook
 
 - **Provider:** Resend — domain `mycompanionapps.com` verified (SPF/DKIM/DMARC records live on the domain's DNS).
 - **Supabase → Project Settings → Authentication → SMTP Settings:** host `smtp.resend.com`, port `465`, username `resend`, password = Resend API key. Sender `noreply@mycompanionapps.com`, display name "MyRecipe Companion".
-- **Supabase → Auth → URL Configuration:** Site URL = `https://www.mycompanionapps.com`. Redirect allow-list includes `https://www.mycompanionapps.com/auth/callback`, `https://jen-ai-companion.vercel.app/auth/callback` (kept during the transition / for Vercel preview deploys), and `http://localhost:3000/auth/callback` for local dev.
+- **Supabase → Auth → URL Configuration:** Site URL = `https://recipe.mycompanionapps.com`. Redirect allow-list includes `https://recipe.mycompanionapps.com/auth/callback`, `https://jen-ai-companion.vercel.app/auth/callback` (kept during the transition / for Vercel preview deploys), and `http://localhost:3000/auth/callback` for local dev.
 - **Supabase → Auth → Providers → Email:** enabled.
 
 Rotating / revoking the Resend API key is a Supabase SMTP-fields update only; no app-code change.
