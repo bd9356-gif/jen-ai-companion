@@ -190,43 +190,54 @@ const PREFERENCE_OPTIONS = [
 // the most common entities, collapse whitespace). If clipboard.read()
 // isn't available or throws (older Safari, permission denied), we
 // fall through to readText() so we degrade rather than break.
+function htmlToCleanText(html) {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<\/?(br|p|div|li|h[1-6]|tr|ol|ul|table|section|article)\b[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#39;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n\s*\n\s*\n+/g, '\n\n')
+    .trim()
+}
+
 async function readClipboardSmart() {
   try {
     if (typeof navigator !== 'undefined' && navigator.clipboard?.read) {
       const items = await navigator.clipboard.read()
+      // Pull BOTH plain and html when present, then return the longer one.
+      // iOS web-page clipboards (from Shortcuts' Get Contents of Web Page,
+      // or Safari's Share → Copy) put a short URL fallback on text/plain
+      // and the real page content on text/html — preferring text/plain
+      // would route the user to the URL tab instead of the Paste tab,
+      // which was the bug we hit.
+      let plain = ''
+      let html = ''
       for (const item of items) {
-        // Prefer plain text when it has real content.
-        if (item.types?.includes('text/plain')) {
+        if (!plain && item.types?.includes('text/plain')) {
           try {
             const blob = await item.getType('text/plain')
-            const txt = (await blob.text()).trim()
-            if (txt) return txt
-          } catch { /* try next type */ }
+            plain = ((await blob.text()) || '').trim()
+          } catch { /* try html instead */ }
         }
-        // Fall back to HTML — strip tags into a clean text dump.
-        if (item.types?.includes('text/html')) {
+        if (!html && item.types?.includes('text/html')) {
           try {
             const blob = await item.getType('text/html')
-            const html = await blob.text()
-            const text = html
-              .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-              .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-              .replace(/<\/?(br|p|div|li|h[1-6]|tr|ol|ul|table|section|article)\b[^>]*>/gi, '\n')
-              .replace(/<[^>]+>/g, ' ')
-              .replace(/&nbsp;/gi, ' ')
-              .replace(/&amp;/gi, '&')
-              .replace(/&lt;/gi, '<')
-              .replace(/&gt;/gi, '>')
-              .replace(/&#39;/gi, "'")
-              .replace(/&quot;/gi, '"')
-              .replace(/[ \t]+/g, ' ')
-              .replace(/\n[ \t]+/g, '\n')
-              .replace(/\n\s*\n\s*\n+/g, '\n\n')
-              .trim()
-            if (text) return text
+            const raw = await blob.text()
+            html = htmlToCleanText(raw)
           } catch { /* try next item */ }
         }
       }
+      if (html.length > plain.length) return html
+      if (plain) return plain
+      if (html) return html
     }
   } catch { /* fall through to readText */ }
   try {
