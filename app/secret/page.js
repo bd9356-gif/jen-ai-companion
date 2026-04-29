@@ -1104,27 +1104,59 @@ export default function MyRecipeVaultPage() {
   // user gesture. This wrapper is wired to the 📥 Import button(s) so
   // tapping Import IS the gesture — iOS Safari will allow the read,
   // show its native "Paste from <App>?" prompt, and once the user
-  // confirms, we route them to the right tab AND pre-fill. If clipboard
-  // is empty / denied / unsupported, we still open Import on the URL
-  // tab so the button never feels broken.
+  // confirms, we route them to the right tab AND pre-fill. We do the
+  // clipboard read BEFORE setView() to keep the read as close as
+  // possible to the user's tap (some iOS versions are strict about
+  // this). If clipboard is empty / denied / unsupported, we still
+  // open Import on the URL tab so the button never feels broken.
   async function openImportFromClipboard() {
+    let trimmed = ''
+    try {
+      trimmed = await readClipboardSmart()
+    } catch { /* permission denied / unsupported */ }
     setView('import')
+    if (!trimmed) return
+    // Branch A — short URL on clipboard → URL tab
+    if (trimmed.length <= 2000 && /^https?:\/\/\S+$/i.test(trimmed)) {
+      if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
+      setImportTab('url')
+      setImportUrl(trimmed)
+      return
+    }
+    // Branch B — long recipe-shaped text → Paste tab
+    if (trimmed.length >= 500 && /\b(ingredient|tablespoon|teaspoon|tbsp|tsp|preheat|cup of|cups of)\b/i.test(trimmed)) {
+      setImportTab('paste')
+      setImportText(trimmed)
+      return
+    }
+    // Fallback — long blob without recipe vocab still lands on Paste
+    // (better than dumping into URL where it'll fail) so Bill's
+    // Shortcut output isn't gated on our regex matching every site.
+    if (trimmed.length >= 200) {
+      setImportTab('paste')
+      setImportText(trimmed)
+    }
+  }
+
+  // ── pasteFromClipboardToTextarea() — manual fallback button ──
+  // The "📋 Paste from clipboard" button on the Paste tab calls this.
+  // Reliable fallback for when the auto-route on Import-button-tap
+  // didn't fire (iOS denied the read silently, or the user dismissed
+  // the system dialog without tapping Paste). Tapping the button is
+  // a fresh gesture, so iOS will re-prompt for clipboard access.
+  async function pasteFromClipboardToTextarea() {
     try {
       const trimmed = await readClipboardSmart()
-      if (!trimmed) return
-      // Branch A — short URL on clipboard → URL tab
-      if (trimmed.length <= 2000 && /^https?:\/\/\S+$/i.test(trimmed)) {
-        if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
-        setImportTab('url')
-        setImportUrl(trimmed)
+      if (!trimmed) {
+        showToast('Clipboard looks empty — try copying again')
         return
       }
-      // Branch B — long recipe-shaped text → Paste tab
-      if (trimmed.length >= 500 && /\b(ingredient|tablespoon|teaspoon|tbsp|tsp|preheat|cup of|cups of)\b/i.test(trimmed)) {
-        setImportTab('paste')
-        setImportText(trimmed)
-      }
-    } catch { /* permission denied / unsupported — leave Import on default URL tab */ }
+      setImportText(trimmed)
+      showToast('Pasted from clipboard ✓')
+      setTimeout(() => importTextRef.current?.focus(), 100)
+    } catch {
+      showToast("Couldn't read clipboard — long-press the box and tap Paste")
+    }
   }
 
   async function uploadPhoto(file, userId) {
@@ -2391,6 +2423,18 @@ export default function MyRecipeVaultPage() {
                 <p>Copy the recipe from the website — Select All works fine because AI filters out the noise — then paste it here. It works on every site, even the ones that try to block copying.</p>
                 <p>Or use the site&apos;s Print Recipe option. Save it, copy everything when you&apos;re ready, paste it in, and let AI handle the rest. You can add the image anytime with a simple copy-and-paste.</p>
               </div>
+              {/* One-tap paste from clipboard. Reliable fallback: tapping
+                  this button is its own user gesture so iOS Safari will
+                  show its native "Paste from..." prompt and let us read
+                  the clipboard even if the auto-jump on the Import
+                  button didn't fire. */}
+              <button
+                type="button"
+                onClick={pasteFromClipboardToTextarea}
+                className="w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 text-orange-700 rounded-xl font-semibold text-base"
+              >
+                📋 Paste from clipboard
+              </button>
               <textarea ref={importTextRef} placeholder="Paste your recipe here — title, ingredients, instructions, notes…" value={importText} onChange={e => setImportText(e.target.value)}
                 rows={10}
                 style={{ fontSize: '16px' }}
