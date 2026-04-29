@@ -655,7 +655,7 @@ export default function MyRecipeVaultPage() {
   // don't apply there. Synced to ?view=grid|portfolio via
   // history.replaceState so refresh/share preserves the user's choice.
   // Distinct from Recipe Cards (/cards), a separate "chef card" concept.
-  const [listStyle, setListStyle] = useState('list')
+  const [listStyle, setListStyle] = useState('grid')
   // Curated Chef Notes promoted from Playbook into Recipe Vault via the
   // "💎 Add to Portfolio" button. Backed by `favorites.is_in_vault = true`
   // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
@@ -1011,7 +1011,8 @@ export default function MyRecipeVaultPage() {
     // default 'list'. Portfolio (💎) renders curated Chef Notes the user
     // promoted from Playbook, not recipes.
     const viewParam = searchParams.get('view')
-    if (viewParam === 'grid') setListStyle('grid')
+    if (viewParam === 'list') setListStyle('list')
+    else if (viewParam === 'grid') setListStyle('grid')
     else if (viewParam === 'portfolio') setListStyle('portfolio')
     // ?import=<encoded-url> deep-link — the entry point used by the
     // iOS Share-Sheet Shortcut (and any other "send a URL to MyRecipe"
@@ -2703,7 +2704,7 @@ export default function MyRecipeVaultPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={openImportFromClipboard} title="Import a recipe" className="text-base font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5">📥</button>
+              <button onClick={openImportFromClipboard} title="Import a recipe" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>
               <button onClick={() => setView('add')} title="Add a recipe" className="text-base font-bold text-white bg-orange-600 rounded-lg px-2.5 py-1.5">+</button>
             </div>
           </div>
