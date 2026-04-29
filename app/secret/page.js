@@ -967,6 +967,40 @@ export default function MyRecipeVaultPage() {
         setTimeout(() => handleImport(decoded), 0)
       }
     }
+    // Clipboard auto-jump — when the user opens the Vault and the system
+    // clipboard already holds a recipe-shaped URL (typical flow: copy from
+    // Safari → switch to MyRecipe), skip the list view entirely and land
+    // them on the Import → URL tab with the URL pre-filled. Collapses the
+    // copy-paste flow from 4 taps to 2: before was [open] → tap 📥 Import
+    // → tap "Use it" → tap "Import & Clean"; after is [open] → tap
+    // "Import & Clean".
+    //
+    // Gated so explicit deep-links always win — if ?recipe= or ?import=
+    // is on the URL, the user asked for something specific and we don't
+    // override. Also gated on a generous URL pattern + length cap so we
+    // don't bounce on a stray non-URL string sitting on the clipboard.
+    //
+    // The actual import is NOT auto-fired (only pre-filled) — the user
+    // still confirms by tapping the orange button. That keeps the page
+    // honest: a stale URL from yesterday's copy doesn't silently re-run.
+    //
+    // readText() requires browser permission. Safari/iOS may block it
+    // when the page wasn't opened by a recent user gesture; in that case
+    // the existing in-Import clipboard prompt still catches it on the
+    // next tap, so the regression-floor is "current behavior".
+    if (!recipeParam && !importParam && typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then((txt) => {
+        const trimmed = (txt || '').trim()
+        if (!trimmed || trimmed.length > 2000) return
+        if (!/^https?:\/\/\S+$/i.test(trimmed)) return
+        // Skip URLs from our own domain — copying a Vault link and
+        // landing back on the Vault shouldn't try to import itself.
+        if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
+        setView('import')
+        setImportTab('url')
+        setImportUrl(trimmed)
+      }).catch(() => { /* permission denied / no clipboard text — fall through */ })
+    }
   }
 
   async function uploadPhoto(file, userId) {
