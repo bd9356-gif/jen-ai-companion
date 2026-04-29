@@ -58,9 +58,14 @@ const supabase = createClient(
 //   - favorites.type='ai_answer' → 📝 Chef Notes tab
 // Neither of those lives in cooking_skill_items — they aren't bucketed,
 // they're separate kinds of save with no move-between UX.
+// `label` drives the pill text (kept short — Teach / Practice — to
+// match the locked Teach/Practice vocabulary across the app). The
+// body header inside each open cell reads richer using `bodyEmoji`
+// + `bodyName` + `desc`, so the pill stays scannable but the cell
+// itself reads like a labeled room ("Learning Videos / Watch & Cook").
 const BUCKETS = [
-  { key: 'teach',    emoji: '🎓', label: 'Teach',    hint: 'Videos that teach you.' },
-  { key: 'practice', emoji: '🍳', label: 'Practice', hint: 'Recipes to cook.' },
+  { key: 'teach',    emoji: '🎓', label: 'Teach',    bodyEmoji: '📺',  bodyName: 'Learning Videos', desc: 'Watch cooking lessons and learning videos.' },
+  { key: 'practice', emoji: '🍳', label: 'Practice', bodyEmoji: '🍽️', bodyName: 'Watch & Cook',     desc: 'Watch videos that include recipes and move them into your Recipe Vault.' },
 ]
 
 // Full Tailwind class literals per bucket — v4 JIT requires complete strings.
@@ -523,11 +528,13 @@ export default function PlaybookPage() {
                 const c = COLOR[tab]
                 return (
                   <div className={`rounded-2xl ${c.border} ${c.body} overflow-hidden shadow-sm`}>
-                    <div className={`${c.header} px-3 py-2.5 flex items-center gap-2`}>
-                      <span className="text-lg">🎬</span>
-                      <span className={`text-sm font-bold ${c.title}`}>Chef TV &middot; {b.emoji} {b.label}</span>
-                      <span className={`text-xs font-semibold ${c.pill} px-2 py-0.5 rounded-full`}>{list.length}</span>
-                      {b.hint && <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">{b.hint}</span>}
+                    <div className={`${c.header} px-3 py-2.5`}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🎬</span>
+                        <span className={`text-sm font-bold ${c.title}`}>Chef TV &middot; {b.bodyEmoji} {b.bodyName}</span>
+                        <span className={`text-xs font-semibold ${c.pill} px-2 py-0.5 rounded-full`}>{list.length}</span>
+                      </div>
+                      {b.desc && <p className="text-xs text-gray-600 mt-1 ml-7">{b.desc}</p>}
                     </div>
                     <div className="divide-y divide-gray-100">
                       {list.length === 0 ? (
@@ -554,11 +561,13 @@ export default function PlaybookPage() {
                  in-place 💾 Save to Recipe Vault button. Empty state
                  routes users to /chef in 🍳 Practice mode. */
               <div className={`rounded-2xl ${RECIPES_COLOR.border} ${RECIPES_COLOR.body} overflow-hidden shadow-sm`}>
-                <div className={`${RECIPES_COLOR.header} px-3 py-2.5 flex items-center gap-2`}>
-                  <span className="text-lg">👨‍🍳</span>
-                  <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Jennifer &middot; 🍳 Practice</span>
-                  <span className={`text-xs font-semibold ${RECIPES_COLOR.pill} px-2 py-0.5 rounded-full`}>{recipes.length}</span>
-                  <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Recipes Chef Jennifer made for you.</span>
+                <div className={`${RECIPES_COLOR.header} px-3 py-2.5`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">👨‍🍳</span>
+                    <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Jennifer &middot; 🍳 Test Kitchen</span>
+                    <span className={`text-xs font-semibold ${RECIPES_COLOR.pill} px-2 py-0.5 rounded-full`}>{recipes.length}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1 ml-7">Where you practice what you learned — the room after class.</p>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {recipes.length === 0 ? (
@@ -583,11 +592,13 @@ export default function PlaybookPage() {
                  Not a bucket (no move-between UX), it's a separate kind
                  of content. Empty state routes users to /chef. */
               <div className={`rounded-2xl ${NOTES_COLOR.border} ${NOTES_COLOR.body} overflow-hidden shadow-sm`}>
-                <div className={`${NOTES_COLOR.header} px-3 py-2.5 flex items-center gap-2`}>
-                  <span className="text-lg">👨‍🍳</span>
-                  <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Jennifer &middot; 🎓 Teach</span>
-                  <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
-                  <span className="text-xs text-gray-500 italic ml-2 hidden sm:inline">Inbox — file the keepers, × the rest.</span>
+                <div className={`${NOTES_COLOR.header} px-3 py-2.5`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">👨‍🍳</span>
+                    <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Jennifer &middot; 🎓 Lesson Notes</span>
+                    <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1 ml-7">Where your AI lesson notes land — the classroom notebook. File the keepers, × the rest.</p>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {notes.length === 0 ? (
