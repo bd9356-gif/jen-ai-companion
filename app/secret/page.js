@@ -1097,6 +1097,36 @@ export default function MyRecipeVaultPage() {
     }
   }
 
+  // ── openImportFromClipboard() — gesture-triggered clipboard route ──
+  // The on-load auto-jump in loadRecipes() works on desktop browsers
+  // that have already granted clipboard permission, but iOS Safari
+  // refuses navigator.clipboard.read() unless it fires from a recent
+  // user gesture. This wrapper is wired to the 📥 Import button(s) so
+  // tapping Import IS the gesture — iOS Safari will allow the read,
+  // show its native "Paste from <App>?" prompt, and once the user
+  // confirms, we route them to the right tab AND pre-fill. If clipboard
+  // is empty / denied / unsupported, we still open Import on the URL
+  // tab so the button never feels broken.
+  async function openImportFromClipboard() {
+    setView('import')
+    try {
+      const trimmed = await readClipboardSmart()
+      if (!trimmed) return
+      // Branch A — short URL on clipboard → URL tab
+      if (trimmed.length <= 2000 && /^https?:\/\/\S+$/i.test(trimmed)) {
+        if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
+        setImportTab('url')
+        setImportUrl(trimmed)
+        return
+      }
+      // Branch B — long recipe-shaped text → Paste tab
+      if (trimmed.length >= 500 && /\b(ingredient|tablespoon|teaspoon|tbsp|tsp|preheat|cup of|cups of)\b/i.test(trimmed)) {
+        setImportTab('paste')
+        setImportText(trimmed)
+      }
+    } catch { /* permission denied / unsupported — leave Import on default URL tab */ }
+  }
+
   async function uploadPhoto(file, userId) {
     if (!file) return null
     setUploadingPhoto(true)
@@ -2629,7 +2659,7 @@ export default function MyRecipeVaultPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setView('import')} title="Import a recipe" className="text-base font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5">📥</button>
+              <button onClick={openImportFromClipboard} title="Import a recipe" className="text-base font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5">📥</button>
               <button onClick={() => setView('add')} title="Add a recipe" className="text-base font-bold text-white bg-orange-600 rounded-lg px-2.5 py-1.5">+</button>
             </div>
           </div>
@@ -2818,7 +2848,7 @@ export default function MyRecipeVaultPage() {
             <p className="text-gray-500 text-sm mb-6">Add your personal and family recipes — private and only visible to you</p>
             <div className="flex flex-col gap-3 items-center">
               <button onClick={() => setView('add')} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold w-48">+ Add a Recipe</button>
-              <button onClick={() => setView('import')} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import a Recipe</button>
+              <button onClick={openImportFromClipboard} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import a Recipe</button>
             </div>
           </div>
         ) : (() => {
