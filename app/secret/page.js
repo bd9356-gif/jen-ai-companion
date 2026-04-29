@@ -991,14 +991,37 @@ export default function MyRecipeVaultPage() {
     if (!recipeParam && !importParam && typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.readText) {
       navigator.clipboard.readText().then((txt) => {
         const trimmed = (txt || '').trim()
-        if (!trimmed || trimmed.length > 2000) return
-        if (!/^https?:\/\/\S+$/i.test(trimmed)) return
-        // Skip URLs from our own domain — copying a Vault link and
-        // landing back on the Vault shouldn't try to import itself.
-        if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
-        setView('import')
-        setImportTab('url')
-        setImportUrl(trimmed)
+        if (!trimmed) return
+        // Branch A — short string that looks like a URL → URL tab.
+        // Length cap of 2000 keeps this branch URL-shaped only; longer
+        // pasted blobs (which are almost always page-text dumps) fall
+        // through to Branch B.
+        if (trimmed.length <= 2000 && /^https?:\/\/\S+$/i.test(trimmed)) {
+          // Skip URLs from our own domain — copying a Vault link and
+          // landing back on the Vault shouldn't try to import itself.
+          if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
+          setView('import')
+          setImportTab('url')
+          setImportUrl(trimmed)
+          return
+        }
+        // Branch B — long block of text that smells like a recipe → Paste
+        // tab. Designed for the Shortcut path Bill uses: an iOS Shortcut
+        // grabs the whole page text from a recipe site (works on sites
+        // that block our scraper because it runs in his Safari context),
+        // copies it to clipboard, and he opens MyRecipe. We bounce him
+        // straight into Paste with the text pre-filled — no manual
+        // navigate-and-paste step. Heuristic: long enough to be a real
+        // page (≥ 500 chars) AND contains classic recipe vocabulary.
+        // The vocab gate keeps random long clipboard blobs (an email,
+        // a chat history, a story) from yanking the user into Import
+        // unsolicited. False negatives are recoverable — user can still
+        // tap 📥 Import → Paste manually like before.
+        if (trimmed.length >= 500 && /\b(ingredient|tablespoon|teaspoon|tbsp|tsp|preheat|cup of|cups of)\b/i.test(trimmed)) {
+          setView('import')
+          setImportTab('paste')
+          setImportText(trimmed)
+        }
       }).catch(() => { /* permission denied / no clipboard text — fall through */ })
     }
   }
