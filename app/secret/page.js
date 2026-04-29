@@ -176,6 +176,67 @@ const PREFERENCE_OPTIONS = [
   { value: 'heart_healthy',    label: 'Heart-healthy',          emoji: '❤️', hint: 'leaner fats, more veg' },
 ]
 
+// ── readClipboardSmart() — clipboard read that handles rich text ──
+// readText() only returns the plain-text representation of the
+// clipboard. iOS Shortcuts' "Get Contents of Web Page" action puts
+// HTML / rich text on the clipboard — readText() returns empty (or
+// just a snippet) and our auto-jump heuristic short-circuits.
+//
+// This helper tries the richer Async Clipboard API (clipboard.read())
+// first, which exposes every MIME type on the clipboard. We prefer
+// text/plain when it's non-empty; otherwise we fall back to text/html
+// and convert it to plain text on our side (strip script/style blocks,
+// turn block-level tags into newlines, strip remaining tags, decode
+// the most common entities, collapse whitespace). If clipboard.read()
+// isn't available or throws (older Safari, permission denied), we
+// fall through to readText() so we degrade rather than break.
+async function readClipboardSmart() {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.read) {
+      const items = await navigator.clipboard.read()
+      for (const item of items) {
+        // Prefer plain text when it has real content.
+        if (item.types?.includes('text/plain')) {
+          try {
+            const blob = await item.getType('text/plain')
+            const txt = (await blob.text()).trim()
+            if (txt) return txt
+          } catch { /* try next type */ }
+        }
+        // Fall back to HTML — strip tags into a clean text dump.
+        if (item.types?.includes('text/html')) {
+          try {
+            const blob = await item.getType('text/html')
+            const html = await blob.text()
+            const text = html
+              .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+              .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+              .replace(/<\/?(br|p|div|li|h[1-6]|tr|ol|ul|table|section|article)\b[^>]*>/gi, '\n')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/&nbsp;/gi, ' ')
+              .replace(/&amp;/gi, '&')
+              .replace(/&lt;/gi, '<')
+              .replace(/&gt;/gi, '>')
+              .replace(/&#39;/gi, "'")
+              .replace(/&quot;/gi, '"')
+              .replace(/[ \t]+/g, ' ')
+              .replace(/\n[ \t]+/g, '\n')
+              .replace(/\n\s*\n\s*\n+/g, '\n\n')
+              .trim()
+            if (text) return text
+          } catch { /* try next item */ }
+        }
+      }
+    }
+  } catch { /* fall through to readText */ }
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
+      return ((await navigator.clipboard.readText()) || '').trim()
+    }
+  } catch { /* permission denied / unsupported */ }
+  return ''
+}
+
 // ── TAG SELECTOR — inline chip groups ──
 // Three labelled chip rows (Meal / Food Groups / Style) replace the old
 // 19-item dropdown. Tap a chip to toggle. Below the curated groups, a
@@ -988,9 +1049,8 @@ export default function MyRecipeVaultPage() {
     // when the page wasn't opened by a recent user gesture; in that case
     // the existing in-Import clipboard prompt still catches it on the
     // next tap, so the regression-floor is "current behavior".
-    if (!recipeParam && !importParam && typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.readText) {
-      navigator.clipboard.readText().then((txt) => {
-        const trimmed = (txt || '').trim()
+    if (!recipeParam && !importParam && typeof navigator !== 'undefined' && navigator.clipboard) {
+      readClipboardSmart().then((trimmed) => {
         if (!trimmed) return
         // Branch A — short string that looks like a URL → URL tab.
         // Length cap of 2000 keeps this branch URL-shaped only; longer
