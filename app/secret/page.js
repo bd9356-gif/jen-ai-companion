@@ -1040,6 +1040,56 @@ export default function MyRecipeVaultPage() {
         setTimeout(() => handleImport(decoded), 0)
       }
     }
+    // ?smart_import=1 — the iOS Share-Sheet Shortcut path. The Shortcut
+    // copies a "URL\n\nHTML" payload to the clipboard, then opens this
+    // route. We read the clipboard (the navigation IS the user gesture,
+    // so iOS Safari typically allows the read), split on the first blank
+    // line, and POST both pieces to /api/import-recipe. The API tries the
+    // URL fetch first and silently falls back to the HTML if the site
+    // blocks the server-side fetcher — same code path either way, so the
+    // user's experience is "share, tap, recipe lands."
+    //
+    // Resilient if the clipboard read denies: the page still ends up on
+    // Import → URL with an empty form, so the user can paste manually.
+    // Stale-clipboard guard: we only fire handleImport if we successfully
+    // parsed a URL or substantial HTML out of the payload. Junk clipboard
+    // contents fall through to the empty Import view.
+    const smartImport = searchParams.get('smart_import')
+    if (smartImport === '1') {
+      setView('import')
+      setImportTab('url')
+      // Strip the param immediately so refresh doesn't re-trigger.
+      try {
+        const u = new URL(window.location.href)
+        u.searchParams.delete('smart_import')
+        window.history.replaceState({}, '', u.pathname + (u.search ? u.search : '') + u.hash)
+      } catch { /* noop */ }
+      // Read clipboard + fire import on next tick (after view-state flush).
+      setTimeout(async () => {
+        let payload = ''
+        try {
+          payload = await readClipboardSmart()
+        } catch { /* permission denied — leave Import view empty */ }
+        if (!payload) return
+        // Parse "<URL>\n\n<HTML>" — first line is the URL, blank line, then HTML.
+        // Tolerant: accepts URL-only (no separator) and HTML-only (no leading URL).
+        const sepMatch = payload.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
+        let smartUrl = ''
+        let smartHtml = ''
+        if (sepMatch) {
+          smartUrl = sepMatch[1].trim()
+          smartHtml = sepMatch[2].trim()
+        } else if (/^https?:\/\/\S+$/i.test(payload.trim())) {
+          smartUrl = payload.trim()
+        } else if (payload.trim().length >= 200) {
+          // Long blob with no leading URL → treat as HTML/text payload.
+          smartHtml = payload.trim()
+        }
+        if (!smartUrl && !smartHtml) return
+        if (smartUrl) setImportUrl(smartUrl)
+        handleImport(smartUrl, smartHtml)
+      }, 0)
+    }
     // Clipboard auto-jump — when the user opens the Vault and the system
     // clipboard already holds a recipe-shaped URL (typical flow: copy from
     // Safari → switch to MyRecipe), skip the list view entirely and land
@@ -1061,7 +1111,7 @@ export default function MyRecipeVaultPage() {
     // when the page wasn't opened by a recent user gesture; in that case
     // the existing in-Import clipboard prompt still catches it on the
     // next tap, so the regression-floor is "current behavior".
-    if (!recipeParam && !importParam && typeof navigator !== 'undefined' && navigator.clipboard) {
+    if (!recipeParam && !importParam && smartImport !== '1' && typeof navigator !== 'undefined' && navigator.clipboard) {
       readClipboardSmart().then((trimmed) => {
         if (!trimmed) return
         // Branch A — short string that looks like a URL → URL tab.
@@ -1490,17 +1540,25 @@ export default function MyRecipeVaultPage() {
   // update to flush — pasting a URL via "Use it" / 📋 Paste / direct
   // input paste sets the field AND immediately starts the import in
   // the same handler, so the user doesn't have to tap "Import" too.
-  async function handleImport(urlOverride) {
+  //
+  // Optional `htmlOverride` is the iOS Share-Sheet Shortcut path: the
+  // Shortcut sends BOTH the URL and the page HTML so the API can fall
+  // back to the HTML payload when its own server-side fetch is blocked
+  // (Cloudflare, paywall, login wall). The caller sets it; the server
+  // decides which to use. Today only the smart_import handler in
+  // loadRecipes passes this; all other call sites omit it.
+  async function handleImport(urlOverride, htmlOverride) {
     const urlToUse = (typeof urlOverride === 'string' ? urlOverride : importUrl).trim()
     const textToUse = importText.trim()
-    if (!textToUse && !urlToUse) return
+    const htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : '').trim()
+    if (!textToUse && !urlToUse && !htmlToUse) return
     if (urlOverride && urlToUse) setImportUrl(urlToUse)
     setImporting(true)
     setImportError('')
     try {
       const res = await fetch('/api/import-recipe', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToUse, url: urlToUse })
+        body: JSON.stringify({ text: textToUse, url: urlToUse, html: htmlToUse })
       })
       const data = await res.json()
       if (data.error) {

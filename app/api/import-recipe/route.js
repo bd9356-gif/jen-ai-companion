@@ -110,8 +110,43 @@ function extractImageUrl(html, baseUrl) {
   try { return new URL(first, baseUrl).toString() } catch { return first }
 }
 
+// Pulls recipe-shaped content out of a raw HTML page. Prefers JSON-LD
+// "Recipe" blocks (most accurate), falls back to stripping all HTML to
+// plain text. Used by both the server-side URL-fetch path AND the
+// client-supplied HTML fallback path (the iOS Share-Sheet Shortcut sends
+// page HTML alongside the URL so we can rescue blocked sites without a
+// separate Paste step).
+function extractContentFromHtml(html) {
+  const jsonLdMatch = html.match(/"@type"\s*:\s*"Recipe"[\s\S]*?(?=<\/script>)/i)
+  if (jsonLdMatch) {
+    const scriptMatch = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)
+    if (scriptMatch) {
+      for (const script of scriptMatch) {
+        if (script.includes('"Recipe"')) {
+          return script.replace(/<[^>]*>/g, '')
+        }
+      }
+    }
+  }
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .substring(0, 8000)
+}
+
 export async function POST(request) {
-  const { text, url } = await request.json()
+  // `html` is the optional client-supplied fallback path: when an iOS
+  // Shortcut grabs the page contents in the user's Safari context (which
+  // has the user's cookies and bypasses our server-side fetch being
+  // blocked), it sends both `url` AND `html`. We try the URL fetch first
+  // because it's lighter and gets the canonical og:image; we silently fall
+  // through to the supplied HTML only if our fetch fails. The user never
+  // sees the difference — A-sites and B-sites both work via the same
+  // share-sheet tap.
+  const { text, url, html } = await request.json()
 
   let content = text
   let scrapedImage = ''
@@ -133,60 +168,55 @@ export async function POST(request) {
         }, { status: 400 })
       }
     } else {
-    try {
-      // Use a real-browser User-Agent + standard headers so recipe blogs
-      // behind Cloudflare / Sucuri / WP bot protection don't 403 us. Our
-      // previous "RecipeBot/1.0" UA was getting blocked outright by big
-      // sites (e.g. natashaskitchen.com), which returned challenge pages
-      // with no recipe data and caused the model to report "No recipe found".
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-        },
-        signal: AbortSignal.timeout(10000),
-      })
-      const html = await res.text()
-
-      // Surface HTTP-level blocks clearly — otherwise we try to extract a
-      // recipe from a 403/503 body and the user just sees "No recipe found".
-      if (!res.ok) {
-        return Response.json({
-          error: `The site returned ${res.status} ${res.statusText || ''}. This usually means the site is blocking automated fetches. Try a different URL.`,
-        }, { status: 400 })
-      }
-
-      // Grab the best available image up front — independent of the content path
-      scrapedImage = extractImageUrl(html, url)
-
-      // First try to extract JSON-LD schema recipe data (most reliable)
-      const jsonLdMatch = html.match(/"@type"\s*:\s*"Recipe"[\s\S]*?(?=<\/script>)/i)
-      if (jsonLdMatch) {
-        // Found structured recipe data - extract just that part
-        const scriptMatch = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)
-        if (scriptMatch) {
-          for (const script of scriptMatch) {
-            if (script.includes('"Recipe"')) {
-              content = script.replace(/<[^>]*>/g, '')
-              break
-            }
-          }
+      // Try the server-side fetch first. If it succeeds (non-blocked site),
+      // we use what came back. If it fails (HTTP 4xx/5xx, network error,
+      // timeout) AND the caller supplied `html`, we silently fall through
+      // to the HTML payload below.
+      let urlSucceeded = false
+      let urlError = ''
+      try {
+        // Use a real-browser User-Agent + standard headers so recipe blogs
+        // behind Cloudflare / Sucuri / WP bot protection don't 403 us.
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+          signal: AbortSignal.timeout(10000),
+        })
+        if (!res.ok) {
+          urlError = `The site returned ${res.status} ${res.statusText || ''}. This usually means the site is blocking automated fetches. Try a different URL.`
+        } else {
+          const fetchedHtml = await res.text()
+          scrapedImage = extractImageUrl(fetchedHtml, url)
+          content = extractContentFromHtml(fetchedHtml)
+          urlSucceeded = true
         }
-      } else {
-        // Fall back to stripping HTML
-        content = html
-          .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-          .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-          .replace(/<[^>]*>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .substring(0, 8000)
+      } catch (err) {
+        urlError = 'Could not fetch URL: ' + err.message
       }
-    } catch (err) {
-      return Response.json({ error: 'Could not fetch URL: ' + err.message }, { status: 400 })
+
+      if (!urlSucceeded) {
+        if (html) {
+          // Caller (typically the iOS Share-Sheet Shortcut) supplied page
+          // HTML because they could fetch it from their browser context
+          // when we couldn't from the server. Run the same extraction on
+          // it. og:image scraping uses the original URL as the base so
+          // relative image URLs in the HTML resolve correctly.
+          scrapedImage = scrapedImage || extractImageUrl(html, url)
+          content = extractContentFromHtml(html)
+        } else {
+          return Response.json({ error: urlError }, { status: 400 })
+        }
+      }
     }
-    }
+  } else if (!url && !text && html) {
+    // No URL, no text, but the caller sent HTML — treat that as the source.
+    // Image extraction without a base URL keeps absolute URLs and leaves
+    // relative ones as-is (rare on og:image / JSON-LD anyway).
+    scrapedImage = extractImageUrl(html, '')
+    content = extractContentFromHtml(html)
   }
 
   if (!content || content.trim().length < 10) {
