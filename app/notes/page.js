@@ -6,30 +6,50 @@ import Link from 'next/link'
    TESTER NOTES — edit below, push, Vercel redeploys in ~1 min.
    ─────────────────────────────────────────────────────────── */
 
-const NOTES_UPDATED = 'April 18, 2026'
+const NOTES_UPDATED = 'April 29, 2026'
 
-const INTRO = `Thanks for helping test MyRecipe Companion. Here's what's
-new, what to try, and what to ignore for now. Use the thumbs-up /
-thumbs-down feedback in your head — or better, text Bill directly.`
+const INTRO = `Welcome — and thanks for trying MyRecipe Companion. This is a cozy AI
+cooking app for home cooks: save recipes, plan meals, shop for them, and
+learn from an AI chef who's always in the kitchen with you.
+
+First visit? Jump to "Start here" below — it'll get you oriented in five
+minutes. Been here before? "What's new" is current.
+
+Anything confusing, broken, or delightful — text me or email
+bd9356@gmail.com. Brutal honesty welcome.`
+
+const START_HERE = [
+  'Sign in with Gmail, Microsoft (Outlook/Hotmail/Live), or your email. No password — magic-link.',
+  'On iPhone, open the site in Safari, then Share → Add to Home Screen. It opens full-screen like a real app.',
+  'MyKitchen is the hub. Two halves: Cook (recipes / meal plans / shopping) and Learn Your Way (the AI cooking school).',
+  'Open Recipe Vault first. You\'ll see 5 starter recipes and 2 starter Chef Notes — they\'re examples to play with, not your saves. Edit, swap, or delete any of them.',
+  'Try one Chef Jennifer question in 🎓 Teach mode (e.g. "How do I know when oil is hot enough?"). She\'ll teach, then assign homework you can cook in 🍳 Practice with one tap.',
+]
 
 const WHATS_NEW = [
-  'Sign in with your email — no Google account needed. Type your email on the sign-in screen and click the link we send you.',
-  'Brand-new vaults start with 5 starter recipes so the app never feels empty. Swap, edit, or delete them any time.',
-  'Installable on iPhone — open the site in Safari, tap Share, then "Add to Home Screen".',
+  'New MyKitchen layout — two sections, eight tiles: Cook (Recipe Vault / Recipe Cards / Meal Plan / Shopping List) and Learn Your Way (Chef Jennifer / Chef TV / Your Library / My Playbook).',
+  'Chef Jennifer has two modes: 🎓 Teach (ask questions, get taught + homework) and 🍳 Practice (describe a meal, get a cook-it recipe).',
+  'Chef Portfolio — keepers from Chef Notes file into the Vault. Auto-sorted into 5 "How to..." groups (Prep / Cook / Season / Improve / Shop).',
+  'Your Library (Guides) — curated reference articles by topic: knife skills, techniques, cooking times, pantry, safety, equipment.',
+  'Recipe Vault opens in Grid view by default — index-card style. Tag chips, search, and import all live in the sticky header.',
+  'Sign in with Microsoft (Outlook/Hotmail/Live) — bypasses the Hotmail spam-folder dance.',
 ]
 
 const TRY_THIS = [
-  "Add a recipe of your own in Recipe Vault — paste from a website, type it in, or snap a photo.",
-  'Ask Chef Jennifer to build a dinner for tonight based on your mood and what protein you have.',
-  "Move 2–3 recipes into the Meal Plan's 'To Make' bucket and try the shopping list.",
-  'Try the ✨ Clean Up List button on the shopping list after adding a few recipes.',
-  'Open a recipe in Recipe Vault, tap ✨ AI, and try "Make This Recipe More…" — adjust it to be lighter, vegetarian, or heart-healthy.',
+  'Save a recipe from a website: Recipe Vault → 📥 Import → paste the URL → "Import & Clean with AI". Paste the page text on the Paste tab if a site blocks the fetcher.',
+  'Ask Chef Jennifer "How do I keep pasta from sticking?" in 🎓 Teach. When she suggests homework at the end, tap 🍳 Cook in Practice → save the recipe she generates.',
+  'Pin a Chef Jennifer answer you want to keep: Playbook → 📝 Chef Notes → expand → 💎 File to Portfolio. It lands in Recipe Vault → 💎 Portfolio.',
+  'Browse Chef TV — start on the 🎓 Teach tab and try the ⭐ Featured chip for a curated starter set. Switch to 🍳 Practice for recipe videos.',
+  'Move 2–3 Vault recipes into Meal Plan\'s ⭐ To Make bucket (drag the ⋮⋮ handle to reorder). Then open Shopping List and try ✨ Clean Up List.',
+  'Open a recipe in Recipe Vault, tap ✨ AI Kitchen Helpers → 🌿 Make more… → pick a few preferences → Transform. Save as a new recipe or replace.',
 ]
 
 const KNOWN_QUIRKS = [
-  'First magic-link email to a Hotmail/Outlook address may land in Junk — mark "Not Junk" once and future ones come through.',
-  'No offline mode yet. If you lose signal mid-page the app pauses.',
-  'Service worker / push notifications are still to come.',
+  'Magic-link email may land in Junk on first send to Hotmail/Outlook — mark "Not Junk" once or use Sign in with Microsoft instead.',
+  'Outlook\'s mobile app opens links in its own webview, which doesn\'t share storage with Safari. The session sticks inside Outlook. Use Sign in with Microsoft to avoid this.',
+  'Some Learn Your Way tile descriptions truncate on a small phone. The full version is on the page itself.',
+  'No offline mode yet — losing signal mid-page pauses the app.',
+  'Push notifications and service worker are still to come.',
 ]
 
 const FEEDBACK = {
@@ -76,6 +96,7 @@ export default function NotesPage() {
           </p>
         </div>
 
+        <Section title="Start here" items={START_HERE} />
         <Section title="What's new" items={WHATS_NEW} />
         <Section title="Try this" items={TRY_THIS} />
         <Section title="Known quirks" items={KNOWN_QUIRKS} />
