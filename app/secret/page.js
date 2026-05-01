@@ -682,16 +682,6 @@ export default function MyRecipeVaultPage() {
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
-  // pendingHtml — when the clipboard auto-jump routes a URL+HTML payload to
-  // the URL tab, we stash the HTML half here so handleImport() can pass it
-  // through as the B-site fallback. Cleared after each handleImport run.
-  const [pendingHtml, setPendingHtml] = useState('')
-  // Clipboard auto-detect — when the user lands on the Import view, peek
-  // at the system clipboard once and (only if it looks like a URL) offer
-  // a one-tap "Use it" prompt above the URL field. Stored as the detected
-  // string so it can be displayed (truncated) and applied on tap. Silent
-  // when the clipboard is empty, blocked, or holds non-URL text.
-  const [clipboardSuggestion, setClipboardSuggestion] = useState('')
   // Import view active tab. The page used to stack three full cards
   // (URL / Paste / JSON) which made it long and busy on first open;
   // they're alternatives — you use one per import — so a tab strip
@@ -752,37 +742,14 @@ export default function MyRecipeVaultPage() {
     })
   }, [])
 
-  // Clipboard auto-detect: on entry to the Import view, try to read the
-  // system clipboard. If it looks like an http(s) URL and the URL field
-  // is empty, expose it as a one-tap suggestion. readText() requires
-  // HTTPS + a recent user gesture (the tap on "📥 Import" satisfies it
-  // on most browsers); when blocked it rejects silently and we just don't
-  // show the prompt. Cleared whenever the user leaves Import or fills
-  // the URL field manually.
-  useEffect(() => {
-    if (view !== 'import' || importTab !== 'url') {
-      setClipboardSuggestion('')
-      return
-    }
-    if (importUrl.trim()) return
-    if (typeof navigator === 'undefined' || !navigator.clipboard?.readText) return
-    let cancelled = false
-    // Run readText() synchronously in the effect — on iOS Safari the
-    // gesture window from the tap-into-Import is consumed within the
-    // same animation frame, so any setTimeout (even 0ms) moves the
-    // call OUT of the gesture context and the promise rejects.
-    navigator.clipboard.readText().then(text => {
-      if (cancelled) return
-      const trimmed = (text || '').trim()
-      // Conservative URL match: http(s) only, no whitespace, reasonable
-      // length cap so a clipboard full of pasted text never gets offered
-      // as a "URL".
-      if (/^https?:\/\/\S+$/i.test(trimmed) && trimmed.length < 2000) {
-        setClipboardSuggestion(trimmed)
-      }
-    }).catch(() => { /* permission denied / not supported — silent */ })
-    return () => { cancelled = true }
-  }, [view, importTab, importUrl])
+  // (Clipboard auto-detect on Import view retired April 2026.) Used to
+  // peek at the clipboard when entering the URL tab and surface a
+  // "📋 URL on your clipboard — Use it" prompt. Removed because the
+  // app-side clipboard read triggered iOS's "Paste from <App>?" prompt
+  // every time the user opened Import, even when the clipboard was
+  // unrelated. Simpler now: user pastes URL themselves into the field,
+  // iOS shows the paste suggestion above the keyboard at the right
+  // moment (when they're focused on the field, not on page entry).
 
   // Detail-view paste listener — when looking at a recipe, Cmd/Ctrl+V
   // lifts an image off the clipboard straight into the recipe. Skips
@@ -1094,118 +1061,33 @@ export default function MyRecipeVaultPage() {
         handleImport(smartUrl, smartHtml)
       }, 0)
     }
-    // Clipboard auto-jump — when the user opens the Vault and the system
-    // clipboard already holds a recipe-shaped URL (typical flow: copy from
-    // Safari → switch to MyRecipe), skip the list view entirely and land
-    // them on the Import → URL tab with the URL pre-filled. Collapses the
-    // copy-paste flow from 4 taps to 2: before was [open] → tap 📥 Import
-    // → tap "Use it" → tap "Import & Clean"; after is [open] → tap
-    // "Import & Clean".
-    //
-    // Gated so explicit deep-links always win — if ?recipe= or ?import=
-    // is on the URL, the user asked for something specific and we don't
-    // override. Also gated on a generous URL pattern + length cap so we
-    // don't bounce on a stray non-URL string sitting on the clipboard.
-    //
-    // The actual import is NOT auto-fired (only pre-filled) — the user
-    // still confirms by tapping the orange button. That keeps the page
-    // honest: a stale URL from yesterday's copy doesn't silently re-run.
-    //
-    // readText() requires browser permission. Safari/iOS may block it
-    // when the page wasn't opened by a recent user gesture; in that case
-    // the existing in-Import clipboard prompt still catches it on the
-    // next tap, so the regression-floor is "current behavior".
-    if (!recipeParam && !importParam && smartImport !== '1' && typeof navigator !== 'undefined' && navigator.clipboard) {
-      readClipboardSmart().then((trimmed) => {
-        if (!trimmed) return
-        // Branch A+ — URL+HTML payload (iOS Shortcut clipboard format:
-        // URL on line 1, blank line, HTML below) → URL tab with URL
-        // pre-filled, HTML stashed for the B-site fallback. This must
-        // come BEFORE Branch B because the HTML half almost always
-        // contains recipe vocabulary, which would otherwise route to
-        // Paste tab and lose the URL → og:image extraction path.
-        const urlHtmlMatch = trimmed.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
-        if (urlHtmlMatch) {
-          const urlOnly = urlHtmlMatch[1].trim()
-          if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(urlOnly)) return
-          setView('import')
-          setImportTab('url')
-          setImportUrl(urlOnly)
-          setPendingHtml(urlHtmlMatch[2].trim())
-          return
-        }
-        // Branch A — short string that looks like a URL → URL tab.
-        // Length cap of 2000 keeps this branch URL-shaped only; longer
-        // pasted blobs (which are almost always page-text dumps) fall
-        // through to Branch B.
-        if (trimmed.length <= 2000 && /^https?:\/\/\S+$/i.test(trimmed)) {
-          // Skip URLs from our own domain — copying a Vault link and
-          // landing back on the Vault shouldn't try to import itself.
-          if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
-          setView('import')
-          setImportTab('url')
-          setImportUrl(trimmed)
-          return
-        }
-        // (Branch B retired April 2026.) The "long recipe-shaped text →
-        // Paste tab" auto-route was too aggressive: Bill's iOS Shortcut
-        // payload would land in Paste tab pre-filled, then iOS's paste-
-        // tray suggestion would overwrite the URL line with the rich-
-        // text body, and the import would run text-only with no image.
-        // URL is now the only path the auto-jump routes to. If clipboard
-        // has just text (no URL), the user stays on the list view and
-        // taps 📥 Import → Paste manually. Paste tab is the explicit
-        // fallback for B-sites, not a clever default.
-      }).catch(() => { /* permission denied / no clipboard text — fall through */ })
-    }
+    // (Clipboard auto-jump retired April 2026.) The on-load auto-jump
+    // used to read the system clipboard, classify it (URL / URL+HTML /
+    // recipe text), and route the user into Import pre-filled. Removed
+    // because (a) it triggered iOS's "Paste from <App>?" prompt on every
+    // page load — extra friction, especially when the clipboard wasn't
+    // even a recipe — and (b) the heuristics misfired on Bill's iOS
+    // Shortcut payload, routing to Paste tab and losing the image path.
+    // Simple flow now: user taps 📥 Import → URL tab opens empty → user
+    // pastes URL → tap Import. If URL fails (B-site), the existing
+    // auto-fallback in handleImport switches them to Paste tab with the
+    // textarea focused. No more app-side clipboard reading on load.
   }
 
-  // ── openImportFromClipboard() — gesture-triggered clipboard route ──
-  // The on-load auto-jump in loadRecipes() works on desktop browsers
-  // that have already granted clipboard permission, but iOS Safari
-  // refuses navigator.clipboard.read() unless it fires from a recent
-  // user gesture. This wrapper is wired to the 📥 Import button(s) so
-  // tapping Import IS the gesture — iOS Safari will allow the read,
-  // show its native "Paste from <App>?" prompt, and once the user
-  // confirms, we route them to the right tab AND pre-fill. We do the
-  // clipboard read BEFORE setView() to keep the read as close as
-  // possible to the user's tap (some iOS versions are strict about
-  // this). If clipboard is empty / denied / unsupported, we still
-  // open Import on the URL tab so the button never feels broken.
-  async function openImportFromClipboard() {
-    let trimmed = ''
-    try {
-      trimmed = await readClipboardSmart()
-    } catch { /* permission denied / unsupported */ }
+  // ── openImportFromClipboard() — opens Import view, no clipboard read ──
+  // The 📥 Import button(s) call this. It used to read the clipboard
+  // and route the user to URL or Paste tab pre-filled, but that
+  // (a) triggered the iOS "Paste from <App>?" prompt on every tap and
+  // (b) misclassified Bill's iOS Shortcut payload, routing to Paste
+  // tab and losing the image. Stripped down to the minimum: open the
+  // Import view, default to URL tab, leave the fields empty. User
+  // pastes URL themselves — iOS gives them the same Paste prompt at
+  // the URL field (where it belongs), and the URL fetch handles the
+  // image. If URL fails, handleImport's existing auto-fallback flips
+  // them to Paste tab with the textarea focused.
+  function openImportFromClipboard() {
     setView('import')
-    if (!trimmed) return
-    // Branch A+ — URL+HTML payload (Shortcut clipboard) → URL tab with
-    // URL pre-filled, HTML stashed for B-site fallback. Must come before
-    // Branch A so the URL on line 1 wins over the HTML body matching
-    // recipe vocab. See loadRecipes for the full rationale.
-    const urlHtmlMatch = trimmed.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
-    if (urlHtmlMatch) {
-      const urlOnly = urlHtmlMatch[1].trim()
-      if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(urlOnly)) return
-      setImportTab('url')
-      setImportUrl(urlOnly)
-      setPendingHtml(urlHtmlMatch[2].trim())
-      return
-    }
-    // Branch A — short URL on clipboard → URL tab
-    if (trimmed.length <= 2000 && /^https?:\/\/\S+$/i.test(trimmed)) {
-      if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
-      setImportTab('url')
-      setImportUrl(trimmed)
-      return
-    }
-    // (Branch B + fallback retired April 2026.) Long-text auto-route
-    // to Paste tab caused the iOS Shortcut → Paste-tray-overwrite →
-    // text-only-no-image regression. URL is the only path the gesture-
-    // triggered open routes to. If the clipboard isn't a URL or
-    // URL+HTML, we still open Import (so the button never feels broken)
-    // but stay on the URL tab with empty fields — user picks Paste tab
-    // explicitly when they want to paste page contents.
+    setImportTab('url')
   }
 
   // ── pasteFromClipboardToTextarea() — manual fallback button ──
@@ -1569,11 +1451,7 @@ export default function MyRecipeVaultPage() {
   async function handleImport(urlOverride, htmlOverride) {
     let urlToUse = (typeof urlOverride === 'string' ? urlOverride : importUrl).trim()
     let textToUse = importText.trim()
-    // Fall back to pendingHtml (set by the auto-jump's URL+HTML branch)
-    // when the caller didn't supply an explicit htmlOverride. Cleared
-    // after this run so a stale stash doesn't leak into the next import.
-    let htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : (pendingHtml || '')).trim()
-    if (pendingHtml) setPendingHtml('')
+    let htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : '').trim()
     // Smart paste: if the Paste textarea holds a "<URL>\n\n<HTML>" payload
     // (typical iOS Share-Sheet Shortcut clipboard contents, dropped in via
     // long-press → Paste), split it so the server sees both the URL (for
@@ -2417,46 +2295,7 @@ export default function MyRecipeVaultPage() {
           {importTab === 'url' && (
             <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
               <label className="text-base font-bold text-gray-800 block">🔗 Import by URL</label>
-              <p className="text-sm text-gray-500">Copy a recipe link and open the Import screen — the app will detect it automatically and ask if you want to import it. One tap and you&apos;re in. If the link can&apos;t be read, just switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold text-gray-700 hover:text-gray-900">📋 Paste</button>.</p>
-
-              {/* Clipboard auto-detect prompt — surfaces a URL the user
-                  already copied so they don't have to paste manually. Only
-                  renders when readText() succeeded with a valid http(s) URL
-                  AND the input is still empty. "Use it" fills the field
-                  (and the prompt clears via the field-non-empty guard);
-                  ✕ dismisses without filling. */}
-              {clipboardSuggestion && (
-                <div className="bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 flex items-center gap-2">
-                  <span className="text-base shrink-0">📋</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-orange-900 font-semibold">URL on your clipboard</p>
-                    <p className="text-xs text-orange-800 truncate">{clipboardSuggestion}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = clipboardSuggestion
-                      setImportUrl(url)
-                      setClipboardSuggestion('')
-                      // Auto-fire the import — Bill expects "tap Use
-                      // it → recipe imports", not "tap Use it → tap
-                      // Import & Clean".
-                      handleImport(url)
-                    }}
-                    className="shrink-0 text-xs font-semibold bg-orange-600 text-white rounded-lg px-3 py-1.5 hover:bg-orange-700 transition-colors"
-                  >
-                    Use it
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setClipboardSuggestion('')}
-                    aria-label="Dismiss"
-                    className="shrink-0 text-orange-500 hover:text-orange-800 text-base leading-none px-1"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
+              <p className="text-sm text-gray-500">Paste a recipe link below and tap Import. If the site blocks our reader, switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold text-gray-700 hover:text-gray-900">📋 Paste</button> and send the page text instead.</p>
 
               <div className="flex gap-2">
                 <input placeholder="https://www.example.com/recipe..." value={importUrl}
@@ -2493,7 +2332,6 @@ export default function MyRecipeVaultPage() {
                         return
                       }
                       setImportUrl(trimmed)
-                      setClipboardSuggestion('')
                       // Auto-fire the import — Bill expects "tap
                       // Paste → recipe imports", not "tap Paste → tap
                       // Import & Clean".
