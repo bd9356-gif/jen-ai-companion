@@ -1147,23 +1147,15 @@ export default function MyRecipeVaultPage() {
           setImportUrl(trimmed)
           return
         }
-        // Branch B — long block of text that smells like a recipe → Paste
-        // tab. Designed for the Shortcut path Bill uses: an iOS Shortcut
-        // grabs the whole page text from a recipe site (works on sites
-        // that block our scraper because it runs in his Safari context),
-        // copies it to clipboard, and he opens MyRecipe. We bounce him
-        // straight into Paste with the text pre-filled — no manual
-        // navigate-and-paste step. Heuristic: long enough to be a real
-        // page (≥ 500 chars) AND contains classic recipe vocabulary.
-        // The vocab gate keeps random long clipboard blobs (an email,
-        // a chat history, a story) from yanking the user into Import
-        // unsolicited. False negatives are recoverable — user can still
-        // tap 📥 Import → Paste manually like before.
-        if (trimmed.length >= 500 && /\b(ingredient|tablespoon|teaspoon|tbsp|tsp|preheat|cup of|cups of)\b/i.test(trimmed)) {
-          setView('import')
-          setImportTab('paste')
-          setImportText(trimmed)
-        }
+        // (Branch B retired April 2026.) The "long recipe-shaped text →
+        // Paste tab" auto-route was too aggressive: Bill's iOS Shortcut
+        // payload would land in Paste tab pre-filled, then iOS's paste-
+        // tray suggestion would overwrite the URL line with the rich-
+        // text body, and the import would run text-only with no image.
+        // URL is now the only path the auto-jump routes to. If clipboard
+        // has just text (no URL), the user stays on the list view and
+        // taps 📥 Import → Paste manually. Paste tab is the explicit
+        // fallback for B-sites, not a clever default.
       }).catch(() => { /* permission denied / no clipboard text — fall through */ })
     }
   }
@@ -1207,19 +1199,13 @@ export default function MyRecipeVaultPage() {
       setImportUrl(trimmed)
       return
     }
-    // Branch B — long recipe-shaped text → Paste tab
-    if (trimmed.length >= 500 && /\b(ingredient|tablespoon|teaspoon|tbsp|tsp|preheat|cup of|cups of)\b/i.test(trimmed)) {
-      setImportTab('paste')
-      setImportText(trimmed)
-      return
-    }
-    // Fallback — long blob without recipe vocab still lands on Paste
-    // (better than dumping into URL where it'll fail) so Bill's
-    // Shortcut output isn't gated on our regex matching every site.
-    if (trimmed.length >= 200) {
-      setImportTab('paste')
-      setImportText(trimmed)
-    }
+    // (Branch B + fallback retired April 2026.) Long-text auto-route
+    // to Paste tab caused the iOS Shortcut → Paste-tray-overwrite →
+    // text-only-no-image regression. URL is the only path the gesture-
+    // triggered open routes to. If the clipboard isn't a URL or
+    // URL+HTML, we still open Import (so the button never feels broken)
+    // but stay on the URL tab with empty fields — user picks Paste tab
+    // explicitly when they want to paste page contents.
   }
 
   // ── pasteFromClipboardToTextarea() — manual fallback button ──
