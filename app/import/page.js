@@ -25,8 +25,10 @@ const supabase = createClient(
 //   - If signed in, redirects to `/secret?import=<encoded>` which the
 //     Vault page already wires up to the existing import pipeline.
 //   - If not signed in, redirects to `/login?next=/import?url=<encoded>`.
-//     /login doesn't honor `next` yet, but landing on the login page
-//     with the URL preserved in history is better than dropping it.
+//     /login threads `next` through OAuth via the callback URL; after
+//     sign-in /auth/confirm sends the user back here, /import re-runs,
+//     finds the now-valid session, and forwards to /secret?import=...
+//     where the import fires automatically.
 //   - If no URL is present, shows a tiny help card explaining what this
 //     page is for and a link back to the Vault. Never a dead-end.
 export default function ImportEntryPage() {

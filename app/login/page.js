@@ -7,6 +7,21 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
+// Read `next` from the URL and validate it's a same-origin relative
+// path — anything else is dropped. Lets callers preserve the URL the
+// user was originally trying to reach (e.g. /secret?import=…) across
+// the OAuth round-trip; without this every sign-in dumps them on
+// /kitchen and the import URL is lost. Returns a query-string
+// fragment ready to append to a callback URL, or '' if no next.
+function nextSuffix() {
+  if (typeof window === 'undefined') return ''
+  try {
+    const raw = new URLSearchParams(window.location.search).get('next')
+    if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return ''
+    return `?next=${encodeURIComponent(raw)}`
+  } catch { return '' }
+}
+
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
@@ -19,7 +34,7 @@ export default function LoginPage() {
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` }
+      options: { redirectTo: `${window.location.origin}/auth/callback${nextSuffix()}` }
     })
     if (error) { setError(error.message); setLoading(false) }
   }
@@ -35,7 +50,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'azure',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback${nextSuffix()}`,
         scopes: 'email openid profile',
       }
     })
@@ -51,7 +66,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmed,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback${nextSuffix()}`,
       },
     })
     setSending(false)

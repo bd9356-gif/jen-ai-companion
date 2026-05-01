@@ -731,7 +731,16 @@ export default function MyRecipeVaultPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { window.location.href = '/login'; return }
+      if (!session) {
+        // Preserve the URL the user was trying to reach (e.g.
+        // /secret?import=… from the iOS Shortcut deep-link or
+        // /secret?smart_import=1) so /login can return them here
+        // after sign-in. Without this, the auth round-trip lands
+        // them on /kitchen and the import URL is lost.
+        const next = window.location.pathname + window.location.search
+        window.location.href = `/login?next=${encodeURIComponent(next)}`
+        return
+      }
       setUser(session.user)
       loadRecipes(session.user.id)
       loadNotes(session.user.id)
