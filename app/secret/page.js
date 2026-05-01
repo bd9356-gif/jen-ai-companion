@@ -682,6 +682,10 @@ export default function MyRecipeVaultPage() {
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
+  // pendingHtml — when the clipboard auto-jump routes a URL+HTML payload to
+  // the URL tab, we stash the HTML half here so handleImport() can pass it
+  // through as the B-site fallback. Cleared after each handleImport run.
+  const [pendingHtml, setPendingHtml] = useState('')
   // Clipboard auto-detect — when the user lands on the Import view, peek
   // at the system clipboard once and (only if it looks like a URL) offer
   // a one-tap "Use it" prompt above the URL field. Stored as the detected
@@ -1114,6 +1118,22 @@ export default function MyRecipeVaultPage() {
     if (!recipeParam && !importParam && smartImport !== '1' && typeof navigator !== 'undefined' && navigator.clipboard) {
       readClipboardSmart().then((trimmed) => {
         if (!trimmed) return
+        // Branch A+ — URL+HTML payload (iOS Shortcut clipboard format:
+        // URL on line 1, blank line, HTML below) → URL tab with URL
+        // pre-filled, HTML stashed for the B-site fallback. This must
+        // come BEFORE Branch B because the HTML half almost always
+        // contains recipe vocabulary, which would otherwise route to
+        // Paste tab and lose the URL → og:image extraction path.
+        const urlHtmlMatch = trimmed.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
+        if (urlHtmlMatch) {
+          const urlOnly = urlHtmlMatch[1].trim()
+          if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(urlOnly)) return
+          setView('import')
+          setImportTab('url')
+          setImportUrl(urlOnly)
+          setPendingHtml(urlHtmlMatch[2].trim())
+          return
+        }
         // Branch A — short string that looks like a URL → URL tab.
         // Length cap of 2000 keeps this branch URL-shaped only; longer
         // pasted blobs (which are almost always page-text dumps) fall
@@ -1167,6 +1187,19 @@ export default function MyRecipeVaultPage() {
     } catch { /* permission denied / unsupported */ }
     setView('import')
     if (!trimmed) return
+    // Branch A+ — URL+HTML payload (Shortcut clipboard) → URL tab with
+    // URL pre-filled, HTML stashed for B-site fallback. Must come before
+    // Branch A so the URL on line 1 wins over the HTML body matching
+    // recipe vocab. See loadRecipes for the full rationale.
+    const urlHtmlMatch = trimmed.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
+    if (urlHtmlMatch) {
+      const urlOnly = urlHtmlMatch[1].trim()
+      if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(urlOnly)) return
+      setImportTab('url')
+      setImportUrl(urlOnly)
+      setPendingHtml(urlHtmlMatch[2].trim())
+      return
+    }
     // Branch A — short URL on clipboard → URL tab
     if (trimmed.length <= 2000 && /^https?:\/\/\S+$/i.test(trimmed)) {
       if (/recipe\.mycompanionapps\.com|jen-ai-companion\.vercel\.app/i.test(trimmed)) return
@@ -1550,7 +1583,11 @@ export default function MyRecipeVaultPage() {
   async function handleImport(urlOverride, htmlOverride) {
     let urlToUse = (typeof urlOverride === 'string' ? urlOverride : importUrl).trim()
     let textToUse = importText.trim()
-    let htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : '').trim()
+    // Fall back to pendingHtml (set by the auto-jump's URL+HTML branch)
+    // when the caller didn't supply an explicit htmlOverride. Cleared
+    // after this run so a stale stash doesn't leak into the next import.
+    let htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : (pendingHtml || '')).trim()
+    if (pendingHtml) setPendingHtml('')
     // Smart paste: if the Paste textarea holds a "<URL>\n\n<HTML>" payload
     // (typical iOS Share-Sheet Shortcut clipboard contents, dropped in via
     // long-press → Paste), split it so the server sees both the URL (for
