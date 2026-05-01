@@ -1548,9 +1548,25 @@ export default function MyRecipeVaultPage() {
   // decides which to use. Today only the smart_import handler in
   // loadRecipes passes this; all other call sites omit it.
   async function handleImport(urlOverride, htmlOverride) {
-    const urlToUse = (typeof urlOverride === 'string' ? urlOverride : importUrl).trim()
-    const textToUse = importText.trim()
-    const htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : '').trim()
+    let urlToUse = (typeof urlOverride === 'string' ? urlOverride : importUrl).trim()
+    let textToUse = importText.trim()
+    let htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : '').trim()
+    // Smart paste: if the Paste textarea holds a "<URL>\n\n<HTML>" payload
+    // (typical iOS Share-Sheet Shortcut clipboard contents, dropped in via
+    // long-press → Paste), split it so the server sees both the URL (for
+    // canonical og:image + content extraction) and the HTML (as a B-site
+    // fallback when the server-side fetch is blocked). Without this branch
+    // the whole blob gets sent as `text` — which works for content but
+    // loses the image. Only fires when the caller didn't already supply
+    // url/html overrides, so smart_import + URL-tab paths are unaffected.
+    if (!urlToUse && !htmlToUse && textToUse) {
+      const sepMatch = textToUse.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
+      if (sepMatch) {
+        urlToUse = sepMatch[1].trim()
+        htmlToUse = sepMatch[2].trim()
+        textToUse = ''
+      }
+    }
     if (!textToUse && !urlToUse && !htmlToUse) return
     if (urlOverride && urlToUse) setImportUrl(urlToUse)
     setImporting(true)
