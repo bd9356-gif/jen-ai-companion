@@ -2622,7 +2622,12 @@ export default function MyRecipeVaultPage() {
     <div className="min-h-screen bg-white">
       {toastEl}
       {pasteTargetEl}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      {/* Sticky list-view header. z-20 (not z-10) so the absolute-positioned
+          ❤️ heart overlays on each Grid tile (also z-10 within their own
+          stacking context) don't bleed through the header as the page
+          scrolls. The other view headers (detail, import) don't have
+          tile-level z-10 elements underneath them, so their z-10 is fine. */}
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
