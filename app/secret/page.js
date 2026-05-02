@@ -682,13 +682,17 @@ export default function MyRecipeVaultPage() {
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
-  // Import view active tab. The page used to stack three full cards
-  // (URL / Paste / JSON) which made it long and busy on first open;
-  // they're alternatives — you use one per import — so a tab strip
-  // collapses the page to the single chosen path. Default 'url' is
-  // the most common case and lets the clipboard prompt surface
-  // immediately. Values: 'url' | 'paste' | 'json'.
+  // Import view active tab. URL is default (most common). Paste is the
+  // "site blocked the fetcher" fallback. Add is manual entry + the
+  // post-import preview surface (where parsed data lands for review).
+  // JSON is power-user import/export. Values: 'url' | 'paste' | 'add' | 'json'.
   const [importTab, setImportTab] = useState('url')
+  // Paste tab — three collapsible "how to get content" instruction
+  // groups (Paste Text / Print Capture / Share Shortcut). All three end
+  // with pasting into the same textarea below; they're just different
+  // recipes for HOW you got the content. Tracks which option is open.
+  // null = none expanded; 'text' | 'print' | 'shortcut' = that one open.
+  const [pasteOption, setPasteOption] = useState(null)
   // AI Kitchen Helpers tab — matches the Import Recipes tab pattern.
   // The four helper cards used to stack on the same scroll which made
   // the page busy on first open. Since they're alternatives (only one
@@ -1516,7 +1520,7 @@ export default function MyRecipeVaultPage() {
       setForm({ title: data.title || '', description: data.description || '', ingredients: ingredientsText,
         instructions: data.instructions || '', category: data.category || '', tags: data.tags || [],
         family_notes: data.family_notes || '', photo_url: data.image || '' })
-      setImportText(''); setImportUrl(''); setView('add')
+      setImportText(''); setImportUrl(''); setImportTab('add')
     } catch (err) { console.error(err) }
     setImporting(false)
   }
@@ -2264,22 +2268,25 @@ export default function MyRecipeVaultPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">📥 Import Recipe</h1>
+            <h1 className="text-lg font-bold text-gray-900">📥 Import Tools</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           <p className="text-sm text-gray-600">Pick a way to bring a recipe in. AI will extract and clean it up.</p>
 
-          {/* Tab strip — three alternatives, one at a time. The page used
-              to stack all three cards which was long and busy on first
-              open. URL is the default and most common; Paste is the
-              "site blocked the fetch" fallback; JSON is for power-user
-              imports/exports. Active tab fills with orange; inactive tabs
-              are gray. Equal-width grid so labels line up cleanly. */}
-          <div className="grid grid-cols-3 gap-1.5 bg-gray-100 rounded-2xl p-1">
+          {/* Tab strip — four alternatives, one at a time. URL is the
+              default and most common; Paste is the "site blocked the
+              fetcher" fallback (with three sub-instructions for HOW to
+              get content into the textarea); ✏️ Add is manual entry +
+              the post-import preview surface; JSON is power-user
+              imports/exports. Active tab fills with orange; inactive
+              tabs are gray. Equal-width grid keeps the strip tight
+              even at 4 columns on phone. */}
+          <div className="grid grid-cols-4 gap-1.5 bg-gray-100 rounded-2xl p-1">
             {[
               { key: 'url', label: '🔗 URL' },
               { key: 'paste', label: '📋 Paste' },
+              { key: 'add', label: '✏️ Add' },
               { key: 'json', label: '📄 JSON' },
             ].map(t => {
               const active = importTab === t.key
@@ -2360,19 +2367,52 @@ export default function MyRecipeVaultPage() {
             </div>
           )}
 
-          {/* Paste tab */}
+          {/* Paste tab — three collapsible "how to get content" groups
+              above one shared textarea. Each group is just instructions
+              for how to fill the textarea below; they all end at the
+              same paste step. Tap a header to expand/collapse its
+              instructions. Multiple closed by default so the page is
+              short on first open. */}
           {importTab === 'paste' && (
-            <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
+            <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-3">
               <label className="text-base font-bold text-gray-800 block">📋 Paste Recipe Text</label>
-              <div className="text-sm text-gray-500 space-y-2">
-                <p>Copy the recipe from the website — Select All works fine because AI filters out the noise — then paste it here. It works on every site, even the ones that try to block copying.</p>
-                <p>Or use the site&apos;s Print Recipe option. Save it, copy everything when you&apos;re ready, paste it in, and let AI handle the rest. You can add the image anytime with a simple copy-and-paste.</p>
-              </div>
-              {/* One-tap paste from clipboard. Reliable fallback: tapping
-                  this button is its own user gesture so iOS Safari will
-                  show its native "Paste from..." prompt and let us read
-                  the clipboard even if the auto-jump on the Import
-                  button didn't fire. */}
+
+              {/* Three collapsible instruction groups — Option 1, 2, 3.
+                  Each renders as a tappable header row that expands to
+                  show its instructions below. Visual: gray border + soft
+                  bg when collapsed, orange border + soft orange bg when
+                  open. Chevron flips ▸/▾ to telegraph state. */}
+              {[
+                { key: 'text', emoji: '📝', title: 'Option 1 — Paste Text', body: 'Copy the recipe from the site (Select All works great) and paste it here.' },
+                { key: 'print', emoji: '🖨️', title: 'Option 2 — Print Capture', body: 'Open the site’s Print Capture, save it, copy all, and paste it here. AI cleans it automatically.' },
+                { key: 'shortcut', emoji: '📲', title: 'Option 3 — Share Shortcut', body: 'Tap Share → choose the app’s Share Shortcut to send the recipe straight in — no copying needed, just click paste.' },
+              ].map(opt => {
+                const open = pasteOption === opt.key
+                return (
+                  <div key={opt.key} className={`rounded-xl border-2 ${open ? 'border-orange-300 bg-orange-50' : 'border-gray-200 bg-gray-50'}`}>
+                    <button
+                      type="button"
+                      onClick={() => setPasteOption(open ? null : opt.key)}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left"
+                    >
+                      <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                        <span className="text-base">{opt.emoji}</span>
+                        {opt.title}
+                      </span>
+                      <span className="text-xs text-gray-500">{open ? '▾' : '▸'}</span>
+                    </button>
+                    {open && (
+                      <div className="px-3 pb-3 -mt-1">
+                        <p className="text-sm text-gray-700 leading-snug">{opt.body}</p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* One-tap paste from clipboard. User-gesture clipboard read,
+                  so iOS will show its native "Paste from..." prompt
+                  and fill the textarea below. */}
               <button
                 type="button"
                 onClick={pasteFromClipboardToTextarea}
@@ -2387,9 +2427,10 @@ export default function MyRecipeVaultPage() {
             </div>
           )}
 
-          {/* Inline error banner — replaces the old alert(). Shown on
-              URL/Paste tabs (where handleImport is the action). */}
-          {importError && importTab !== 'json' && (
+          {/* Inline error banner — replaces the old alert(). Only on
+              URL/Paste tabs (where handleImport is the action). Add and
+              JSON each have their own flow with their own error paths. */}
+          {importError && (importTab === 'url' || importTab === 'paste') && (
             <div className="border-2 border-red-200 bg-red-50 rounded-2xl p-4 space-y-2">
               <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
               <p className="text-sm text-red-700">{importError}</p>
@@ -2399,13 +2440,119 @@ export default function MyRecipeVaultPage() {
             </div>
           )}
 
-          {/* Submit button — only on URL/Paste tabs (JSON has its own). */}
-          {importTab !== 'json' && (
+          {/* Submit button — only on URL/Paste tabs. Add tab has its
+              own Save button inline; JSON has a separate file picker. */}
+          {(importTab === 'url' || importTab === 'paste') && (
             <button onClick={handleImport} disabled={importing || (!importText.trim() && !importUrl.trim())}
               style={{ fontSize: '16px' }}
               className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
               {importing ? '🤖 Extracting recipe...' : '📥 Import & Clean with AI'}
             </button>
+          )}
+
+          {/* Add tab — manual recipe entry. Form fields lifted from the
+              old standalone view='add' page so users can add a recipe
+              directly from Import Tools (the + Add button in the Vault
+              header was retired April 2026). Same form is also used as
+              the post-import preview surface — after URL/Paste/JSON
+              imports succeed, importTab flips to 'add' with the form
+              pre-filled for the user to review/edit/save. */}
+          {importTab === 'add' && (
+            <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-7 pb-4">
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">📷 Photo</label>
+                <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}>
+                  {form.photo_url ? (
+                    <img src={form.photo_url} alt="Preview" className="h-32 object-cover rounded-xl" />
+                  ) : (
+                    <><span className="text-3xl mb-2">📷</span>
+                    <p className="text-base text-orange-600 font-semibold">Browse & Upload Photo</p>
+                    <p className="text-sm text-gray-500">JPG, PNG, HEIC supported</p></>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*,.heic" className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0]; if (!file) return
+                      setSelectedPhoto(file)
+                      setForm(f => ({ ...f, photo_url: URL.createObjectURL(file) }))
+                    }} />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">Recipe Title *</label>
+                <input placeholder="e.g. Grandma's Chicken Soup" value={form.title}
+                  onChange={e => setForm(f => ({...f, title: e.target.value}))}
+                  style={{ fontSize: '16px' }}
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
+              </div>
+
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">Description</label>
+                <p className="text-sm text-gray-500 mb-2">One or two sentences about the dish.</p>
+                <textarea placeholder="A short description of this recipe" value={form.description}
+                  onChange={e => setForm(f => ({...f, description: e.target.value}))}
+                  rows={3}
+                  style={{ fontSize: '16px' }}
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
+              </div>
+
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">Category</label>
+                <input placeholder="e.g. Main Dish, Dessert, Side" value={form.category}
+                  onChange={e => setForm(f => ({...f, category: e.target.value}))}
+                  style={{ fontSize: '16px' }}
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
+              </div>
+
+              <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} />
+
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">Ingredients</label>
+                <p className="text-sm text-gray-500 mb-2">
+                  One per line. Format: <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">2 cups - flour</span> — quantity first, then a dash, then the name.
+                </p>
+                <textarea placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
+                  value={form.ingredients} onChange={e => setForm(f => ({...f, ingredients: e.target.value}))}
+                  rows={14}
+                  style={{ fontSize: '16px' }}
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
+              </div>
+
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">Instructions</label>
+                <p className="text-sm text-gray-500 mb-2">One step per line — a new line per numbered instruction.</p>
+                <textarea placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Combine wet and dry"
+                  value={form.instructions} onChange={e => setForm(f => ({...f, instructions: e.target.value}))}
+                  rows={16}
+                  style={{ fontSize: '16px' }}
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
+              </div>
+
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">Family Notes</label>
+                <p className="text-sm text-gray-500 mb-2">The story, tips, source attribution — anything you want to remember.</p>
+                <textarea placeholder="The story behind this recipe, tips, memories..."
+                  value={form.family_notes} onChange={e => setForm(f => ({...f, family_notes: e.target.value}))}
+                  rows={8}
+                  style={{ fontSize: '16px' }}
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
+              </div>
+
+              {/* Save / Cancel — saves to Vault and exits Import Tools. */}
+              <div className="flex gap-3">
+                <button onClick={() => setView('list')}
+                  style={{ fontSize: '16px' }}
+                  className="px-5 py-4 border-2 border-gray-200 text-gray-600 rounded-2xl font-semibold hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+                <button onClick={saveRecipe} disabled={!form.title.trim() || uploadingPhoto}
+                  style={{ fontSize: '16px' }}
+                  className="flex-1 py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
+                  {uploadingPhoto ? '📷 Uploading photo...' : '💾 Save Recipe'}
+                </button>
+              </div>
+            </div>
           )}
 
           {/* JSON tab */}
@@ -2463,119 +2610,12 @@ export default function MyRecipeVaultPage() {
     )
   }
 
-  // ── ADD VIEW ──
-  if (view === 'add') {
-    return (
-      <div className="min-h-screen bg-white">
-        {toastEl}
-        {pasteTargetEl}
-        <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
-            <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">➕ Add Recipe</h1>
-          </div>
-        </header>
-        <main className="max-w-2xl mx-auto px-4 py-6">
-          <div className="space-y-7 pb-24">
-
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">📷 Photo</label>
-              <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
-                onClick={() => fileInputRef.current?.click()}>
-                {form.photo_url ? (
-                  <img src={form.photo_url} alt="Preview" className="h-32 object-cover rounded-xl" />
-                ) : (
-                  <><span className="text-3xl mb-2">📷</span>
-                  <p className="text-base text-orange-600 font-semibold">Browse & Upload Photo</p>
-                  <p className="text-sm text-gray-500">JPG, PNG, HEIC supported</p></>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*,.heic" className="hidden"
-                  onChange={e => {
-                    const file = e.target.files?.[0]; if (!file) return
-                    setSelectedPhoto(file)
-                    setForm(f => ({ ...f, photo_url: URL.createObjectURL(file) }))
-                  }} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">Recipe Title *</label>
-              <input placeholder="e.g. Grandma's Chicken Soup" value={form.title}
-                onChange={e => setForm(f => ({...f, title: e.target.value}))}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
-            </div>
-
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">Description</label>
-              <p className="text-sm text-gray-500 mb-2">One or two sentences about the dish.</p>
-              <textarea placeholder="A short description of this recipe" value={form.description}
-                onChange={e => setForm(f => ({...f, description: e.target.value}))}
-                rows={3}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y transition-colors" />
-            </div>
-
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">Category</label>
-              <input placeholder="e.g. Main Dish, Dessert, Side" value={form.category}
-                onChange={e => setForm(f => ({...f, category: e.target.value}))}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
-            </div>
-
-            <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} />
-
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">Ingredients</label>
-              <p className="text-sm text-gray-500 mb-2">
-                One per line. Format: <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">2 cups - flour</span> — quantity first, then a dash, then the name.
-              </p>
-              <textarea placeholder="2 cups - flour&#10;1 cup - sugar&#10;1/2 cup - butter&#10;Salt"
-                value={form.ingredients} onChange={e => setForm(f => ({...f, ingredients: e.target.value}))}
-                rows={14}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
-            </div>
-
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">Instructions</label>
-              <p className="text-sm text-gray-500 mb-2">One step per line — a new line per numbered instruction.</p>
-              <textarea placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Combine wet and dry"
-                value={form.instructions} onChange={e => setForm(f => ({...f, instructions: e.target.value}))}
-                rows={16}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
-            </div>
-
-            <div>
-              <label className="block text-base font-bold text-gray-800 mb-2">Family Notes</label>
-              <p className="text-sm text-gray-500 mb-2">The story, tips, source attribution — anything you want to remember.</p>
-              <textarea placeholder="The story behind this recipe, tips, memories..."
-                value={form.family_notes} onChange={e => setForm(f => ({...f, family_notes: e.target.value}))}
-                rows={8}
-                style={{ fontSize: '16px' }}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
-            </div>
-
-            {/* Sticky save footer — always reachable. */}
-            <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-white/95 backdrop-blur-sm border-t border-gray-200 flex gap-3 z-20">
-              <button onClick={() => setView('list')}
-                style={{ fontSize: '16px' }}
-                className="px-5 py-4 border-2 border-gray-200 text-gray-600 rounded-2xl font-semibold hover:bg-gray-50 transition-colors">
-                Cancel
-              </button>
-              <button onClick={saveRecipe} disabled={!form.title.trim() || uploadingPhoto}
-                style={{ fontSize: '16px' }}
-                className="flex-1 py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
-                {uploadingPhoto ? '📷 Uploading photo...' : '💾 Save Recipe'}
-              </button>
-            </div>
-          </div>
-        </main>
-      </div>
-    )
-  }
+  // ── (view === 'add' retired April 2026.) The standalone Add Recipe
+  //     page was folded into the Import Tools page as the ✏️ Add tab.
+  //     The form lives inline as `importTab === 'add'` content. The
+  //     post-import preview flow now sets `setImportTab('add')` instead
+  //     of `setView('add')`, and the Vault's old + Add header button
+  //     was removed at the same time.
 
   // ── LIST VIEW ──
   return (
@@ -2648,8 +2688,7 @@ export default function MyRecipeVaultPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={openImportFromClipboard} title="Import a recipe" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>
-              <button onClick={() => setView('add')} title="Add a recipe" className="text-base font-bold text-white bg-orange-600 rounded-lg px-2.5 py-1.5">+</button>
+              <button onClick={openImportFromClipboard} title="Import Tools" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>
             </div>
           </div>
           {/* Row below the header swaps between the chip scroller and the
@@ -2836,8 +2875,8 @@ export default function MyRecipeVaultPage() {
             <p className="text-gray-700 font-semibold mb-2">Your vault is empty</p>
             <p className="text-gray-500 text-sm mb-6">Add your personal and family recipes — private and only visible to you</p>
             <div className="flex flex-col gap-3 items-center">
-              <button onClick={() => setView('add')} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold w-48">+ Add a Recipe</button>
-              <button onClick={openImportFromClipboard} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import a Recipe</button>
+              <button onClick={() => { setView('import'); setImportTab('add') }} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold w-48">+ Add a Recipe</button>
+              <button onClick={openImportFromClipboard} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import Tools</button>
             </div>
           </div>
         ) : (() => {
