@@ -593,7 +593,6 @@ export default function PlaybookPage() {
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">📘 My Playbook</h1>
-            {totalCount > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{totalCount}</span>}
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/chef'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Chef Jen</button>
