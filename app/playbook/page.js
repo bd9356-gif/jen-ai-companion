@@ -152,14 +152,29 @@ export default function PlaybookPage() {
   //   _favType     : favorites.type for 'favorite' items, else null
   //   _bucket      : resolved bucket key (default chosen by defaultBucketFor)
   async function loadAll(userId) {
-    const [{ data: sv1 }, { data: sv2 }, { data: vidFavs }, { data: bucketRows }, { data: recipeFavs }, { data: answerFavs }] = await Promise.all([
+    const [{ data: sv1 }, { data: sv2 }, { data: vidFavs }, { data: bucketRows }, { data: recipeFavs }, { data: answerFavs }, { data: vaultRecipes }] = await Promise.all([
       supabase.from('saved_videos').select('video_id').eq('user_id', userId),
       supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
       supabase.from('favorites').select('*').eq('user_id', userId).in('type', ['video_recipe','video_education']),
       supabase.from('cooking_skill_items').select('*').eq('user_id', userId),
       supabase.from('favorites').select('*').eq('user_id', userId).eq('type', 'ai_recipe').order('created_at', { ascending: false }),
       supabase.from('favorites').select('*').eq('user_id', userId).eq('type', 'ai_answer').order('created_at', { ascending: false }),
+      // Pull every Vault recipe's photo_url so we can detect which
+      // Chef TV videos are already in the Vault and flip the per-row
+      // Practice button to "✓ In Recipe Vault" without making the user
+      // re-discover that they already saved it. Match is by youtube_id
+      // parsed out of the photo_url (saveToKitchen / saveVideoToVault
+      // both write the YouTube hqdefault URL as the recipe's photo).
+      supabase.from('personal_recipes').select('photo_url').eq('user_id', userId),
     ])
+
+    // Set of youtube_ids that already have a row in personal_recipes.
+    // Used below to stamp `_inVault` on Practice items at load time.
+    const vaultYoutubeIds = new Set()
+    for (const r of (vaultRecipes || [])) {
+      const m = (r.photo_url || '').match(/youtube\.com\/vi\/([^/]+)\//)
+      if (m && m[1]) vaultYoutubeIds.add(m[1])
+    }
 
     const cookingIds = (sv1 || []).map(s => s.video_id)
     const educationIds = (sv2 || []).map(s => s.video_id)
@@ -185,6 +200,7 @@ export default function PlaybookPage() {
         youtube_id: v.youtube_id,
         title: v.title,
         channel: v.channel,
+        _inVault: vaultYoutubeIds.has(v.youtube_id),
       }
       base._bucket = bucketMap.get(`cooking_video:${v.id}`) || defaultBucketFor(base)
       return base
@@ -201,6 +217,7 @@ export default function PlaybookPage() {
         youtube_id: v.youtube_id,
         title: v.title,
         channel: v.channel,
+        _inVault: vaultYoutubeIds.has(v.youtube_id),
       }
       base._bucket = bucketMap.get(`education_video:${v.id}`) || defaultBucketFor(base)
       return base
@@ -215,6 +232,7 @@ export default function PlaybookPage() {
       const legacyType = f.type === 'video_education' ? 'education_video' : 'cooking_video'
       const refId = f.ref_id || null
       if (refId && legacyKey.has(`${legacyType}:${refId}`)) return null
+      const yt = meta.youtube_id || ''
       const base = {
         _item_type: 'favorite',
         _item_id: f.id,
@@ -222,9 +240,10 @@ export default function PlaybookPage() {
         _favoriteId: f.id,
         _favType: f.type,
         id: refId || f.id,
-        youtube_id: meta.youtube_id || '',
+        youtube_id: yt,
         title: f.title || '',
         channel: meta.channel || '',
+        _inVault: yt ? vaultYoutubeIds.has(yt) : false,
       }
       base._bucket = bucketMap.get(`favorite:${f.id}`) || defaultBucketFor(base)
       return base
@@ -664,7 +683,7 @@ export default function PlaybookPage() {
                               onMove={(bucket) => moveToBucket(item, bucket)}
                               onSaveToVault={() => saveVideoToVault(item)}
                               onMoveToPortfolio={() => moveVideoToPortfolio(item)}
-                              inVault={vaultIds.has(key)}
+                              inVault={!!item._inVault || vaultIds.has(key)}
                               onRemove={() => removeItem(item)}
                               currentBucket={tab}
                             />
