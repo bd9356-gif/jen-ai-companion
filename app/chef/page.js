@@ -299,7 +299,10 @@ export default function ChefPage() {
   // screen. min-h-screen used to let the column grow past 100vh, which
   // on iPhone hid the input behind the browser chrome.
   return (
-    <div className="h-dvh bg-white flex flex-col">
+    <div className={`h-dvh flex flex-col ${
+      isPractice ? 'bg-gradient-to-b from-orange-50 via-white to-white'
+                 : 'bg-gradient-to-b from-sky-50 via-white to-white'
+    }`}>
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">
           {toast}
@@ -363,6 +366,42 @@ export default function ChefPage() {
       </header>
 
       <main className="flex-1 min-h-0 max-w-2xl mx-auto w-full px-4 py-2 flex flex-col">
+        {/* Input bar at TOP (April 2026 move) — Bill's ask: easier
+            thumb reach, the textarea sits right under the header so
+            it's the first thing the user touches. Conversation flows
+            below it. Mode-tinted card-style border keeps the box
+            visually anchored even on the soft gradient page bg. */}
+        <div
+          className={`rounded-2xl border-2 px-3 py-3 mb-3 shadow-sm bg-white ${
+            isPractice ? 'border-orange-200' : 'border-sky-200'
+          }`}
+        >
+          <div className="flex gap-2">
+            <textarea
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
+              placeholder={placeholder}
+              rows={1}
+              style={{ fontSize: '16px' }}
+              className={`flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 ${accentRing} resize-none`}
+            />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!input.trim() || loading}
+              className={`h-11 w-11 shrink-0 ${accentSend} text-white rounded-xl flex items-center justify-center disabled:opacity-40 transition-colors`}
+              aria-label="Send"
+            >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-[11px] text-gray-400 mt-2 text-center">
+            {isPractice ? '🍳 Recipes save to Chef Jennifer Recipes.' : '📝 Answers save to Chef Notes (on My Playbook).'}
+          </p>
+        </div>
+
         <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-2">
 
           {/* Empty state — mode-aware copy + suggested prompts.
@@ -375,7 +414,8 @@ export default function ChefPage() {
           {messages.length === 0 && (
             <div className="space-y-2">
               <div className="text-center pt-1 pb-1">
-                <p className="text-gray-900 font-bold text-xl leading-tight">
+                <p className="text-2xl mb-1">{isPractice ? '🍳' : '🎓'}</p>
+                <p className={`font-bold text-xl leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
                   {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
                 </p>
                 <p className="text-gray-600 text-base mt-1 leading-snug max-w-md mx-auto">
@@ -384,7 +424,17 @@ export default function ChefPage() {
                     : 'You\u2019re in the classroom with your chef — ask your question, learn the skill, then head to 🍳 Practice for your homework.'}
                 </p>
               </div>
-              <div className="space-y-2">
+              {/* Suggested prompts wrapped in a soft mode-tinted card so
+                  the cluster reads as one menu and the page has color
+                  even before the first message lands. */}
+              <div className={`rounded-2xl border p-2 space-y-2 ${
+                isPractice ? 'border-orange-100 bg-orange-50/50' : 'border-sky-100 bg-sky-50/50'
+              }`}>
+                <p className={`text-[11px] font-bold uppercase tracking-wider text-center ${
+                  isPractice ? 'text-orange-700' : 'text-sky-700'
+                }`}>
+                  Try one of these
+                </p>
                 {promptList.map(q => (
                   <button
                     key={q}
@@ -500,38 +550,6 @@ export default function ChefPage() {
           )}
 
           <div ref={bottomRef} />
-        </div>
-
-        {/* Input bar — pinned to the bottom of the dvh column. The
-            paddingBottom uses env(safe-area-inset-bottom) so iPhone's
-            home indicator doesn't overlap the textarea. */}
-        <div
-          className="border-t border-gray-100 pt-3 pb-2"
-          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
-        >
-          <div className="flex gap-2">
-            <textarea
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
-              placeholder={placeholder}
-              rows={1}
-              style={{ fontSize: '16px' }}
-              className={`flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 ${accentRing} resize-none`}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || loading}
-              className={`h-11 w-11 shrink-0 ${accentSend} text-white rounded-xl flex items-center justify-center disabled:opacity-40 transition-colors`}
-            >
-              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-          <p className="text-[11px] text-gray-400 mt-2 text-center">
-            {isPractice ? 'Recipes save to Chef Jennifer Recipes.' : 'Answers save to Chef Notes (on My Playbook).'}
-          </p>
         </div>
       </main>
     </div>
