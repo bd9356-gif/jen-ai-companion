@@ -2852,7 +2852,7 @@ export default function MyRecipeVaultPage() {
                 <span>💎</span><span>Chef Portfolio</span>
               </p>
               <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                Your place to keep the <strong>My Playbook</strong> notes and learning videos worth holding onto — Chef Jennifer&rsquo;s answers and Chef TV&rsquo;s technique videos, all in one shelf.
+                Your place to keep the <strong>My Playbook</strong>{' '}notes and learning videos worth holding onto — Chef Jennifer&rsquo;s answers and Chef TV&rsquo;s technique videos, all in one shelf.
               </p>
               <p className="text-sm text-gray-600 mt-1 leading-relaxed">
                 Tap <strong>×</strong> on a row to send it back.
