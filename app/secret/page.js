@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 import ExpandableItem from '@/components/ExpandableItem'
+import VideoItem from '@/components/VideoItem'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -2858,11 +2859,11 @@ export default function MyRecipeVaultPage() {
             })()}
 
             {/* 📺 Saved Videos section — Chef TV Teach videos the user
-                moved over from Playbook. Sits above the Notes accordion
-                because videos are the more eye-catching surface and the
-                Notes accordion is heavier (multiple buckets). Tap the ×
-                on any thumb to un-file (returns to Chef TV · Teach in
-                Playbook). The video link clicks through to YouTube. */}
+                moved over from Playbook. Renders each video via the
+                shared <VideoItem>, which keeps playback IN-APP (tap the
+                play overlay → iframe expands inline) instead of bouncing
+                to youtube.com. Tap × on a row to un-file (returns to
+                Chef TV · Teach in Playbook). */}
             {portfolioVideos.length > 0 && (
               <div className="mb-4 bg-white rounded-2xl border-2 border-sky-200 border-l-8 border-l-sky-500 overflow-hidden">
                 <div className="flex items-center gap-3 px-4 py-3 bg-sky-50">
@@ -2872,35 +2873,21 @@ export default function MyRecipeVaultPage() {
                 </div>
                 <div className="divide-y divide-sky-100">
                   {portfolioVideos.map(v => {
-                    const ytId = v.metadata?.youtube_id || ''
-                    const channel = v.metadata?.channel || ''
-                    const thumb = v.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '')
-                    const ytUrl = ytId ? `https://www.youtube.com/watch?v=${ytId}` : null
+                    // Map favorites-row shape → VideoItem's expected
+                    // { youtube_id, title, channel } props. Both legacy-
+                    // sourced and favorites-sourced videos store the
+                    // youtube_id in metadata.youtube_id when filed.
+                    const videoForItem = {
+                      youtube_id: v.metadata?.youtube_id || '',
+                      title: v.title,
+                      channel: v.metadata?.channel || '',
+                    }
                     return (
-                      <div key={v.id} className="flex items-start gap-3 p-3 bg-white hover:bg-sky-50/40">
-                        {thumb ? (
-                          <a href={ytUrl || '#'} target="_blank" rel="noopener noreferrer" className="shrink-0 w-20 aspect-video rounded-lg overflow-hidden bg-gray-100">
-                            <img src={thumb} alt="" className="w-full h-full object-cover" />
-                          </a>
-                        ) : (
-                          <div className="shrink-0 w-20 aspect-video rounded-lg bg-sky-100 flex items-center justify-center text-2xl">🎬</div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          {ytUrl ? (
-                            <a href={ytUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-sm text-gray-900 leading-snug line-clamp-2 hover:text-sky-700">{v.title}</a>
-                          ) : (
-                            <p className="font-semibold text-sm text-gray-900 leading-snug line-clamp-2">{v.title}</p>
-                          )}
-                          {channel && <p className="text-xs text-sky-700 mt-0.5">{channel}</p>}
-                        </div>
-                        <button
-                          onClick={() => removeVideoFromPortfolio(v)}
-                          title="Return to Chef TV · Teach (un-file)"
-                          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
-                        >
-                          ×
-                        </button>
-                      </div>
+                      <VideoItem
+                        key={v.id}
+                        video={videoForItem}
+                        onRemove={() => removeVideoFromPortfolio(v)}
+                      />
                     )
                   })}
                 </div>
