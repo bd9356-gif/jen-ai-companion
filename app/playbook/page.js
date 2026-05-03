@@ -129,13 +129,10 @@ export default function PlaybookPage() {
   // the explainer is one tap away when needed.
   const [showAbout, setShowAbout] = useState(false)
   const [toast, setToast] = useState(null)
-  // Tracks which Practice videos the user has already saved to the
-  // Recipe Vault this session. Used to flip the per-row "Move to
-  // Recipe Vault" button to a confirmation state ("✓ In Recipe Vault")
-  // after a successful save so the user can see the action landed.
-  // Session-level — refresh resets it. Re-saving creates another row
-  // (no dedupe), matching the /videos saveToKitchen pattern.
-  const [vaultIds, setVaultIds] = useState(() => new Set())
+  // (vaultIds session-Set retired April 2026 in favor of `_inVault` on
+  // each item — single source of truth that's set at load time AND
+  // refreshed on visibilitychange, so deletes-elsewhere flip the
+  // button back to "🔐 Move to Recipe Vault" automatically.)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
@@ -414,10 +411,14 @@ export default function PlaybookPage() {
       servings: null,
     })
     if (error) { showToast('Could not save to Vault'); return }
-    // Mark this item as "in Vault" for the rest of the session so the
-    // PlaybookRow flips its button to the confirmation state.
-    const itemKey = `${item._item_type}:${item._item_id}`
-    setVaultIds(prev => { const n = new Set(prev); n.add(itemKey); return n })
+    // Update the item's `_inVault` flag so the PlaybookRow flips to the
+    // "✓ In Recipe Vault" confirmation. Single source of truth — same
+    // flag the load-time scan + visibility-change refresh both write.
+    setItems(prev => prev.map(it =>
+      (it._item_type === item._item_type && it._item_id === item._item_id)
+        ? { ...it, _inVault: true }
+        : it
+    ))
     showToast('Saved to Recipe Vault ✓')
   }
 
@@ -457,6 +458,29 @@ export default function PlaybookPage() {
     showToast('Saved to Recipe Vault ✓')
   }
 
+  // Re-check which Practice videos are in the Recipe Vault. Lightweight
+  // version of loadAll's vault scan — only re-fetches `personal_recipes`
+  // photo_urls and updates the `_inVault` flag on existing items in
+  // place. Runs whenever the Playbook tab regains visibility (e.g. user
+  // deletes a recipe over on /secret and switches back here), so the
+  // "✓ In Recipe Vault" badge can flip back to "🔐 Move to Recipe Vault"
+  // without a hard reload.
+  async function refreshInVaultStatus(userId) {
+    const { data: vaultRecipes } = await supabase
+      .from('personal_recipes')
+      .select('photo_url')
+      .eq('user_id', userId)
+    const vaultYoutubeIds = new Set()
+    for (const r of (vaultRecipes || [])) {
+      const m = (r.photo_url || '').match(/youtube\.com\/vi\/([^/]+)\//)
+      if (m && m[1]) vaultYoutubeIds.add(m[1])
+    }
+    setItems(prev => prev.map(it => ({
+      ...it,
+      _inVault: it.youtube_id ? vaultYoutubeIds.has(it.youtube_id) : false,
+    })))
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
@@ -464,6 +488,27 @@ export default function PlaybookPage() {
       loadAll(session.user.id).finally(() => setLoading(false))
     })
   }, [])
+
+  // Re-fetch vault status whenever the page regains visibility — covers
+  // the "user deleted the recipe in another tab" case so the Practice
+  // button flips back to "🔐 Move to Recipe Vault" without requiring
+  // a manual refresh of Playbook.
+  useEffect(() => {
+    if (!user) return
+    function onVisibility() {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        refreshInVaultStatus(user.id)
+      }
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibility)
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibility)
+      }
+    }
+  }, [user])
 
   // Deep-link `?tab=<key>` support. /chef appends this to its
   // "📘 View in Playbook →" exit cue after a save so the user lands
@@ -683,7 +728,7 @@ export default function PlaybookPage() {
                               onMove={(bucket) => moveToBucket(item, bucket)}
                               onSaveToVault={() => saveVideoToVault(item)}
                               onMoveToPortfolio={() => moveVideoToPortfolio(item)}
-                              inVault={!!item._inVault || vaultIds.has(key)}
+                              inVault={!!item._inVault}
                               onRemove={() => removeItem(item)}
                               currentBucket={tab}
                             />
