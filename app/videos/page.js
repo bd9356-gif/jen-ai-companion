@@ -39,8 +39,9 @@ const PRACTICE_CHIPS = [
   { key: 'pizza',  label: '🍕 Pizza',  match: /pizza|calzone/i },
   { key: 'salad',  label: '🥗 Salad',  match: /salad|slaw/i },
   { key: 'soup',   label: '🍲 Soup',   match: /soup|stew|chili|chowder|ramen|pho|broth/i },
-  { key: 'meat',   label: '🥩 Meat',   match: /steak|beef|burger|brisket|pork|chicken|turkey|lamb|meatball|ribs|bbq|grill/i },
-  { key: 'fish',   label: '🐟 Fish',   match: /fish|salmon|tuna|shrimp|prawn|scallop|seafood|crab|lobster/i },
+  { key: 'meat',    label: '🥩 Meat',    match: /\b(steak|beef|burger|brisket|pork|lamb|meatball|ribs|bbq|smoked|short rib|chuck|sirloin|tenderloin|veal)\b/i },
+  { key: 'chicken', label: '🍗 Chicken', match: /\b(chicken|turkey|duck|poultry|wings?|drumsticks?|thighs?)\b/i },
+  { key: 'fish',    label: '🐟 Fish',    match: /\b(fish|salmon|tuna|shrimp|prawn|scallop|seafood|crab|lobster|cod|halibut|tilapia|sardine|mussel|clam|oyster)\b/i },
   { key: 'bread',  label: '🍞 Bread',  match: /bread|focaccia|sourdough|baguette|brioche|rolls?|buns?|loaf/i },
   { key: 'sweet',  label: '🍰 Sweet',  match: /cake|cookie|pie|tart|brownie|dessert|cheesecake|chocolate|ice cream|pudding|mousse|muffin|scone|cinnamon roll|donut/i },
 ]
@@ -54,7 +55,8 @@ const TEACH_CHIPS = [
   { key: 'all',      label: 'All' },
   { key: 'knife',    label: '🔪 Knife',   match: /knife|cut|chop|dice|slice|mince|julienne/i },
   { key: 'eggs',     label: '🥚 Eggs',    match: /\begg\b|eggs|omelet|omelette|scramble|frittata|quiche|poach/i },
-  { key: 'meat',     label: '🥩 Meat',    match: /steak|beef|pork|chicken|butcher|brine|grill|sear|roast|braise/i },
+  { key: 'meat',     label: '🥩 Meat',    match: /\b(steak|beef|pork|lamb|butcher|brine|sear|roast|braise|smoke)\b/i },
+  { key: 'chicken',  label: '🍗 Chicken', match: /\b(chicken|turkey|duck|poultry|wings?|drumsticks?|thighs?)\b/i },
   { key: 'baking',   label: '🍞 Baking',  match: /bak(e|ed|ing)|bread|cake|cookie|pie|dough|flour|yeast|sourdough|pastry/i },
   { key: 'season',   label: '🧂 Season',  match: /salt|season|spice|herb|marinade|flavor|umami|sauce/i },
   { key: 'basics',   label: '📚 Basics',  match: /how to|basics|beginner|fundamentals|essential|must know|mistake|tip/i },
@@ -503,7 +505,21 @@ export default function VideosPage() {
       const hasRecipe = meta?.ingredients?.length > 0
       const matchFilter = (filter === 'practice' && hasRecipe) || (filter === 'teach' && !hasRecipe)
       const matchShorts = !isShort(v.duration)
-      const matchTopic = !activeChip?.match || activeChip.match.test(v.title)
+      // Topic chip filter — matches against the title first, and on
+      // Practice videos ALSO scans the recipe's ingredients list. Title
+      // can be vague ("Crispy Wings 3 Ways") but the ingredients almost
+      // always name the protein ("chicken wings, paprika, ..."), so the
+      // ingredients pass catches videos the title alone misses.
+      const matchTopic = !activeChip?.match || (() => {
+        if (activeChip.match.test(v.title)) return true
+        if (filter === 'practice' && Array.isArray(meta?.ingredients) && meta.ingredients.length > 0) {
+          const ingredientText = meta.ingredients
+            .map(i => `${i?.name || ''} ${i?.measure || ''}`)
+            .join(' ')
+          if (activeChip.match.test(ingredientText)) return true
+        }
+        return false
+      })()
       return matchFilter && matchShorts && matchTopic
     })
     .sort((a, b) => {
