@@ -2852,10 +2852,7 @@ export default function MyRecipeVaultPage() {
                 <span>💎</span><span>Chef Portfolio</span>
               </p>
               <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                Your saved <strong>My Playbook</strong>{' '}lesson notes and learning videos, all in one place.
-              </p>
-              <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                Tap <strong>×</strong> on a row to send it back.
+                Your saved <strong>My Playbook</strong>{' '}lesson notes and learning videos, all in one place. <span className="font-bold text-orange-700">Tap <span className="bg-orange-100 px-1.5 py-0.5 rounded">×</span> on a row to send it back.</span>
               </p>
             </div>
             {(() => {
