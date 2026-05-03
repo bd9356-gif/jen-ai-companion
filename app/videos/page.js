@@ -63,7 +63,8 @@ const TEACH_CHIPS = [
   { key: 'basics',   label: '📚 Basics',  match: /how to|basics|beginner|fundamentals|essential|must know|mistake|tip/i },
 ]
 
-const FEATURED_CAP = 15
+// (FEATURED_CAP retired April 2026 — Featured chip now shows ONLY
+// is_featured rows with no auto-fill cap.)
 
 // Teaching-weighted channels — technique/method/craft heavy. Used by
 // teachScore() below to float instructional content up the Teach tab.
@@ -500,10 +501,9 @@ export default function VideosPage() {
   //   teach    → teachScore (teaching-channel boost × popularity)
   //   practice → practiceScore (recipe completeness × popularity)
   //
-  // Featured chip (Teach only): hand-curated rows first, then top up to
-  // FEATURED_CAP from the automatic teachScore slice so newcomers always
-  // land on "what's good" — even before the curator has picked anything.
-  // Curator rows go to /admin/featured → flips cooking_videos.is_featured.
+  // Featured chip (both tabs): strictly is_featured only — the curator's
+  // picks, no fillers. Curator rows go to /admin/featured (or
+  // /admin/library) → flips cooking_videos.is_featured.
   const afterFilter = videos
     .filter(v => {
       const meta = metadata[v.id]
@@ -536,21 +536,14 @@ export default function VideosPage() {
       return teachScore(b) - teachScore(a)
     })
   let filtered = afterFilter
-  // Featured chip slicing — works on either tab now (the chip exists on
-  // both Teach and Practice). Curator-additive: featured rows lead, and
-  // when there aren't yet FEATURED_CAP featured rows, the rest is filled
-  // from the automatic top-by-score slice so the chip never feels empty.
+  // Featured chip — strictly is_featured only. Earlier the chip used a
+  // featured-first-then-fill pattern that padded with the auto top-by-score
+  // slice when there weren't yet enough curator picks; that turned the chip
+  // into a "best of" view instead of a curator-only view, so users couldn't
+  // see at a glance what had actually been featured. Now Featured = exactly
+  // the videos the curator picked, nothing more.
   if (activeChip?.feature) {
-    const featuredRows = afterFilter.filter(v => v.is_featured)
-    if (featuredRows.length >= FEATURED_CAP) {
-      filtered = featuredRows.slice(0, FEATURED_CAP)
-    } else {
-      // Not enough curated picks yet — append automatic slice rows that
-      // aren't already in the curated set, until we reach FEATURED_CAP.
-      const featuredIds = new Set(featuredRows.map(v => v.id))
-      const fillers = afterFilter.filter(v => !featuredIds.has(v.id))
-      filtered = [...featuredRows, ...fillers].slice(0, FEATURED_CAP)
-    }
+    filtered = afterFilter.filter(v => v.is_featured)
   }
 
   // Used by the ℹ️ About panel — total real (non-Shorts) videos in the
