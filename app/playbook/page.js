@@ -129,6 +129,13 @@ export default function PlaybookPage() {
   // the explainer is one tap away when needed.
   const [showAbout, setShowAbout] = useState(false)
   const [toast, setToast] = useState(null)
+  // Tracks which Practice videos the user has already saved to the
+  // Recipe Vault this session. Used to flip the per-row "Move to
+  // Recipe Vault" button to a confirmation state ("✓ In Recipe Vault")
+  // after a successful save so the user can see the action landed.
+  // Session-level — refresh resets it. Re-saving creates another row
+  // (no dedupe), matching the /videos saveToKitchen pattern.
+  const [vaultIds, setVaultIds] = useState(() => new Set())
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
@@ -337,6 +344,10 @@ export default function PlaybookPage() {
       servings: null,
     })
     if (error) { showToast('Could not save to Vault'); return }
+    // Mark this item as "in Vault" for the rest of the session so the
+    // PlaybookRow flips its button to the confirmation state.
+    const itemKey = `${item._item_type}:${item._item_id}`
+    setVaultIds(prev => { const n = new Set(prev); n.add(itemKey); return n })
     showToast('Saved to Recipe Vault ✓')
   }
 
@@ -593,16 +604,20 @@ export default function PlaybookPage() {
                       {list.length === 0 ? (
                         <p className="text-center text-xs text-gray-400 py-6 px-3">Nothing here yet.</p>
                       ) : (
-                        list.map(item => (
-                          <PlaybookRow
-                            key={`${item._item_type}:${item._item_id}`}
-                            item={item}
-                            onMove={(bucket) => moveToBucket(item, bucket)}
-                            onSaveToVault={() => saveVideoToVault(item)}
-                            onRemove={() => removeItem(item)}
-                            currentBucket={tab}
-                          />
-                        ))
+                        list.map(item => {
+                          const key = `${item._item_type}:${item._item_id}`
+                          return (
+                            <PlaybookRow
+                              key={key}
+                              item={item}
+                              onMove={(bucket) => moveToBucket(item, bucket)}
+                              onSaveToVault={() => saveVideoToVault(item)}
+                              inVault={vaultIds.has(key)}
+                              onRemove={() => removeItem(item)}
+                              currentBucket={tab}
+                            />
+                          )
+                        })
                       )}
                     </div>
                   </div>
@@ -694,7 +709,7 @@ export default function PlaybookPage() {
 // to actually cook this." It mirrors the 💾 Save to My Kitchen button
 // on Chef TV's Recipe view, surfaced here for users browsing their
 // saved Practice videos in Playbook.
-function PlaybookRow({ item, onMove, onSaveToVault, onRemove, currentBucket }) {
+function PlaybookRow({ item, onMove, onSaveToVault, inVault, onRemove, currentBucket }) {
   const other = BUCKETS.find(b => b.key !== currentBucket)
   const c = other ? COLOR[other.key] : null
   const isPractice = currentBucket === 'practice'
@@ -704,13 +719,30 @@ function PlaybookRow({ item, onMove, onSaveToVault, onRemove, currentBucket }) {
       <VideoItem video={item} onRemove={onRemove} />
       <div className="px-3 pb-2 pt-1 bg-white">
         {isPractice ? (
-          <button
-            onClick={onSaveToVault}
-            title="Save this recipe to your Recipe Vault"
-            className="text-xs font-semibold border-2 border-orange-300 bg-orange-50 text-orange-700 rounded-lg px-2.5 py-1 hover:opacity-80"
-          >
-            🔐 Move to Recipe Vault
-          </button>
+          // Two states. Default ("not yet saved"): orange "🔐 Move to
+          // Recipe Vault" — tappable, fires onSaveToVault. After save
+          // ("inVault" prop true): emerald "✓ In Recipe Vault" —
+          // disabled, confirms the action landed. Session-level so the
+          // user can see what they've already moved without bouncing
+          // out to the Vault to verify. Refresh resets it.
+          inVault ? (
+            <button
+              type="button"
+              disabled
+              title="This recipe is in your Recipe Vault"
+              className="text-xs font-semibold border-2 border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg px-2.5 py-1 cursor-default"
+            >
+              ✓ In Recipe Vault
+            </button>
+          ) : (
+            <button
+              onClick={onSaveToVault}
+              title="Save this recipe to your Recipe Vault"
+              className="text-xs font-semibold border-2 border-orange-300 bg-orange-50 text-orange-700 rounded-lg px-2.5 py-1 hover:opacity-80"
+            >
+              🔐 Move to Recipe Vault
+            </button>
+          )
         ) : (
           other && c && (
             <button
