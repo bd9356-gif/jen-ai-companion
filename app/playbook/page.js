@@ -469,9 +469,16 @@ export default function PlaybookPage() {
             <div className="grid grid-cols-2 gap-3 mb-4">
               {/* Chef Jennifer's column */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1 text-center">
+                {/* Column header is a tappable link to /chef so users can
+                    jump from Playbook back to the source surface (where
+                    they generated the saves they're now reviewing). */}
+                <button
+                  onClick={() => window.location.href = '/chef'}
+                  title="Open Chef Jennifer"
+                  className="block w-full text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-orange-600 mb-1.5 px-1 text-center"
+                >
                   👨‍🍳 Chef Jennifer
-                </p>
+                </button>
                 <div className="space-y-1.5">
                   <button
                     onClick={() => setTab('chef_notes')}
@@ -494,9 +501,15 @@ export default function PlaybookPage() {
 
               {/* Chef TV's column */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1.5 px-1 text-center">
+                {/* Column header is a tappable link to /videos — same
+                    pattern as the Chef Jennifer column. */}
+                <button
+                  onClick={() => window.location.href = '/videos'}
+                  title="Open Chef TV"
+                  className="block w-full text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-orange-600 mb-1.5 px-1 text-center"
+                >
                   🎬 Chef TV
-                </p>
+                </button>
                 <div className="space-y-1.5">
                   <button
                     onClick={() => setTab('teach')}
