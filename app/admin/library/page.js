@@ -67,7 +67,13 @@ export default function AdminLibraryPage() {
     (async () => {
       const { data } = await supabase.auth.getSession()
       const session = data?.session
-      if (!session) { window.location.href = '/login'; return }
+      if (!session) {
+        // Preserve the URL so /login → /auth/confirm returns the admin
+        // here after sign-in instead of dumping them on /kitchen.
+        const next = encodeURIComponent('/admin/library')
+        window.location.href = `/login?next=${next}`
+        return
+      }
       if (session.user?.email !== ADMIN_EMAIL) { window.location.href = '/kitchen'; return }
       setToken(session.access_token)
       setReady(true)

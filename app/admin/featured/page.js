@@ -47,13 +47,15 @@ export default function AdminFeaturedPage() {
   const [qInput, setQInput] = useState('')
   const [q, setQ] = useState('')
 
-  // 1. Auth gate — admin only.
+  // 1. Auth gate — admin only. Preserves `?next=` so post-sign-in
+  // returns the admin here rather than dumping them on /kitchen.
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getSession()
       const session = data?.session
       if (!session) {
-        window.location.href = '/login'
+        const next = encodeURIComponent('/admin/featured')
+        window.location.href = `/login?next=${next}`
         return
       }
       if (session.user?.email !== ADMIN_EMAIL) {
