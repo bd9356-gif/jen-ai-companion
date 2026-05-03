@@ -527,6 +527,10 @@ export default function VideosPage() {
       return matchFilter && matchShorts && matchTopic
     })
     .sort((a, b) => {
+      // Featured videos always lead, regardless of tab or topic chip.
+      // Within featured (and within not-featured), the tab-specific
+      // score takes over so the rest of the list stays meaningful.
+      if (!!a.is_featured !== !!b.is_featured) return a.is_featured ? -1 : 1
       if (filter === 'practice') return practiceScore(b, metadata[b.id]) - practiceScore(a, metadata[a.id])
       return teachScore(b) - teachScore(a)
     })
