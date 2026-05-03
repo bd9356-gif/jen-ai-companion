@@ -759,7 +759,12 @@ export default function VideosPage() {
                             </div>
                           )
                         })()}
-                        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">{video.title}</h3>
+                        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">
+                          {video.is_featured && (
+                            <span className="text-amber-500 mr-1" title="Featured by curator">⭐</span>
+                          )}
+                          {video.title}
+                        </h3>
                         <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
                         <p className="text-xs text-gray-500 mt-0.5 mb-2">{viewCount(video.view_count)}</p>
                         {/* Credit link → drives the user back to the creator's
