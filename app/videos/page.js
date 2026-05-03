@@ -165,8 +165,9 @@ export default function VideosPage() {
   //   practice → one of PRACTICE_CHIPS keys (default 'all')
   // When the tab flips, we reset topic to the tab's sensible default.
   const [topic, setTopic] = useState('featured')
-  const [search, setSearch] = useState('')
-  const [showSearch, setShowSearch] = useState(false)
+  // (Search retired April 2026 — Bill found the magnifying-glass toggle
+  // on Chef TV unnecessary; the Teach/Practice tabs + topic chips
+  // already narrow the list enough.)
   // About toggle — matches the 🔍 search pattern. When open, reveals the
   // teaching card at the top of main (Teach / Practice / save
   // destinations). Default hidden so the page isn't cluttered for
@@ -478,14 +479,6 @@ export default function VideosPage() {
     setExpandedId(expandedId === videoId ? null : videoId)
   }
 
-  function toggleSearch() {
-    if (showSearch) {
-      setSearch('')
-      setShowSearch(false)
-    } else {
-      setShowSearch(true)
-    }
-  }
 
   // Figure out the active chip set for the current tab. Teach and
   // Practice each have their own shortlist.
@@ -508,11 +501,10 @@ export default function VideosPage() {
     .filter(v => {
       const meta = metadata[v.id]
       const hasRecipe = meta?.ingredients?.length > 0
-      const matchSearch = search === '' || v.title.toLowerCase().includes(search.toLowerCase()) || v.channel.toLowerCase().includes(search.toLowerCase())
       const matchFilter = (filter === 'practice' && hasRecipe) || (filter === 'teach' && !hasRecipe)
       const matchShorts = !isShort(v.duration)
       const matchTopic = !activeChip?.match || activeChip.match.test(v.title)
-      return matchSearch && matchFilter && matchShorts && matchTopic
+      return matchFilter && matchShorts && matchTopic
     })
     .sort((a, b) => {
       if (filter === 'practice') return practiceScore(b, metadata[b.id]) - practiceScore(a, metadata[a.id])
@@ -593,17 +585,6 @@ export default function VideosPage() {
               >
                 {showAbout ? '✕' : 'ℹ️'}
               </button>
-              <button
-                onClick={toggleSearch}
-                aria-label={showSearch ? 'Close search' : 'Open search'}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                  showSearch || search
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
-                }`}
-              >
-                {showSearch || search ? '✕' : '🔍'}
-              </button>
             </div>
           </div>
 
@@ -625,17 +606,6 @@ export default function VideosPage() {
             </p>
           </div>
 
-          {(showSearch || search) && (
-            <input
-              type="text"
-              placeholder="Search videos or channels..."
-              value={search}
-              autoFocus
-              onChange={e => { setSearch(e.target.value); setShowCount(12) }}
-              style={{ fontSize: '16px' }}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300 mb-3"
-            />
-          )}
 
           {/* Topic chips — techniques for Teach, dish-types for Practice.
               Horizontally scrollable on narrow viewports. Active chip uses
