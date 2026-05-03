@@ -663,6 +663,7 @@ So the chip never feels empty — when the curator hasn't picked anything yet, i
 - `ingest_education_metadata.js` — enriches education videos.
 - `ingest_missing.js` — fills gaps.
 - `generate-instructions.js` — AI-generates step-by-step instructions for videos that have ingredients but no instructions. Uses `SUPABASE_SERVICE_ROLE_KEY` — do **not** commit.
+- `backfill_video_metadata.js` (April 2026) — re-extracts `video_metadata.ingredients`/`instructions`/`ai_summary` for `cooking_videos` rows where they're null/empty. Mirrors the `/api/import-recipe` extraction path: fetches YouTube title + description + **transcript** (via `youtube-transcript`) and feeds the whole blob to Claude haiku. Bulk ingestion uses description-only, which leaves a long tail of videos with no recipe metadata — this fills them in. Idempotent, batchable via `--limit N`, supports `--dry-run` and `--video-id ID` for spot checks. Skips videos with no transcript AND a thin description (<200 chars) since there's nothing new to extract. Returns `{no_recipe: true}` for vlogs/equipment reviews/restaurant tours so they don't get junk metadata. Env: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `YOUTUBE_API_KEY`. Usage: `node backfill_video_metadata.js [--limit N] [--dry-run] [--video-id ID]`.
 
 ## Conventions
 
