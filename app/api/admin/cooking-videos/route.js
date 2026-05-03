@@ -48,19 +48,26 @@ export async function GET(request) {
 
   const url = new URL(request.url)
   const featured = url.searchParams.get('featured')   // 'true' to restrict to is_featured rows
-  const q = (url.searchParams.get('q') || '').trim()  // optional title search (ilike)
+  const status = url.searchParams.get('status')       // 'visible' | 'hidden' | 'all' (default: 'all')
+  const q = (url.searchParams.get('q') || '').trim()  // optional title/channel search (ilike)
   const limit = Math.min(Number(url.searchParams.get('limit')) || 200, 500)
 
   let query = supabase
     .from('cooking_videos')
-    .select('id, title, channel, youtube_id, thumbnail_url, view_count, is_featured')
+    .select('id, title, channel, youtube_id, thumbnail_url, view_count, is_featured, is_hidden')
     .limit(limit)
 
   if (featured === 'true') {
     query = query.eq('is_featured', true)
   }
+  if (status === 'visible') {
+    query = query.eq('is_hidden', false)
+  } else if (status === 'hidden') {
+    query = query.eq('is_hidden', true)
+  }
   if (q.length > 0) {
-    query = query.ilike('title', `%${q}%`)
+    // Match against title OR channel so the curator can search either.
+    query = query.or(`title.ilike.%${q}%,channel.ilike.%${q}%`)
   }
 
   const { data: videos, error } = await query

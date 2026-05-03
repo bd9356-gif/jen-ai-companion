@@ -59,7 +59,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { videoId, action } = body || {}
+  const { videoId, action, title, channel } = body || {}
   if (!videoId || !action) {
     return NextResponse.json({ error: 'videoId and action are required' }, { status: 400 })
   }
@@ -72,6 +72,27 @@ export async function POST(request) {
     case 'unfeature':
       update.is_featured = false
       break
+    case 'hide':
+      update.is_hidden = true
+      break
+    case 'unhide':
+      update.is_hidden = false
+      break
+    case 'update_meta': {
+      // Inline title / channel edit from the library curator. Allow
+      // either field to be omitted (update only what's provided).
+      // Guard against empty strings — refuse to clear a title.
+      if (typeof title === 'string') {
+        const t = title.trim()
+        if (!t) return NextResponse.json({ error: 'title cannot be empty' }, { status: 400 })
+        update.title = t
+      }
+      if (typeof channel === 'string') update.channel = channel.trim()
+      if (Object.keys(update).length === 0) {
+        return NextResponse.json({ error: 'update_meta requires title or channel' }, { status: 400 })
+      }
+      break
+    }
     default:
       return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
   }
@@ -82,7 +103,7 @@ export async function POST(request) {
   // "Cannot coerce" error.
   const { data: pre, error: preErr } = await supabase
     .from('cooking_videos')
-    .select('id, is_featured')
+    .select('id, is_featured, is_hidden, title, channel')
     .eq('id', videoId)
     .maybeSingle()
 
@@ -105,7 +126,7 @@ export async function POST(request) {
     .from('cooking_videos')
     .update(update)
     .eq('id', videoId)
-    .select('id, is_featured')
+    .select('id, is_featured, is_hidden, title, channel')
 
   if (error) {
     return NextResponse.json({
