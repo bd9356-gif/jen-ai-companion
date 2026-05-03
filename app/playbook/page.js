@@ -484,7 +484,10 @@ export default function PlaybookPage() {
       category: '',
       tags: [],
       family_notes: familyNotes,
-      photo_url: '',
+      // Branded default photo for Chef Jennifer recipes promoted to
+      // the Vault. Lives in /public so it ships with the build; user
+      // can swap it for a real photo from the recipe detail view.
+      photo_url: '/chef-jen-recipe.jpg',
       difficulty: meta.difficulty || '',
     })
     if (error) {
