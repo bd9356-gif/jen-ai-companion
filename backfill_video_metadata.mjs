@@ -22,7 +22,17 @@ dotenv.config({ path: '.env.local' })
 
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
-import { YoutubeTranscript } from 'youtube-transcript'
+
+// Resolve youtube-transcript flexibly — different versions of the package
+// export the class via different paths (named `YoutubeTranscript`, default
+// export, or default-of-namespace). Picks whichever shape exposes
+// `fetchTranscript` so a future package upgrade doesn't break us.
+import * as YT_NS from 'youtube-transcript'
+const YoutubeTranscript =
+  YT_NS.YoutubeTranscript ||
+  YT_NS.default?.YoutubeTranscript ||
+  YT_NS.default ||
+  YT_NS
 
 // ── ENV ──────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
