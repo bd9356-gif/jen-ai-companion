@@ -172,6 +172,18 @@ export default function PlaybookPage() {
       const m = (r.photo_url || '').match(/youtube\.com\/vi\/([^/]+)\//)
       if (m && m[1]) vaultYoutubeIds.add(m[1])
     }
+    // Set of favorites IDs (and youtube_ids) that are currently in
+    // Portfolio (`favorites.is_in_vault=true`). Used to stamp
+    // `_inPortfolio` on Teach items so the row badge reflects the
+    // Portfolio state without requiring the user to refresh.
+    const portfolioFavIds = new Set()
+    const portfolioYoutubeIds = new Set()
+    for (const f of (vidFavs || [])) {
+      if (!f.is_in_vault) continue
+      portfolioFavIds.add(f.id)
+      const yt = f.metadata?.youtube_id
+      if (yt) portfolioYoutubeIds.add(yt)
+    }
 
     const cookingIds = (sv1 || []).map(s => s.video_id)
     const educationIds = (sv2 || []).map(s => s.video_id)
@@ -198,6 +210,7 @@ export default function PlaybookPage() {
         title: v.title,
         channel: v.channel,
         _inVault: vaultYoutubeIds.has(v.youtube_id),
+        _inPortfolio: portfolioYoutubeIds.has(v.youtube_id),
       }
       base._bucket = bucketMap.get(`cooking_video:${v.id}`) || defaultBucketFor(base)
       return base
@@ -215,6 +228,7 @@ export default function PlaybookPage() {
         title: v.title,
         channel: v.channel,
         _inVault: vaultYoutubeIds.has(v.youtube_id),
+        _inPortfolio: portfolioYoutubeIds.has(v.youtube_id),
       }
       base._bucket = bucketMap.get(`education_video:${v.id}`) || defaultBucketFor(base)
       return base
@@ -241,6 +255,7 @@ export default function PlaybookPage() {
         title: f.title || '',
         channel: meta.channel || '',
         _inVault: yt ? vaultYoutubeIds.has(yt) : false,
+        _inPortfolio: !!f.is_in_vault,
       }
       base._bucket = bucketMap.get(`favorite:${f.id}`) || defaultBucketFor(base)
       return base
@@ -274,31 +289,41 @@ export default function PlaybookPage() {
     showToast(`Moved to ${BUCKETS.find(b => b.key === bucket)?.label} ✓`)
   }
 
-  // Move a Chef TV Teach video out of Playbook and into the Recipe Vault
-  // Portfolio (the user's "skill learning" reference shelf — same surface
-  // that holds saved Chef Notes). The Portfolio data model is the
-  // `favorites` table with `is_in_vault=true`; for legacy `saved_videos`
-  // sources we synthesize a fresh favorites row first since they have no
-  // such flag of their own. Either way the video disappears from Teach
-  // (matching Chef Notes' "file moves out of inbox" behavior).
+  // Move a Chef TV Teach video to the Recipe Vault Portfolio. Updated
+  // April 2026 to mirror the Practice → Recipe Vault behavior — the
+  // video STAYS in Teach after the move, with the per-row button
+  // flipping to "✓ In Portfolio". Filing is non-destructive: the
+  // bucket placement and underlying save record are kept. Un-filing
+  // (× on the Portfolio row in /secret) flips is_in_vault back to
+  // false, and the next visibility refresh on Playbook drops the
+  // "✓ In Portfolio" badge.
   async function moveVideoToPortfolio(item) {
     if (!user) return
     if (item._favoriteId) {
-      // Already a favorites row — flip the flag.
+      // Already a favorites row — flip the flag, keep cooking_skill_items
+      // intact so the video stays visible in Teach.
       const { error } = await supabase
         .from('favorites')
         .update({ is_in_vault: true })
         .eq('id', item._favoriteId)
       if (error) { showToast('Could not move to Portfolio'); return }
-    } else if (item._legacy_src) {
-      // Legacy cooking_video / education_video saved-row → synthesize a
-      // favorites row that the Portfolio query can find. type stays
-      // descriptive ('video_education' or 'video_recipe') so existing
-      // queries keep working; metadata carries the hooks the Portfolio
-      // renderer needs (youtube_id, channel) without us having to join
-      // back to the source table.
+      setItems(prev => prev.map(i =>
+        (i._item_type === item._item_type && i._item_id === item._item_id)
+          ? { ...i, _inPortfolio: true }
+          : i
+      ))
+      showToast('💎 Moved to Portfolio')
+      return
+    }
+    if (item._legacy_src) {
+      // Legacy cooking_video / education_video → synthesize a favorites
+      // row with is_in_vault=true, then re-point the cooking_skill_items
+      // bucket placement at the new favorites id so the video keeps
+      // showing up in Teach (now as a favorites-sourced item). Drop the
+      // legacy saved-video row since the favorites entry is the
+      // canonical record going forward.
       const favType = item._legacy_src === 'education' ? 'video_education' : 'video_recipe'
-      const { error: insErr } = await supabase.from('favorites').insert({
+      const { data: inserted, error: insErr } = await supabase.from('favorites').insert({
         user_id: user.id,
         type: favType,
         title: item.title,
@@ -306,23 +331,34 @@ export default function PlaybookPage() {
         source: 'chef_tv',
         metadata: { youtube_id: item.youtube_id || '', channel: item.channel || '', legacy_video_id: item._item_id },
         is_in_vault: true,
-      })
-      if (insErr) { showToast('Could not move to Portfolio'); return }
-      // Remove the legacy save row — the new favorites entry is the
-      // canonical record going forward.
+      }).select('id').single()
+      if (insErr || !inserted) { showToast('Could not move to Portfolio'); return }
+      // Re-point the bucket placement to the new favorites row.
+      await supabase.from('cooking_skill_items')
+        .update({ item_type: 'favorite', item_id: inserted.id, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('item_type', item._item_type)
+        .eq('item_id', item._item_id)
+      // Remove the legacy saved-video row.
       const legacyTable = item._legacy_src === 'education' ? 'saved_education_videos' : 'saved_videos'
       await supabase.from(legacyTable).delete().eq('user_id', user.id).eq('video_id', item._item_id)
+      // Re-key the local item from legacy to favorites and flip
+      // _inPortfolio so the row stays visible with the new badge.
+      setItems(prev => prev.map(i =>
+        (i._item_type === item._item_type && i._item_id === item._item_id)
+          ? {
+              ...i,
+              _item_type: 'favorite',
+              _item_id: inserted.id,
+              _legacy_src: null,
+              _favoriteId: inserted.id,
+              _favType: favType,
+              _inPortfolio: true,
+            }
+          : i
+      ))
+      showToast('💎 Moved to Portfolio')
     }
-    // Remove the bucket placement so the video leaves Teach.
-    await supabase.from('cooking_skill_items')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('item_type', item._item_type)
-      .eq('item_id', item._item_id)
-    // Drop from the local items state so the Teach tab reflects the
-    // move immediately (no refresh needed).
-    setItems(prev => prev.filter(i => !(i._item_type === item._item_type && i._item_id === item._item_id)))
-    showToast('💎 Moved to Portfolio')
   }
 
   async function removeItem(item) {
@@ -458,26 +494,39 @@ export default function PlaybookPage() {
     showToast('Saved to Recipe Vault ✓')
   }
 
-  // Re-check which Practice videos are in the Recipe Vault. Lightweight
-  // version of loadAll's vault scan — only re-fetches `personal_recipes`
-  // photo_urls and updates the `_inVault` flag on existing items in
-  // place. Runs whenever the Playbook tab regains visibility (e.g. user
-  // deletes a recipe over on /secret and switches back here), so the
-  // "✓ In Recipe Vault" badge can flip back to "🔐 Move to Recipe Vault"
+  // Re-check which Practice videos are in the Recipe Vault AND which
+  // Teach videos are currently in Portfolio. Lightweight version of
+  // loadAll's two scans — only re-queries `personal_recipes` and the
+  // video favorites' `is_in_vault` flag, then re-stamps `_inVault` and
+  // `_inPortfolio` on existing items in place. Runs whenever the
+  // Playbook tab regains visibility (e.g. user deleted a recipe on
+  // /secret or un-filed a video from Portfolio and switched back),
+  // so both badges flip back to their default "Move to ..." states
   // without a hard reload.
   async function refreshInVaultStatus(userId) {
-    const { data: vaultRecipes } = await supabase
-      .from('personal_recipes')
-      .select('photo_url')
-      .eq('user_id', userId)
+    const [{ data: vaultRecipes }, { data: portfolioFavs }] = await Promise.all([
+      supabase.from('personal_recipes').select('photo_url').eq('user_id', userId),
+      supabase.from('favorites').select('id, metadata, is_in_vault').eq('user_id', userId).in('type', ['video_recipe', 'video_education']),
+    ])
     const vaultYoutubeIds = new Set()
     for (const r of (vaultRecipes || [])) {
       const m = (r.photo_url || '').match(/youtube\.com\/vi\/([^/]+)\//)
       if (m && m[1]) vaultYoutubeIds.add(m[1])
     }
+    const portfolioFavIds = new Set()
+    const portfolioYoutubeIds = new Set()
+    for (const f of (portfolioFavs || [])) {
+      if (!f.is_in_vault) continue
+      portfolioFavIds.add(f.id)
+      const yt = f.metadata?.youtube_id
+      if (yt) portfolioYoutubeIds.add(yt)
+    }
     setItems(prev => prev.map(it => ({
       ...it,
       _inVault: it.youtube_id ? vaultYoutubeIds.has(it.youtube_id) : false,
+      _inPortfolio: it._favoriteId
+        ? portfolioFavIds.has(it._favoriteId)
+        : it.youtube_id ? portfolioYoutubeIds.has(it.youtube_id) : false,
     })))
   }
 
@@ -729,6 +778,7 @@ export default function PlaybookPage() {
                               onSaveToVault={() => saveVideoToVault(item)}
                               onMoveToPortfolio={() => moveVideoToPortfolio(item)}
                               inVault={!!item._inVault}
+                              inPortfolio={!!item._inPortfolio}
                               onRemove={() => removeItem(item)}
                               currentBucket={tab}
                             />
@@ -825,7 +875,7 @@ export default function PlaybookPage() {
 // to actually cook this." It mirrors the 💾 Save to My Kitchen button
 // on Chef TV's Recipe view, surfaced here for users browsing their
 // saved Practice videos in Playbook.
-function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, onRemove, currentBucket }) {
+function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, inPortfolio, onRemove, currentBucket }) {
   const isPractice = currentBucket === 'practice'
   const isTeach = currentBucket === 'teach'
 
@@ -835,8 +885,9 @@ function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, 
       <div className="px-3 pb-2 pt-1 bg-white">
         {isPractice ? (
           // Practice: "🔐 Move to Recipe Vault" → "✓ In Recipe Vault"
-          // (disabled emerald confirmation after save). Session-level
-          // — refresh resets so the user can re-save.
+          // (disabled emerald confirmation after save). Persistent —
+          // _inVault flips back automatically when the user deletes
+          // the recipe in /secret and returns to this tab.
           inVault ? (
             <button
               type="button"
@@ -856,19 +907,29 @@ function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, 
             </button>
           )
         ) : isTeach ? (
-          // Teach: "💎 Move to Portfolio" — moves the technique video out
-          // of Teach and into the Recipe Vault Portfolio (the user's
-          // "skill learning" reference shelf, same surface that holds
-          // saved Chef Notes). Mirrors the Chef Jennifer · Teach button.
-          // No confirmation state needed — the row disappears from Teach
-          // immediately on success.
-          <button
-            onClick={onMoveToPortfolio}
-            title="Move this technique video to your Recipe Vault Portfolio"
-            className="text-xs font-semibold border-2 border-orange-300 bg-orange-50 text-orange-700 rounded-lg px-2.5 py-1 hover:opacity-80"
-          >
-            💎 Move to Portfolio
-          </button>
+          // Teach: "💎 Move to Portfolio" → "✓ In Portfolio" (disabled
+          // emerald confirmation after save). Same persistence pattern
+          // as Practice — _inPortfolio flips back when the user un-files
+          // the video from Portfolio in /secret. Video stays visible
+          // in Teach the whole time so the user can see the new badge.
+          inPortfolio ? (
+            <button
+              type="button"
+              disabled
+              title="This video is in your Recipe Vault Portfolio"
+              className="text-xs font-semibold border-2 border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg px-2.5 py-1 cursor-default"
+            >
+              ✓ In Portfolio
+            </button>
+          ) : (
+            <button
+              onClick={onMoveToPortfolio}
+              title="Move this technique video to your Recipe Vault Portfolio"
+              className="text-xs font-semibold border-2 border-orange-300 bg-orange-50 text-orange-700 rounded-lg px-2.5 py-1 hover:opacity-80"
+            >
+              💎 Move to Portfolio
+            </button>
+          )
         ) : null}
       </div>
     </div>
