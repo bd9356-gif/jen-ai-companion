@@ -44,6 +44,27 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
             <span className="text-gray-400 text-xs ml-1">{expanded ? '▲' : '▼'}</span>
           </button>
 
+          {/* Move to Recipe Vault — always-visible row action so the user
+              can promote a recipe without expanding it first. The full
+              expanded view still has its own big button for users
+              reviewing the full recipe. Both share `savedToVault`
+              state so once tapped the row reflects the saved state
+              everywhere. */}
+          {onSaveToVault && (
+            <button
+              onClick={handleSaveToVault}
+              disabled={savedToVault}
+              title="Save this recipe to your Recipe Vault"
+              className={`mt-1.5 text-xs font-semibold rounded-lg px-2.5 py-1 border-2 transition-colors ${
+                savedToVault
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default'
+                  : 'border-orange-300 bg-orange-50 text-orange-700 hover:opacity-80'
+              }`}
+            >
+              {savedToVault ? '✓ In Recipe Vault' : '🔐 Move to Recipe Vault'}
+            </button>
+          )}
+
           {expanded && (
             <div className="mt-2 space-y-3 text-sm text-gray-700">
               {(cuisine || difficulty) && (
