@@ -295,9 +295,9 @@ export default function PlaybookPage() {
       .from('favorites')
       .update({ is_in_vault: true })
       .eq('id', note.id)
-    if (error) { showToast('Could not file note'); return }
+    if (error) { showToast('Could not move note'); return }
     setNotes(prev => prev.filter(n => n.id !== note.id))
-    showToast('💎 Filed to Portfolio')
+    showToast('💎 Moved to Portfolio')
   }
 
   async function removeRecipe(item) {

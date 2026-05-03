@@ -5,11 +5,14 @@ import { useState } from 'react'
 // Used by /playbook (📝 Chef Notes section) and /secret (💎 Chef Portfolio
 // view inside the Recipe Vault).
 //
-// Optional `onPortfolio` + `inPortfolio` props add a portfolio file button:
-//   - inPortfolio=false → "💎 File to Portfolio" (orange outline)
-//   - inPortfolio=true  → "✓ Filed" (orange filled — rarely visible since
-//                         filed notes vanish from the Chef Notes inbox)
-// Tap files the note: it MOVES out of the Playbook inbox and into the
+// Optional `onPortfolio` + `inPortfolio` props add a portfolio move button:
+//   - inPortfolio=false → "💎 Move to Portfolio" (orange outline)
+//   - inPortfolio=true  → "✓ In Portfolio" (emerald — matches the
+//                         "✓ In Recipe Vault" confirmation pattern on
+//                         Chef TV Practice videos so the cross-surface
+//                         "after I moved it" state reads the same way
+//                         everywhere)
+// Tap moves the note: it MOVES out of the Playbook inbox and into the
 // Recipe Vault Portfolio (favorites.is_in_vault = true). Matches Bill's
 // "zip through, file the keepers, delete the rest" workflow. To un-file,
 // tap × on the row inside the Portfolio view — the note returns to the
@@ -37,15 +40,16 @@ export default function ExpandableItem({ item, emoji = '💡', onRemove, removeT
           )}
           {onPortfolio && (
             <button
-              onClick={onPortfolio}
-              title={inPortfolio ? 'Filed in Recipe Vault Portfolio' : 'File this note to Recipe Vault Portfolio (moves out of Chef Notes)'}
+              onClick={inPortfolio ? undefined : onPortfolio}
+              disabled={inPortfolio}
+              title={inPortfolio ? 'This note is in your Recipe Vault Portfolio' : 'Move this note to Recipe Vault Portfolio (moves out of Chef Notes)'}
               className={`mt-2 text-xs font-semibold rounded-lg px-2.5 py-1 border-2 transition-colors ${
                 inPortfolio
-                  ? 'bg-orange-600 text-white border-orange-600 hover:bg-orange-700'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300 cursor-default'
                   : 'text-orange-700 border-orange-300 bg-white hover:bg-orange-50'
               }`}
             >
-              {inPortfolio ? '✓ Filed' : '💎 File to Portfolio'}
+              {inPortfolio ? '✓ In Portfolio' : '💎 Move to Portfolio'}
             </button>
           )}
         </div>
