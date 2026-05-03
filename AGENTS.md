@@ -536,7 +536,17 @@ The Vault used to have two overlapping fields — a free-text `category` input (
 
 ## Chef Portfolio (`/secret?view=portfolio`)
 
-The 💎 Chef Portfolio is a curated subset of saved Chef Notes the user has promoted out of `/playbook` and into the Recipe Vault. **Notes, not recipes** — it's the equivalent of pinning a Chef Jennifer answer to the Vault as a "keep forever" reference. The note still lives in Playbook regardless; Portfolio is just a second surface that renders the marked subset.
+The 💎 Chef Portfolio is a curated subset of saved **skill-learning content** the user has promoted out of `/playbook` and into the Recipe Vault — **Chef Notes** (saved AI answers from Chef Jennifer · Teach) and **technique videos** (Chef TV · Teach), both rendered on the same surface as the user's permanent reference shelf. The underlying items still live on Playbook regardless; Portfolio is a second surface that renders the marked subset.
+
+**Two sections, same data flag.** Both notes and videos use `favorites.is_in_vault=true` to mark them as "in Portfolio". The Portfolio query runs in parallel against `type='ai_answer'` (notes) and `type IN ('video_education','video_recipe')` (videos), populating two separate state slots. The render shows a **📺 Saved Videos** section first (sky-themed, flat thumbnail list with channel + click-through to YouTube), then the **5-bucket Notes accordion** below it (How to Prep / Cook / Season / Improve / Shop). Empty sections collapse — when the user has only notes, only the accordion shows; when only videos, only the video block shows.
+
+**Filing a Chef TV Teach video to Portfolio (April 2026).** The Chef TV · 🎓 Teach tab on `/playbook` shows a per-video **💎 Move to Portfolio** button (orange outline, mirrors the Chef Notes button). On tap, `moveVideoToPortfolio(item)` runs:
+- For favorites-sourced video saves: `update favorites set is_in_vault=true`.
+- For legacy `saved_videos` rows: synthesize a fresh `favorites` row (type=`video_education` or `video_recipe`, metadata={youtube_id, channel, legacy_video_id}, is_in_vault=true) and delete the legacy save row.
+- Either way: delete the matching `cooking_skill_items` row so the video leaves Teach.
+- Filter the item out of local state so the Teach tab reflects the move immediately.
+
+**Un-filing a video from Portfolio.** Tap × on a video row → `removeVideoFromPortfolio(video)` flips `is_in_vault=false` AND re-creates the Teach bucket placement (`cooking_skill_items.bucket='teach'`). Mirrors the un-file pattern for notes — Portfolio is the safe shelf, deletion happens by un-filing first then deleting from the Playbook inbox.
 
 **Why it exists.** Bill's framing (April 2026): Chef TV and Chef Jennifer already have paths to move recipes into the Vault, but **notes** had no equivalent. Saved AI answers piled up in Playbook with no way to elevate the genuinely valuable ones. Portfolio gives the user a one-tap "this one's a keeper" gesture.
 

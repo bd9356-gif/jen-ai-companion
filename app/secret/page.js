@@ -661,6 +661,11 @@ export default function MyRecipeVaultPage() {
   // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
   // whenever the user toggles between listStyle modes.
   const [portfolioNotes, setPortfolioNotes] = useState([])
+  // Portfolio also holds Chef TV Teach videos the user moved over from
+  // Playbook (April 2026). Same `favorites.is_in_vault=true` flag as
+  // notes; type is `video_education` or `video_recipe` instead of
+  // `ai_answer`. Rendered in its own section above the Notes accordion.
+  const [portfolioVideos, setPortfolioVideos] = useState([])
   // Which of the 5 Chef Portfolio "How to..." groups are expanded.
   // Defaults to all collapsed (matches Guides/Library accordion pattern) so
   // the Portfolio opens as a 5-row scannable index — tap a row to drill in.
@@ -947,19 +952,28 @@ export default function MyRecipeVaultPage() {
     setEducationVideos(prev => prev.filter(v => v.id !== id))
   }
 
-  // Chef Portfolio — saved AI answers (Chef Notes) the user has promoted
-  // from /playbook into the Recipe Vault as a curated keep-forever subset.
-  // The notes still live on /playbook regardless; is_in_vault just marks
-  // the ones worth keeping in the Vault's Portfolio view.
+  // Chef Portfolio — saved Chef Notes (AI answers) AND Chef TV Teach
+  // videos the user has promoted from /playbook. Both live on the
+  // `favorites` table with `is_in_vault=true`; we run two parallel
+  // queries because the rendering surface differs (notes get the
+  // 5-bucket "How to..." accordion, videos get a flat thumbnail grid
+  // above it). Both still live on /playbook regardless; the flag
+  // just marks the keepers for the Vault's Portfolio view.
   async function loadPortfolioNotes(userId) {
-    const { data } = await supabase
-      .from('favorites')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('type', 'ai_answer')
-      .eq('is_in_vault', true)
-      .order('created_at', { ascending: false })
-    setPortfolioNotes(data || [])
+    const [{ data: noteRows }, { data: videoRows }] = await Promise.all([
+      supabase
+        .from('favorites').select('*')
+        .eq('user_id', userId).eq('type', 'ai_answer')
+        .eq('is_in_vault', true)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('favorites').select('*')
+        .eq('user_id', userId).in('type', ['video_education', 'video_recipe'])
+        .eq('is_in_vault', true)
+        .order('created_at', { ascending: false }),
+    ])
+    setPortfolioNotes(noteRows || [])
+    setPortfolioVideos(videoRows || [])
   }
 
   // Un-file a note: send it back to the Chef Notes inbox in Playbook.
@@ -977,6 +991,31 @@ export default function MyRecipeVaultPage() {
     if (error) { showToast('Could not un-file note'); return }
     setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
     showToast('↩ Returned to Chef Notes')
+  }
+
+  // Un-file a video: send it back to Chef TV · Teach in Playbook by
+  // flipping is_in_vault to false. Bucket placement was deleted when the
+  // video was moved here, so on un-file we also re-create the Teach
+  // bucket row so it shows up where the user expects. Doesn't delete
+  // the underlying favorites row — same safe-escape pattern as notes.
+  async function removeVideoFromPortfolio(video) {
+    if (!user) return
+    const { error: updErr } = await supabase
+      .from('favorites')
+      .update({ is_in_vault: false })
+      .eq('id', video.id)
+    if (updErr) { showToast('Could not un-file video'); return }
+    // Restore the Teach bucket placement on Playbook so the video
+    // reappears in the Chef TV Teach inbox (same as Chef Notes' return).
+    await supabase.from('cooking_skill_items').upsert({
+      user_id: user.id,
+      item_type: 'favorite',
+      item_id: video.id,
+      bucket: 'teach',
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,item_type,item_id' })
+    setPortfolioVideos(prev => prev.filter(v => v.id !== video.id))
+    showToast('↩ Returned to Chef TV · Teach')
   }
 
   async function loadRecipes(userId) {
@@ -2806,15 +2845,76 @@ export default function MyRecipeVaultPage() {
                 Tap <strong>×</strong> to send it back.
               </p>
             </div>
-            <p className="text-sm text-gray-500 mb-3">{portfolioNotes.length} {portfolioNotes.length === 1 ? 'note' : 'notes'} in your Portfolio</p>
-            {portfolioNotes.length === 0 ? (
+            {(() => {
+              const totalCount = portfolioNotes.length + portfolioVideos.length
+              return (
+                <p className="text-sm text-gray-500 mb-3">
+                  {totalCount === 0 ? '0 saved' : `${totalCount} saved`}
+                  {portfolioVideos.length > 0 && portfolioNotes.length > 0 && (
+                    <> ({portfolioVideos.length} {portfolioVideos.length === 1 ? 'video' : 'videos'}, {portfolioNotes.length} {portfolioNotes.length === 1 ? 'note' : 'notes'})</>
+                  )}
+                </p>
+              )
+            })()}
+
+            {/* 📺 Saved Videos section — Chef TV Teach videos the user
+                moved over from Playbook. Sits above the Notes accordion
+                because videos are the more eye-catching surface and the
+                Notes accordion is heavier (multiple buckets). Tap the ×
+                on any thumb to un-file (returns to Chef TV · Teach in
+                Playbook). The video link clicks through to YouTube. */}
+            {portfolioVideos.length > 0 && (
+              <div className="mb-4 bg-white rounded-2xl border-2 border-sky-200 border-l-8 border-l-sky-500 overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3 bg-sky-50">
+                  <span className="text-2xl">📺</span>
+                  <span className="font-bold text-sky-900">Saved Videos</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">{portfolioVideos.length}</span>
+                </div>
+                <div className="divide-y divide-sky-100">
+                  {portfolioVideos.map(v => {
+                    const ytId = v.metadata?.youtube_id || ''
+                    const channel = v.metadata?.channel || ''
+                    const thumb = v.thumbnail_url || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '')
+                    const ytUrl = ytId ? `https://www.youtube.com/watch?v=${ytId}` : null
+                    return (
+                      <div key={v.id} className="flex items-start gap-3 p-3 bg-white hover:bg-sky-50/40">
+                        {thumb ? (
+                          <a href={ytUrl || '#'} target="_blank" rel="noopener noreferrer" className="shrink-0 w-20 aspect-video rounded-lg overflow-hidden bg-gray-100">
+                            <img src={thumb} alt="" className="w-full h-full object-cover" />
+                          </a>
+                        ) : (
+                          <div className="shrink-0 w-20 aspect-video rounded-lg bg-sky-100 flex items-center justify-center text-2xl">🎬</div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          {ytUrl ? (
+                            <a href={ytUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-sm text-gray-900 leading-snug line-clamp-2 hover:text-sky-700">{v.title}</a>
+                          ) : (
+                            <p className="font-semibold text-sm text-gray-900 leading-snug line-clamp-2">{v.title}</p>
+                          )}
+                          {channel && <p className="text-xs text-sky-700 mt-0.5">{channel}</p>}
+                        </div>
+                        <button
+                          onClick={() => removeVideoFromPortfolio(v)}
+                          title="Return to Chef TV · Teach (un-file)"
+                          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {portfolioNotes.length === 0 && portfolioVideos.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
                 <p className="text-4xl mb-3">💎</p>
                 <p className="text-gray-700 font-semibold mb-1">Nothing filed yet</p>
-                <p className="text-gray-500 text-sm mb-5 px-6">Open My Playbook → 📝 Chef Notes, zip through the inbox, and tap <strong>💎 File to Portfolio</strong> on the keepers.</p>
-                <button onClick={() => window.location.href='/playbook?tab=chef_notes'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open Chef Notes →</button>
+                <p className="text-gray-500 text-sm mb-5 px-6">Open My Playbook and tap <strong>💎 Move to Portfolio</strong> on the Chef Notes (Chef Jennifer · Teach) or technique videos (Chef TV · Teach) you want to keep here.</p>
+                <button onClick={() => window.location.href='/playbook?tab=chef_notes'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open Playbook →</button>
               </div>
-            ) : (
+            ) : portfolioNotes.length === 0 ? null : (
               /* Group portfolio notes into the 5 fixed "How to..." buckets and
                  render each as a collapsed accordion section. Empty groups are
                  hidden so the page only shows what the user has actually saved

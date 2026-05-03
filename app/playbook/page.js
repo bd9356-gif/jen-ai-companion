@@ -258,6 +258,57 @@ export default function PlaybookPage() {
     showToast(`Moved to ${BUCKETS.find(b => b.key === bucket)?.label} ✓`)
   }
 
+  // Move a Chef TV Teach video out of Playbook and into the Recipe Vault
+  // Portfolio (the user's "skill learning" reference shelf — same surface
+  // that holds saved Chef Notes). The Portfolio data model is the
+  // `favorites` table with `is_in_vault=true`; for legacy `saved_videos`
+  // sources we synthesize a fresh favorites row first since they have no
+  // such flag of their own. Either way the video disappears from Teach
+  // (matching Chef Notes' "file moves out of inbox" behavior).
+  async function moveVideoToPortfolio(item) {
+    if (!user) return
+    if (item._favoriteId) {
+      // Already a favorites row — flip the flag.
+      const { error } = await supabase
+        .from('favorites')
+        .update({ is_in_vault: true })
+        .eq('id', item._favoriteId)
+      if (error) { showToast('Could not move to Portfolio'); return }
+    } else if (item._legacy_src) {
+      // Legacy cooking_video / education_video saved-row → synthesize a
+      // favorites row that the Portfolio query can find. type stays
+      // descriptive ('video_education' or 'video_recipe') so existing
+      // queries keep working; metadata carries the hooks the Portfolio
+      // renderer needs (youtube_id, channel) without us having to join
+      // back to the source table.
+      const favType = item._legacy_src === 'education' ? 'video_education' : 'video_recipe'
+      const { error: insErr } = await supabase.from('favorites').insert({
+        user_id: user.id,
+        type: favType,
+        title: item.title,
+        thumbnail_url: item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : null,
+        source: 'chef_tv',
+        metadata: { youtube_id: item.youtube_id || '', channel: item.channel || '', legacy_video_id: item._item_id },
+        is_in_vault: true,
+      })
+      if (insErr) { showToast('Could not move to Portfolio'); return }
+      // Remove the legacy save row — the new favorites entry is the
+      // canonical record going forward.
+      const legacyTable = item._legacy_src === 'education' ? 'saved_education_videos' : 'saved_videos'
+      await supabase.from(legacyTable).delete().eq('user_id', user.id).eq('video_id', item._item_id)
+    }
+    // Remove the bucket placement so the video leaves Teach.
+    await supabase.from('cooking_skill_items')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('item_type', item._item_type)
+      .eq('item_id', item._item_id)
+    // Drop from the local items state so the Teach tab reflects the
+    // move immediately (no refresh needed).
+    setItems(prev => prev.filter(i => !(i._item_type === item._item_type && i._item_id === item._item_id)))
+    showToast('💎 Moved to Portfolio')
+  }
+
   async function removeItem(item) {
     if (!user) return
     if (item._legacy_src === 'cooking') {
@@ -612,6 +663,7 @@ export default function PlaybookPage() {
                               item={item}
                               onMove={(bucket) => moveToBucket(item, bucket)}
                               onSaveToVault={() => saveVideoToVault(item)}
+                              onMoveToPortfolio={() => moveVideoToPortfolio(item)}
                               inVault={vaultIds.has(key)}
                               onRemove={() => removeItem(item)}
                               currentBucket={tab}
@@ -709,22 +761,18 @@ export default function PlaybookPage() {
 // to actually cook this." It mirrors the 💾 Save to My Kitchen button
 // on Chef TV's Recipe view, surfaced here for users browsing their
 // saved Practice videos in Playbook.
-function PlaybookRow({ item, onMove, onSaveToVault, inVault, onRemove, currentBucket }) {
-  const other = BUCKETS.find(b => b.key !== currentBucket)
-  const c = other ? COLOR[other.key] : null
+function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, onRemove, currentBucket }) {
   const isPractice = currentBucket === 'practice'
+  const isTeach = currentBucket === 'teach'
 
   return (
     <div>
       <VideoItem video={item} onRemove={onRemove} />
       <div className="px-3 pb-2 pt-1 bg-white">
         {isPractice ? (
-          // Two states. Default ("not yet saved"): orange "🔐 Move to
-          // Recipe Vault" — tappable, fires onSaveToVault. After save
-          // ("inVault" prop true): emerald "✓ In Recipe Vault" —
-          // disabled, confirms the action landed. Session-level so the
-          // user can see what they've already moved without bouncing
-          // out to the Vault to verify. Refresh resets it.
+          // Practice: "🔐 Move to Recipe Vault" → "✓ In Recipe Vault"
+          // (disabled emerald confirmation after save). Session-level
+          // — refresh resets so the user can re-save.
           inVault ? (
             <button
               type="button"
@@ -743,17 +791,21 @@ function PlaybookRow({ item, onMove, onSaveToVault, inVault, onRemove, currentBu
               🔐 Move to Recipe Vault
             </button>
           )
-        ) : (
-          other && c && (
-            <button
-              onClick={() => onMove(other.key)}
-              title={`Move to ${other.label}`}
-              className={`text-xs font-semibold border-2 ${c.btnCls} rounded-lg px-2.5 py-1 hover:opacity-80`}
-            >
-              Move to {other.emoji} {other.label}
-            </button>
-          )
-        )}
+        ) : isTeach ? (
+          // Teach: "💎 Move to Portfolio" — moves the technique video out
+          // of Teach and into the Recipe Vault Portfolio (the user's
+          // "skill learning" reference shelf, same surface that holds
+          // saved Chef Notes). Mirrors the Chef Jennifer · Teach button.
+          // No confirmation state needed — the row disappears from Teach
+          // immediately on success.
+          <button
+            onClick={onMoveToPortfolio}
+            title="Move this technique video to your Recipe Vault Portfolio"
+            className="text-xs font-semibold border-2 border-orange-300 bg-orange-50 text-orange-700 rounded-lg px-2.5 py-1 hover:opacity-80"
+          >
+            💎 Move to Portfolio
+          </button>
+        ) : null}
       </div>
     </div>
   )
