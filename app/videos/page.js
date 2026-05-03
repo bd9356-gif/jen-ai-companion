@@ -34,6 +34,7 @@ const PLAYBOOK_BUCKETS = {
 // against the video title. One chip active at a time; "All" = no filter.
 // Keywords are hand-tuned; refine as we learn what titles look like.
 const PRACTICE_CHIPS = [
+  { key: 'featured', label: '⭐ Featured', feature: true },
   { key: 'all',    label: 'All' },
   { key: 'pasta',  label: '🍝 Pasta',  match: /pasta|spaghetti|linguine|fettuccine|ravioli|lasagna|macaroni|noodle|carbonara|bolognese|risotto|gnocchi/i },
   { key: 'pizza',  label: '🍕 Pizza',  match: /pizza|calzone/i },
@@ -535,7 +536,11 @@ export default function VideosPage() {
       return teachScore(b) - teachScore(a)
     })
   let filtered = afterFilter
-  if (filter === 'teach' && activeChip?.feature) {
+  // Featured chip slicing — works on either tab now (the chip exists on
+  // both Teach and Practice). Curator-additive: featured rows lead, and
+  // when there aren't yet FEATURED_CAP featured rows, the rest is filled
+  // from the automatic top-by-score slice so the chip never feels empty.
+  if (activeChip?.feature) {
     const featuredRows = afterFilter.filter(v => v.is_featured)
     if (featuredRows.length >= FEATURED_CAP) {
       filtered = featuredRows.slice(0, FEATURED_CAP)
@@ -600,7 +605,7 @@ export default function VideosPage() {
                 🎓 Teach
               </button>
               <button
-                onClick={() => { setFilter('practice'); setShowCount(12); setTopic('all') }}
+                onClick={() => { setFilter('practice'); setShowCount(12); setTopic('featured') }}
                 className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
                   filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
