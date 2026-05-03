@@ -2842,15 +2842,20 @@ export default function MyRecipeVaultPage() {
              Tap a row to expand; tap the × to remove from the Portfolio
              (the underlying note stays in Playbook). */
           <div>
-            <div className="mb-4 rounded-xl bg-amber-50 border-2 border-amber-200 px-4 py-3">
-              <p className="text-sm font-bold text-amber-900 flex items-center gap-2">
+            {/* Tagline: plain prose, no surrounding card. Keeps the
+                page light at the top and lets the Learning Videos +
+                Notes sections below carry the visual weight. Mentions
+                both kinds of content so users know Portfolio holds
+                more than just notes. */}
+            <div className="mb-4 px-1">
+              <p className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <span>💎</span><span>Chef Portfolio</span>
               </p>
-              <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                Your place to store the <strong>My Playbook</strong>{' '}notes you want to keep from your cooking questions. It&apos;s simply where you choose to send your saved answers so everything stays organized. Your Portfolio.
+              <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                Your place to keep the <strong>My Playbook</strong> notes and learning videos worth holding onto — Chef Jennifer&rsquo;s answers and Chef TV&rsquo;s technique videos, all in one shelf.
               </p>
-              <p className="text-xs text-amber-800 mt-2 leading-relaxed">
-                Tap <strong>×</strong> to send it back.
+              <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                Tap <strong>×</strong> on a row to send it back.
               </p>
             </div>
             {(() => {
