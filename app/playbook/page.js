@@ -300,6 +300,46 @@ export default function PlaybookPage() {
     showToast('Recipe removed')
   }
 
+  // Save a Chef TV video's recipe into the user's permanent Recipe Vault.
+  // Mirrors the saveToKitchen logic on /videos but invoked from inside
+  // Playbook's 🍳 Practice tab — same flow, second surface. Item shape
+  // differs by source (legacy cooking_video vs favorites-sourced
+  // video_recipe), so the metadata fetch picks the right table on each
+  // path. The video stays in Practice — saving to the Vault doesn't
+  // remove it from Playbook (the user might still want to rewatch).
+  async function saveVideoToVault(item) {
+    if (!user) return
+    let recipe = null
+    if (item._favoriteId) {
+      const { data: f } = await supabase
+        .from('favorites').select('metadata').eq('id', item._favoriteId).maybeSingle()
+      recipe = f?.metadata || null
+    } else if (item._item_type === 'cooking_video') {
+      const { data: meta } = await supabase
+        .from('video_metadata').select('*').eq('video_id', item.id).maybeSingle()
+      recipe = meta || null
+    }
+    if (!recipe?.ingredients?.length) {
+      showToast('No recipe data found for this video')
+      return
+    }
+    const { error } = await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: item.title,
+      description: recipe.ai_summary || '',
+      ingredients: recipe.ingredients,
+      instructions: recipe.instructions || '',
+      category: '',
+      tags: [],
+      family_notes: `Saved from Chef TV — ${item.channel || ''}.`.replace(' — .', '.'),
+      photo_url: item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : '',
+      difficulty: '',
+      servings: null,
+    })
+    if (error) { showToast('Could not save to Vault'); return }
+    showToast('Saved to Recipe Vault ✓')
+  }
+
   // Promote a Chef Jennifer recipe into the user's permanent vault.
   // Mirrors the saveToVault logic that used to live on /chef-recipes —
   // ingredients normalized to {name, measure}, instructions normalized
@@ -558,6 +598,7 @@ export default function PlaybookPage() {
                             key={`${item._item_type}:${item._item_id}`}
                             item={item}
                             onMove={(bucket) => moveToBucket(item, bucket)}
+                            onSaveToVault={() => saveVideoToVault(item)}
                             onRemove={() => removeItem(item)}
                             currentBucket={tab}
                           />
@@ -642,26 +683,46 @@ export default function PlaybookPage() {
 }
 
 // One saved video row. Shows the video thumb + embed via <VideoItem>,
-// plus a Move ▾ menu. With only 2 buckets, the "move to" target is
-// always the single other bucket — one tap, no submenu needed.
-function PlaybookRow({ item, onMove, onRemove, currentBucket }) {
+// plus an action button below the thumb.
+//   - currentBucket = 'practice': button reads "Move to Recipe Vault"
+//     and calls onSaveToVault — copies the video's recipe into the
+//     user's personal Recipe Vault. The video stays in Practice (this
+//     is a cross-surface save, not a bucket move).
+//   - currentBucket = 'teach': button reads "Move to 🍳 Practice"
+//     and calls onMove — swaps to the other bucket. Existing behavior.
+// The Practice → Recipe Vault path is a real product gesture: "I want
+// to actually cook this." It mirrors the 💾 Save to My Kitchen button
+// on Chef TV's Recipe view, surfaced here for users browsing their
+// saved Practice videos in Playbook.
+function PlaybookRow({ item, onMove, onSaveToVault, onRemove, currentBucket }) {
   const other = BUCKETS.find(b => b.key !== currentBucket)
   const c = other ? COLOR[other.key] : null
+  const isPractice = currentBucket === 'practice'
 
   return (
     <div>
       <VideoItem video={item} onRemove={onRemove} />
-      {other && c && (
-        <div className="px-3 pb-2 pt-1 bg-white">
+      <div className="px-3 pb-2 pt-1 bg-white">
+        {isPractice ? (
           <button
-            onClick={() => onMove(other.key)}
-            title={`Move to ${other.label}`}
-            className={`text-xs font-semibold border-2 ${c.btnCls} rounded-lg px-2.5 py-1 hover:opacity-80`}
+            onClick={onSaveToVault}
+            title="Save this recipe to your Recipe Vault"
+            className="text-xs font-semibold border-2 border-orange-300 bg-orange-50 text-orange-700 rounded-lg px-2.5 py-1 hover:opacity-80"
           >
-            Move to {other.emoji} {other.label}
+            🔐 Move to Recipe Vault
           </button>
-        </div>
-      )}
+        ) : (
+          other && c && (
+            <button
+              onClick={() => onMove(other.key)}
+              title={`Move to ${other.label}`}
+              className={`text-xs font-semibold border-2 ${c.btnCls} rounded-lg px-2.5 py-1 hover:opacity-80`}
+            >
+              Move to {other.emoji} {other.label}
+            </button>
+          )
+        )}
+      </div>
     </div>
   )
 }
