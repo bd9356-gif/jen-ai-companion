@@ -180,7 +180,12 @@ export default function VideosPage() {
   const [playingId, setPlayingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [metadata, setMetadata] = useState({})
-  const [showCount, setShowCount] = useState(12)
+  // Pagination — 20 per page with Previous / Next controls. Page is
+  // 0-indexed in state; the render shows "Page N of M" 1-indexed.
+  // Resets to 0 whenever the user changes tab / topic chip so they
+  // never end up on an empty page.
+  const PAGE_SIZE = 20
+  const [page, setPage] = useState(0)
   // Default to 'teach' — Teach leads in the new Teach → Practice ordering
   // (matches the Cooking School framing: techniques teach you, recipes
   // are where you practice them). User can flip to 'practice' for
@@ -549,8 +554,16 @@ export default function VideosPage() {
   // Used by the ℹ️ About panel — total real (non-Shorts) videos in the
   // library so visitors can see the catalog size at a glance.
   const totalNonShort = videos.filter(v => !isShort(v.duration)).length
-  const visible = filtered.slice(0, showCount)
-  const hasMore = filtered.length > showCount
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const visible = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+  function goToPage(p) {
+    const next = Math.max(0, Math.min(p, totalPages - 1))
+    setPage(next)
+    // Scroll the user back to the top of the list so they can see the
+    // first row of the new page instead of staying parked mid-list.
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -590,7 +603,7 @@ export default function VideosPage() {
             </div>
             <div className="shrink-0 flex bg-gray-100 rounded-full p-0.5 gap-0.5">
               <button
-                onClick={() => { setFilter('teach'); setShowCount(12); setTopic('featured') }}
+                onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
                 className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
                   filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
@@ -598,7 +611,7 @@ export default function VideosPage() {
                 🎓 Teach
               </button>
               <button
-                onClick={() => { setFilter('practice'); setShowCount(12); setTopic('featured') }}
+                onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
                 className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
                   filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
@@ -657,7 +670,7 @@ export default function VideosPage() {
                 return (
                   <button
                     key={c.key}
-                    onClick={() => { setTopic(c.key); setShowCount(12) }}
+                    onClick={() => { setTopic(c.key); setPage(0) }}
                     className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
                       isActive ? activeCls : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
                     }`}
@@ -872,11 +885,28 @@ export default function VideosPage() {
               </div>
             )}
 
-            {hasMore && (
-              <div className="mt-6 text-center">
-                <button onClick={() => setShowCount(c => c + 12)}
-                  className="px-8 py-3 bg-orange-600 text-white rounded-xl font-semibold hover:bg-orange-700 transition-colors">
-                  Show more ({filtered.length - showCount} remaining)
+            {/* Pagination — Previous / Page X of Y / Next. Hidden when
+                everything fits on one page. Buttons disable at the
+                edges. Page change scrolls the list to the top so the
+                user always sees row #1 of the new page. */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => goToPage(safePage - 1)}
+                  disabled={safePage === 0}
+                  className="px-4 py-2 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  ← Previous
+                </button>
+                <span className="text-sm font-semibold text-gray-700">
+                  Page {safePage + 1} of {totalPages}
+                </span>
+                <button
+                  onClick={() => goToPage(safePage + 1)}
+                  disabled={safePage >= totalPages - 1}
+                  className="px-4 py-2 rounded-xl border border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next →
                 </button>
               </div>
             )}
