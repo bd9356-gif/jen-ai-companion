@@ -665,8 +665,15 @@ export default function MyRecipeVaultPage() {
   // Portfolio also holds Chef TV Teach videos the user moved over from
   // Playbook (April 2026). Same `favorites.is_in_vault=true` flag as
   // notes; type is `video_education` or `video_recipe` instead of
-  // `ai_answer`. Rendered in its own section above the Notes accordion.
+  // `ai_answer`. Rendered in its own collapsible section above the
+  // Notes accordion.
   const [portfolioVideos, setPortfolioVideos] = useState([])
+  // Whether the "📺 Learning Videos" Portfolio section is expanded.
+  // Default closed to match the Notes accordion's collapsed-by-default
+  // pattern — user taps the section header to open. Collapsed state
+  // is per-mount (no persistence) since the user usually opens
+  // Portfolio for one specific thing and closes again.
+  const [portfolioVideosOpen, setPortfolioVideosOpen] = useState(false)
   // Which of the 5 Chef Portfolio "How to..." groups are expanded.
   // Defaults to all collapsed (matches Guides/Library accordion pattern) so
   // the Portfolio opens as a 5-row scannable index — tap a row to drill in.
@@ -2858,39 +2865,47 @@ export default function MyRecipeVaultPage() {
               )
             })()}
 
-            {/* 📺 Saved Videos section — Chef TV Teach videos the user
-                moved over from Playbook. Renders each video via the
-                shared <VideoItem>, which keeps playback IN-APP (tap the
-                play overlay → iframe expands inline) instead of bouncing
-                to youtube.com. Tap × on a row to un-file (returns to
-                Chef TV · Teach in Playbook). */}
+            {/* 📺 Learning Videos section — collapsible accordion that
+                holds Chef TV Teach videos the user moved over from
+                Playbook. Header is a tap-to-toggle button (▾/▸ chevron).
+                Each video row uses the shared <VideoItem> so playback
+                stays IN-APP (iframe expands inline). Tap × on a row to
+                un-file (returns to Chef TV · Teach in Playbook). */}
             {portfolioVideos.length > 0 && (
               <div className="mb-4 bg-white rounded-2xl border-2 border-sky-200 border-l-8 border-l-sky-500 overflow-hidden">
-                <div className="flex items-center gap-3 px-4 py-3 bg-sky-50">
-                  <span className="text-2xl">📺</span>
-                  <span className="font-bold text-sky-900">Saved Videos</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">{portfolioVideos.length}</span>
-                </div>
-                <div className="divide-y divide-sky-100">
-                  {portfolioVideos.map(v => {
-                    // Map favorites-row shape → VideoItem's expected
-                    // { youtube_id, title, channel } props. Both legacy-
-                    // sourced and favorites-sourced videos store the
-                    // youtube_id in metadata.youtube_id when filed.
-                    const videoForItem = {
-                      youtube_id: v.metadata?.youtube_id || '',
-                      title: v.title,
-                      channel: v.metadata?.channel || '',
-                    }
-                    return (
-                      <VideoItem
-                        key={v.id}
-                        video={videoForItem}
-                        onRemove={() => removeVideoFromPortfolio(v)}
-                      />
-                    )
-                  })}
-                </div>
+                <button
+                  onClick={() => setPortfolioVideosOpen(o => !o)}
+                  className={`w-full flex items-center justify-between px-4 py-3 ${portfolioVideosOpen ? 'bg-sky-50' : 'bg-white'} hover:bg-sky-50 transition-colors`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📺</span>
+                    <span className="font-bold text-sky-900">Learning Videos</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">{portfolioVideos.length}</span>
+                  </div>
+                  <span className="text-xl text-sky-900">{portfolioVideosOpen ? '▾' : '▸'}</span>
+                </button>
+                {portfolioVideosOpen && (
+                  <div className="divide-y divide-sky-100">
+                    {portfolioVideos.map(v => {
+                      // Map favorites-row shape → VideoItem's expected
+                      // { youtube_id, title, channel } props. Both legacy-
+                      // sourced and favorites-sourced videos store the
+                      // youtube_id in metadata.youtube_id when filed.
+                      const videoForItem = {
+                        youtube_id: v.metadata?.youtube_id || '',
+                        title: v.title,
+                        channel: v.metadata?.channel || '',
+                      }
+                      return (
+                        <VideoItem
+                          key={v.id}
+                          video={videoForItem}
+                          onRemove={() => removeVideoFromPortfolio(v)}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
