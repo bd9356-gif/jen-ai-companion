@@ -20,6 +20,10 @@
 // that are already populated unless ingredients were also missing
 // (instructions backfill is handled separately by generate-instructions.js).
 
+// Load .env.local automatically so the script just runs with `node ...`
+// without the caller having to export every var by hand.
+require('dotenv').config({ path: '.env.local' })
+
 const { createClient } = require('@supabase/supabase-js')
 const Anthropic = require('@anthropic-ai/sdk')
 const { YoutubeTranscript } = require('youtube-transcript')
