@@ -68,6 +68,19 @@ export default function ChefPage() {
     })
   }, [])
 
+  // Read ?mode= once on mount so deep-links from MyKitchen's split
+  // Chef Jennifer tiles land on the right mode. Valid values:
+  // 'teach' | 'practice'. Anything else is ignored — the default
+  // ('teach') stands. Mode changes inside the page are local state
+  // only and don't sync back to the URL, matching the Playbook /
+  // Chef TV ?tab= pattern.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const m = params.get('mode')
+    if (m === 'teach' || m === 'practice') setMode(m)
+  }, [])
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
@@ -310,6 +323,17 @@ export default function ChefPage() {
             className="text-base text-gray-500 hover:text-gray-700 shrink-0 px-1"
           >
             ←
+          </button>
+          {/* Quick jump back to My Playbook — surfaces the natural return
+              path for users who came from Playbook (or who want to see
+              where their just-saved Chef Jennifer answer / recipe landed). */}
+          <button
+            onClick={() => window.location.href='/playbook'}
+            title="Open My Playbook"
+            aria-label="Open My Playbook"
+            className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+          >
+            📘
           </button>
           <h1 className="text-base font-bold text-gray-900 truncate min-w-0">👨‍🍳 Chef Jennifer</h1>
           <div className="shrink-0 ml-auto flex bg-gray-100 rounded-full p-0.5 gap-0.5">

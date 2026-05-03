@@ -553,6 +553,17 @@ export default function VideosPage() {
           <div className="flex items-center gap-2 mb-2">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
+              {/* Quick jump back to My Playbook — same pattern as
+                  Chef Jennifer's header so users have a one-tap way to
+                  see where their just-saved video landed. */}
+              <button
+                onClick={() => window.location.href='/playbook'}
+                title="Open My Playbook"
+                aria-label="Open My Playbook"
+                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+              >
+                📘
+              </button>
               <h1 className="text-base font-bold text-gray-900 truncate">🎬 Chef TV</h1>
             </div>
             <div className="shrink-0 flex bg-gray-100 rounded-full p-0.5 gap-0.5">
