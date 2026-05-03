@@ -26,7 +26,18 @@ require('dotenv').config({ path: '.env.local' })
 
 const { createClient } = require('@supabase/supabase-js')
 const Anthropic = require('@anthropic-ai/sdk')
-const { YoutubeTranscript } = require('youtube-transcript')
+
+// youtube-transcript is ESM-only as of v1.x — it can't be `require()`'d
+// from a CommonJS script. Load it lazily via dynamic import the first
+// time we need it, then cache the constructor for subsequent calls.
+let _YoutubeTranscript = null
+async function getYoutubeTranscript() {
+  if (!_YoutubeTranscript) {
+    const mod = await import('youtube-transcript')
+    _YoutubeTranscript = mod.YoutubeTranscript || mod.default?.YoutubeTranscript || mod.default
+  }
+  return _YoutubeTranscript
+}
 
 // ── ENV ──────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -74,7 +85,8 @@ async function fetchYouTubeContent(youtubeId) {
 
   let transcript = ''
   try {
-    const chunks = await YoutubeTranscript.fetchTranscript(youtubeId)
+    const YT = await getYoutubeTranscript()
+    const chunks = await YT.fetchTranscript(youtubeId)
     transcript = chunks.map(c => c.text).join(' ').replace(/\s+/g, ' ').trim()
   } catch {
     // No captions — description-only is fine, that's what bulk ingestion had.
