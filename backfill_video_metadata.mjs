@@ -23,11 +23,13 @@ dotenv.config({ path: '.env.local' })
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 
-// Resolve youtube-transcript flexibly — different versions of the package
-// export the class via different paths (named `YoutubeTranscript`, default
-// export, or default-of-namespace). Picks whichever shape exposes
-// `fetchTranscript` so a future package upgrade doesn't break us.
-import * as YT_NS from 'youtube-transcript'
+// youtube-transcript@1.3.0's package.json is busted — it sets
+// `"type": "module"` AND points "main" at a CommonJS file, so Node tries
+// to load that .common.js as ESM and crashes. The "module" field
+// correctly points at the ESM build, but Node 24 doesn't honor it for
+// bare specifiers (only bundlers do). Import the ESM build path
+// directly to sidestep the broken main entry.
+import * as YT_NS from 'youtube-transcript/dist/youtube-transcript.esm.js'
 const YoutubeTranscript =
   YT_NS.YoutubeTranscript ||
   YT_NS.default?.YoutubeTranscript ||
