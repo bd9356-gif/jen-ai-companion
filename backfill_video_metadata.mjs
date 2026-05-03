@@ -4,40 +4,25 @@
 // transcript via youtube-transcript), so the AI has way more raw
 // material than the bulk-ingestion description-only pass had.
 //
-// Usage:
-//   node backfill_video_metadata.js [--limit N] [--dry-run] [--video-id ID]
+// ESM module (`.mjs`) because youtube-transcript@1.x ships as ESM-only
+// and its `.common.js` bundle has packaging quirks that crash from CJS.
+// dotenv has a clean ESM entry point so the conversion is straightforward.
 //
-// Env vars (loaded from .env.local — copy/paste into shell, or load via dotenv):
+// Usage:
+//   node backfill_video_metadata.mjs [--limit N] [--dry-run] [--video-id ID]
+//
+// Env vars (loaded from .env.local automatically):
 //   NEXT_PUBLIC_SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY
 //   ANTHROPIC_API_KEY
 //   YOUTUBE_API_KEY
-//
-// Targets every cooking_videos row whose video_metadata.ingredients is
-// null or empty. Skips rows already populated (idempotent — safe to
-// re-run; --limit lets you batch through in chunks). Writes results
-// directly to video_metadata via upsert. Refuses to touch instructions
-// that are already populated unless ingredients were also missing
-// (instructions backfill is handled separately by generate-instructions.js).
 
-// Load .env.local automatically so the script just runs with `node ...`
-// without the caller having to export every var by hand.
-require('dotenv').config({ path: '.env.local' })
+import dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
 
-const { createClient } = require('@supabase/supabase-js')
-const Anthropic = require('@anthropic-ai/sdk')
-
-// youtube-transcript is ESM-only as of v1.x — it can't be `require()`'d
-// from a CommonJS script. Load it lazily via dynamic import the first
-// time we need it, then cache the constructor for subsequent calls.
-let _YoutubeTranscript = null
-async function getYoutubeTranscript() {
-  if (!_YoutubeTranscript) {
-    const mod = await import('youtube-transcript')
-    _YoutubeTranscript = mod.YoutubeTranscript || mod.default?.YoutubeTranscript || mod.default
-  }
-  return _YoutubeTranscript
-}
+import { createClient } from '@supabase/supabase-js'
+import Anthropic from '@anthropic-ai/sdk'
+import { YoutubeTranscript } from 'youtube-transcript'
 
 // ── ENV ──────────────────────────────────────────────────────
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -85,8 +70,7 @@ async function fetchYouTubeContent(youtubeId) {
 
   let transcript = ''
   try {
-    const YT = await getYoutubeTranscript()
-    const chunks = await YT.fetchTranscript(youtubeId)
+    const chunks = await YoutubeTranscript.fetchTranscript(youtubeId)
     transcript = chunks.map(c => c.text).join(' ').replace(/\s+/g, ' ').trim()
   } catch {
     // No captions — description-only is fine, that's what bulk ingestion had.
@@ -169,10 +153,6 @@ async function extractRecipeWithAI(youtubeContent) {
 
 // ── MAIN ─────────────────────────────────────────────────────
 async function main() {
-  // Find candidates: cooking_videos rows whose video_metadata is missing
-  // OR has null/empty ingredients. Use a left-outer pattern via two
-  // queries (Supabase doesn't expose left-anti-joins through the JS
-  // client cleanly).
   let videosQuery = supabase
     .from('cooking_videos')
     .select('id, youtube_id, title, channel')
@@ -193,7 +173,6 @@ async function main() {
   const metaMap = new Map()
   for (const m of (existing || [])) metaMap.set(m.video_id, m)
 
-  // Candidate = no metadata row, OR ingredients null/[]/missing.
   const candidates = (videos || []).filter(v => {
     const m = metaMap.get(v.id)
     if (!m) return true
@@ -217,8 +196,6 @@ async function main() {
 
     try {
       const yt = await fetchYouTubeContent(v.youtube_id)
-      // Throw out videos with no transcript AND a useless description —
-      // we'd just be repeating the failed bulk-ingestion pass.
       if (!yt.hasTranscript && (yt.description || '').length < 200) {
         console.log('⏭  skip (no transcript, thin description)')
         continue
@@ -254,8 +231,6 @@ async function main() {
       errored++
     }
 
-    // Light pacing — Anthropic accepts higher RPS but courteous +
-    // gives us time to ctrl-C cleanly mid-run.
     await new Promise(r => setTimeout(r, 250))
   }
 
