@@ -52,45 +52,66 @@ export async function GET(request) {
   const q = (url.searchParams.get('q') || '').trim()  // optional title/channel search (ilike)
   const limit = Math.min(Number(url.searchParams.get('limit')) || 200, 500)
 
-  let query = supabase
-    .from('cooking_videos')
-    .select('id, title, channel, youtube_id, thumbnail_url, view_count, is_featured, is_hidden')
-    .limit(limit)
-
-  if (featured === 'true') {
-    query = query.eq('is_featured', true)
-  }
-  if (status === 'visible') {
-    query = query.eq('is_hidden', false)
-  } else if (status === 'hidden') {
-    query = query.eq('is_hidden', true)
-  }
-  if (q.length > 0) {
-    // Match against title OR channel so the curator can search either.
-    query = query.or(`title.ilike.%${q}%,channel.ilike.%${q}%`)
+  // Pull from cooking_videos AND education_videos in parallel so the
+  // admin library curator can manage every video that surfaces on Chef
+  // TV. Both tables now carry is_featured + is_hidden (migration 013),
+  // so the same filters apply to either source. Each row is tagged
+  // with `_source` so the action API knows which table to update.
+  function buildQuery(table) {
+    let q2 = supabase.from(table)
+      .select('id, title, channel, youtube_id, thumbnail_url, view_count, is_featured, is_hidden')
+      .limit(limit)
+    if (featured === 'true') q2 = q2.eq('is_featured', true)
+    if (status === 'visible') q2 = q2.eq('is_hidden', false)
+    else if (status === 'hidden') q2 = q2.eq('is_hidden', true)
+    if (q.length > 0) q2 = q2.or(`title.ilike.%${q}%,channel.ilike.%${q}%`)
+    return q2
   }
 
-  const { data: videos, error } = await query
+  const [{ data: cookingRows, error: cErr }, { data: educationRows, error: eErr }] = await Promise.all([
+    buildQuery('cooking_videos'),
+    buildQuery('education_videos'),
+  ])
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (cErr) return NextResponse.json({ error: `cooking_videos: ${cErr.message}` }, { status: 500 })
+  // education_videos missing the is_featured / is_hidden columns means
+  // migration 013 hasn't been run yet. Surface that clearly so the user
+  // knows what to do, rather than failing with a cryptic select error.
+  if (eErr) {
+    return NextResponse.json({
+      error: `education_videos query failed: ${eErr.message}. If this mentions is_hidden / is_featured, run supabase/013_chef_tv_education_admin.sql in the Supabase SQL Editor first.`,
+    }, { status: 500 })
   }
 
-  // Pull metadata in a second query keyed by video id. Matches the pattern
-  // /videos/page.js uses on the client.
-  const ids = (videos || []).map(v => v.id)
+  const cooking = (cookingRows || []).map(v => ({ ...v, _source: 'cooking' }))
+  const education = (educationRows || []).map(v => ({ ...v, _source: 'education' }))
+  const videos = [...cooking, ...education]
+
+  // Pull metadata from BOTH metadata tables in parallel. cooking_videos
+  // joins to video_metadata; education_videos joins to
+  // education_video_metadata. Both keyed by video_id.
+  const cookingIds = cooking.map(v => v.id)
+  const educationIds = education.map(v => v.id)
   let metaMap = {}
-  if (ids.length > 0) {
-    const { data: metaRows } = await supabase
-      .from('video_metadata')
-      .select('video_id, ai_summary, ingredients, instructions')
-      .in('video_id', ids)
-    ;(metaRows || []).forEach(m => { metaMap[m.video_id] = m })
+  const metaPromises = []
+  if (cookingIds.length > 0) {
+    metaPromises.push(
+      supabase.from('video_metadata').select('video_id, ai_summary, ingredients, instructions').in('video_id', cookingIds)
+    )
+  }
+  if (educationIds.length > 0) {
+    metaPromises.push(
+      supabase.from('education_video_metadata').select('video_id, ai_summary, ingredients, instructions').in('video_id', educationIds)
+    )
+  }
+  if (metaPromises.length > 0) {
+    const results = await Promise.all(metaPromises)
+    for (const r of results) {
+      ;(r.data || []).forEach(m => { metaMap[m.video_id] = m })
+    }
   }
 
-  // Sort featured-first, then by view_count desc. Same shape Golf's curator
-  // expects under `_meta`.
-  const rows = (videos || []).map(v => ({ ...v, _meta: metaMap[v.id] || null }))
+  const rows = videos.map(v => ({ ...v, _meta: metaMap[v.id] || null }))
   rows.sort((a, b) => {
     if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1
     return (b.view_count || 0) - (a.view_count || 0)

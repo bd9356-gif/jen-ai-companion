@@ -201,13 +201,13 @@ export default function VideosPage() {
   }, [])
 
   async function loadVideos() {
-    // is_hidden=false filter — admin curator at /admin/library can soft-hide
-    // videos here; they stay in the DB but disappear from the public list.
-    // education_videos doesn't carry the column (no admin curator there yet),
-    // so its query is unfiltered.
+    // is_hidden=false on both tables — admin curator at /admin/library
+    // soft-hides videos in either source; they stay in the DB but
+    // disappear from the public list. is_hidden was added to
+    // education_videos in migration 013 (April 2026).
     const [{ data: cooking }, { data: education }] = await Promise.all([
       supabase.from('cooking_videos').select('*').eq('is_hidden', false).order('view_count', { ascending: false }),
-      supabase.from('education_videos').select('*').order('view_count', { ascending: false }),
+      supabase.from('education_videos').select('*').eq('is_hidden', false).order('view_count', { ascending: false }),
     ])
     const allVideos = [
       ...(cooking || []).map(v => ({ ...v, _source: 'cooking' })),

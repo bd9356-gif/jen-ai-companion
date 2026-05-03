@@ -59,10 +59,15 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { videoId, action, title, channel } = body || {}
+  const { videoId, action, title, channel, source } = body || {}
   if (!videoId || !action) {
     return NextResponse.json({ error: 'videoId and action are required' }, { status: 400 })
   }
+  // Source picks the underlying table — cooking_videos for the original
+  // recipe-bearing rows, education_videos for the technique-only set
+  // added under admin coverage in migration 013. Defaults to cooking
+  // for backward compat with old call sites.
+  const table = source === 'education' ? 'education_videos' : 'cooking_videos'
 
   const update = {}
   switch (action) {
@@ -102,7 +107,7 @@ export async function POST(request) {
   // scoping issues that .single() was hiding behind a generic
   // "Cannot coerce" error.
   const { data: pre, error: preErr } = await supabase
-    .from('cooking_videos')
+    .from(table)
     .select('id, is_featured, is_hidden, title, channel')
     .eq('id', videoId)
     .maybeSingle()
@@ -123,7 +128,7 @@ export async function POST(request) {
   }
 
   const { data: rows, error } = await supabase
-    .from('cooking_videos')
+    .from(table)
     .update(update)
     .eq('id', videoId)
     .select('id, is_featured, is_hidden, title, channel')

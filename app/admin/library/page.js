@@ -134,7 +134,7 @@ export default function AdminLibraryPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ videoId: video.id, action, ...extra })
+        body: JSON.stringify({ videoId: video.id, action, source: video._source, ...extra })
       })
       const body = await res.json()
       if (!res.ok) {
@@ -332,6 +332,14 @@ export default function AdminLibraryPage() {
                       </>
                     )}
                     <div className="mt-1 flex items-center gap-2 text-xs flex-wrap">
+                      {/* Source chip — telegraphs which underlying table
+                          the row lives in (cooking_videos vs education_videos)
+                          so the curator knows which "shelf" they're on. */}
+                      {v._source === 'education' ? (
+                        <span className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-800">🎒 Education</span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">📺 Cooking</span>
+                      )}
                       {hasRecipe ? (
                         <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-800">🍳 Recipe</span>
                       ) : (

@@ -331,7 +331,7 @@ Tables referenced in the app:
   - For `type='ai_answer'`, `metadata.answer` holds the AI response text.
 - **`saved_videos`** — `user_id, video_id` (join to `cooking_videos.id`)
 - **`saved_education_videos`** — `user_id, video_id` (join to `education_videos.id`)
-- **`cooking_videos`** — `id, title, channel, youtube_id, view_count, is_featured, is_hidden, …`. `is_featured` (migration `supabase/010_chef_tv_featured.sql`) is the human override for the ⭐ Featured chip on Chef TV's Teach tab — flipped from `/admin/featured`. `is_hidden` (migration `supabase/012_chef_tv_hidden.sql`, April 2026) is the soft-hide flag flipped from `/admin/library`; the public Chef TV listing query (`/videos`) filters `is_hidden = false`. Both default `false`. Partial indexes on each `= true` set so the public list scans only the rare-state rows.
+- **`cooking_videos`** + **`education_videos`** both carry `is_featured` and `is_hidden` columns (cooking from migrations 010 + 012; education from migration 013, April 2026 — added so the admin library curator at `/admin/library` can manage every video that surfaces on Chef TV, not just the cooking-side rows). Both flags default `false`. Public Chef TV (`/videos`) filters `is_hidden = false` on both tables. Each table has partial indexes on each `= true` set so the public list scans only the rare-state rows.
 - **`education_videos`** — `id, title, channel, youtube_id, …`
 - **`education_video_metadata`** — per-video educational metadata, joined by `video_id`
 - **`video_metadata`** — `id, video_id, ingredients (jsonb[]), instructions` — populated by ingestion scripts.
