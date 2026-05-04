@@ -1322,8 +1322,24 @@ export default function MyRecipeVaultPage() {
     return data
   }
 
-  async function deleteRecipe(id) {
+  // Delete a recipe from the Vault. If it was originally promoted from
+  // a Chef Jennifer recipe (family_notes includes the attribution), also
+  // flip the source favorite's is_in_vault=false so it reappears in
+  // Playbook's ✨ Practice tab. Mirrors the un-file pattern for Chef
+  // Notes from Portfolio.
+  async function deleteRecipe(recipeOrId) {
+    const recipe = typeof recipeOrId === 'object' ? recipeOrId : recipes.find(r => r.id === recipeOrId)
+    const id = recipe?.id || recipeOrId
+    if (!id) return
     await supabase.from('personal_recipes').delete().eq('id', id)
+    if (user && recipe?.title && (recipe.family_notes || '').includes('Saved from Chef Jennifer.')) {
+      await supabase
+        .from('favorites')
+        .update({ is_in_vault: false })
+        .eq('user_id', user.id)
+        .eq('type', 'ai_recipe')
+        .eq('title', recipe.title)
+    }
     setRecipes(prev => prev.filter(r => r.id !== id))
     setView('list'); setViewing(null)
   }
@@ -1657,7 +1673,7 @@ export default function MyRecipeVaultPage() {
                   showToast('Added to Meal Plan ✓')
                 }
               }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>📅 {picksIds.includes(viewing.id) ? 'In Meal Plan' : 'Meal Plan'}</button>
-              <button onClick={() => deleteRecipe(viewing.id)}
+              <button onClick={() => deleteRecipe(viewing)}
                 className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
             </div>
           </div>
