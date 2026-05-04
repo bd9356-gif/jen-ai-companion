@@ -262,12 +262,7 @@ export default function PlaybookPage() {
     }).filter(Boolean)
 
     setItems([...legacyCooking, ...legacyEducation, ...favItems])
-    // Practice = Chef Jennifer recipes NOT yet promoted to the Recipe
-    // Vault. Once promoted (favorites.is_in_vault = true), the recipe
-    // disappears from this inbox — matches the Chef Notes pattern, and
-    // prevents re-tapping "Move to Recipe Vault" from creating duplicate
-    // personal_recipes rows.
-    setRecipes((recipeFavs || []).filter(r => !r.is_in_vault))
+    setRecipes(recipeFavs || [])
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
     // the row), the note is moved to /secret?view=portfolio and
@@ -397,23 +392,14 @@ export default function PlaybookPage() {
   // inbox after filing, matching Bill's "zip through, file keepers, delete
   // the rest" workflow. To un-file, tap × on the row in the Portfolio view —
   // the note returns here as unfiled.
-  //
-  // Optimistic remove — the note disappears from local state BEFORE the
-  // DB update returns, so a quick double-tap can't fire two updates and
-  // see the row twice. If the DB update fails, the note is restored.
   async function togglePortfolio(note) {
     if (!user) return
-    setNotes(prev => prev.filter(n => n.id !== note.id))
     const { error } = await supabase
       .from('favorites')
       .update({ is_in_vault: true })
       .eq('id', note.id)
-    if (error) {
-      showToast('Could not move note')
-      // Restore the note to the inbox — keeps the user's view honest.
-      setNotes(prev => [note, ...prev])
-      return
-    }
+    if (error) { showToast('Could not move note'); return }
+    setNotes(prev => prev.filter(n => n.id !== note.id))
     showToast('💎 Moved to Portfolio')
   }
 
@@ -506,18 +492,6 @@ export default function PlaybookPage() {
     })
     if (error) {
       showToast('Could not save to Vault')
-      return
-    }
-    // Optimistic remove — drop the recipe from the Practice inbox before
-    // awaiting the favorites update so a quick double-tap can't fire
-    // two saves. Lock the favorites row in the background; on update
-    // failure restore the recipe to the inbox.
-    setRecipes(prev => prev.filter(r => r.id !== item.id))
-    const { error: lockErr } = await supabase
-      .from('favorites').update({ is_in_vault: true }).eq('id', item.id)
-    if (lockErr) {
-      setRecipes(prev => [item, ...prev])
-      showToast('Saved to Vault — but lock failed')
       return
     }
     showToast('Saved to Recipe Vault ✓')
