@@ -259,9 +259,9 @@ export default function PlaybookPage() {
     }).filter(Boolean)
 
     setItems([...legacyCooking, ...legacyEducation, ...favItems])
-    // Show only recipes NOT yet moved to the Vault. Mirrors the Notes
-    // inbox filter (!is_in_vault) — same model as Teach.
-    setRecipes((recipeFavs || []).filter(r => !r.is_in_vault))
+    // Show all Chef Jennifer recipes — moved or not. Same as Chef TV
+    // Teach: row stays visible, button locks when is_in_vault=true.
+    setRecipes(recipeFavs || [])
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
     // the row), the note is moved to /secret?view=portfolio and
@@ -501,13 +501,17 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
-    // Mirrors togglePortfolio for Notes — flip is_in_vault=true so
-    // the row leaves the Playbook inbox. Recipe lives in personal_
-    // recipes (the Vault). Deleting the Vault row will flip
-    // is_in_vault=false on the matching favorite, returning the row
-    // to Playbook (handled in /secret deleteRecipe).
-    await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
-    setRecipes(prev => prev.filter(r => r.id !== item.id))
+    // Mirrors moveVideoToPortfolio for Chef TV Teach — flip
+    // favorites.is_in_vault=true and mark the local row. Row stays
+    // visible in Practice with the button locked. Deleting from the
+    // Vault flips is_in_vault=false (handled in /secret deleteRecipe)
+    // and the row's button unlocks on next visit.
+    const { error: lockErr } = await supabase
+      .from('favorites').update({ is_in_vault: true }).eq('id', item.id)
+    if (lockErr) { showToast('Could not lock recipe'); return }
+    setRecipes(prev => prev.map(r =>
+      r.id === item.id ? { ...r, is_in_vault: true } : r
+    ))
     showToast('Saved to Recipe Vault ✓')
   }
 
