@@ -262,10 +262,11 @@ export default function PlaybookPage() {
     }).filter(Boolean)
 
     setItems([...legacyCooking, ...legacyEducation, ...favItems])
-    // Filter out recipes already moved to the Vault — same model as
-    // Chef Notes inbox vs Portfolio. Practice only shows recipes
-    // still pending promotion. Reloads stay clean.
-    setRecipes((recipeFavs || []).filter(r => !r.is_in_vault))
+    // Show all Chef Jennifer recipes including ones already moved to
+    // the Vault — they stay visible in Practice with a "✓ In Recipe
+    // Vault" disabled badge (same pattern as Chef TV Practice videos).
+    // The is_in_vault flag drives the button state, not list visibility.
+    setRecipes(recipeFavs || [])
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
     // the row), the note is moved to /secret?view=portfolio and
@@ -505,29 +506,29 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
-    // Lock the source favorites row so this recipe leaves the Practice
-    // inbox and can't be re-tapped. Uses .select() on the update so we
-    // can tell the difference between "succeeded with 0 rows" (RLS
-    // blocked) and a real success.
+    // Lock the source favorites row so the per-row button flips to
+    // "✓ In Recipe Vault" (disabled) and stays that way across reloads.
+    // Recipe stays visible in Practice — same UX as Chef TV's
+    // Practice tab. Uses .select() so we can detect 0-row updates
+    // (RLS) and surface them clearly.
     const { data: locked, error: lockErr } = await supabase
       .from('favorites')
       .update({ is_in_vault: true })
       .eq('id', item.id)
       .select('id')
     if (lockErr) {
-      // Recipe is in Vault but lock didn't take. Surface the error
-      // verbatim so we can see why next time.
       showToast(`Saved but lock failed: ${lockErr.message}`)
       return
     }
     if (!locked || locked.length === 0) {
-      // Update returned 0 rows — usually means RLS blocked the write.
-      // Recipe is in Vault but Practice will still show it.
       showToast('Saved — but the row did not lock (RLS?)')
       return
     }
-    // Lock confirmed in DB → drop from the local Practice list.
-    setRecipes(prev => prev.filter(r => r.id !== item.id))
+    // Mark this recipe as in_vault locally so the row's badge flips
+    // immediately. Row stays visible.
+    setRecipes(prev => prev.map(r =>
+      r.id === item.id ? { ...r, is_in_vault: true } : r
+    ))
     showToast('Saved to Recipe Vault ✓')
   }
 

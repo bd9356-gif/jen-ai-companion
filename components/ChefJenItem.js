@@ -12,6 +12,11 @@ import { normalizeInstructionsArray } from '@/lib/normalize_instructions'
 export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
   const [expanded, setExpanded] = useState(false)
   const [savedToVault, setSavedToVault] = useState(false)
+  // Persistent lock — derived from the favorites.is_in_vault column
+  // (set by saveRecipeToVault). Combined with the session-level
+  // savedToVault flag for immediate visual feedback after a tap.
+  // Locked state survives reloads and tab switches.
+  const inVault = savedToVault || !!item.is_in_vault
   const meta = item.metadata || {}
   const description  = meta.description || ''
   const ingredients  = Array.isArray(meta.ingredients) ? meta.ingredients : []
@@ -25,7 +30,7 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
   const hasContent   = description || ingredients.length > 0 || instructionSteps.length > 0 || answer
 
   async function handleSaveToVault() {
-    if (savedToVault || !onSaveToVault) return
+    if (inVault || !onSaveToVault) return
     await onSaveToVault()
     setSavedToVault(true)
   }
@@ -47,21 +52,21 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
           {/* Move to Recipe Vault — always-visible row action so the user
               can promote a recipe without expanding it first. The full
               expanded view still has its own big button for users
-              reviewing the full recipe. Both share `savedToVault`
+              reviewing the full recipe. Both share `inVault`
               state so once tapped the row reflects the saved state
               everywhere. */}
           {onSaveToVault && (
             <button
               onClick={handleSaveToVault}
-              disabled={savedToVault}
+              disabled={inVault}
               title="Save this recipe to your Recipe Vault"
               className={`mt-1.5 text-xs font-semibold rounded-lg px-2.5 py-1 border-2 transition-colors ${
-                savedToVault
+                inVault
                   ? 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default'
                   : 'border-orange-300 bg-orange-50 text-orange-700 hover:opacity-80'
               }`}
             >
-              {savedToVault ? '✓ In Recipe Vault' : '🔐 Move to Recipe Vault'}
+              {inVault ? '✓ In Recipe Vault' : '🔐 Move to Recipe Vault'}
             </button>
           )}
 
@@ -120,15 +125,15 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
               {onSaveToVault && (
                 <button
                   onClick={handleSaveToVault}
-                  disabled={savedToVault}
+                  disabled={inVault}
                   title="Save this recipe to your Recipe Vault"
                   className={`w-full py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    savedToVault
+                    inVault
                       ? 'bg-gray-100 text-gray-400 cursor-default'
                       : 'bg-purple-600 text-white hover:bg-purple-700'
                   }`}
                 >
-                  {savedToVault ? '✓ Saved to Recipe Vault' : '💾 Save to Recipe Vault'}
+                  {inVault ? '✓ Saved to Recipe Vault' : '💾 Save to Recipe Vault'}
                 </button>
               )}
             </div>
