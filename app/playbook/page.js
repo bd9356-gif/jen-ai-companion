@@ -397,14 +397,23 @@ export default function PlaybookPage() {
   // inbox after filing, matching Bill's "zip through, file keepers, delete
   // the rest" workflow. To un-file, tap × on the row in the Portfolio view —
   // the note returns here as unfiled.
+  //
+  // Optimistic remove — the note disappears from local state BEFORE the
+  // DB update returns, so a quick double-tap can't fire two updates and
+  // see the row twice. If the DB update fails, the note is restored.
   async function togglePortfolio(note) {
     if (!user) return
+    setNotes(prev => prev.filter(n => n.id !== note.id))
     const { error } = await supabase
       .from('favorites')
       .update({ is_in_vault: true })
       .eq('id', note.id)
-    if (error) { showToast('Could not move note'); return }
-    setNotes(prev => prev.filter(n => n.id !== note.id))
+    if (error) {
+      showToast('Could not move note')
+      // Restore the note to the inbox — keeps the user's view honest.
+      setNotes(prev => [note, ...prev])
+      return
+    }
     showToast('💎 Moved to Portfolio')
   }
 
@@ -499,13 +508,18 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
-    // Lock the source favorites row + drop it from the Practice inbox
-    // so the user can't re-tap and create duplicate personal_recipes
-    // rows. Mirrors the togglePortfolio pattern for Chef Notes:
-    // moved item leaves the inbox immediately. Reloads stay clean
-    // because loadAll filters on `!is_in_vault`.
-    await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
+    // Optimistic remove — drop the recipe from the Practice inbox before
+    // awaiting the favorites update so a quick double-tap can't fire
+    // two saves. Lock the favorites row in the background; on update
+    // failure restore the recipe to the inbox.
     setRecipes(prev => prev.filter(r => r.id !== item.id))
+    const { error: lockErr } = await supabase
+      .from('favorites').update({ is_in_vault: true }).eq('id', item.id)
+    if (lockErr) {
+      setRecipes(prev => [item, ...prev])
+      showToast('Saved to Vault — but lock failed')
+      return
+    }
     showToast('Saved to Recipe Vault ✓')
   }
 
