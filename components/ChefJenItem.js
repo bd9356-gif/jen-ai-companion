@@ -12,11 +12,12 @@ import { normalizeInstructionsArray } from '@/lib/normalize_instructions'
 export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
   const [expanded, setExpanded] = useState(false)
   const [savedToVault, setSavedToVault] = useState(false)
-  // Persistent lock — derived from the favorites.is_in_vault column
-  // (set by saveRecipeToVault). Combined with the session-level
-  // savedToVault flag for immediate visual feedback after a tap.
-  // Locked state survives reloads and tab switches.
-  const inVault = savedToVault || !!item.is_in_vault
+  // Persistent lock — derived from `_inVault` which the parent stamps
+  // by checking if a matching personal_recipes row exists right now.
+  // If the user deletes the recipe from the Vault, this flag drops on
+  // the next refresh and the row unlocks automatically. Combined with
+  // session-level savedToVault for immediate visual feedback after tap.
+  const inVault = savedToVault || !!item._inVault
   const meta = item.metadata || {}
   const description  = meta.description || ''
   const ingredients  = Array.isArray(meta.ingredients) ? meta.ingredients : []
