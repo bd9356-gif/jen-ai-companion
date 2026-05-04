@@ -494,6 +494,13 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
+    // Persist the "saved to vault" lock on the underlying favorites row
+    // so reloads + tab switches see the locked state. Without this the
+    // user could re-tap "Move to Recipe Vault" and create duplicate
+    // personal_recipes rows. Mirrors the favorites.is_in_vault flag we
+    // already use for Chef Notes → Portfolio and Chef TV Teach videos.
+    await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
+    setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, is_in_vault: true } : r))
     showToast('Saved to Recipe Vault ✓')
   }
 
