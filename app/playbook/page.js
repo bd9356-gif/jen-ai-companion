@@ -157,29 +157,17 @@ export default function PlaybookPage() {
       supabase.from('favorites').select('*').eq('user_id', userId).eq('type', 'ai_recipe').order('created_at', { ascending: false }),
       supabase.from('favorites').select('*').eq('user_id', userId).eq('type', 'ai_answer').order('created_at', { ascending: false }),
       // Pull every Vault recipe's photo_url so we can detect which
-      // Chef TV videos are already in the Vault and flip the per-row
-      // Practice button to "✓ In Recipe Vault" without making the user
-      // re-discover that they already saved it. Match is by youtube_id
-      // parsed out of the photo_url. Also pulls family_notes + title so
-      // we can detect Chef Jennifer recipes already in the Vault by
-      // matching title + the "Saved from Chef Jennifer." attribution.
-      supabase.from('personal_recipes').select('title, photo_url, family_notes').eq('user_id', userId),
+      // Chef TV videos already in the Vault flip the per-row Practice
+      // button to "✓ In Recipe Vault". Match is by youtube_id parsed
+      // out of the photo_url (saveToKitchen / saveVideoToVault both
+      // write the YouTube hqdefault URL).
+      supabase.from('personal_recipes').select('photo_url').eq('user_id', userId),
     ])
 
-    // Set of youtube_ids that already have a row in personal_recipes.
-    // Used below to stamp `_inVault` on Practice (Chef TV) items.
     const vaultYoutubeIds = new Set()
-    // Set of Chef Jennifer recipe titles in the Vault, used to stamp
-    // `_inVault` on ai_recipe favorites. The combination of title +
-    // "Saved from Chef Jennifer." in family_notes is what saveRecipe-
-    // ToVault writes, so the match round-trips cleanly.
-    const vaultChefJenTitles = new Set()
     for (const r of (vaultRecipes || [])) {
       const m = (r.photo_url || '').match(/youtube\.com\/vi\/([^/]+)\//)
       if (m && m[1]) vaultYoutubeIds.add(m[1])
-      if ((r.family_notes || '').includes('Saved from Chef Jennifer.') && r.title) {
-        vaultChefJenTitles.add(r.title.trim().toLowerCase())
-      }
     }
     // Set of favorites IDs (and youtube_ids) that are currently in
     // Portfolio (`favorites.is_in_vault=true`). Used to stamp
@@ -271,14 +259,7 @@ export default function PlaybookPage() {
     }).filter(Boolean)
 
     setItems([...legacyCooking, ...legacyEducation, ...favItems])
-    // Stamp `_inVault` on each Chef Jennifer recipe based on whether a
-    // matching personal_recipes row exists right now. Live link — if
-    // the user deletes the recipe from /secret, on next refresh the
-    // match drops and the row unlocks automatically.
-    setRecipes((recipeFavs || []).map(r => ({
-      ...r,
-      _inVault: vaultChefJenTitles.has((r.title || '').trim().toLowerCase()),
-    })))
+    setRecipes(recipeFavs || [])
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
     // the row), the note is moved to /secret?view=portfolio and
@@ -518,14 +499,6 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
-    // Lock the local row by stamping _inVault=true. Persistence comes
-    // from the live link — next time loadAll runs, it'll see the
-    // recipe in personal_recipes and re-stamp the flag. If the user
-    // deletes the recipe from the Vault, on next refresh the match
-    // drops and the row unlocks automatically.
-    setRecipes(prev => prev.map(r =>
-      r.id === item.id ? { ...r, _inVault: true } : r
-    ))
     showToast('Saved to Recipe Vault ✓')
   }
 
@@ -540,24 +513,14 @@ export default function PlaybookPage() {
   // without a hard reload.
   async function refreshInVaultStatus(userId) {
     const [{ data: vaultRecipes }, { data: portfolioFavs }] = await Promise.all([
-      supabase.from('personal_recipes').select('title, photo_url, family_notes').eq('user_id', userId),
+      supabase.from('personal_recipes').select('photo_url').eq('user_id', userId),
       supabase.from('favorites').select('id, metadata, is_in_vault').eq('user_id', userId).in('type', ['video_recipe', 'video_education']),
     ])
     const vaultYoutubeIds = new Set()
-    const vaultChefJenTitles = new Set()
     for (const r of (vaultRecipes || [])) {
       const m = (r.photo_url || '').match(/youtube\.com\/vi\/([^/]+)\//)
       if (m && m[1]) vaultYoutubeIds.add(m[1])
-      if ((r.family_notes || '').includes('Saved from Chef Jennifer.') && r.title) {
-        vaultChefJenTitles.add(r.title.trim().toLowerCase())
-      }
     }
-    // Re-stamp Chef Jennifer recipe lock state. Drops the lock if the
-    // user deleted the recipe from the Vault since the last load.
-    setRecipes(prev => prev.map(r => ({
-      ...r,
-      _inVault: vaultChefJenTitles.has((r.title || '').trim().toLowerCase()),
-    })))
     const portfolioFavIds = new Set()
     const portfolioYoutubeIds = new Set()
     for (const f of (portfolioFavs || [])) {
