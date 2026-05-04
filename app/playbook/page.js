@@ -262,7 +262,12 @@ export default function PlaybookPage() {
     }).filter(Boolean)
 
     setItems([...legacyCooking, ...legacyEducation, ...favItems])
-    setRecipes(recipeFavs || [])
+    // Practice = Chef Jennifer recipes NOT yet promoted to the Recipe
+    // Vault. Once promoted (favorites.is_in_vault = true), the recipe
+    // disappears from this inbox — matches the Chef Notes pattern, and
+    // prevents re-tapping "Move to Recipe Vault" from creating duplicate
+    // personal_recipes rows.
+    setRecipes((recipeFavs || []).filter(r => !r.is_in_vault))
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
     // the row), the note is moved to /secret?view=portfolio and
@@ -494,13 +499,13 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
-    // Persist the "saved to vault" lock on the underlying favorites row
-    // so reloads + tab switches see the locked state. Without this the
-    // user could re-tap "Move to Recipe Vault" and create duplicate
-    // personal_recipes rows. Mirrors the favorites.is_in_vault flag we
-    // already use for Chef Notes → Portfolio and Chef TV Teach videos.
+    // Lock the source favorites row + drop it from the Practice inbox
+    // so the user can't re-tap and create duplicate personal_recipes
+    // rows. Mirrors the togglePortfolio pattern for Chef Notes:
+    // moved item leaves the inbox immediately. Reloads stay clean
+    // because loadAll filters on `!is_in_vault`.
     await supabase.from('favorites').update({ is_in_vault: true }).eq('id', item.id)
-    setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, is_in_vault: true } : r))
+    setRecipes(prev => prev.filter(r => r.id !== item.id))
     showToast('Saved to Recipe Vault ✓')
   }
 
