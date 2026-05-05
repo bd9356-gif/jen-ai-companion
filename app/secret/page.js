@@ -656,7 +656,18 @@ export default function MyRecipeVaultPage() {
   // don't apply there. Synced to ?view=grid|portfolio via
   // history.replaceState so refresh/share preserves the user's choice.
   // Distinct from Recipe Cards (/cards), a separate "chef card" concept.
-  const [listStyle, setListStyle] = useState('grid')
+  // 'cardbox' is the default for new visits — splayed Favorites + Surprise
+  // me + collapsed All-recipes drawer. Existing list / grid / portfolio
+  // modes stay available via the toggle.
+  const [listStyle, setListStyle] = useState('cardbox')
+  // Surprise me — random recipe pulled from non-favorites when the user
+  // taps 🎲. Stored as a recipe object so the result card can render
+  // without re-querying. Cleared when user picks a different list mode.
+  const [surpriseRecipe, setSurpriseRecipe] = useState(null)
+  // Card box drawer state — favorites open by default, all-recipes
+  // collapsed. Per-mount, no persistence.
+  const [favOpen, setFavOpen] = useState(true)
+  const [allOpen, setAllOpen] = useState(false)
   // Curated Chef Notes promoted from Playbook into Recipe Vault via the
   // "💎 Add to Portfolio" button. Backed by `favorites.is_in_vault = true`
   // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
@@ -1045,6 +1056,7 @@ export default function MyRecipeVaultPage() {
     if (viewParam === 'list') setListStyle('list')
     else if (viewParam === 'grid') setListStyle('grid')
     else if (viewParam === 'portfolio') setListStyle('portfolio')
+    else if (viewParam === 'cardbox') setListStyle('cardbox')
     // ?import=<encoded-url> deep-link — the entry point used by the
     // iOS Share-Sheet Shortcut (and any other "send a URL to MyRecipe"
     // flow). Switches to the import view, prefills the URL field, and
@@ -2731,6 +2743,7 @@ export default function MyRecipeVaultPage() {
                   NOT the same as /cards (a separate "chef card" concept). */}
               <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                 {[
+                  { key: 'cardbox', icon: '📦', title: 'Card box (Favorites + Surprise me)' },
                   { key: 'list', icon: '📋', title: 'List view (recipes)' },
                   { key: 'grid', icon: '🖼', title: 'Grid view (recipes)' },
                   { key: 'portfolio', icon: '💎', title: 'Chef Portfolio (saved notes)' },
@@ -2739,11 +2752,16 @@ export default function MyRecipeVaultPage() {
                     key={opt.key}
                     onClick={() => {
                       setListStyle(opt.key)
+                      // Cardbox is the default — no ?view= param needed.
+                      // Other modes get the explicit view param.
                       const url = new URL(window.location.href)
-                      if (opt.key === 'list') url.searchParams.delete('view')
+                      if (opt.key === 'cardbox') url.searchParams.delete('view')
                       else url.searchParams.set('view', opt.key)
                       window.history.replaceState({}, '', url.toString())
                       if (opt.key === 'portfolio' && user) loadPortfolioNotes(user.id)
+                      // Clear the surprise me pick when leaving cardbox so
+                      // it doesn't reappear stale on next return.
+                      if (opt.key !== 'cardbox') setSurpriseRecipe(null)
                     }}
                     title={opt.title}
                     className={`text-base font-semibold px-2.5 py-1.5 ${
@@ -2851,6 +2869,222 @@ export default function MyRecipeVaultPage() {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
+        ) : listStyle === 'cardbox' ? (
+          /* 📦 Card box — the recipe-box-on-the-counter mode. ❤️ Favorites
+             drawer (open by default) renders as splayed cards the user
+             can scroll through and 🎴 Pin without opening. 🎲 Surprise me
+             button at top deals one random non-favorite when the user
+             wants something new. 📚 All recipes drawer (collapsed) gives
+             access to the full Vault when the favorites pass isn't enough.
+             This is the home view for daily meal planning. */
+          (() => {
+            const favs = recipes.filter(r => r.is_favorite)
+            const nonFavs = recipes.filter(r => !r.is_favorite)
+            function rollSurprise() {
+              if (nonFavs.length === 0) return
+              let pick = nonFavs[Math.floor(Math.random() * nonFavs.length)]
+              // Try to avoid landing on the same one twice in a row.
+              if (surpriseRecipe && nonFavs.length > 1) {
+                let safety = 5
+                while (pick?.id === surpriseRecipe.id && safety-- > 0) {
+                  pick = nonFavs[Math.floor(Math.random() * nonFavs.length)]
+                }
+              }
+              setSurpriseRecipe(pick)
+            }
+            return (
+              <div>
+                {/* Surprise me — header chip + result card */}
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <p className="text-sm text-gray-600">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your vault</p>
+                  <button
+                    onClick={rollSurprise}
+                    disabled={nonFavs.length === 0}
+                    title="Pick a random non-favorite recipe"
+                    className="text-xs font-semibold border-2 border-sky-300 bg-sky-50 text-sky-800 rounded-lg px-3 py-1.5 hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    🎲 Surprise me
+                  </button>
+                </div>
+
+                {surpriseRecipe && (
+                  <div className="mb-4 rounded-2xl border-2 border-sky-200 bg-sky-50/60 p-3 flex items-start gap-3">
+                    <div className="shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-amber-100 flex items-center justify-center">
+                      {surpriseRecipe.photo_url
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={surpriseRecipe.photo_url} alt={surpriseRecipe.title} className="w-full h-full object-cover" />
+                        : <span className="text-3xl">{categoryEmoji(surpriseRecipe)}</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700">🎲 Tonight&rsquo;s pick</p>
+                      <button
+                        onClick={() => { setViewing(surpriseRecipe); setView('detail') }}
+                        className="block text-left font-bold text-sm text-gray-900 leading-snug mt-0.5 hover:text-sky-700"
+                      >
+                        {surpriseRecipe.title}
+                      </button>
+                      <p className="text-xs text-gray-500 mt-0.5">From your &ldquo;haven&rsquo;t favorited yet&rdquo; pile</p>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => toggleCardPin(surpriseRecipe.id)}
+                          className={`text-xs font-semibold rounded-lg px-2.5 py-1 border transition-colors ${
+                            pinnedCards.includes(surpriseRecipe.id)
+                              ? 'bg-orange-600 text-white border-orange-600'
+                              : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
+                          }`}
+                        >
+                          {pinnedCards.includes(surpriseRecipe.id) ? '🃏 Pinned' : '🃏 Pin to Cards'}
+                        </button>
+                        <button
+                          onClick={rollSurprise}
+                          className="text-xs font-semibold rounded-lg px-2.5 py-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                        >
+                          🎲 Again
+                        </button>
+                        <button
+                          onClick={() => setSurpriseRecipe(null)}
+                          aria-label="Dismiss"
+                          className="text-xs text-gray-400 hover:text-gray-600 ml-auto"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ❤️ Favorites drawer — splayed cards, open by default */}
+                <div className="mb-3 bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 overflow-hidden">
+                  <button
+                    onClick={() => setFavOpen(o => !o)}
+                    className={`w-full flex items-center justify-between px-4 py-3 ${favOpen ? 'bg-rose-50' : 'bg-white'} hover:bg-rose-50 transition-colors`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">❤️</span>
+                      <span className="font-bold text-rose-900">Favorites</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-900">{favs.length}</span>
+                    </div>
+                    <span className="text-xl text-rose-900">{favOpen ? '▾' : '▸'}</span>
+                  </button>
+                  {favOpen && (
+                    favs.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-sm text-gray-500">
+                        Tap the ❤️ on a recipe to add it here.
+                      </div>
+                    ) : (
+                      <div className="px-3 py-3 flex gap-3 overflow-x-auto">
+                        {favs.map((r, i) => {
+                          const rot = ((i % 5) - 2) * 0.6
+                          const pinned = pinnedCards.includes(r.id)
+                          return (
+                            <div key={r.id} className="shrink-0 w-32" style={{ transform: `rotate(${rot}deg)` }}>
+                              <div className="bg-amber-50 border-2 border-amber-200 rounded-xl overflow-hidden shadow-sm">
+                                <div className="h-1 bg-red-600" />
+                                <button
+                                  onClick={() => { setViewing(r); setView('detail') }}
+                                  className="block w-full text-left"
+                                >
+                                  <div className="px-2 pt-2">
+                                    <p className="font-bold text-[11px] text-gray-900 leading-snug line-clamp-2 min-h-[1.85rem]">{r.title}</p>
+                                  </div>
+                                  <div className="p-2">
+                                    {r.photo_url ? (
+                                      <div className="rounded-lg overflow-hidden h-20">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={r.photo_url} alt={r.title} className="w-full h-full object-cover" />
+                                      </div>
+                                    ) : (
+                                      <div className="rounded-lg bg-amber-100 h-20 flex items-center justify-center text-2xl">
+                                        {categoryEmoji(r)}
+                                      </div>
+                                    )}
+                                  </div>
+                                </button>
+                                <div className="px-2 pb-2">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); toggleCardPin(r.id) }}
+                                    className={`w-full text-[10px] font-semibold rounded-md py-1 border transition-colors ${
+                                      pinned
+                                        ? 'bg-orange-600 text-white border-orange-600'
+                                        : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
+                                    }`}
+                                  >
+                                    {pinned ? '🃏 Pinned' : '🃏 Pin'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  )}
+                </div>
+
+                {/* 📚 All recipes drawer — collapsed by default */}
+                <div className="bg-white rounded-2xl border-2 border-gray-200 border-l-8 border-l-gray-400 overflow-hidden">
+                  <button
+                    onClick={() => setAllOpen(o => !o)}
+                    className={`w-full flex items-center justify-between px-4 py-3 ${allOpen ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-50 transition-colors`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">📚</span>
+                      <span className="font-bold text-gray-900">All recipes</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{recipes.length}</span>
+                    </div>
+                    <span className="text-xl text-gray-600">{allOpen ? '▾' : '▸'}</span>
+                  </button>
+                  {allOpen && (
+                    <div className="px-3 py-3 grid grid-cols-2 gap-3">
+                      {recipes.map(r => {
+                        const pinned = pinnedCards.includes(r.id)
+                        return (
+                          <div key={r.id} className="bg-amber-50 border-2 border-amber-200 rounded-xl overflow-hidden">
+                            <div className="h-1 bg-red-600" />
+                            <button
+                              onClick={() => { setViewing(r); setView('detail') }}
+                              className="block w-full text-left"
+                            >
+                              <div className="px-3 pt-2">
+                                <p className="font-bold text-xs text-gray-900 leading-snug line-clamp-2 min-h-[2rem]">
+                                  {r.is_favorite && <span className="text-rose-500 mr-1">❤️</span>}
+                                  {r.title}
+                                </p>
+                              </div>
+                              <div className="p-2">
+                                {r.photo_url ? (
+                                  <div className="rounded-lg overflow-hidden h-20">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={r.photo_url} alt={r.title} className="w-full h-full object-cover" />
+                                  </div>
+                                ) : (
+                                  <div className="rounded-lg bg-amber-100 h-20 flex items-center justify-center text-2xl">
+                                    {categoryEmoji(r)}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                            <div className="px-2 pb-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleCardPin(r.id) }}
+                                className={`w-full text-[11px] font-semibold rounded-md py-1 border transition-colors ${
+                                  pinned
+                                    ? 'bg-orange-600 text-white border-orange-600'
+                                    : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
+                                }`}
+                              >
+                                {pinned ? '🃏 Pinned' : '🃏 Pin to Cards'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()
         ) : listStyle === 'portfolio' ? (
           /* 💎 Chef Portfolio — curated Chef Notes the user has promoted
              from /playbook. Notes (saved AI answers), not recipes — so
@@ -3019,14 +3253,14 @@ export default function MyRecipeVaultPage() {
                   /* Grid view — cream "index card" paper, thin red top rule,
                      title + photo tile. Shows every vault recipe as a
                      photo-first tile. Tapping opens the standard Vault
-                     detail view (not the Card detail). */
+                     detail view (not the Card detail). 🃏 Pin button sits
+                     under the photo so users can pin to /cards without
+                     opening the recipe — matches the Card box pattern. */
                   <div className="grid grid-cols-2 gap-3">
-                    {regularRecipes.map(recipe => (
+                    {regularRecipes.map(recipe => {
+                      const pinned = pinnedCards.includes(recipe.id)
+                      return (
                       <div key={recipe.id} className="relative">
-                        {/* Heart overlay — absolute-positioned so it sits
-                            on top of the card without nesting a <button>
-                            inside the outer <button>. stopPropagation keeps
-                            the tap from also opening the recipe. */}
                         <span
                           role="button"
                           tabIndex={0}
@@ -3057,8 +3291,22 @@ export default function MyRecipeVaultPage() {
                             )}
                           </div>
                         </button>
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); toggleCardPin(recipe.id) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleCardPin(recipe.id) } }}
+                          title={pinned ? 'Pinned to Recipe Cards' : 'Pin to Recipe Cards'}
+                          className={`absolute bottom-2 right-2 z-10 text-[10px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
+                            pinned
+                              ? 'bg-orange-600 text-white border-orange-600'
+                              : 'bg-white/95 text-orange-700 border-orange-300 hover:bg-orange-50'
+                          }`}
+                        >
+                          {pinned ? '🃏 Pinned' : '🃏 Pin'}
+                        </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -3098,6 +3346,23 @@ export default function MyRecipeVaultPage() {
                             }`}
                           >
                             {recipe.is_favorite ? '❤️' : '🤍'}
+                          </span>
+                          {/* 🃏 Pin to Cards — same one-tap pin available
+                              on the cardbox / grid / list rows so the user
+                              can build their card box from any view. */}
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(e) => { e.stopPropagation(); toggleCardPin(recipe.id) }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleCardPin(recipe.id) } }}
+                            title={pinnedCards.includes(recipe.id) ? 'Pinned to Recipe Cards' : 'Pin to Recipe Cards'}
+                            className={`self-center text-[11px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
+                              pinnedCards.includes(recipe.id)
+                                ? 'bg-orange-600 text-white border-orange-600'
+                                : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
+                            }`}
+                          >
+                            {pinnedCards.includes(recipe.id) ? '🃏 Pinned' : '🃏 Pin'}
                           </span>
                           <span className="text-gray-400 text-xl self-center">→</span>
                         </div>
