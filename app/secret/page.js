@@ -668,6 +668,10 @@ export default function MyRecipeVaultPage() {
   // collapsed. Per-mount, no persistence.
   const [favOpen, setFavOpen] = useState(true)
   const [allOpen, setAllOpen] = useState(false)
+  // Story mode — full-screen vertical-scroll viewer over the All Recipes
+  // drawer. Younger-user UX (TikTok / Instagram pattern). Opt-in via a
+  // 📱 Story button on the drawer; ✕ closes back to the page.
+  const [storyMode, setStoryMode] = useState(false)
   // Curated Chef Notes promoted from Playbook into Recipe Vault via the
   // "💎 Add to Portfolio" button. Backed by `favorites.is_in_vault = true`
   // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
@@ -816,6 +820,20 @@ export default function MyRecipeVaultPage() {
     return () => document.removeEventListener('paste', onPaste)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, viewing?.id, user?.id])
+
+  // ESC closes the Story-mode overlay. Also lock <body> scroll while it's
+  // open so a swipe-up doesn't bleed into the underlying page.
+  useEffect(() => {
+    if (!storyMode) return
+    function onKey(e) { if (e.key === 'Escape') setStoryMode(false) }
+    document.addEventListener('keydown', onKey)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [storyMode])
 
   function showToast(msg) {
     setToastMsg(msg)
@@ -2760,8 +2778,13 @@ export default function MyRecipeVaultPage() {
                       window.history.replaceState({}, '', url.toString())
                       if (opt.key === 'portfolio' && user) loadPortfolioNotes(user.id)
                       // Clear the surprise me pick when leaving cardbox so
-                      // it doesn't reappear stale on next return.
-                      if (opt.key !== 'cardbox') setSurpriseRecipe(null)
+                      // it doesn't reappear stale on next return. Also kill
+                      // story mode if it was open — it only belongs to the
+                      // cardbox All Recipes drawer.
+                      if (opt.key !== 'cardbox') {
+                        setSurpriseRecipe(null)
+                        setStoryMode(false)
+                      }
                     }}
                     title={opt.title}
                     className={`text-base font-semibold px-2.5 py-1.5 ${
@@ -3021,19 +3044,150 @@ export default function MyRecipeVaultPage() {
                   )}
                 </div>
 
-                {/* 📚 All recipes drawer — collapsed by default */}
-                <div className="bg-white rounded-2xl border-2 border-gray-200 border-l-8 border-l-gray-400 overflow-hidden">
-                  <button
-                    onClick={() => setAllOpen(o => !o)}
-                    className={`w-full flex items-center justify-between px-4 py-3 ${allOpen ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-50 transition-colors`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">📚</span>
-                      <span className="font-bold text-gray-900">All recipes</span>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{recipes.length}</span>
+                {/* Story mode — full-screen vertical-snap viewer rendered as
+                    a fixed overlay above the page. Each recipe is one
+                    snapped page (h-screen + scroll-snap-align: start) with
+                    a hero photo, title overlay, family-notes excerpt, and
+                    a "View recipe →" CTA. Designed for younger users who
+                    instinctively swipe TikTok / Instagram-style. ✕ in the
+                    top-right closes back to the drawer. */}
+                {storyMode && (
+                  <div className="fixed inset-0 z-50 bg-black">
+                    <button
+                      onClick={() => setStoryMode(false)}
+                      className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/60 text-white text-2xl flex items-center justify-center backdrop-blur"
+                      title="Close story view"
+                    >
+                      ✕
+                    </button>
+                    <div
+                      className="h-full overflow-y-auto"
+                      style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
+                    >
+                      {recipes.map(r => {
+                        const pinned = pinnedCards.includes(r.id)
+                        const notesExcerpt = (r.family_notes || r.description || '')
+                          .replace(/^Saved from .*?\n+/i, '')
+                          .replace(/\n+/g, ' ')
+                          .trim()
+                          .slice(0, 180)
+                        return (
+                          <div
+                            key={r.id}
+                            className="relative h-screen w-full overflow-hidden"
+                            style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+                          >
+                            {/* Hero — photo or emoji-on-gradient fallback */}
+                            {r.photo_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={r.photo_url}
+                                alt={r.title}
+                                className="absolute inset-0 w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-amber-300 to-rose-300 flex items-center justify-center">
+                                <span className="text-[10rem]">{categoryEmoji(r)}</span>
+                              </div>
+                            )}
+                            {/* Top + bottom gradients for legibility */}
+                            <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+                            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/50 to-transparent pointer-events-none" />
+
+                            {/* Top-left favorite badge */}
+                            {r.is_favorite && (
+                              <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-rose-500/90 text-white text-xs font-bold backdrop-blur">
+                                ❤️ Favorite
+                              </div>
+                            )}
+
+                            {/* Bottom content stack */}
+                            <div className="absolute inset-x-0 bottom-0 p-6 pb-10 text-white">
+                              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-200 mb-2">
+                                {r.category || 'Recipe'}
+                              </p>
+                              <h2 className="text-3xl font-black leading-tight mb-3 drop-shadow-lg">
+                                {r.title}
+                              </h2>
+                              {notesExcerpt && (
+                                <p className="text-sm text-white/85 leading-relaxed mb-4 line-clamp-3">
+                                  {notesExcerpt}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => { setStoryMode(false); setViewing(r); setView('detail') }}
+                                  className="flex-1 py-3 rounded-full bg-white text-gray-900 text-sm font-bold shadow-lg hover:bg-gray-100 transition-colors"
+                                >
+                                  View recipe →
+                                </button>
+                                <button
+                                  onClick={() => toggleCardPin(r.id)}
+                                  title={pinned ? 'Unpin from Cards' : 'Pin to Cards'}
+                                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg transition-colors ${
+                                    pinned
+                                      ? 'bg-orange-600 text-white'
+                                      : 'bg-white/20 text-white border border-white/40 backdrop-blur hover:bg-white/30'
+                                  }`}
+                                >
+                                  🃏
+                                </button>
+                              </div>
+                              {/* Tiny progress dot row — visual cue that more is below */}
+                              <p className="text-[10px] text-white/60 text-center mt-4 tracking-widest">
+                                ▼ SWIPE UP FOR NEXT
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {/* Final pad so the last card snaps cleanly */}
+                      <div className="h-screen w-full bg-black flex items-center justify-center" style={{ scrollSnapAlign: 'start' }}>
+                        <div className="text-center text-white px-6">
+                          <p className="text-5xl mb-4">🎉</p>
+                          <p className="text-xl font-bold mb-2">That&rsquo;s your whole vault</p>
+                          <p className="text-sm text-white/70 mb-6">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} saved</p>
+                          <button
+                            onClick={() => setStoryMode(false)}
+                            className="px-6 py-3 rounded-full bg-white text-gray-900 text-sm font-bold"
+                          >
+                            ← Back to vault
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-xl text-gray-600">{allOpen ? '▾' : '▸'}</span>
-                  </button>
+                  </div>
+                )}
+
+                {/* 📚 All recipes drawer — collapsed by default. The header
+                    is a tap-to-toggle row with a tucked-in 📱 Story button
+                    on the right that flips the drawer into a TikTok /
+                    Instagram-style full-screen vertical scroller (younger-
+                    user UX). The Story button stops propagation so it
+                    doesn't also collapse/expand the drawer. */}
+                <div className="bg-white rounded-2xl border-2 border-gray-200 border-l-8 border-l-gray-400 overflow-hidden">
+                  <div className={`flex items-center ${allOpen ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-50 transition-colors`}>
+                    <button
+                      onClick={() => setAllOpen(o => !o)}
+                      className="flex-1 flex items-center justify-between px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">📚</span>
+                        <span className="font-bold text-gray-900">All recipes</span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{recipes.length}</span>
+                      </div>
+                      <span className="text-xl text-gray-600">{allOpen ? '▾' : '▸'}</span>
+                    </button>
+                    {recipes.length > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setStoryMode(true) }}
+                        title="Browse story-style — full-screen, swipe-up"
+                        className="mr-3 my-2 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white shadow-sm hover:from-fuchsia-600 hover:to-pink-600"
+                      >
+                        📱 Story
+                      </button>
+                    )}
+                  </div>
                   {allOpen && (
                     <div className="px-3 py-3 grid grid-cols-2 gap-3">
                       {recipes.map(r => {
