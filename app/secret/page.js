@@ -3044,7 +3044,7 @@ export default function MyRecipeVaultPage() {
                                         : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
                                     }`}
                                   >
-                                    {pinned ? '🃏 Pinned' : '🃏 Pin'}
+                                    {pinned ? '🃏 Pinned' : '🃏 Pin to Cards'}
                                   </button>
                                 </div>
                               </div>
@@ -3469,7 +3469,7 @@ export default function MyRecipeVaultPage() {
                               : 'bg-white/95 text-orange-700 border-orange-300 hover:bg-orange-50'
                           }`}
                         >
-                          {pinned ? '🃏 Pinned' : '🃏 Pin'}
+                          {pinned ? '🃏 Pinned' : '🃏 Pin to Cards'}
                         </div>
                       </div>
                     )})}
@@ -3528,7 +3528,7 @@ export default function MyRecipeVaultPage() {
                                 : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
                             }`}
                           >
-                            {pinnedCards.includes(recipe.id) ? '🃏 Pinned' : '🃏 Pin'}
+                            {pinnedCards.includes(recipe.id) ? '🃏 Pinned' : '🃏 Pin to Cards'}
                           </span>
                           <span className="text-gray-400 text-xl self-center">→</span>
                         </div>
