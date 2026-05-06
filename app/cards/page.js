@@ -462,7 +462,7 @@ export default function CardsPage() {
                     onChange={e => setLogNotes(e.target.value)}
                     placeholder={`"Made for Tom's birthday — added cayenne, big hit"\n"Doubled the garlic. Better."\n"Out of buttermilk; used yogurt + milk"`}
                     rows={3}
-                    style={{ fontFamily: 'var(--font-caveat)', fontSize: '20px', lineHeight: '28px' }}
+                    style={{ fontFamily: 'var(--font-caveat)', fontSize: '24px', lineHeight: '32px' }}
                     className="w-full bg-white border border-stone-300 rounded-lg px-3 py-2 text-stone-800 focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none"
                   />
                   <div className="flex gap-2 mt-2">
@@ -510,7 +510,7 @@ export default function CardsPage() {
                       </div>
                       <p
                         className="text-stone-800 whitespace-pre-wrap leading-snug"
-                        style={{ fontFamily: 'var(--font-caveat)', fontSize: '20px', lineHeight: '28px' }}
+                        style={{ fontFamily: 'var(--font-caveat)', fontSize: '24px', lineHeight: '32px' }}
                       >
                         {entry.notes || <span className="text-stone-400 italic" style={{ fontFamily: 'inherit' }}>(no notes — just cooked)</span>}
                       </p>
