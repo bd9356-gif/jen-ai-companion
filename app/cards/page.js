@@ -20,12 +20,20 @@ export default function CardsPage() {
   const [suggestions, setSuggestions] = useState(null)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [toast, setToast] = useState(null)
+  // Set of recipe ids that are currently in the user's Meal Plan
+  // (`my_picks`). Loaded once at auth so we can render the inline
+  // 📅 button on each card tile in the right state without opening
+  // the card. Toggling updates this set optimistically.
+  const [picksIds, setPicksIds] = useState(new Set())
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
+      /* eslint-disable react-hooks/immutability -- hoisted function declarations are safe to call here */
       loadCards(session.user.id)
+      loadPicks(session.user.id)
+      /* eslint-enable react-hooks/immutability */
     })
   }, [])
 
@@ -37,6 +45,45 @@ export default function CardsPage() {
       .order('created_at', { ascending: false })
     setRecipes((data || []).map(d => d.personal_recipes).filter(Boolean))
     setLoading(false)
+  }
+
+  // Pull the recipe ids currently in the user's Meal Plan so the inline
+  // 📅 button on each card tile can render in the right state (filled
+  // when present, outlined when absent). Light query — id only.
+  async function loadPicks(userId) {
+    const { data } = await supabase
+      .from('my_picks')
+      .select('recipe_id')
+      .eq('user_id', userId)
+    setPicksIds(new Set((data || []).map(r => r.recipe_id)))
+  }
+
+  // Toggle a recipe in/out of the Meal Plan without opening the card.
+  // Mirrors the Recipe Vault detail-view's toggle behavior: tap once
+  // to add (lands in 'top' bucket), tap again to remove. Optimistic UI
+  // — picksIds updates immediately; toasts confirm. Used by the inline
+  // tile button AND the detail-view header button so behavior is the
+  // same everywhere.
+  async function toggleMealPlan(recipe, e) {
+    if (e) e.stopPropagation()
+    if (!user || !recipe) return
+    const inPlan = picksIds.has(recipe.id)
+    if (inPlan) {
+      setPicksIds(prev => { const n = new Set(prev); n.delete(recipe.id); return n })
+      await supabase.from('my_picks').delete().eq('user_id', user.id).eq('recipe_id', recipe.id)
+      showToast('Removed from Meal Plan')
+    } else {
+      setPicksIds(prev => new Set([...prev, recipe.id]))
+      await supabase.from('my_picks').upsert({
+        user_id: user.id,
+        recipe_id: recipe.id,
+        title: recipe.title,
+        photo_url: recipe.photo_url || '',
+        category: recipe.category || '',
+        bucket: 'top'
+      }, { onConflict: 'user_id,recipe_id' })
+      showToast('Added to Meal Plan ✓')
+    }
   }
 
   function openCard(recipe) {
@@ -143,12 +190,20 @@ export default function CardsPage() {
             <button onClick={() => setViewing(null)} className="text-sm text-gray-500 hover:text-gray-600">← Cards</button>
             <div className="flex gap-2">
               <button onClick={() => removeCard(viewing.id)} className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Remove Card</button>
-              <button onClick={async () => {
-                const { data: { session } } = await supabase.auth.getSession()
-                if (!session) return
-                await supabase.from('my_picks').upsert({ user_id: session.user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
-                alert('Added to Meal Plan ✓')
-              }} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">📅 Meal Plan</button>
+              {/* Meal Plan toggle — fill orange when the recipe is in
+                  the plan so the user can tap once to remove it again.
+                  Same picksIds set as the inline tile button. */}
+              <button
+                onClick={() => toggleMealPlan(viewing)}
+                title={picksIds.has(viewing.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                className={`text-xs font-semibold rounded-lg px-3 py-1.5 transition-colors ${
+                  picksIds.has(viewing.id)
+                    ? 'bg-orange-600 text-white border border-orange-600 hover:bg-orange-700'
+                    : 'text-orange-600 border border-orange-200 hover:bg-orange-50'
+                }`}
+              >
+                {picksIds.has(viewing.id) ? '📅 In Meal Plan' : '📅 Meal Plan'}
+              </button>
               <a href={`/secret?recipe=${viewing.id}`} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">Full Recipe →</a>
             </div>
           </div>
@@ -349,29 +404,54 @@ export default function CardsPage() {
         ) : (
           <>
             <p className="text-sm text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
-            {/* Index-card grid: cream paper body, red top rule, thin amber border. */}
+            {/* Index-card grid: cream paper body, red top rule, thin amber border.
+                Each tile is split into a tap-to-open header (title + photo) and
+                a bottom action row with a 📅 Meal Plan toggle so the user can
+                add/remove a card to/from the plan without opening it. The
+                toggle stops propagation; everything else opens the card. */}
             <div className="grid grid-cols-2 gap-3">
-              {filtered.map(recipe => (
-                <button key={recipe.id} onClick={() => openCard(recipe)}
-                  className="text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
-                  {/* Red "top rule" like an index card */}
-                  <div className="bg-red-600 h-1.5" />
-                  <div className="px-3 pt-3 pb-1">
-                    <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
-                  </div>
-                  <div className="px-3 pb-3">
-                    {recipe.photo_url ? (
-                      <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
-                        <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+              {filtered.map(recipe => {
+                const inPlan = picksIds.has(recipe.id)
+                return (
+                  <div key={recipe.id}
+                    className="bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all shadow-sm flex flex-col">
+                    {/* Red "top rule" like an index card */}
+                    <div className="bg-red-600 h-1.5" />
+                    <button
+                      onClick={() => openCard(recipe)}
+                      className="text-left active:scale-[0.98] transition-transform"
+                    >
+                      <div className="px-3 pt-3 pb-1">
+                        <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
                       </div>
-                    ) : (
-                      <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
-                        <span style={{fontSize:'32px'}}>🍽️</span>
+                      <div className="px-3 pb-2">
+                        {recipe.photo_url ? (
+                          <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
+                            <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+                            <span style={{fontSize:'32px'}}>🍽️</span>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </button>
+                    <div className="px-2 pb-2 mt-auto">
+                      <button
+                        onClick={(e) => toggleMealPlan(recipe, e)}
+                        title={inPlan ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                        className={`w-full text-[11px] font-semibold rounded-md py-1 border transition-colors ${
+                          inPlan
+                            ? 'bg-orange-600 text-white border-orange-600'
+                            : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
+                        }`}
+                      >
+                        {inPlan ? '📅 In Meal Plan' : '📅 Meal Plan'}
+                      </button>
+                    </div>
                   </div>
-                </button>
-              ))}
+                )
+              })}
             </div>
           </>
         )}
