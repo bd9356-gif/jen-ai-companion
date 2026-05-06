@@ -25,6 +25,18 @@ export default function CardsPage() {
   // 📅 button on each card tile in the right state without opening
   // the card. Toggling updates this set optimistically.
   const [picksIds, setPicksIds] = useState(new Set())
+  // Cook log — dated entries for the currently-viewing card. The
+  // heritage feature: each row is one time the user cooked this recipe
+  // (date stamp + handwritten notes). Reset to [] when a new card is
+  // opened; loaded fresh from `recipe_cook_log` for the open card.
+  const [cookLog, setCookLog] = useState([])
+  // New-entry form state. `logDate` defaults to today (YYYY-MM-DD) so
+  // tapping "Add entry" lands a current row; the user can backdate by
+  // editing the date input.
+  const [logDate, setLogDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [logNotes, setLogNotes] = useState('')
+  const [savingLog, setSavingLog] = useState(false)
+  const [showLogForm, setShowLogForm] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -92,6 +104,101 @@ export default function CardsPage() {
     setNotesSaved(false)
     setSuggestions(null)
     setAddedToList(new Set())
+    // Reset the cook log form + load this card's history.
+    setCookLog([])
+    setShowLogForm(false)
+    setLogDate(new Date().toISOString().slice(0, 10))
+    setLogNotes('')
+    if (user) loadCookLog(user.id, recipe.id)
+  }
+
+  // Pull the dated cook log entries for one (user, recipe). Newest first
+  // (entry_date desc, then created_at desc as a tiebreaker for two
+  // entries on the same day).
+  async function loadCookLog(userId, recipeId) {
+    const { data } = await supabase
+      .from('recipe_cook_log')
+      .select('id, entry_date, notes, created_at')
+      .eq('user_id', userId)
+      .eq('recipe_id', recipeId)
+      .order('entry_date', { ascending: false })
+      .order('created_at', { ascending: false })
+    setCookLog(data || [])
+  }
+
+  // Save a new cook-log entry. Optimistic — we splice the new row in
+  // by entry_date desc immediately, then INSERT and reconcile by id.
+  // Empty notes are allowed; a date stamp alone is still a meaningful
+  // record ("we cooked this on this day").
+  async function addLogEntry() {
+    if (!user || !viewing) return
+    setSavingLog(true)
+    // eslint-disable-next-line react-hooks/purity -- async event handler, not render
+    const tempId = `tmp-${Date.now()}`
+    const tempRow = {
+      id: tempId,
+      entry_date: logDate,
+      notes: logNotes,
+      created_at: new Date().toISOString(),
+    }
+    setCookLog(prev => {
+      const merged = [tempRow, ...prev]
+      merged.sort((a, b) => {
+        if (a.entry_date !== b.entry_date) return a.entry_date < b.entry_date ? 1 : -1
+        return a.created_at < b.created_at ? 1 : -1
+      })
+      return merged
+    })
+    const { data, error } = await supabase
+      .from('recipe_cook_log')
+      .insert({
+        user_id: user.id,
+        recipe_id: viewing.id,
+        entry_date: logDate,
+        notes: logNotes,
+      })
+      .select()
+      .single()
+    if (error || !data) {
+      // Roll back optimistic insert on failure.
+      setCookLog(prev => prev.filter(r => r.id !== tempId))
+      showToast('Could not save entry')
+    } else {
+      setCookLog(prev => prev.map(r => r.id === tempId ? data : r))
+      showToast('Entry saved ✓')
+    }
+    setLogNotes('')
+    setLogDate(new Date().toISOString().slice(0, 10))
+    setShowLogForm(false)
+    setSavingLog(false)
+  }
+
+  async function deleteLogEntry(entryId) {
+    if (!user) return
+    setCookLog(prev => prev.filter(r => r.id !== entryId))
+    await supabase
+      .from('recipe_cook_log')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('id', entryId)
+    showToast('Entry removed')
+  }
+
+  // Friendly date formatter for the cook log header. "March 15, 2026"
+  // reads warmer than "3/15/26" or "2026-03-15"; matches the heritage
+  // feel without being too fussy. Falls back to the raw ISO date if
+  // anything goes sideways.
+  function formatLogDate(iso) {
+    if (!iso) return ''
+    try {
+      // Date-only strings like "2026-03-15" parse as UTC midnight in
+      // some browsers, which can shift to the previous day in earlier
+      // timezones. Force-parse as local by appending a noon offset.
+      const d = new Date(`${iso}T12:00:00`)
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    } catch {
+      return iso
+    }
   }
 
   async function saveNotes() {
@@ -278,24 +385,138 @@ export default function CardsPage() {
             </div>
           </div>
 
-          {/* Family Notes */}
+          {/* Family Notes — "the story" of the card. Origin, who in
+              the family makes it best, the memory attached to it.
+              One-time write that anchors the card. The Cook Log
+              (below) is the running history; Family Notes is the
+              introduction. */}
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-5">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">📝</span>
               <h2 className="text-sm font-bold text-gray-900">Family Notes</h2>
-              <span className="text-xs text-amber-600 italic">— the soul of the card</span>
+              <span className="text-xs text-amber-600 italic">— where it came from</span>
             </div>
             <textarea
               value={familyNotes}
               onChange={e => setFamilyNotes(e.target.value)}
-              placeholder={`"Use less salt next time"\n"Kids loved this"\n"Grandma's version used fresh basil"\n"This was our Sunday dinner in 1998"`}
-              rows={5}
+              placeholder={`"Grandma's recipe — she got it from her sister"\n"Sunday dinner growing up"\n"The one we always make for birthdays"`}
+              rows={4}
               className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none leading-relaxed"
             />
             <button onClick={saveNotes} disabled={savingNotes}
               className={`mt-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${notesSaved ? 'bg-green-100 text-green-700' : 'bg-amber-600 text-white hover:bg-amber-700'}`}>
               {savingNotes ? 'Saving...' : notesSaved ? '✓ Saved' : 'Save Notes'}
             </button>
+          </div>
+
+          {/* Cook Log — the heritage feature. Real recipe boxes
+              accumulate dated entries: each cook adds a line ("3/15/26
+              — Made for Tom's birthday. Added cayenne, hit."). Each
+              entry renders in the Caveat handwriting font over a faint
+              ruled background so the section reads like a card that's
+              been written on across years. */}
+          <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 mb-5 relative overflow-hidden">
+            {/* Subtle horizontal rule lines for the index-card feel */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-[0.18]"
+              style={{
+                backgroundImage: 'repeating-linear-gradient(to bottom, transparent, transparent 27px, #d6d3d1 27px, #d6d3d1 28px)',
+              }}
+            />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📖</span>
+                  <h2 className="text-sm font-bold text-stone-900">Cook Log</h2>
+                  <span className="text-xs text-stone-500 italic">— each time you make it</span>
+                </div>
+                {!showLogForm && (
+                  <button
+                    onClick={() => setShowLogForm(true)}
+                    className="text-xs font-semibold text-orange-700 border border-orange-300 bg-white rounded-lg px-2.5 py-1 hover:bg-orange-50"
+                  >
+                    + Add entry
+                  </button>
+                )}
+              </div>
+
+              {/* Add-entry form — date picker + freeform notes. Reveals
+                  on tap so the section starts compact. Notes textarea
+                  uses the handwriting font so the user feels like
+                  they're writing on a card, not filling out a form. */}
+              {showLogForm && (
+                <div className="bg-white/80 border border-stone-200 rounded-xl p-3 mb-4 backdrop-blur-sm">
+                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1">Date cooked</label>
+                  <input
+                    type="date"
+                    value={logDate}
+                    onChange={e => setLogDate(e.target.value)}
+                    className="w-full bg-white border border-stone-300 rounded-lg px-3 py-2 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-orange-200 mb-2"
+                    style={{ fontSize: '16px' }}
+                  />
+                  <label className="block text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1">What happened</label>
+                  <textarea
+                    value={logNotes}
+                    onChange={e => setLogNotes(e.target.value)}
+                    placeholder={`"Made for Tom's birthday — added cayenne, big hit"\n"Doubled the garlic. Better."\n"Out of buttermilk; used yogurt + milk"`}
+                    rows={3}
+                    style={{ fontFamily: 'var(--font-caveat)', fontSize: '20px', lineHeight: '28px' }}
+                    className="w-full bg-white border border-stone-300 rounded-lg px-3 py-2 text-stone-800 focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={addLogEntry}
+                      disabled={savingLog}
+                      className="flex-1 py-2 rounded-lg bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 disabled:opacity-60"
+                    >
+                      {savingLog ? 'Saving…' : 'Save entry'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowLogForm(false)
+                        setLogNotes('')
+                        setLogDate(new Date().toISOString().slice(0, 10))
+                      }}
+                      className="px-3 py-2 rounded-lg bg-white border border-stone-300 text-stone-600 text-sm font-semibold hover:bg-stone-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Entry list. Empty state nudges toward the ritual. */}
+              {cookLog.length === 0 ? (
+                <p className="text-sm text-stone-500 italic leading-relaxed">
+                  No entries yet. The next time you make this — even a quick line — adds it here. A card that gets written on becomes a card worth keeping.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {cookLog.map(entry => (
+                    <li key={entry.id} className="group relative">
+                      <div className="flex items-baseline justify-between mb-0.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                          {formatLogDate(entry.entry_date)}
+                        </span>
+                        <button
+                          onClick={() => deleteLogEntry(entry.id)}
+                          title="Remove this entry"
+                          className="text-stone-300 hover:text-red-400 text-base leading-none px-1"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <p
+                        className="text-stone-800 whitespace-pre-wrap leading-snug"
+                        style={{ fontFamily: 'var(--font-caveat)', fontSize: '20px', lineHeight: '28px' }}
+                      >
+                        {entry.notes || <span className="text-stone-400 italic" style={{ fontFamily: 'inherit' }}>(no notes — just cooked)</span>}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
 
           {/* AI Suggestions */}

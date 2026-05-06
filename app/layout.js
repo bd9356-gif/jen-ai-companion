@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Caveat } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -9,6 +9,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Handwriting font for /cards heritage features — the dated cook log
+// entries on each Recipe Card. Pulled in app-wide (not just on the
+// cards route) because recipes flow between Vault and Cards and we
+// want the option to use it elsewhere later (e.g. Family Notes
+// rendering on the detail view). Exposed as a CSS variable so we can
+// apply it via Tailwind's `font-[var(--font-caveat)]` arbitrary value.
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata = {
@@ -44,7 +56,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} antialiased`}>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <script dangerouslySetInnerHTML={{ __html: `

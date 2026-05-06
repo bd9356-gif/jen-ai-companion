@@ -616,6 +616,37 @@ Implications for anyone tempted to "simplify" `/cards`:
 - **Collapsible search in the header.** `/cards` mirrors the Recipe Vault pattern: a 🔍/✕ toggle lives in the sticky header's right-side button group (next to Clear All and + Add), and the full-width `<input>` only appears under the header when search is active. Input uses `style={{ fontSize: '16px' }}` to block iOS Safari auto-zoom.
 - **"My Photo" section removed.** The "My Photo" (`card_photos` upload) block on the card detail view is gone. The `card_photos` table is no longer read or written from this page — the supporting state (`cardPhoto`, `uploadingPhoto`, `photoInputRef`) and the `loadCardPhoto` / `uploadCardPhoto` helpers were deleted at the same time. If/when we bring user photos back on cards, plan for a simpler UX (e.g. swap the hero photo itself, like Recipe Vault).
 - **Shopping List — per-ingredient +/✓ toggle (matches Recipe Vault).** Inside the Ingredients section of the card detail view, each row has a small round `+` button that turns green `✓` once that ingredient is in the list. `toggleIngredient(ing)` adds a row to `shopping_list` (`ingredient = "{measure} {name}"`, `recipe_title = viewing.title`, `checked = false`, `store_id = null`) or deletes it on toggle-off. A `🛒 Add All` button sits next to the "Ingredients" heading and calls `addAllToShoppingList()` to insert every ingredient at once and mark them all as added. Session-level state (`addedToList: Set<string>`) tracks what was added during the current view; it resets when a different card is opened. The old full-width "Add all ingredients" button below the card was removed.
+- **📅 Meal Plan toggle on each tile (May 2026).** Every Card tile shows a small "📅 Meal Plan" / "📅 In Meal Plan" button under the photo so a user can drop a card straight into Meal Plan without opening it. Mirrors the Vault detail-view's toggle behavior — tap once to add (lands in 'top' bucket), tap again to remove. Backed by a `picksIds: Set<recipe_id>` loaded once on mount via `loadPicks()`. The detail-view's "📅 Meal Plan" button shares the same state and now also toggles + toasts (was a one-way upsert + native `alert`). Tile button uses `e.stopPropagation()` so it doesn't open the card.
+
+## Recipe Cards heritage pass — Cook Log + handwriting font (May 2026)
+
+Bill's framing: the Cards page "has become something of real value — truly restoring a lost ritual recipe box. It has heritage but needs to reflect that more." A real recipe box accumulates — every cook adds a dated line, and the card becomes a history. The first heritage pass adds that ritual.
+
+**Two surfaces, two roles.** Family Notes and the Cook Log play different parts of the story so they're kept separate, side by side:
+
+- **Family Notes (📝 amber)** — the *introduction*. Where the recipe came from, who in the family makes it best, the memory attached to it. One-time write, anchors the card. The placeholder copy was rewritten to lean into origin ("Grandma's recipe — she got it from her sister" / "Sunday dinner growing up") instead of cook-log territory ("Use less salt next time"). Eyebrow line reads "— where it came from".
+- **Cook Log (📖 stone)** — the *running history*. Every time you make it, you add a dated entry. Stack of timestamped notes that builds over years. Eyebrow line reads "— each time you make it".
+
+**Visual — the page that's been written on.** The Cook Log block uses a stone palette (warmer than the amber Family Notes, distinct on the page) with a faint horizontal-rule background drawn via a `repeating-linear-gradient` of 28px stripes at ~18% opacity — reads as index-card paper without screaming for attention. Entry text and the new-entry textarea both render in the **Caveat** handwriting font (Google Fonts, loaded via `next/font/google` in `app/layout.js` and exposed as the CSS variable `--font-caveat`). Caveat at 20px / 28px line-height has the warmth of pen-on-card without the legibility tradeoff of more cursive scripts. Entry dates render in a small uppercase tracking-wider style that looks like a date stamp above the handwritten note.
+
+**Data model.** New table `recipe_cook_log` (migration `supabase/014_recipe_cook_log.sql`) — `id uuid, user_id uuid, recipe_id uuid (fk personal_recipes, cascade), entry_date date, notes text, created_at timestamptz`. Composite index on `(user_id, recipe_id, entry_date desc, created_at desc)` matches the natural query shape (one card's history, newest first). RLS scoped to owner. Idempotent. Distinct from `personal_recipes.family_notes` — both stay live, and editing one doesn't touch the other.
+
+**UX details.**
+- Form is hidden by default; a "+ Add entry" pill in the section header reveals it. Keeps the section compact when a card has no entries yet.
+- Date picker defaults to today (`new Date().toISOString().slice(0, 10)`); user can backdate freely (you cooked Saturday but logged it Monday).
+- Notes field is optional — saving a date-only entry is meaningful ("we cooked this on this day"). Empty entries render as italic gray "(no notes — just cooked)".
+- Optimistic insert: a temp row spliced in by entry_date desc immediately, reconciled to the DB row's id on success, rolled back with a toast on failure.
+- Per-entry × button to remove. No edit-in-place yet — if the user got a date wrong, delete and re-add. Simple beats clever for v1.
+- iOS-friendly: `style={{ fontSize: '16px' }}` on the date input blocks Safari's auto-zoom on focus. Two-step layout (date label + input, then notes label + textarea) reads cleanly on a phone.
+
+**Empty state copy.** "No entries yet. The next time you make this — even a quick line — adds it here. A card that gets written on becomes a card worth keeping." Frames the section as a ritual, not a feature.
+
+**Why the font is loaded app-wide, not just on /cards.** `Caveat` is imported in `app/layout.js` alongside Geist and exposed as a CSS variable so it's available anywhere via `style={{ fontFamily: 'var(--font-caveat)' }}`. Recipes flow between Vault and Cards, and we want the option to use the same script font on Family Notes (Vault and Cards) or other heritage surfaces later without re-importing.
+
+**What's deliberately NOT in v1.**
+- No multi-line "well-loved" / "cooked N times" stamp on the tile — the Cook Log already implies that and a count metric on the tile would be premature optimization.
+- No card-back / flip gesture. A subtle "↺" that turns the card around to show the log is a future move; it adds animation surface area v1 doesn't need.
+- No Family Notes font swap. Caveat is loaded for that purpose but only Cook Log uses it now — keeping Family Notes in the system font lets it stay scannable while the Cook Log gets the heritage treatment. If the Cook Log handwritten look lands well, extending to Family Notes is a one-line change.
 
 ## AI Kitchen Helpers — tab strip (April 2026)
 
