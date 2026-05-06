@@ -208,7 +208,7 @@ export default function CardsPage() {
     setRecipes(prev => prev.map(r => r.id === viewing.id ? { ...r, family_notes: familyNotes } : r))
     setSavingNotes(false)
     setNotesSaved(true)
-    showToast('Notes saved ✓')
+    showToast('Origin saved ✓')
     setTimeout(() => setNotesSaved(false), 2000)
   }
 
@@ -385,15 +385,15 @@ export default function CardsPage() {
             </div>
           </div>
 
-          {/* Family Notes — "the story" of the card. Origin, who in
-              the family makes it best, the memory attached to it.
-              One-time write that anchors the card. The Cook Log
-              (below) is the running history; Family Notes is the
+          {/* Origin — "the story" of the card. Where it came from,
+              who in the family makes it best, the memory attached to
+              it. One-time write that anchors the card. Family Notes
+              (below) is the running, dated history; Origin is the
               introduction. */}
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-5">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">📝</span>
-              <h2 className="text-sm font-bold text-gray-900">Family Notes</h2>
+              <span className="text-lg">📜</span>
+              <h2 className="text-sm font-bold text-gray-900">Origin</h2>
               <span className="text-xs text-amber-600 italic">— where it came from</span>
             </div>
             <textarea
@@ -405,16 +405,18 @@ export default function CardsPage() {
             />
             <button onClick={saveNotes} disabled={savingNotes}
               className={`mt-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${notesSaved ? 'bg-green-100 text-green-700' : 'bg-amber-600 text-white hover:bg-amber-700'}`}>
-              {savingNotes ? 'Saving...' : notesSaved ? '✓ Saved' : 'Save Notes'}
+              {savingNotes ? 'Saving...' : notesSaved ? '✓ Saved' : 'Save Origin'}
             </button>
           </div>
 
-          {/* Cook Log — the heritage feature. Real recipe boxes
+          {/* Family Notes — the heritage feature. Real recipe boxes
               accumulate dated entries: each cook adds a line ("3/15/26
               — Made for Tom's birthday. Added cayenne, hit."). Each
               entry renders in the Caveat handwriting font over a faint
               ruled background so the section reads like a card that's
-              been written on across years. */}
+              been written on across years. (Section was called "Cook
+              Log" briefly; renamed to Family Notes May 2026 to put the
+              heritage label on the actual heritage surface.) */}
           <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 mb-5 relative overflow-hidden">
             {/* Subtle horizontal rule lines for the index-card feel */}
             <div
@@ -426,8 +428,8 @@ export default function CardsPage() {
             <div className="relative">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">📖</span>
-                  <h2 className="text-sm font-bold text-stone-900">Cook Log</h2>
+                  <span className="text-lg">📝</span>
+                  <h2 className="text-sm font-bold text-stone-900">Family Notes</h2>
                   <span className="text-xs text-stone-500 italic">— each time you make it</span>
                 </div>
                 {!showLogForm && (

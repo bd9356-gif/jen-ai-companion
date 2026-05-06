@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 // Handwriting font for /cards heritage features — the dated cook log
 // entries on each Recipe Card. Pulled in app-wide (not just on the
 // cards route) because recipes flow between Vault and Cards and we
-// want the option to use it elsewhere later (e.g. Family Notes
-// rendering on the detail view). Exposed as a CSS variable so we can
+// want the option to use it elsewhere later (e.g. Origin rendering
+// on the detail view). Exposed as a CSS variable so we can
 // apply it via Tailwind's `font-[var(--font-caveat)]` arbitrary value.
 const caveat = Caveat({
   variable: "--font-caveat",

@@ -459,10 +459,10 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
       </div>
 
       <div>
-        <label className={labelClass}>Family Notes</label>
-        <p className={helperClass}>The story, tips, source attribution — anything you want to remember.</p>
+        <label className={labelClass}>Notes</label>
+        <p className={helperClass}>Tips, tweaks, source attribution — anything you want to remember.</p>
         <textarea value={familyNotes} onChange={e => setFamilyNotes(e.target.value)}
-          placeholder="The story behind this recipe, tips, memories..."
+          placeholder="Less salt next time. Doubled the garlic. Saved from..."
           rows={8}
           style={fieldStyle}
           className={`${fieldBase} resize-y font-mono`} />
@@ -1900,10 +1900,10 @@ export default function MyRecipeVaultPage() {
               <button
                 type="button"
                 onClick={() => toggleDetailSection('notes')}
-                title={detailCollapsed.notes ? 'Expand Family Notes' : 'Collapse Family Notes'}
+                title={detailCollapsed.notes ? 'Expand Notes' : 'Collapse Notes'}
                 className="w-full flex items-center justify-between text-left"
               >
-                <p className="text-xs font-semibold text-amber-800">📖 Family Notes</p>
+                <p className="text-xs font-semibold text-amber-800">📝 Notes</p>
                 <span className="text-amber-700 text-sm">{detailCollapsed.notes ? '▶' : '▼'}</span>
               </button>
               {!detailCollapsed.notes && (
@@ -2623,9 +2623,9 @@ export default function MyRecipeVaultPage() {
               </div>
 
               <div>
-                <label className="block text-base font-bold text-gray-800 mb-2">Family Notes</label>
-                <p className="text-sm text-gray-500 mb-2">The story, tips, source attribution — anything you want to remember.</p>
-                <textarea placeholder="The story behind this recipe, tips, memories..."
+                <label className="block text-base font-bold text-gray-800 mb-2">Notes</label>
+                <p className="text-sm text-gray-500 mb-2">Tips, tweaks, source attribution — anything you want to remember.</p>
+                <textarea placeholder="Less salt next time. Doubled the garlic. Saved from..."
                   value={form.family_notes} onChange={e => setForm(f => ({...f, family_notes: e.target.value}))}
                   rows={8}
                   style={{ fontSize: '16px' }}
