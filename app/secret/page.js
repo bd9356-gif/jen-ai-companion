@@ -2901,8 +2901,17 @@ export default function MyRecipeVaultPage() {
              access to the full Vault when the favorites pass isn't enough.
              This is the home view for daily meal planning. */
           (() => {
-            const favs = recipes.filter(r => r.is_favorite)
-            const nonFavs = recipes.filter(r => !r.is_favorite)
+            // Honor the search box + tag chip filter the user typed at
+            // the top of the page — Card Box used to render raw
+            // `recipes`, so typing in the 🔍 input did nothing here
+            // even though the input was visible. Alphabetical sort by
+            // title gives the drawers the predictable "flipping through
+            // a card box" feel.
+            const cardBoxList = [...filtered].sort((a, b) =>
+              (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' })
+            )
+            const favs = cardBoxList.filter(r => r.is_favorite)
+            const nonFavs = cardBoxList.filter(r => !r.is_favorite)
             function rollSurprise() {
               if (nonFavs.length === 0) return
               let pick = nonFavs[Math.floor(Math.random() * nonFavs.length)]
@@ -2919,7 +2928,10 @@ export default function MyRecipeVaultPage() {
               <div>
                 {/* Surprise me — header chip + result card */}
                 <div className="mb-4 flex items-center justify-between gap-2">
-                  <p className="text-sm text-gray-600">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} in your vault</p>
+                  <p className="text-sm text-gray-600">
+                    {cardBoxList.length} {cardBoxList.length === 1 ? 'recipe' : 'recipes'}
+                    {(searchText || searchTag) ? ' match' : ' in your vault'}
+                  </p>
                   <button
                     onClick={rollSurprise}
                     disabled={nonFavs.length === 0}
@@ -3064,7 +3076,7 @@ export default function MyRecipeVaultPage() {
                       className="h-full overflow-y-auto"
                       style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
                     >
-                      {recipes.map(r => {
+                      {cardBoxList.map(r => {
                         const pinned = pinnedCards.includes(r.id)
                         const notesExcerpt = (r.family_notes || r.description || '')
                           .replace(/^Saved from .*?\n+/i, '')
@@ -3146,7 +3158,7 @@ export default function MyRecipeVaultPage() {
                         <div className="text-center text-white px-6">
                           <p className="text-5xl mb-4">🎉</p>
                           <p className="text-xl font-bold mb-2">That&rsquo;s your whole vault</p>
-                          <p className="text-sm text-white/70 mb-6">{recipes.length} {recipes.length === 1 ? 'recipe' : 'recipes'} saved</p>
+                          <p className="text-sm text-white/70 mb-6">{cardBoxList.length} {cardBoxList.length === 1 ? 'recipe' : 'recipes'} saved</p>
                           <button
                             onClick={() => setStoryMode(false)}
                             className="px-6 py-3 rounded-full bg-white text-gray-900 text-sm font-bold"
@@ -3173,12 +3185,12 @@ export default function MyRecipeVaultPage() {
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">📚</span>
-                        <span className="font-bold text-gray-900">All recipes</span>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{recipes.length}</span>
+                        <span className="font-bold text-gray-900">{(searchText || searchTag) ? 'Matching recipes' : 'All recipes'}</span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{cardBoxList.length}</span>
                       </div>
                       <span className="text-xl text-gray-600">{allOpen ? '▾' : '▸'}</span>
                     </button>
-                    {recipes.length > 0 && (
+                    {cardBoxList.length > 0 && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setStoryMode(true) }}
                         title="Browse story-style — full-screen, swipe-up"
@@ -3190,7 +3202,7 @@ export default function MyRecipeVaultPage() {
                   </div>
                   {allOpen && (
                     <div className="px-3 py-3 grid grid-cols-2 gap-3">
-                      {recipes.map(r => {
+                      {cardBoxList.map(r => {
                         const pinned = pinnedCards.includes(r.id)
                         return (
                           <div key={r.id} className="bg-amber-50 border-2 border-amber-200 rounded-xl overflow-hidden">
