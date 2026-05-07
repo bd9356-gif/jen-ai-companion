@@ -260,6 +260,19 @@ function stripTapbackPrefix(s) {
   return out
 }
 
+// Pull the first http(s) URL out of arbitrary text. Used to rescue
+// messy iMessage clipboards (Tapbacks, reply threads, quote-blocks
+// with multiple messages stacked together). The user pastes whatever
+// they have; we extract the URL inside it. Trailing punctuation that
+// commonly hangs off the end of a sentence-ending URL gets shaved off.
+// Returns '' when no URL is found.
+function extractFirstUrl(s) {
+  if (!s) return ''
+  const m = s.match(/https?:\/\/[^\s'"‘’“”`<>()[\]]+/i)
+  if (!m) return ''
+  return m[0].replace(/[.,!?;:)\]]+$/, '')
+}
+
 function htmlToCleanText(html) {
   return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -2575,15 +2588,23 @@ export default function MyRecipeVaultPage() {
                 <input placeholder="https://www.example.com/recipe..." value={importUrl}
                   onChange={e => setImportUrl(e.target.value)}
                   onPaste={e => {
-                    // Direct paste into the field — auto-fire the
-                    // import too. Read clipboardData synchronously so
-                    // we have the URL value without waiting for state.
+                    // Robust paste — handles clean URLs AND messy
+                    // iMessage clipboards (Tapbacks, replies, quote
+                    // blocks). Strip the Tapback prefix first, then
+                    // pull the first http(s) URL out of whatever is
+                    // left. preventDefault so the messy original
+                    // doesn't dump into the field; we put just the
+                    // clean URL in via setImportUrl.
                     const pasted = (e.clipboardData?.getData('text') || '').trim()
-                    if (/^https?:\/\/\S+$/i.test(pasted) && pasted.length < 2000) {
-                      // Let the default-paste fill the field, then
-                      // fire the import with the pasted value.
-                      setTimeout(() => handleImport(pasted), 0)
+                    if (!pasted) return
+                    const url = extractFirstUrl(stripTapbackPrefix(pasted))
+                    if (url) {
+                      e.preventDefault()
+                      setImportUrl(url)
+                      setTimeout(() => handleImport(url), 0)
                     }
+                    // No URL found → let the default paste land
+                    // (user can edit) so we don't silently swallow it.
                   }}
                   style={{ fontSize: '16px' }}
                   className="flex-1 min-w-0 border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
@@ -2605,11 +2626,21 @@ export default function MyRecipeVaultPage() {
                         showToast('Clipboard is empty')
                         return
                       }
-                      setImportUrl(trimmed)
+                      // Pull the first http(s) URL out of whatever's
+                      // on the clipboard, after stripping any Tapback
+                      // prefix. Handles messy iMessage replies that
+                      // bundle multiple messages + reactions around
+                      // the URL the user actually wants to import.
+                      const url = extractFirstUrl(stripTapbackPrefix(trimmed))
+                      if (!url) {
+                        showToast('No URL found in clipboard')
+                        return
+                      }
+                      setImportUrl(url)
                       // Auto-fire the import — Bill expects "tap
                       // Paste → recipe imports", not "tap Paste → tap
                       // Import & Clean".
-                      handleImport(trimmed)
+                      handleImport(url)
                     } catch (err) {
                       const tag = err?.name || 'Error'
                       const msg = err?.message ? `: ${err.message}` : ''
