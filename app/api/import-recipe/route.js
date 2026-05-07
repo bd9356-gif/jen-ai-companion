@@ -110,6 +110,104 @@ function extractImageUrl(html, baseUrl) {
   try { return new URL(first, baseUrl).toString() } catch { return first }
 }
 
+// Convert an ISO 8601 duration ("PT15M", "PT1H30M", "P0DT0H30M") to
+// a number of minutes. Returns null when the input is missing or
+// unparseable. Recipe schema lets sites use either ISO 8601 or a
+// raw-number string ("15"); we accept both.
+function parseISODuration(input) {
+  if (input == null) return null
+  const s = String(input).trim()
+  if (!s) return null
+  // Bare number (sites occasionally send "15" instead of "PT15M").
+  const bare = s.match(/^\d+$/)
+  if (bare) return parseInt(s, 10)
+  const m = s.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/i)
+  if (!m) return null
+  const days = parseInt(m[1] || '0', 10)
+  const hours = parseInt(m[2] || '0', 10)
+  const mins = parseInt(m[3] || '0', 10)
+  const secs = parseInt(m[4] || '0', 10)
+  const total = days * 24 * 60 + hours * 60 + mins + Math.round(secs / 60)
+  return total > 0 ? total : null
+}
+
+// Pull a number out of a nutrient string ("5g", "320 kcal", "12.5 g").
+// Returns a number (rounded to 2 decimals for grams, integer for cal)
+// or null if no number is present.
+function parseNutrient(input) {
+  if (input == null) return null
+  if (typeof input === 'number') return input
+  const s = String(input)
+  const m = s.match(/-?\d+(?:\.\d+)?/)
+  if (!m) return null
+  const n = parseFloat(m[0])
+  return Number.isFinite(n) ? n : null
+}
+
+// Pull a number of servings out of recipeYield. Sites send strings like
+// "8 servings", "Makes 12", "12", or arrays with both forms. Returns
+// the first integer found, capped at 99 so a runaway "12 to 16 servings"
+// doesn't store something silly.
+function parseYieldServings(input) {
+  if (input == null) return null
+  const arr = Array.isArray(input) ? input : [input]
+  for (const item of arr) {
+    if (typeof item === 'number' && Number.isFinite(item)) return Math.min(99, Math.max(1, Math.round(item)))
+    const s = String(item || '')
+    const m = s.match(/\d+/)
+    if (m) return Math.min(99, Math.max(1, parseInt(m[0], 10)))
+  }
+  return null
+}
+
+// Walk the page's JSON-LD blocks and pull the structured fields we
+// care about out of any Recipe node. Returns an object whose keys are
+// only set when a value was successfully extracted — everything else
+// falls back to whatever Claude returns. Same parsing precedence as
+// `extractImageUrl`: if the page ships valid JSON-LD with a Recipe,
+// we trust it over the model.
+function parseRecipeSchema(html) {
+  const out = {}
+  const scripts = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || []
+  for (const script of scripts) {
+    if (!script.includes('"Recipe"')) continue
+    const json = script.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim()
+    let parsed
+    try { parsed = JSON.parse(json) } catch { continue }
+    const nodes = Array.isArray(parsed) ? parsed : (parsed['@graph'] || [parsed])
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object') continue
+      const t = node['@type']
+      const isRecipe = t === 'Recipe' || (Array.isArray(t) && t.includes('Recipe'))
+      if (!isRecipe) continue
+      const prep = parseISODuration(node.prepTime)
+      const cook = parseISODuration(node.cookTime)
+      const total = parseISODuration(node.totalTime)
+      if (prep) out.prep_time_minutes = prep
+      if (cook) out.cook_time_minutes = cook
+      // If totalTime missing but prep+cook both present, derive it.
+      if (total) out.total_time_minutes = total
+      else if (prep && cook) out.total_time_minutes = prep + cook
+      const yieldServings = parseYieldServings(node.recipeYield)
+      if (yieldServings != null) out.servings = yieldServings
+      const nutr = node.nutrition
+      if (nutr && typeof nutr === 'object') {
+        const cal = parseNutrient(nutr.calories)
+        const pro = parseNutrient(nutr.proteinContent)
+        const car = parseNutrient(nutr.carbohydrateContent)
+        const fat = parseNutrient(nutr.fatContent)
+        if (cal != null) out.calories = Math.round(cal)
+        if (pro != null) out.protein_g = Math.round(pro * 10) / 10
+        if (car != null) out.carbs_g = Math.round(car * 10) / 10
+        if (fat != null) out.fat_g = Math.round(fat * 10) / 10
+      }
+      // First Recipe node wins — most pages only have one.
+      return out
+    }
+  }
+  return out
+}
+
 // Pulls recipe-shaped content out of a raw HTML page. Prefers JSON-LD
 // "Recipe" blocks (most accurate), falls back to stripping all HTML to
 // plain text. Used by both the server-side URL-fetch path AND the
@@ -150,6 +248,10 @@ export async function POST(request) {
 
   let content = text
   let scrapedImage = ''
+  // Direct JSON-LD extractions (timing, nutrition, yield). When present,
+  // these override whatever Claude infers. Empty {} when no JSON-LD or
+  // the request is text/youtube-only.
+  let scrapedSchema = {}
 
   if (url && !text) {
     // YouTube branch — recipe video URLs (youtu.be, youtube.com/watch, shorts).
@@ -190,6 +292,7 @@ export async function POST(request) {
         } else {
           const fetchedHtml = await res.text()
           scrapedImage = extractImageUrl(fetchedHtml, url)
+          scrapedSchema = parseRecipeSchema(fetchedHtml)
           content = extractContentFromHtml(fetchedHtml)
           urlSucceeded = true
         }
@@ -205,6 +308,7 @@ export async function POST(request) {
           // it. og:image scraping uses the original URL as the base so
           // relative image URLs in the HTML resolve correctly.
           scrapedImage = scrapedImage || extractImageUrl(html, url)
+          scrapedSchema = Object.keys(scrapedSchema).length ? scrapedSchema : parseRecipeSchema(html)
           content = extractContentFromHtml(html)
         } else {
           return Response.json({ error: urlError }, { status: 400 })
@@ -216,6 +320,7 @@ export async function POST(request) {
     // Image extraction without a base URL keeps absolute URLs and leaves
     // relative ones as-is (rare on og:image / JSON-LD anyway).
     scrapedImage = extractImageUrl(html, '')
+    scrapedSchema = parseRecipeSchema(html)
     content = extractContentFromHtml(html)
   }
 
@@ -313,6 +418,20 @@ If no recipe is found, return exactly: {"error": "No recipe found"}`
     // asking the model to pick one), fall back to whatever Claude returned.
     if (!result.error) {
       result.image = scrapedImage || result.image || ''
+
+      // Structured fields from JSON-LD (timing + nutrition + servings)
+      // — the whole point of upgrade #1. We trust the site's labeled
+      // data over anything Claude might have inferred. Only set fields
+      // when scrapedSchema actually has them; null/missing entries are
+      // skipped so the UI knows to hide that pill rather than show "0".
+      if (scrapedSchema.prep_time_minutes != null) result.prep_time_minutes = scrapedSchema.prep_time_minutes
+      if (scrapedSchema.cook_time_minutes != null) result.cook_time_minutes = scrapedSchema.cook_time_minutes
+      if (scrapedSchema.total_time_minutes != null) result.total_time_minutes = scrapedSchema.total_time_minutes
+      if (scrapedSchema.servings != null) result.servings = scrapedSchema.servings
+      if (scrapedSchema.calories != null) result.calories = scrapedSchema.calories
+      if (scrapedSchema.protein_g != null) result.protein_g = scrapedSchema.protein_g
+      if (scrapedSchema.carbs_g != null) result.carbs_g = scrapedSchema.carbs_g
+      if (scrapedSchema.fat_g != null) result.fat_g = scrapedSchema.fat_g
 
       // Belt-and-suspenders post-processing — the model usually honors the
       // prompt, but some sites push it into overlong descriptions or one

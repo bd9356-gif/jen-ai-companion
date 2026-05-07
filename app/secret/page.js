@@ -758,7 +758,12 @@ export default function MyRecipeVaultPage() {
 
   const [form, setForm] = useState({
     title: '', description: '', ingredients: '', instructions: '',
-    category: '', tags: [], family_notes: '', photo_url: ''
+    category: '', tags: [], family_notes: '', photo_url: '',
+    // Structured fields from JSON-LD on import (May 2026). All optional;
+    // null/undefined means "not set, don't render the pill". Numbers are
+    // stored as plain JS numbers; the DB columns are int / numeric(6,2).
+    prep_time_minutes: null, cook_time_minutes: null, total_time_minutes: null,
+    calories: null, protein_g: null, carbs_g: null, fat_g: null,
   })
 
   useEffect(() => {
@@ -1333,10 +1338,24 @@ export default function MyRecipeVaultPage() {
       user_id: user.id, title: form.title, description: form.description,
       ingredients, instructions: form.instructions, category: form.category,
       tags: form.tags, family_notes: form.family_notes, photo_url,
+      // Structured fields land iff the import set them. Spreading nulls
+      // is fine — the DB columns are nullable.
+      prep_time_minutes: form.prep_time_minutes,
+      cook_time_minutes: form.cook_time_minutes,
+      total_time_minutes: form.total_time_minutes,
+      calories: form.calories,
+      protein_g: form.protein_g,
+      carbs_g: form.carbs_g,
+      fat_g: form.fat_g,
     }).select().single()
     if (!error && data) {
       setRecipes(prev => [data, ...prev])
-      setForm({ title: '', description: '', ingredients: '', instructions: '', category: '', tags: [], family_notes: '', photo_url: '' })
+      setForm({
+        title: '', description: '', ingredients: '', instructions: '',
+        category: '', tags: [], family_notes: '', photo_url: '',
+        prep_time_minutes: null, cook_time_minutes: null, total_time_minutes: null,
+        calories: null, protein_g: null, carbs_g: null, fat_g: null,
+      })
       setView('list')
     }
   }
@@ -1612,7 +1631,17 @@ export default function MyRecipeVaultPage() {
       }).join('\n')
       setForm({ title: data.title || '', description: data.description || '', ingredients: ingredientsText,
         instructions: data.instructions || '', category: data.category || '', tags: data.tags || [],
-        family_notes: data.family_notes || '', photo_url: data.image || '' })
+        family_notes: data.family_notes || '', photo_url: data.image || '',
+        // Carry through any structured fields the API extracted from
+        // JSON-LD. Missing fields stay null so the save path skips them.
+        prep_time_minutes: data.prep_time_minutes ?? null,
+        cook_time_minutes: data.cook_time_minutes ?? null,
+        total_time_minutes: data.total_time_minutes ?? null,
+        calories: data.calories ?? null,
+        protein_g: data.protein_g ?? null,
+        carbs_g: data.carbs_g ?? null,
+        fat_g: data.fat_g ?? null,
+      })
       setImportText(''); setImportUrl(''); setImportTab('add')
     } catch (err) { console.error(err) }
     setImporting(false)
@@ -1799,14 +1828,37 @@ export default function MyRecipeVaultPage() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            {viewing.category && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">{viewing.category}</span>}
-            {viewing.difficulty && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">{viewing.difficulty}</span>}
-            {viewing.cooking_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">⏱ {viewing.cooking_time}</span>}
-            {viewing.prep_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">🔪 {viewing.prep_time}</span>}
-          </div>
+          {/* Pill row under the title — at-a-glance timing + nutrition.
+              Each pill renders only when its source field is populated.
+              Structured fields (prep_time_minutes, calories, etc.) are
+              the May 2026 JSON-LD-import additions; legacy text fields
+              (prep_time, cooking_time, nutrition.calories) are kept for
+              older Vault entries. The new fields are formatted with a
+              "m" / "g" / "cal" suffix; legacy strings render as-is. */}
+          {(() => {
+            const prepMin = viewing.prep_time_minutes
+            const cookMin = viewing.cook_time_minutes
+            const totalMin = viewing.total_time_minutes
+            const cal = viewing.calories ?? viewing.nutrition?.calories
+            const pro = viewing.protein_g ?? viewing.nutrition?.protein
+            return (
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {viewing.category && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">{viewing.category}</span>}
+                {viewing.difficulty && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">{viewing.difficulty}</span>}
+                {prepMin != null
+                  ? <span className="px-3 py-1 bg-orange-50 text-orange-700 border border-orange-200 rounded-full text-xs">🔪 {prepMin}m prep</span>
+                  : viewing.prep_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">🔪 {viewing.prep_time}</span>}
+                {cookMin != null
+                  ? <span className="px-3 py-1 bg-orange-50 text-orange-700 border border-orange-200 rounded-full text-xs">⏱ {cookMin}m cook</span>
+                  : viewing.cooking_time && <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">⏱ {viewing.cooking_time}</span>}
+                {totalMin != null && <span className="px-3 py-1 bg-orange-50 text-orange-700 border border-orange-200 rounded-full text-xs">⏲ {totalMin}m total</span>}
+                {cal != null && <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs">{cal} cal</span>}
+                {pro != null && <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs">{pro}g protein</span>}
+              </div>
+            )
+          })()}
 
-          {(viewing.cooking_time || viewing.prep_time || viewing.difficulty || viewing.equipment?.length > 0 || viewing.nutrition) && (
+          {(viewing.cooking_time || viewing.prep_time || viewing.difficulty || viewing.equipment?.length > 0 || viewing.nutrition || viewing.prep_time_minutes != null || viewing.cook_time_minutes != null || viewing.total_time_minutes != null || viewing.calories != null || viewing.protein_g != null || viewing.carbs_g != null || viewing.fat_g != null) && (
             <div className="bg-orange-50 border border-orange-100 rounded-2xl p-4 mb-5">
               <button
                 type="button"
@@ -1819,18 +1871,25 @@ export default function MyRecipeVaultPage() {
               </button>
               {!detailCollapsed.info && (<>
               <div className="grid grid-cols-2 gap-3 mb-3">
-                {viewing.prep_time && (
+                {(viewing.prep_time_minutes != null || viewing.prep_time) && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">🔪</p>
-                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.prep_time}</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.prep_time_minutes != null ? `${viewing.prep_time_minutes} min` : viewing.prep_time}</p>
                     <p className="text-xs text-gray-500">Prep Time</p>
                   </div>
                 )}
-                {viewing.cooking_time && (
+                {(viewing.cook_time_minutes != null || viewing.cooking_time) && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">⏱</p>
-                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.cooking_time}</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.cook_time_minutes != null ? `${viewing.cook_time_minutes} min` : viewing.cooking_time}</p>
                     <p className="text-xs text-gray-500">Cook Time</p>
+                  </div>
+                )}
+                {viewing.total_time_minutes != null && (
+                  <div className="bg-white rounded-xl p-3 text-center">
+                    <p className="text-base">⏲</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.total_time_minutes} min</p>
+                    <p className="text-xs text-gray-500">Total Time</p>
                   </div>
                 )}
                 {viewing.difficulty && (
@@ -1854,19 +1913,37 @@ export default function MyRecipeVaultPage() {
                   <p className="text-sm text-gray-700">{viewing.equipment.join(', ')}</p>
                 </div>
               )}
-              {viewing.nutrition && (
-                <div className="bg-white rounded-xl p-3">
-                  <p className="text-xs font-semibold text-gray-500 mb-2">Nutrition per serving</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {['calories','protein','carbs','fat'].map(k => viewing.nutrition[k] && (
-                      <div key={k} className="text-center">
-                        <p className="text-xs font-bold text-orange-600">{viewing.nutrition[k]}</p>
-                        <p className="text-xs text-gray-500 capitalize">{k}</p>
-                      </div>
-                    ))}
+              {(() => {
+                // Prefer the new flat columns (May 2026 JSON-LD import).
+                // Fall back to the legacy nested `viewing.nutrition` object
+                // for older Vault rows that came in via the previous path.
+                const nutr = {
+                  calories: viewing.calories ?? viewing.nutrition?.calories,
+                  protein: viewing.protein_g ?? viewing.nutrition?.protein,
+                  carbs: viewing.carbs_g ?? viewing.nutrition?.carbs,
+                  fat: viewing.fat_g ?? viewing.nutrition?.fat,
+                }
+                const hasAny = Object.values(nutr).some(v => v != null && v !== '')
+                if (!hasAny) return null
+                return (
+                  <div className="bg-white rounded-xl p-3">
+                    <p className="text-xs font-semibold text-gray-500 mb-2">Nutrition per serving</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { key: 'calories', label: 'cal', value: nutr.calories, suffix: '' },
+                        { key: 'protein', label: 'protein', value: nutr.protein, suffix: 'g' },
+                        { key: 'carbs', label: 'carbs', value: nutr.carbs, suffix: 'g' },
+                        { key: 'fat', label: 'fat', value: nutr.fat, suffix: 'g' },
+                      ].map(({ key, label, value, suffix }) => value != null && value !== '' && (
+                        <div key={key} className="text-center">
+                          <p className="text-xs font-bold text-orange-600">{value}{typeof value === 'number' && suffix ? suffix : ''}</p>
+                          <p className="text-xs text-gray-500">{label}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
               </>)}
             </div>
           )}
@@ -2630,6 +2707,65 @@ export default function MyRecipeVaultPage() {
                   rows={8}
                   style={{ fontSize: '16px' }}
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 resize-y font-mono transition-colors" />
+              </div>
+
+              {/* Time & Nutrition — May 2026. Pre-filled from JSON-LD on
+                  imports that ship Recipe schema; manual otherwise. All
+                  optional; blank fields stay null in the DB and don't
+                  render their pill on the detail view. Number inputs use
+                  inputMode="decimal" so iOS shows the numeric keypad. */}
+              <div>
+                <label className="block text-base font-bold text-gray-800 mb-2">⏱ Time &amp; Nutrition</label>
+                <p className="text-sm text-gray-500 mb-3">Optional. We pre-fill these when the source recipe has them.</p>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {[
+                    { key: 'prep_time_minutes', label: 'Prep (min)', step: '1' },
+                    { key: 'cook_time_minutes', label: 'Cook (min)', step: '1' },
+                    { key: 'total_time_minutes', label: 'Total (min)', step: '1' },
+                  ].map(({ key, label, step }) => (
+                    <div key={key}>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step={step}
+                        min="0"
+                        value={form[key] ?? ''}
+                        onChange={e => {
+                          const v = e.target.value
+                          setForm(f => ({ ...f, [key]: v === '' ? null : parseInt(v, 10) }))
+                        }}
+                        style={{ fontSize: '16px' }}
+                        className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { key: 'calories', label: 'Cal', step: '1', isInt: true },
+                    { key: 'protein_g', label: 'Protein g', step: '0.1', isInt: false },
+                    { key: 'carbs_g', label: 'Carbs g', step: '0.1', isInt: false },
+                    { key: 'fat_g', label: 'Fat g', step: '0.1', isInt: false },
+                  ].map(({ key, label, step, isInt }) => (
+                    <div key={key}>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step={step}
+                        min="0"
+                        value={form[key] ?? ''}
+                        onChange={e => {
+                          const v = e.target.value
+                          setForm(f => ({ ...f, [key]: v === '' ? null : (isInt ? parseInt(v, 10) : parseFloat(v)) }))
+                        }}
+                        style={{ fontSize: '16px' }}
+                        className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Save / Cancel — saves to Vault and exits Import Tools. */}
