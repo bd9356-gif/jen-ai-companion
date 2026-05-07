@@ -1214,14 +1214,19 @@ export default function MyRecipeVaultPage() {
         payload = stripTapbackPrefix(payload)
         // Parse "<URL>\n\n<HTML>" — first line is the URL, blank line, then HTML.
         // Tolerant: accepts URL-only (no separator) and HTML-only (no leading URL).
-        const sepMatch = payload.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
+        // Quote-tolerant: a Tapback often leaves the URL wrapped in
+        // smart-quotes ("https://…") even after the verb is stripped,
+        // so the URL boundary is `[^\s'"‘’“”`]` — anything-but-whitespace-
+        // or-quote — to peel them off cleanly.
+        const URL_TOKEN = `(?:['"‘’“”\`]?)(https?:\\/\\/[^\\s'"‘’“”\`]+)(?:['"‘’“”\`]?)`
+        const sepMatch = payload.match(new RegExp(`^\\s*${URL_TOKEN}\\s*\\r?\\n\\s*\\r?\\n([\\s\\S]+)$`))
         let smartUrl = ''
         let smartHtml = ''
         if (sepMatch) {
           smartUrl = sepMatch[1].trim()
           smartHtml = sepMatch[2].trim()
-        } else if (/^https?:\/\/\S+$/i.test(payload.trim())) {
-          smartUrl = payload.trim()
+        } else if (new RegExp(`^${URL_TOKEN}$`, 'i').test(payload.trim())) {
+          smartUrl = payload.trim().replace(/^['"‘’“”`]|['"‘’“”`]$/g, '')
         } else if (payload.trim().length >= 200) {
           // Long blob with no leading URL → treat as HTML/text payload.
           smartHtml = payload.trim()
@@ -1665,7 +1670,11 @@ export default function MyRecipeVaultPage() {
     // loses the image. Only fires when the caller didn't already supply
     // url/html overrides, so smart_import + URL-tab paths are unaffected.
     if (!urlToUse && !htmlToUse && textToUse) {
-      const sepMatch = textToUse.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
+      // Quote-tolerant URL boundary so a residual Tapback smart-quote
+      // wrap ("https://…") still parses as a URL — see the smart_import
+      // handler comment for why.
+      const URL_TOKEN = `(?:['"‘’“”\`]?)(https?:\\/\\/[^\\s'"‘’“”\`]+)(?:['"‘’“”\`]?)`
+      const sepMatch = textToUse.match(new RegExp(`^\\s*${URL_TOKEN}\\s*\\r?\\n\\s*\\r?\\n([\\s\\S]+)$`))
       if (sepMatch) {
         urlToUse = sepMatch[1].trim()
         htmlToUse = sepMatch[2].trim()
