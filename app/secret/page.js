@@ -191,6 +191,41 @@ const PREFERENCE_OPTIONS = [
 // the most common entities, collapse whitespace). If clipboard.read()
 // isn't available or throws (older Safari, permission denied), we
 // fall through to readText() so we degrade rather than break.
+// Strip iMessage Tapback prefixes from a clipboard string. When you copy
+// a message that someone "Loved"/"Liked"/"Laughed at"/etc., iOS pastes
+// it as `Loved "<original content>"` — sometimes with a leading ❤️ /
+// 👍 / 😂 emoji, depending on iOS version + locale. URLs that came from
+// hearted iMessages then no longer start at line 1, so the smart-paste
+// `^https?://...` regex misses them.
+//
+// We strip the leading Tapback verb (and its trailing space), the
+// optional reaction emoji, and unwrap surrounding quote characters
+// (straight, curly, or backtick) so the original URL surfaces back at
+// the start of the string. Idempotent — runs cleanly on plain content.
+function stripTapbackPrefix(s) {
+  if (!s) return s
+  let out = s
+  // Leading reaction emoji (heart / thumbs up / etc.). Two passes so
+  // a "❤️ Loved" double-prefix gets fully cleaned.
+  for (let i = 0; i < 2; i++) {
+    out = out.replace(
+      /^[\s​-‍﻿]*[❤👍👎😂😮😍⁉‼️]+\s*/u,
+      ''
+    )
+    // English Tapback verbs Apple uses in the pasted form.
+    out = out.replace(
+      /^(Loved|Liked|Disliked|Laughed at|Emphasized|Questioned)\s+/i,
+      ''
+    )
+  }
+  // If what's left is wrapped in quotes (straight, curly, or backtick),
+  // strip exactly one matching pair. Tapback wraps the original content
+  // in smart-quotes ("…") around the URL.
+  const m = out.match(/^([‘’“”"'`])([\s\S]*?)\1\s*$/)
+  if (m) out = m[2]
+  return out
+}
+
 function htmlToCleanText(html) {
   return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -1090,7 +1125,9 @@ export default function MyRecipeVaultPage() {
     // the same path as a manual Import 📥 → URL → Import tap.
     const importParam = searchParams.get('import')
     if (importParam) {
-      const decoded = decodeURIComponent(importParam).trim()
+      // Same Tapback strip as smart-paste — defends against the deep-link
+      // path picking up a URL the user copied from a hearted iMessage.
+      const decoded = stripTapbackPrefix(decodeURIComponent(importParam).trim())
       if (decoded) {
         setView('import')
         setImportTab('url')
@@ -1137,6 +1174,10 @@ export default function MyRecipeVaultPage() {
           payload = await readClipboardSmart()
         } catch { /* permission denied — leave Import view empty */ }
         if (!payload) return
+        // Strip iMessage Tapback prefix ("Loved", heart emoji, wrapping
+        // smart-quotes) before the regex — old hearted iMessage copies
+        // would otherwise hide the URL and skip the smart_import path.
+        payload = stripTapbackPrefix(payload)
         // Parse "<URL>\n\n<HTML>" — first line is the URL, blank line, then HTML.
         // Tolerant: accepts URL-only (no separator) and HTML-only (no leading URL).
         const sepMatch = payload.match(/^\s*(https?:\/\/\S+)\s*\r?\n\s*\r?\n([\s\S]+)$/)
@@ -1574,8 +1615,12 @@ export default function MyRecipeVaultPage() {
   // decides which to use. Today only the smart_import handler in
   // loadRecipes passes this; all other call sites omit it.
   async function handleImport(urlOverride, htmlOverride) {
-    let urlToUse = (typeof urlOverride === 'string' ? urlOverride : importUrl).trim()
-    let textToUse = importText.trim()
+    // Strip iMessage Tapback prefixes ("Loved", "❤️", quotes) from any
+    // user-supplied URL/text before parsing — old hearted iMessage
+    // copies otherwise hide the URL behind a verb + quote pair and the
+    // smart-paste regex would miss it.
+    let urlToUse = stripTapbackPrefix((typeof urlOverride === 'string' ? urlOverride : importUrl).trim())
+    let textToUse = stripTapbackPrefix(importText.trim())
     let htmlToUse = (typeof htmlOverride === 'string' ? htmlOverride : '').trim()
     // Smart paste: if the Paste textarea holds a "<URL>\n\n<HTML>" payload
     // (typical iOS Share-Sheet Shortcut clipboard contents, dropped in via
