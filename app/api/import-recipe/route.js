@@ -341,7 +341,11 @@ Rules for the output:
 - "instructions" MUST use a real newline (\\n) between every step — never one paragraph. If the source has one running paragraph, break it on each sentence so each step is on its own line.
 - "ingredients" entries: "measure" is the quantity and unit (e.g. "2 cups", "1 large", "to taste"); "name" is just the ingredient name. If there's no quantity, leave "measure" as an empty string.
 - "family_notes" is for anecdotes, tips, source attribution, and any overflow from description. Keep it short.
-- If the content is a video transcript (includes "Video title", "Channel", "Transcript"), extract the recipe from what the host actually demonstrates. Ignore sponsor reads, intros, outros, subscribe asks, and personal anecdotes. If measurements are only spoken vaguely (e.g. "about a cup"), reflect that in "measure". Credit the channel in "family_notes" as: Recipe adapted from {Channel} on YouTube.
+- "prep_time_minutes" / "cook_time_minutes" / "total_time_minutes": integers in MINUTES. Look for phrases like "Prep Time: 5 minutes", "Cook: 10 min", "Total: 1 hour 15 min", "PT15M". Convert hours to minutes (1 hr 30 min → 90). If a field isn't mentioned in the source, use null. If only prep+cook are present, you may set total = prep + cook.
+- "servings": integer count if the source says "Servings: 4" / "Makes 12" / "Yields: 8". Use null if absent.
+- "calories": integer per-serving calories. Look for "370kcal", "320 calories", "Calories: 450". Use null if absent.
+- "protein_g" / "carbs_g" / "fat_g": numbers (decimals OK) in GRAMS, per serving. Look for "37g protein", "23g fat", "3g carbs", or "Carbohydrates: 12g". Strip the "g" and any unit prefix. Use null if absent.
+- If the content is a video transcript (includes "Video title", "Channel", "Transcript"), extract the recipe from what the host actually demonstrates. Ignore sponsor reads, intros, outros, subscribe asks, and personal anecdotes. If measurements are only spoken vaguely (e.g. "about a cup"), reflect that in "measure". Credit the channel in "family_notes" as: Recipe adapted from {Channel} on YouTube. For transcripts, leave timing/nutrition as null unless the host states them explicitly.
 
 Respond with ONLY a valid JSON object, no markdown, no backticks:
 {
@@ -354,7 +358,15 @@ Respond with ONLY a valid JSON object, no markdown, no backticks:
   "instructions": "Step 1 text\\nStep 2 text\\nStep 3 text",
   "tags": ["tag1", "tag2", "tag3"],
   "family_notes": "",
-  "image": "https://… main recipe image URL if present in the content, otherwise empty string"
+  "image": "https://… main recipe image URL if present in the content, otherwise empty string",
+  "prep_time_minutes": null,
+  "cook_time_minutes": null,
+  "total_time_minutes": null,
+  "servings": null,
+  "calories": null,
+  "protein_g": null,
+  "carbs_g": null,
+  "fat_g": null
 }
 
 For "tags": pick 2–4 short lowercase words from this curated set when they fit the recipe — meal: breakfast, lunch, dinner, dessert, side, snack — food groups: chicken, beef, seafood, pasta, vegetarian — style: quick, comfort, healthy, baking, holiday. Don't invent tags outside this list unless the recipe genuinely needs one.
