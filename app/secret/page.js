@@ -191,32 +191,66 @@ const PREFERENCE_OPTIONS = [
 // the most common entities, collapse whitespace). If clipboard.read()
 // isn't available or throws (older Safari, permission denied), we
 // fall through to readText() so we degrade rather than break.
-// Strip iMessage Tapback prefixes from a clipboard string. When you copy
-// a message that someone "Loved"/"Liked"/"Laughed at"/etc., iOS pastes
-// it as `Loved "<original content>"` — sometimes with a leading ❤️ /
-// 👍 / 😂 emoji, depending on iOS version + locale. URLs that came from
-// hearted iMessages then no longer start at line 1, so the smart-paste
-// `^https?://...` regex misses them.
+// Strip iMessage Tapback prefixes from a clipboard string. Modern iOS
+// pastes Tap-Backed messages with the reactor's NAME baked into the
+// prefix — formats observed:
+//   Tom loved "<original>"
+//   ❤️ Tom: <original>
+//   Loved by Tom: <original>
+//   Sarah laughed at "<original>"
+// The original message (often a URL) is then either quote-wrapped or
+// follows a colon. Hearted URLs that come through this path no longer
+// start at line 1 of the clipboard, so the smart-paste `^https?://`
+// regex misses them and the import silently does nothing.
 //
-// We strip the leading Tapback verb (and its trailing space), the
-// optional reaction emoji, and unwrap surrounding quote characters
-// (straight, curly, or backtick) so the original URL surfaces back at
-// the start of the string. Idempotent — runs cleanly on plain content.
+// This helper makes a best-effort strip:
+//   1. Leading reaction emoji (❤️ 👍 😂 etc.)
+//   2. Either "<Name> <verb> " OR "<verb> by <Name>: " OR "<Name>: "
+//   3. Wrapping smart-quotes around what remains
+// Idempotent — runs cleanly on plain content.
 function stripTapbackPrefix(s) {
   if (!s) return s
-  let out = s
-  // Leading reaction emoji (heart / thumbs up / etc.). Two passes so
-  // a "❤️ Loved" double-prefix gets fully cleaned.
-  for (let i = 0; i < 2; i++) {
+  let out = s.trim()
+  // Tapback verbs Apple uses in the pasted form (English locale).
+  const VERBS = '(?:loved|liked|disliked|laughed at|emphasized|questioned)'
+  // A "name" — one to four capitalized words, possibly with apostrophes,
+  // hyphens, or accented characters. Conservative so we don't eat real
+  // recipe titles by accident.
+  const NAME = "(?:[A-Z][\\p{L}'’\\-]*(?:\\s+[A-Z][\\p{L}'’\\-]*){0,3})"
+  // Run a few sweeps so layered prefixes ("❤️ Tom loved \"…\"") get
+  // peeled cleanly even though each individual rule only nibbles once.
+  // The bare-name strip ("Tom: URL") is gated on having JUST stripped a
+  // reaction emoji this iteration — otherwise we'd eat regular content
+  // like "Title: my recipe".
+  let emojiJustStripped = false
+  for (let i = 0; i < 3; i++) {
+    const before = out
+    // Leading reaction emoji + zero-width joiners + variation selectors.
+    // The U+200D / U+FE0F characters show up inside compound emoji like
+    // ❤️ — accept them as part of the leading run so we strip the whole
+    // glyph, not just one codepoint.
+    const beforeEmoji = out
     out = out.replace(
-      /^[\s​-‍﻿]*[❤👍👎😂😮😍⁉‼️]+\s*/u,
+      /^[\s​-‍﻿]*[❤️♥️💚💙💛🧡🖤🤍🤎💜👍👎😂🤣😮😍⁉‼️🥰😆]+[️‍]*\s*/u,
       ''
     )
-    // English Tapback verbs Apple uses in the pasted form.
-    out = out.replace(
-      /^(Loved|Liked|Disliked|Laughed at|Emphasized|Questioned)\s+/i,
-      ''
-    )
+    if (out !== beforeEmoji) emojiJustStripped = true
+    // "<Name> <verb> " (e.g. `Tom loved `, `Sarah laughed at `)
+    out = out.replace(new RegExp(`^${NAME}\\s+${VERBS}\\s+`, 'iu'), '')
+    // "<verb> by <Name>[:]? " (e.g. `Loved by Tom: `, `Liked by Sarah `)
+    out = out.replace(new RegExp(`^${VERBS}\\s+by\\s+${NAME}\\s*:?\\s*`, 'iu'), '')
+    // "<verb> " on its own (e.g. just `Loved "..."`)
+    out = out.replace(new RegExp(`^${VERBS}\\s+`, 'iu'), '')
+    // "<Name>: " — bare name + colon. Only fire after a reaction emoji
+    // was stripped (this run or any previous one) so we don't eat real
+    // recipe content like "Title: …". The cumulative `emojiJustStripped`
+    // flag means a leading "❤️ Tom: URL" gets fully cleaned across two
+    // iterations.
+    if (emojiJustStripped) {
+      out = out.replace(new RegExp(`^${NAME}\\s*:\\s*`, 'u'), '')
+    }
+    if (out === before) break
+    out = out.trim()
   }
   // If what's left is wrapped in quotes (straight, curly, or backtick),
   // strip exactly one matching pair. Tapback wraps the original content
