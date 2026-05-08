@@ -404,26 +404,14 @@ export default function ChefPage() {
 
         <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-2">
 
-          {/* Empty state — mode-aware copy + suggested prompts.
-              Stripped down so the prompt boxes ride near the top on
-              iPhone: dropped the 4xl emoji (it's already in the header),
-              dropped the "Try one of these" label (the cards are
-              self-evidently tappable), and tightened to a single
-              heading + readable subtitle. Subtitle stays at text-base
-              gray-600 — that's the readable size. */}
+          {/* Empty state — suggested prompts FIRST so the search box
+              at the top of <main> sits directly above them (Bill's
+              ask, May 2026). The mode-aware heading + subtitle render
+              below the prompts as a quieter footer that gives the
+              page voice without pushing the input away from the
+              tappable suggestions. */}
           {messages.length === 0 && (
             <div className="space-y-2">
-              <div className="text-center pt-1 pb-1">
-                <p className="text-2xl mb-1">{isPractice ? '🍳' : '🎓'}</p>
-                <p className={`font-bold text-xl leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
-                  {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
-                </p>
-                <p className="text-gray-600 text-base mt-1 leading-snug max-w-md mx-auto">
-                  {isPractice
-                    ? 'Class just ended — you\u2019re in the practice kitchen. Pick an assignment or ask Chef Jennifer for a custom one.'
-                    : 'You\u2019re in the classroom with your chef — ask your question, learn the skill, then head to 🍳 Practice for your homework.'}
-                </p>
-              </div>
               {/* Suggested prompts wrapped in a soft mode-tinted card so
                   the cluster reads as one menu and the page has color
                   even before the first message lands. */}
@@ -444,6 +432,16 @@ export default function ChefPage() {
                     {q}
                   </button>
                 ))}
+              </div>
+              <div className="text-center pt-2 pb-1">
+                <p className={`font-bold text-base leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
+                  {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
+                </p>
+                <p className="text-gray-600 text-sm mt-1 leading-snug max-w-md mx-auto">
+                  {isPractice
+                    ? 'Class just ended \u2014 you\u2019re in the practice kitchen. Pick an assignment or ask Chef Jennifer for a custom one.'
+                    : 'You\u2019re in the classroom with your chef \u2014 ask your question, learn the skill, then head to \ud83c\udf73 Practice for your homework.'}
+                </p>
               </div>
             </div>
           )}
