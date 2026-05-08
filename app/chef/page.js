@@ -366,6 +366,23 @@ export default function ChefPage() {
       </header>
 
       <main className="flex-1 min-h-0 max-w-2xl mx-auto w-full px-4 py-2 flex flex-col">
+        {/* Mode-aware heading at the TOP of <main> when the chat
+            is empty (Bill's ask, May 2026). Disappears once the
+            user sends their first message so the conversation
+            has full vertical room. */}
+        {messages.length === 0 && (
+          <div className="text-center pb-3">
+            <p className={`font-bold text-base leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
+              {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
+            </p>
+            <p className="text-gray-600 text-sm mt-1 leading-snug max-w-md mx-auto">
+              {isPractice
+                ? 'Class just ended \u2014 you\u2019re in the practice kitchen. Pick an assignment or ask Chef Jennifer for a custom one.'
+                : 'You\u2019re in the classroom with your chef \u2014 ask your question, learn the skill, then head to \ud83c\udf73 Practice for your homework.'}
+            </p>
+          </div>
+        )}
+
         {/* Input bar at TOP (April 2026 move) — Bill's ask: easier
             thumb reach, the textarea sits right under the header so
             it's the first thing the user touches. Conversation flows
@@ -432,16 +449,6 @@ export default function ChefPage() {
                     {q}
                   </button>
                 ))}
-              </div>
-              <div className="text-center pt-2 pb-1">
-                <p className={`font-bold text-base leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
-                  {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
-                </p>
-                <p className="text-gray-600 text-sm mt-1 leading-snug max-w-md mx-auto">
-                  {isPractice
-                    ? 'Class just ended \u2014 you\u2019re in the practice kitchen. Pick an assignment or ask Chef Jennifer for a custom one.'
-                    : 'You\u2019re in the classroom with your chef \u2014 ask your question, learn the skill, then head to \ud83c\udf73 Practice for your homework.'}
-                </p>
               </div>
             </div>
           )}
