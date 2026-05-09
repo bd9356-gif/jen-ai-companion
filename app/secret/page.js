@@ -428,7 +428,8 @@ function TagSelector({ tags, onChange }) {
 }
 
 // ── EDIT FORM ──
-function EditForm({ initial, initialIngredients, onSave, onCancel }) {
+function EditForm({ initial, initialIngredients, onSave, onCancel, photoUrl, onUploadImage, onPasteImage, uploadingPhoto }) {
+  const editPhotoInputRef = useRef(null)
   const [title, setTitle] = useState(initial.title || '')
   const [description, setDescription] = useState(initial.description || '')
   const [category, setCategory] = useState(initial.category || '')
@@ -481,6 +482,69 @@ function EditForm({ initial, initialIngredients, onSave, onCancel }) {
 
   return (
     <div className="space-y-7 pb-24">
+
+      {/* Photo block — mirrors the detail-view hero affordances so users
+          can swap the photo from the Edit form too. Tap the preview to
+          open the file picker; or use 📁 Upload / 📋 Paste pills. Photo
+          changes save immediately via the parent's onUploadImage /
+          onPasteImage callbacks (same path as the detail view), so they
+          land on the recipe row whether the user hits Save Recipe or
+          Cancel — same as the detail-view paste flow. */}
+      {(onUploadImage || onPasteImage) && (
+        <div>
+          <label className={labelClass}>Photo</label>
+          <p className={helperClass}>Tap to upload, or paste an image from your clipboard.</p>
+          <div className="relative w-full rounded-2xl overflow-hidden border-2 border-gray-200" style={{ height: '180px' }}>
+            {photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={photoUrl} alt="Recipe" className="w-full h-full object-cover" />
+            ) : (
+              <button
+                type="button"
+                onClick={() => editPhotoInputRef.current?.click()}
+                className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 hover:from-orange-100 hover:to-amber-100 transition-colors"
+              >
+                <span className="text-4xl mb-1">📷</span>
+                <span className="text-sm font-semibold text-orange-700">Add a photo</span>
+              </button>
+            )}
+            <div className="absolute top-2 right-2 flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => editPhotoInputRef.current?.click()}
+                disabled={uploadingPhoto}
+                title="Upload from device"
+                className="text-xs font-semibold bg-white/95 text-orange-700 border border-orange-300 rounded-lg px-2.5 py-1 hover:bg-orange-50 disabled:opacity-50"
+              >
+                {photoUrl ? '📷 Change' : '📁 Upload'}
+              </button>
+              {onPasteImage && (
+                <button
+                  type="button"
+                  onClick={() => onPasteImage()}
+                  disabled={uploadingPhoto}
+                  title="Paste image from clipboard"
+                  className="text-xs font-semibold bg-white/95 text-orange-700 border border-orange-300 rounded-lg px-2.5 py-1 hover:bg-orange-50 disabled:opacity-50"
+                >
+                  {uploadingPhoto ? '⏳ …' : (photoUrl ? '📋 Paste' : '📋 Paste image')}
+                </button>
+              )}
+            </div>
+          </div>
+          <input
+            ref={editPhotoInputRef}
+            type="file"
+            accept="image/*,.heic"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              if (onUploadImage) onUploadImage(file)
+              e.target.value = ''
+            }}
+          />
+        </div>
+      )}
 
       <div>
         <label className={labelClass}>Recipe Title *</label>
@@ -2180,6 +2244,10 @@ export default function MyRecipeVaultPage() {
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
           <EditForm initial={viewing} initialIngredients={editIngredients}
+            photoUrl={viewing.photo_url || ''}
+            uploadingPhoto={uploadingPhoto}
+            onUploadImage={(file) => attachImageBlobToRecipe(file, viewing.id, user.id)}
+            onPasteImage={() => pasteImageFromClipboard(viewing.id)}
             onSave={async (updates) => { await updateRecipe(viewing.id, updates); setView('detail') }}
             onCancel={() => setView('detail')} />
         </main>
