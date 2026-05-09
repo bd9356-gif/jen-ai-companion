@@ -711,9 +711,10 @@ export default function PlaybookPage() {
                 <button
                   onClick={() => window.location.href = '/chef'}
                   title="Open Chef Jennifer"
-                  className="block w-full text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-orange-600 mb-1.5 px-1 text-center"
+                  className="block w-full hover:text-orange-600 mb-1.5 px-1 text-center"
                 >
-                  👨‍🍳 Chef Jennifer&rsquo;s Classroom
+                  <p className="text-[9px] uppercase tracking-wider text-gray-400 leading-none">Classroom</p>
+                  <p className="text-[12px] font-bold text-gray-700 leading-tight mt-0.5">👨‍🍳 Chef Jennifer</p>
                 </button>
                 <div className="space-y-1.5">
                   <button
@@ -742,9 +743,10 @@ export default function PlaybookPage() {
                 <button
                   onClick={() => window.location.href = '/videos'}
                   title="Open Chef TV"
-                  className="block w-full text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-orange-600 mb-1.5 px-1 text-center"
+                  className="block w-full hover:text-orange-600 mb-1.5 px-1 text-center"
                 >
-                  🎬 Chef TV&rsquo;s Classroom
+                  <p className="text-[9px] uppercase tracking-wider text-gray-400 leading-none">Classroom</p>
+                  <p className="text-[12px] font-bold text-gray-700 leading-tight mt-0.5">🎬 Chef TV</p>
                 </button>
                 <div className="space-y-1.5">
                   <button
