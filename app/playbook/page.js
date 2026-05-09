@@ -713,7 +713,7 @@ export default function PlaybookPage() {
                   title="Open Chef Jennifer"
                   className="block w-full text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-orange-600 mb-1.5 px-1 text-center"
                 >
-                  👨‍🍳 Chef Jennifer
+                  👨‍🍳 Chef Jennifer&rsquo;s Classroom
                 </button>
                 <div className="space-y-1.5">
                   <button
@@ -744,7 +744,7 @@ export default function PlaybookPage() {
                   title="Open Chef TV"
                   className="block w-full text-[11px] font-bold uppercase tracking-wider text-gray-500 hover:text-orange-600 mb-1.5 px-1 text-center"
                 >
-                  🎬 Chef TV
+                  🎬 Chef TV&rsquo;s Classroom
                 </button>
                 <div className="space-y-1.5">
                   <button
