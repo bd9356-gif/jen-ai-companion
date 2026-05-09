@@ -101,7 +101,7 @@ export default function WeeklyPlanPage() {
                     {planByDay[day].map(item => (
                       <div key={item.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl p-3">
                         {item.recipes?.thumbnail_url && (
-                          <img src={item.recipes.thumbnail_url} alt={item.recipes.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+                          <img loading="lazy" decoding="async" src={item.recipes.thumbnail_url} alt={item.recipes.title} className="w-14 h-14 rounded-xl object-cover shrink-0" />
                         )}
                         <div className="flex-1 min-w-0">
                           <a href={`/recipes/${item.recipe_id}`}>

@@ -82,7 +82,7 @@ function SortablePick({ pick, bucketKey, onMove, onRemove }) {
       </button>
       {pick.photo_url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={pick.photo_url} alt={pick.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+        <img loading="lazy" decoding="async" src={pick.photo_url} alt={pick.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
       ) : (
         <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
           <span className="text-lg">🍽️</span>

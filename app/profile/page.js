@@ -55,7 +55,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl p-6 flex flex-col items-center text-center shadow-sm">
           <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center mb-4">
             {user?.user_metadata?.avatar_url ? (
-              <img src={user.user_metadata.avatar_url} alt="avatar" className="w-20 h-20 rounded-full object-cover" />
+              <img loading="lazy" decoding="async" src={user.user_metadata.avatar_url} alt="avatar" className="w-20 h-20 rounded-full object-cover" />
             ) : (
               <span className="text-2xl font-bold text-orange-600">{getInitials(user)}</span>
             )}

@@ -497,7 +497,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel, photoUrl, onU
           <div className="relative w-full rounded-2xl overflow-hidden border-2 border-gray-200" style={{ height: '180px' }}>
             {photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={photoUrl} alt="Recipe" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={photoUrl} alt="Recipe" className="w-full h-full object-cover" />
             ) : (
               <button
                 type="button"
@@ -645,7 +645,7 @@ function EducationVideoCard({ item, onDelete }) {
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
             {item.thumbnail_url ? (
-              <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-2xl">📚</div>
             )}
@@ -684,7 +684,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
         <div className="flex gap-3 p-4">
           <button onClick={() => setPlaying(true)} className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-blue-100">
             {recipe.photo_url ? (
-              <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-2xl">🍳</div>
             )}
@@ -1070,14 +1070,14 @@ export default function MyRecipeVaultPage() {
             //   - text/uri-list (most reliable when present)
             //   - text/plain (iOS Safari often only puts plain text)
             //   - text/html (iOS Safari sometimes only ships an
-            //                <img src="..."> blob — extract the src)
+            //                <img loading="lazy" decoding="async" src="..."> blob — extract the src)
             // Fetch the URL; if it's an image, use it. Tries hardest
             // before giving up because iOS Safari's "long-press → Copy
             // image" path is flaky and varies by version.
             const uriList = (cd?.getData('text/uri-list') || '').trim()
             const plain = (cd?.getData('text/plain') || '').trim()
             const html = cd?.getData('text/html') || ''
-            const htmlImgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+            const htmlImgMatch = html.match(/<img loading="lazy" decoding="async"[^>]+src=["']([^"']+)["']/i)
             const fromHtml = htmlImgMatch ? htmlImgMatch[1] : ''
             const candidate =
               [uriList, plain, fromHtml]
@@ -1955,7 +1955,7 @@ export default function MyRecipeVaultPage() {
             stretch across a wide monitor. */}
         <div className="relative w-full max-w-2xl mx-auto h-40 sm:h-52 md:h-64">
           {viewing.photo_url ? (
-            <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-orange-100 via-orange-50 to-amber-100 flex items-center justify-center cursor-pointer hover:brightness-95 transition-all"
               onClick={() => photoInputRef.current?.click()}
@@ -2868,7 +2868,7 @@ export default function MyRecipeVaultPage() {
                 <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
                   onClick={() => fileInputRef.current?.click()}>
                   {form.photo_url ? (
-                    <img src={form.photo_url} alt="Preview" className="h-32 object-cover rounded-xl" />
+                    <img loading="lazy" decoding="async" src={form.photo_url} alt="Preview" className="h-32 object-cover rounded-xl" />
                   ) : (
                     <><span className="text-3xl mb-2">📷</span>
                     <p className="text-base text-orange-600 font-semibold">Browse & Upload Photo</p>
@@ -3331,7 +3331,7 @@ export default function MyRecipeVaultPage() {
                     <div className="shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-amber-100 flex items-center justify-center">
                       {surpriseRecipe.photo_url
                         // eslint-disable-next-line @next/next/no-img-element
-                        ? <img src={surpriseRecipe.photo_url} alt={surpriseRecipe.title} className="w-full h-full object-cover" />
+                        ? <img loading="lazy" decoding="async" src={surpriseRecipe.photo_url} alt={surpriseRecipe.title} className="w-full h-full object-cover" />
                         : <span className="text-3xl">{categoryEmoji(surpriseRecipe)}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -3410,7 +3410,7 @@ export default function MyRecipeVaultPage() {
                                     {r.photo_url ? (
                                       <div className="rounded-lg overflow-hidden h-20">
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={r.photo_url} alt={r.title} className="w-full h-full object-cover" />
+                                        <img loading="lazy" decoding="async" src={r.photo_url} alt={r.title} className="w-full h-full object-cover" />
                                       </div>
                                     ) : (
                                       <div className="rounded-lg bg-amber-100 h-20 flex items-center justify-center text-2xl">
@@ -3476,7 +3476,7 @@ export default function MyRecipeVaultPage() {
                             {/* Hero — photo or emoji-on-gradient fallback */}
                             {r.photo_url ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img
+                              <img loading="lazy" decoding="async"
                                 src={r.photo_url}
                                 alt={r.title}
                                 className="absolute inset-0 w-full h-full object-cover"
@@ -3603,7 +3603,7 @@ export default function MyRecipeVaultPage() {
                                 {r.photo_url ? (
                                   <div className="rounded-lg overflow-hidden h-20">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={r.photo_url} alt={r.title} className="w-full h-full object-cover" />
+                                    <img loading="lazy" decoding="async" src={r.photo_url} alt={r.title} className="w-full h-full object-cover" />
                                   </div>
                                 ) : (
                                   <div className="rounded-lg bg-amber-100 h-20 flex items-center justify-center text-2xl">
@@ -3830,7 +3830,7 @@ export default function MyRecipeVaultPage() {
                           <div className="px-3 pb-3">
                             {recipe.photo_url ? (
                               <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
-                                <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                                <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                               </div>
                             ) : (
                               <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">

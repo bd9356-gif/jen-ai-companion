@@ -123,7 +123,7 @@ export default function RecipeDetailPage() {
         )}
         {!recipe.youtube_url && recipe.thumbnail_url && (
           <div className="mb-6 rounded-2xl overflow-hidden" style={{height:'240px'}}>
-            <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
           </div>
         )}
 

@@ -166,7 +166,7 @@ export default function HomePage() {
             like crossing the same threshold as a tile tap on the hub. */}
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3">
           <div className="w-full relative" style={{ height: '130px' }}>
-            <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={image.url} alt={image.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/50 to-stone-900/20" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
               {userName ? (

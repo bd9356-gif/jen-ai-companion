@@ -111,7 +111,7 @@ export default function BrowsePage() {
                   <a href={`/recipes/${recipe.id}`}>
                     <div style={{height: '120px'}}>
                       {recipe.thumbnail_url ? (
-                        <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-orange-50 flex items-center justify-center">
                           <span className="text-3xl">🍽️</span>

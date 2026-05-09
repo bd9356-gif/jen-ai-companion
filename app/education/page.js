@@ -167,7 +167,7 @@ export default function EducationPage() {
                       </div>
                     ) : (
                       <button onClick={() => setPlayingId(video.id)} className="w-full relative block group">
-                        <img src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
+                        <img loading="lazy" decoding="async" src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
                           alt={video.title} className="w-full object-cover" style={{height:'192px'}} />
                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                           <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-lg">

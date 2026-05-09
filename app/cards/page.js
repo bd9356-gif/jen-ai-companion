@@ -327,7 +327,7 @@ export default function CardsPage() {
             {/* Recipe photo */}
             {viewing.photo_url && (
               <div style={{height:'180px'}} className="overflow-hidden">
-                <img src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={viewing.photo_url} alt={viewing.title} className="w-full h-full object-cover" />
               </div>
             )}
 
@@ -650,7 +650,7 @@ export default function CardsPage() {
                       <div className="px-3 pb-2">
                         {recipe.photo_url ? (
                           <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
-                            <img src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                            <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                           </div>
                         ) : (
                           <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">

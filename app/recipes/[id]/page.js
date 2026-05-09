@@ -197,7 +197,7 @@ export default function RecipeDetailPage() {
         {/* Hero image */}
         <div className="relative w-full overflow-hidden mb-6" style={{height: '240px'}}>
           {recipe.thumbnail_url ? (
-            <img src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={recipe.thumbnail_url} alt={recipe.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full bg-orange-50 flex items-center justify-center">
               <span className="text-6xl">🍽️</span>

@@ -26,7 +26,7 @@ export default function VideoItem({ video, onRemove }) {
         <div className="flex items-center gap-3 p-3 hover:bg-gray-50">
           <button onClick={() => setPlaying(true)} title="Play skill video" className="relative shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <img loading="lazy" decoding="async"
               src={`https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`}
               alt={video.title}
               className="w-16 h-12 rounded-xl object-cover"
