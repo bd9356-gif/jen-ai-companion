@@ -1460,18 +1460,18 @@ export default function MyRecipeVaultPage() {
       // paste-target modal — the synchronous paste-event handler has
       // access to formats the async API hides.
       setPasteTarget(recipeId)
-    } catch (err) {
-      // Permission denied (NotAllowedError) or unsupported — fall
-      // back to the manual paste-target modal here too. The modal's
-      // paste handler doesn't need clipboard.read() permission, just
-      // a paste event from the user's long-press → Paste.
-      const tag = err?.name || 'Error'
-      if (tag === 'NotAllowedError' || tag === 'AbortError' || tag === 'NotFoundError') {
-        setPasteTarget(recipeId)
-        return
-      }
-      const msg = err?.message ? `: ${err.message}` : ''
-      showToast(`Clipboard ${tag}${msg}`)
+    } catch {
+      // Any clipboard.read() failure — permission denied, NotReadable,
+      // DataError, AbortError, format mismatch, iOS PWA quirks, etc. —
+      // falls through to the manual paste-target modal. The modal uses
+      // a synchronous `paste` event handler that doesn't need
+      // clipboard.read() permission; the user's long-press → Paste
+      // there bypasses every variant of the async-API failure. Used
+      // to whitelist three specific error names; that left other
+      // errors (like NotReadableError on iOS Safari) showing a dead-
+      // end "Clipboard <Error>" toast instead of opening the working
+      // fallback. Every clipboard error is now treated the same way.
+      setPasteTarget(recipeId)
     }
   }
 
