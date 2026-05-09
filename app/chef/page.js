@@ -338,7 +338,7 @@ export default function ChefPage() {
           >
             📘
           </button>
-          <h1 className="text-base font-bold text-gray-900 truncate min-w-0">👨‍🍳 Chef Jennifer</h1>
+          <h1 className="text-base font-bold text-gray-900 truncate min-w-0">👨‍🍳 Chef Jennifer&rsquo;s Classroom</h1>
           <div className="shrink-0 ml-auto flex bg-gray-100 rounded-full p-0.5 gap-0.5">
             <button
               onClick={() => setMode('teach')}
