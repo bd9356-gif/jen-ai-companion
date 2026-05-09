@@ -1048,21 +1048,54 @@ export default function MyRecipeVaultPage() {
           ref={(el) => { if (el) setTimeout(() => el.focus(), 50) }}
           onPaste={async (e) => {
             const items = e.clipboardData?.items
-            if (!items) return
-            for (const it of items) {
-              if (it.kind === 'file' && it.type.startsWith('image/')) {
-                const blob = it.getAsFile()
-                if (blob && user) {
-                  e.preventDefault()
-                  const targetId = pasteTarget
-                  setPasteTarget(null)
-                  await attachImageBlobToRecipe(blob, targetId, user.id)
+            // Pass 1 — direct image bytes (the desktop / Notes-converted
+            // path). When the clipboard has a real image File, this
+            // grabs it and we're done.
+            if (items) {
+              for (const it of items) {
+                if (it.kind === 'file' && it.type.startsWith('image/')) {
+                  const blob = it.getAsFile()
+                  if (blob && user) {
+                    e.preventDefault()
+                    const targetId = pasteTarget
+                    setPasteTarget(null)
+                    await attachImageBlobToRecipe(blob, targetId, user.id)
+                  }
+                  return
                 }
-                return
               }
             }
-            // Paste happened but no image item — keep the modal open
-            // so the user can try again.
+            // Pass 2 — URL fallback. iOS Safari's "long-press → Copy
+            // image" on a webpage usually puts only the image's URL on
+            // the clipboard (text/uri-list or text/plain), not the
+            // image bytes — that's why direct browser-to-app paste
+            // failed before but Notes-as-converter worked. We fetch
+            // the URL ourselves; if it's an image, we use it.
+            const urlText = (
+              e.clipboardData?.getData('text/uri-list') ||
+              e.clipboardData?.getData('text/plain') ||
+              ''
+            ).trim()
+            const urlMatch = urlText.match(/^https?:\/\/\S+/i)
+            if (urlMatch && user) {
+              e.preventDefault()
+              const targetId = pasteTarget
+              setPasteTarget(null)
+              try {
+                const res = await fetch(urlMatch[0])
+                const ct = res.headers.get('content-type') || ''
+                if (ct.startsWith('image/')) {
+                  const blob = await res.blob()
+                  await attachImageBlobToRecipe(blob, targetId, user.id)
+                  return
+                }
+                showToast('That URL doesn’t point to an image')
+              } catch {
+                showToast('Couldn’t fetch that URL — try paste-through-Notes instead')
+              }
+              return
+            }
+            // Nothing usable on the clipboard.
             showToast('That paste didn\'t contain an image — try copying again')
           }}
           className="border-2 border-dashed border-orange-300 rounded-xl p-6 min-h-[120px] text-center text-gray-500 text-sm bg-orange-50 focus:outline-none focus:border-orange-500 focus:bg-orange-100"
