@@ -1047,10 +1047,11 @@ export default function MyRecipeVaultPage() {
           autoFocus
           ref={(el) => { if (el) setTimeout(() => el.focus(), 50) }}
           onPaste={async (e) => {
-            const items = e.clipboardData?.items
-            // Pass 1 — direct image bytes (the desktop / Notes-converted
-            // path). When the clipboard has a real image File, this
-            // grabs it and we're done.
+            const cd = e.clipboardData
+            // Pass 1 — direct image bytes. The clipboard exposes a
+            // File item with type image/*. Works for desktop copies
+            // and the Notes-as-converter path on iOS.
+            const items = cd?.items
             if (items) {
               for (const it of items) {
                 if (it.kind === 'file' && it.type.startsWith('image/')) {
@@ -1065,38 +1066,49 @@ export default function MyRecipeVaultPage() {
                 }
               }
             }
-            // Pass 2 — URL fallback. iOS Safari's "long-press → Copy
-            // image" on a webpage usually puts only the image's URL on
-            // the clipboard (text/uri-list or text/plain), not the
-            // image bytes — that's why direct browser-to-app paste
-            // failed before but Notes-as-converter worked. We fetch
-            // the URL ourselves; if it's an image, we use it.
-            const urlText = (
-              e.clipboardData?.getData('text/uri-list') ||
-              e.clipboardData?.getData('text/plain') ||
-              ''
-            ).trim()
-            const urlMatch = urlText.match(/^https?:\/\/\S+/i)
-            if (urlMatch && user) {
+            // Pass 2 — extract a URL from any of three places:
+            //   - text/uri-list (most reliable when present)
+            //   - text/plain (iOS Safari often only puts plain text)
+            //   - text/html (iOS Safari sometimes only ships an
+            //                <img src="..."> blob — extract the src)
+            // Fetch the URL; if it's an image, use it. Tries hardest
+            // before giving up because iOS Safari's "long-press → Copy
+            // image" path is flaky and varies by version.
+            const uriList = (cd?.getData('text/uri-list') || '').trim()
+            const plain = (cd?.getData('text/plain') || '').trim()
+            const html = cd?.getData('text/html') || ''
+            const htmlImgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+            const fromHtml = htmlImgMatch ? htmlImgMatch[1] : ''
+            const candidate =
+              [uriList, plain, fromHtml]
+                .map(s => s && s.match(/^https?:\/\/\S+/i)?.[0])
+                .find(Boolean) || ''
+            if (candidate && user) {
               e.preventDefault()
               const targetId = pasteTarget
               setPasteTarget(null)
               try {
-                const res = await fetch(urlMatch[0])
+                const res = await fetch(candidate)
                 const ct = res.headers.get('content-type') || ''
                 if (ct.startsWith('image/')) {
                   const blob = await res.blob()
                   await attachImageBlobToRecipe(blob, targetId, user.id)
                   return
                 }
-                showToast('That URL doesn’t point to an image')
-              } catch {
-                showToast('Couldn’t fetch that URL — try paste-through-Notes instead')
+                showToast(`URL fetched but not an image (got ${ct || 'unknown'}). Try paste-through-Notes.`)
+              } catch (err) {
+                showToast(`Couldn't fetch URL — likely CORS-blocked. ${err?.name || ''}`)
               }
               return
             }
-            // Nothing usable on the clipboard.
-            showToast('That paste didn\'t contain an image — try copying again')
+            // Nothing usable. Diagnostic toast lists what was actually
+            // on the clipboard so we can see why iOS rejected it. Tap
+            // to dismiss; auto-dismisses in 6s (diagnostic toasts hold
+            // longer than success ones).
+            const types = []
+            if (items) for (const it of items) types.push(`${it.kind}:${it.type || '(no type)'}`)
+            const typeList = types.length ? types.join(', ') : '(empty)'
+            showToast(`No image found. Clipboard had: ${typeList}. On iPhone, long-press → Save Image, then Upload.`)
           }}
           className="border-2 border-dashed border-orange-300 rounded-xl p-6 min-h-[120px] text-center text-gray-500 text-sm bg-orange-50 focus:outline-none focus:border-orange-500 focus:bg-orange-100"
         >
