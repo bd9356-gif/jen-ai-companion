@@ -3129,7 +3129,7 @@ export default function MyRecipeVaultPage() {
                   NOT the same as /cards (a separate "chef card" concept). */}
               <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                 {[
-                  { key: 'cardbox', icon: '📦', title: 'Card box (Favorites + Surprise me)' },
+                  { key: 'cardbox', icon: '🍽', title: "What's Cooking? — favorites + a wildcard" },
                   { key: 'list', icon: '📋', title: 'List view (recipes)' },
                   { key: 'grid', icon: '🖼', title: 'Grid view (recipes)' },
                   { key: 'portfolio', icon: '💎', title: 'Chef Portfolio (saved notes)' },
@@ -3294,6 +3294,21 @@ export default function MyRecipeVaultPage() {
             }
             return (
               <div>
+                {/* "What's Cooking?" header — names the decision-surface
+                    framing (Bill's tagline, May 2026). This mode is the
+                    answer to "what should I cook?" — favorites first,
+                    a 🎲 surprise when you're stuck, the whole vault one
+                    tap below. The List / Grid / Portfolio toggles are
+                    about HOW you look at the vault; this one is about
+                    WHAT to make. */}
+                <div className="text-center mb-4 px-2">
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
+                    What&rsquo;s Cooking?
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1 leading-snug">
+                    Favorites up top, a wildcard when you&rsquo;re stuck, the whole vault one tap below.
+                  </p>
+                </div>
                 {/* Surprise me — header chip + result card */}
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <p className="text-sm text-gray-600">
