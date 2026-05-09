@@ -1267,8 +1267,10 @@ export default function MyRecipeVaultPage() {
     // default 'list'. Portfolio (💎) renders curated Chef Notes the user
     // promoted from Playbook, not recipes.
     const viewParam = searchParams.get('view')
-    if (viewParam === 'list') setListStyle('list')
-    else if (viewParam === 'grid') setListStyle('grid')
+    // 'list' retired May 2026 — old ?view=list bookmarks fall through
+    // to the default (cardbox / What's Cooking?). Grid covers visual
+    // browse; the cardbox All Recipes drawer covers dense scanning.
+    if (viewParam === 'grid') setListStyle('grid')
     else if (viewParam === 'portfolio') setListStyle('portfolio')
     else if (viewParam === 'cardbox') setListStyle('cardbox')
     // ?import=<encoded-url> deep-link — the entry point used by the
@@ -3130,7 +3132,6 @@ export default function MyRecipeVaultPage() {
               <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                 {[
                   { key: 'cardbox', icon: '🍽', title: "What's Cooking? — favorites + a wildcard" },
-                  { key: 'list', icon: '📋', title: 'List view (recipes)' },
                   { key: 'grid', icon: '🖼', title: 'Grid view (recipes)' },
                   { key: 'portfolio', icon: '💎', title: 'Chef Portfolio (saved notes)' },
                 ].map(opt => (
@@ -3798,7 +3799,7 @@ export default function MyRecipeVaultPage() {
                 {regularRecipes.length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-4">No recipes match your search</p>
                 )}
-                {listStyle === 'grid' ? (
+                {(
                   /* Grid view — cream "index card" paper, thin red top rule,
                      title + photo tile. Shows every vault recipe as a
                      photo-first tile. Tapping opens the standard Vault
@@ -3856,67 +3857,6 @@ export default function MyRecipeVaultPage() {
                         </div>
                       </div>
                     )})}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {regularRecipes.map(recipe => (
-                      <button key={recipe.id} onClick={() => { setViewing(recipe); setView('detail') }}
-                        className="w-full text-left bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-orange-200 hover:bg-orange-50 transition-colors">
-                        <div className="flex gap-3 p-4">
-                          {recipe.photo_url ? (
-                            <img src={recipe.photo_url} alt={recipe.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                          ) : (
-                            <div className="w-16 h-16 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-                              <span className="text-2xl">🍽️</span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate mb-1">{recipe.title}</p>
-                            {recipe.description && <p className="text-xs text-gray-500 truncate mb-1">{recipe.description}</p>}
-                            <div className="flex flex-wrap gap-1">
-                              {recipe.category && <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">{recipe.category}</span>}
-                              {(recipe.tags || []).slice(0, 3).map(tag => (
-                                <span key={tag} className="px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full text-xs">#{tag}</span>
-                              ))}
-                            </div>
-                          </div>
-                          {/* Heart toggle — taps don't bubble up to the
-                              outer card click, so users can favorite without
-                              opening the recipe. Keeps a visible 🤍 even when
-                              empty so the affordance is always discoverable. */}
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe) }}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleFavorite(recipe) } }}
-                            title={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
-                            className={`self-center text-lg leading-none px-2 py-1 rounded-lg transition-colors ${
-                              recipe.is_favorite ? 'text-rose-500' : 'text-gray-300 hover:text-rose-400'
-                            }`}
-                          >
-                            {recipe.is_favorite ? '❤️' : '🤍'}
-                          </span>
-                          {/* 🃏 Pin to Cards — same one-tap pin available
-                              on the cardbox / grid / list rows so the user
-                              can build their card box from any view. */}
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            onClick={(e) => { e.stopPropagation(); toggleCardPin(recipe.id) }}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleCardPin(recipe.id) } }}
-                            title={pinnedCards.includes(recipe.id) ? 'Pinned to Recipe Cards' : 'Pin to Recipe Cards'}
-                            className={`self-center text-[11px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
-                              pinnedCards.includes(recipe.id)
-                                ? 'bg-orange-600 text-white border-orange-600'
-                                : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
-                            }`}
-                          >
-                            {pinnedCards.includes(recipe.id) ? '🃏 Pinned' : '🃏 Pin to Cards'}
-                          </span>
-                          <span className="text-gray-400 text-xl self-center">→</span>
-                        </div>
-                      </button>
-                    ))}
                   </div>
                 )}
               </div>
