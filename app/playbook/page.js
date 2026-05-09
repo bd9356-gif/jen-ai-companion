@@ -639,22 +639,15 @@ export default function PlaybookPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-        {/* Heading tagline — names the two-classroom framing. Each
-            teacher has both 🎓 Teach and 🍳 Practice; the row labels
-            below tell you which classroom each pair belongs to. */}
+        {/* Heading tagline — single line that ties the page to the
+            two-classroom framing without belaboring it. The 2x2 grid
+            below makes the "two classrooms, two modes" structure
+            visible; the tagline just names what's saved here. */}
         <div className="text-center px-2 mb-6">
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
             Everything you&rsquo;ve saved
           </p>
-          <p className="text-sm text-gray-500 mt-2">Your notebook from Chef Jennifer&rsquo;s classroom and Chef TV&rsquo;s.</p>
-          {/* Three-pair framing line — Bill's tagline for the 2x2 grid
-              below: two teachers, each with two modes, equals four
-              "teaching kitchens" where instruction happens. Sits
-              between the headline and the tab grid so the structure
-              of the 2x2 reads as deliberate, not arbitrary. */}
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mt-3">
-            Two instructors &middot; Two classrooms &middot; Two teaching kitchens
-          </p>
+          <p className="text-sm text-gray-500 mt-2">from your two teaching classrooms.</p>
         </div>
 
         {/* Intro callout — explains the two-classroom framing. Each
