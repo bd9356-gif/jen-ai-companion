@@ -3565,14 +3565,12 @@ export default function MyRecipeVaultPage() {
                   <div className={`flex items-center ${allOpen ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-50 transition-colors`}>
                     <button
                       onClick={() => setAllOpen(o => !o)}
-                      className="flex-1 flex items-center justify-between px-4 py-3"
+                      className="flex-1 flex items-center gap-2 px-4 py-3 text-left"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">📚</span>
-                        <span className="font-bold text-gray-900">{(searchText || searchTag) ? 'Matching recipes' : 'All recipes'}</span>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{cardBoxList.length}</span>
-                      </div>
-                      <span className="text-xl text-gray-600">{allOpen ? '▾' : '▸'}</span>
+                      <span className="text-2xl shrink-0">📚</span>
+                      <span className="font-bold text-gray-900">{(searchText || searchTag) ? 'Matching recipes' : 'All recipes'}</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 shrink-0">{cardBoxList.length}</span>
+                      <span className="text-xl text-gray-600 shrink-0">{allOpen ? '▾' : '▸'}</span>
                     </button>
                     {cardBoxList.length > 0 && (
                       <button
