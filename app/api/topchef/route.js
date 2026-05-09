@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { findCachedRecipe, bumpServeCount } from '@/lib/chef_recipe_cache'
+import { checkRateLimit } from '@/lib/rate_limit'
 
 // Normalize instructions to a newline-separated string. Tolerates
 // either an array (preferred shape from the prompt) or a numbered
@@ -27,6 +28,17 @@ function normalizeInstructions(value) {
 }
 
 export async function POST(request) {
+    // Rate limit: 10 recipe generations / IP / minute. Recipe gen is
+    // a heavier call than chat (longer prompts, larger output) so the
+    // limit's tighter than /api/chef. A user clicking through Practice
+    // mode tops out around 2/min naturally.
+    const rl = await checkRateLimit(request, 'topchef', 10)
+    if (!rl.ok) {
+      return Response.json({ error: rl.message }, {
+        status: 429,
+        headers: { 'Retry-After': '60' },
+      })
+    }
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     const body = await request.json()

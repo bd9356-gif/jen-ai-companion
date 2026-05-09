@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -8,6 +9,16 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 // grocery-shoppable version of the list. Store assignments are preserved
 // where possible.
 export async function POST(request) {
+  // Rate limit: 5 cleanup runs / IP / minute. This is a one-tap action
+  // ("✨ Clean Up List") so a user almost never fires it more than
+  // once or twice — strict limit catches abuse immediately.
+  const rl = await checkRateLimit(request, 'cleanup', 5)
+  if (!rl.ok) {
+    return Response.json({ error: rl.message }, {
+      status: 429,
+      headers: { 'Retry-After': '60' },
+    })
+  }
   let body
   try {
     body = await request.json()

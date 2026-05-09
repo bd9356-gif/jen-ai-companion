@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -19,6 +20,16 @@ const PREFERENCE_LABELS = {
 }
 
 export async function POST(request) {
+  // Rate limit: 15 enhancements / IP / minute. AI Kitchen Helper actions
+  // (polish, resize, generate info, transform) are all routed through here
+  // — clicking through them in sequence stays well under the limit.
+  const rl = await checkRateLimit(request, 'enhance', 15)
+  if (!rl.ok) {
+    return Response.json({ error: rl.message }, {
+      status: 429,
+      headers: { 'Retry-After': '60' },
+    })
+  }
   try {
     const { recipe, action, servings, preferences } = await request.json()
 

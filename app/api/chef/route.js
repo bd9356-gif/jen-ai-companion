@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -84,6 +85,17 @@ function buildLibraryBlock(library) {
 }
 
 export async function POST(request) {
+  // Rate limit: 30 chat calls / IP / minute. A real user holding a
+  // conversation tops out around 5/min; 30 leaves headroom for
+  // legitimate burst use and blocks runaway loops + cheap abuse.
+  const rl = await checkRateLimit(request, 'chef', 30)
+  if (!rl.ok) {
+    return Response.json({ error: rl.message }, {
+      status: 429,
+      headers: { 'Retry-After': '60' },
+    })
+  }
+
   const { messages, library } = await request.json()
   const libraryBlock = buildLibraryBlock(library)
 

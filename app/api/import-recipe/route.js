@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { YoutubeTranscript } from 'youtube-transcript'
+import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -242,6 +243,16 @@ function extractContentFromHtml(html) {
 }
 
 export async function POST(request) {
+  // Rate limit: 15 imports / IP / minute. Imports can be heavy (URL
+  // fetch + page parse + Claude call), so the limit's tighter than
+  // chat. A user importing recipes one at a time stays well under.
+  const rl = await checkRateLimit(request, 'import', 15)
+  if (!rl.ok) {
+    return Response.json({ error: rl.message }, {
+      status: 429,
+      headers: { 'Retry-After': '60' },
+    })
+  }
   // `html` is the optional client-supplied fallback path: when an iOS
   // Shortcut grabs the page contents in the user's Safari context (which
   // has the user's cookies and bypasses our server-side fetch being
