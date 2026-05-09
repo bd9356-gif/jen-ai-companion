@@ -232,7 +232,13 @@ function extractContentFromHtml(html) {
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .substring(0, 8000)
+    // Bumped 8000 → 18000 (May 2026). Long recipe blogs (Serious Eats,
+    // NYT Cooking) frequently put the headnote / "why it works" prose
+    // BEFORE the ingredient list and nutrition table — at 8k chars
+    // Claude was getting only the prose and hallucinating ingredients
+    // / leaving nutrition null. 18k catches the recipe section on every
+    // long-form blog we've tested without meaningfully bumping cost.
+    .substring(0, 18000)
 }
 
 export async function POST(request) {
@@ -328,8 +334,10 @@ export async function POST(request) {
     return Response.json({ error: 'No content found at that URL' }, { status: 400 })
   }
 
-  // Limit content length
-  content = content.substring(0, 8000)
+  // Limit content length. Bumped 8000 → 18000 (May 2026) so long
+  // recipe-blog headnotes don't push the actual ingredient list +
+  // nutrition table past the cap before Claude sees them.
+  content = content.substring(0, 18000)
 
   const prompt = `Extract a recipe from this content. The content may include structured JSON-LD recipe data or plain text. Extract all recipe information accurately.
 
@@ -376,7 +384,7 @@ If no recipe is found, return exactly: {"error": "No recipe found"}`
   try {
     const message = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
+      max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }]
     })
 
