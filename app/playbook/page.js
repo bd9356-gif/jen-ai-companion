@@ -714,7 +714,7 @@ export default function PlaybookPage() {
                   className="block w-full hover:text-orange-600 mb-1.5 px-1 text-center"
                 >
                   <p className="text-[12px] font-bold text-gray-700 leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</p>
-                  <p className="text-[9px] text-gray-500 leading-none mt-0.5">Classroom</p>
+                  <p className="text-[11px] font-semibold italic text-orange-600 leading-tight mt-0.5 pl-5">Classroom</p>
                 </button>
                 <div className="space-y-1.5">
                   <button
@@ -746,7 +746,7 @@ export default function PlaybookPage() {
                   className="block w-full hover:text-orange-600 mb-1.5 px-1 text-center"
                 >
                   <p className="text-[12px] font-bold text-gray-700 leading-tight">🎬 Chef TV&rsquo;s</p>
-                  <p className="text-[9px] text-gray-500 leading-none mt-0.5">Classroom</p>
+                  <p className="text-[11px] font-semibold italic text-orange-600 leading-tight mt-0.5 pl-5">Classroom</p>
                 </button>
                 <div className="space-y-1.5">
                   <button
