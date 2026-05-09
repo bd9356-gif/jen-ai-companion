@@ -600,8 +600,8 @@ export default function VideosPage() {
                 📘
               </button>
               <div className="min-w-0 leading-none">
-                <h1 className="text-base font-bold text-gray-900 truncate leading-tight">🎬 Chef TV</h1>
-                <p className="text-[10px] text-gray-500 leading-none mt-0.5 truncate">Chef TV&rsquo;s Classroom</p>
+                <h1 className="text-base font-bold text-gray-900 truncate leading-tight">🎬 Chef TV&rsquo;s</h1>
+                <p className="text-[10px] text-gray-500 leading-none mt-0.5 truncate">Classroom</p>
               </div>
             </div>
             <div className="shrink-0 flex bg-gray-100 rounded-full p-0.5 gap-0.5">
