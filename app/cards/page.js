@@ -670,7 +670,7 @@ export default function CardsPage() {
                         so it reads as ornament, not a button. */}
                     <span
                       aria-hidden="true"
-                      className="absolute top-1.5 right-2 text-xl pointer-events-none select-none opacity-80"
+                      className="absolute top-3 right-2 text-3xl pointer-events-none select-none opacity-80"
                     >
                       🍴
                     </span>
