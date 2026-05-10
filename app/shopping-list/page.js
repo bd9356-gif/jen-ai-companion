@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import ShoppingByStore, { StoreEditor } from '@/components/ShoppingByStore'
+import { groupByAisle } from '@/lib/grocery_aisle'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -25,6 +26,11 @@ export default function ShoppingListPage() {
   // and there's no obvious way out from a phone. Printing the current
   // window with @media print rules avoids the popup entirely.
   const [printText, setPrintText] = useState('')
+  // Grouping mode — 'store' (default, the existing flow) or 'aisle'
+  // (new May 2026, group by grocery section: 🥬 Produce, 🥩 Meat,
+  // 🥛 Dairy, etc.). Toggle persists in localStorage so a user who
+  // prefers aisle-grouped sticks with it across sessions.
+  const [groupMode, setGroupMode] = useState('store')
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
@@ -202,7 +208,19 @@ export default function ShoppingListPage() {
       Promise.all([loadShoppingList(session.user.id), loadStores(session.user.id)])
         .finally(() => setLoading(false))
     })
+    // Restore the user's preferred grouping (store / aisle) from
+    // last visit. Defaults to 'store' if nothing's saved yet.
+    try {
+      const saved = window.localStorage.getItem('shopping_list_group_mode')
+      if (saved === 'aisle' || saved === 'store') setGroupMode(saved)
+    } catch { /* localStorage disabled — keep default */ }
   }, [])
+
+  // Persist the grouping preference whenever it changes.
+  function changeGroupMode(mode) {
+    setGroupMode(mode)
+    try { window.localStorage.setItem('shopping_list_group_mode', mode) } catch { /* noop */ }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -273,6 +291,39 @@ export default function ShoppingListPage() {
               )}
             </div>
 
+            {/* Grouping toggle — Store (default) vs Aisle. Aisle groups
+                items into grocery sections (🥬 Produce, 🥩 Meat, 🥛 Dairy,
+                etc.) which is how you walk a store. Store keeps the
+                multi-store flow for users who shop at more than one
+                place. Persists in localStorage so the user's pick
+                sticks across sessions. Hidden when the list is empty —
+                no point picking a view of nothing. */}
+            {shoppingList.length > 0 && (
+              <div className="flex items-center justify-center gap-1 px-3 py-2 border-b border-gray-200 bg-white">
+                <span className="text-[11px] uppercase tracking-wider font-bold text-gray-400 mr-2">Group by</span>
+                <button
+                  onClick={() => changeGroupMode('store')}
+                  className={`text-xs font-semibold rounded-lg px-3 py-1 border transition-colors ${
+                    groupMode === 'store'
+                      ? 'bg-sky-100 border-sky-300 text-sky-800'
+                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  🏬 Store
+                </button>
+                <button
+                  onClick={() => changeGroupMode('aisle')}
+                  className={`text-xs font-semibold rounded-lg px-3 py-1 border transition-colors ${
+                    groupMode === 'aisle'
+                      ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  🥬 Aisle
+                </button>
+              </div>
+            )}
+
             {showStoreEditor && (
               <StoreEditor
                 stores={stores}
@@ -285,6 +336,12 @@ export default function ShoppingListPage() {
 
             {shoppingList.length === 0 ? (
               <p className="text-sm text-gray-400 text-center py-10">No items yet — add ingredients from a recipe in your Vault to get started.</p>
+            ) : groupMode === 'aisle' ? (
+              <ShoppingByAisle
+                shoppingList={shoppingList}
+                onToggle={toggleShoppingItem}
+                onRemove={removeShoppingItem}
+              />
             ) : (
               <ShoppingByStore
                 shoppingList={shoppingList}
@@ -327,6 +384,72 @@ export default function ShoppingListPage() {
           }
         }
       `}</style>
+    </div>
+  )
+}
+
+// Renders the shopping list grouped by grocery aisle instead of by
+// store. Each section has a colored stripe + emoji header matching
+// the AISLES table in lib/grocery_aisle.js. Inside each section,
+// rows have the same +/✓ toggle and × remove that ShoppingByStore
+// uses, so the interaction is consistent between the two views.
+function ShoppingByAisle({ shoppingList, onToggle, onRemove }) {
+  const groups = groupByAisle(shoppingList)
+
+  // Tailwind v4 needs the full class strings to be present in source
+  // for its JIT to scan, so we map color → fixed border/bg/text strings
+  // here rather than building them dynamically in JSX.
+  const COLORS = {
+    green:   { border: 'border-green-200',   stripe: 'border-l-green-500',   bg: 'bg-green-50',    text: 'text-green-900',   pill: 'bg-green-100 text-green-800' },
+    red:     { border: 'border-red-200',     stripe: 'border-l-red-500',     bg: 'bg-red-50',      text: 'text-red-900',     pill: 'bg-red-100 text-red-800' },
+    sky:     { border: 'border-sky-200',     stripe: 'border-l-sky-500',     bg: 'bg-sky-50',      text: 'text-sky-900',     pill: 'bg-sky-100 text-sky-800' },
+    amber:   { border: 'border-amber-200',   stripe: 'border-l-amber-500',   bg: 'bg-amber-50',    text: 'text-amber-900',   pill: 'bg-amber-100 text-amber-800' },
+    orange:  { border: 'border-orange-200',  stripe: 'border-l-orange-500',  bg: 'bg-orange-50',   text: 'text-orange-900',  pill: 'bg-orange-100 text-orange-800' },
+    purple:  { border: 'border-purple-200',  stripe: 'border-l-purple-500',  bg: 'bg-purple-50',   text: 'text-purple-900',  pill: 'bg-purple-100 text-purple-800' },
+    stone:   { border: 'border-stone-200',   stripe: 'border-l-stone-500',   bg: 'bg-stone-50',    text: 'text-stone-900',   pill: 'bg-stone-100 text-stone-800' },
+    gray:    { border: 'border-gray-200',    stripe: 'border-l-gray-400',    bg: 'bg-gray-50',     text: 'text-gray-900',    pill: 'bg-gray-100 text-gray-700' },
+    slate:   { border: 'border-slate-200',   stripe: 'border-l-slate-400',   bg: 'bg-slate-50',    text: 'text-slate-900',   pill: 'bg-slate-100 text-slate-700' },
+  }
+
+  return (
+    <div className="divide-y divide-gray-100">
+      {groups.map(({ aisle, items }) => {
+        const c = COLORS[aisle.color] || COLORS.gray
+        return (
+          <div key={aisle.key}>
+            <div className={`flex items-center gap-2 px-3 py-2 ${c.bg} border-l-4 ${c.stripe}`}>
+              <span className="text-base">{aisle.emoji}</span>
+              <span className={`text-sm font-bold ${c.text}`}>{aisle.label}</span>
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${c.pill}`}>{items.length}</span>
+            </div>
+            <ul>
+              {items.map(item => (
+                <li key={item.id} className="flex items-center gap-2 px-3 py-2 border-b border-gray-50 last:border-0">
+                  <button
+                    onClick={() => onToggle(item.id, !item.checked)}
+                    title={item.checked ? 'Mark as unchecked' : 'Mark as bought'}
+                    className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                      item.checked
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-white text-gray-300 border-2 border-gray-200 hover:border-emerald-300'
+                    }`}
+                  >
+                    {item.checked ? '✓' : ''}
+                  </button>
+                  <span className={`flex-1 text-sm ${item.checked ? 'text-gray-400 line-through' : 'text-gray-800'}`}>{item.ingredient}</span>
+                  <button
+                    onClick={() => onRemove(item.id)}
+                    title="Remove from list"
+                    className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none px-1"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      })}
     </div>
   )
 }
