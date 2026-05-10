@@ -648,34 +648,49 @@ export default function CardsPage() {
         ) : (
           <>
             <p className="text-sm text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
-            {/* Index-card grid: cream paper body, red top rule, thin amber border.
-                Each tile is split into a tap-to-open header (title + photo) and
-                a bottom action row with a 📅 Meal Plan toggle so the user can
-                add/remove a card to/from the plan without opening it. The
-                toggle stops propagation; everything else opens the card. */}
+            {/* Recipe-card grid (May 2026 heritage refresh — Bill's ask).
+                Pulled away from the Vault Grid's index-card look so
+                Cards feel like the heirloom recipe-box object, not a
+                second cookbook view. Visual cues borrowed from real
+                recipe-card stationery: rose-cream paper, red dashed
+                accent rules, cursive script title (Caveat font, loaded
+                app-wide), and a small botanical glyph for warmth. The
+                tap-to-open header + 📅 Meal Plan toggle stay where
+                they were. */}
             <div className="grid grid-cols-2 gap-3">
               {filtered.map(recipe => {
                 const inPlan = picksIds.has(recipe.id)
                 return (
                   <div key={recipe.id}
-                    className="bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all shadow-sm flex flex-col">
-                    {/* Red "top rule" like an index card */}
-                    <div className="bg-red-600 h-1.5" />
+                    className="relative bg-rose-50 border-2 border-rose-200 rounded-2xl overflow-hidden hover:border-rose-400 hover:shadow-md transition-all shadow-sm flex flex-col">
+                    {/* Red dashed top rule — three thin stacked lines
+                        give the printed-stationery border feel that a
+                        single solid bar can't. Pure decoration. */}
+                    <div className="border-t-2 border-dashed border-red-400 mt-1.5" />
                     <button
                       onClick={() => openCard(recipe)}
                       className="text-left active:scale-[0.98] transition-transform"
                     >
-                      <div className="px-3 pt-3 pb-1">
+                      <div className="px-3 pt-2 pb-1">
+                        {/* "Recipe" eyebrow in cursive — the recipe-card
+                            stationery hallmark. Caveat font already
+                            loaded for /cards Family Notes. */}
+                        <p
+                          className="text-red-600 leading-none mb-0.5"
+                          style={{ fontFamily: 'var(--font-caveat)', fontSize: '13px' }}
+                        >
+                          recipe
+                        </p>
                         <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
                       </div>
                       <div className="px-3 pb-2">
                         {recipe.photo_url ? (
-                          <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
+                          <div style={{height:'100px'}} className="rounded-xl overflow-hidden border border-rose-200">
                             <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
-                            <span style={{fontSize:'32px'}}>🍽️</span>
+                          <div style={{height:'100px'}} className="rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center">
+                            <span style={{fontSize:'32px'}}>🍓</span>
                           </div>
                         )}
                       </div>
