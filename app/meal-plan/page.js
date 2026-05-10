@@ -47,7 +47,14 @@ const BUCKETS = [
 // One draggable row. Accepts the @dnd-kit hooks and wires transform/transition
 // onto the outer container. The ≡ drag handle is the only drag surface — the
 // title stays a plain clickable link so tapping a meal still navigates.
-function SortablePick({ pick, bucketKey, onMove, onRemove }) {
+//
+// Two visual modes (May 2026): main and side. Bill's KISS workflow plans
+// dinner as main → sides under it. The "↳ Side" toggle below the title
+// flips a row to side mode: indented, smaller thumb, softer styling, so
+// the structure of "main + its sides" reads visually inside the bucket.
+// Drag-reorder still works, side rows keep all their move/remove
+// buttons — the flag is purely cosmetic + organizational.
+function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
   const {
     attributes,
     listeners,
@@ -66,33 +73,60 @@ function SortablePick({ pick, bucketKey, onMove, onRemove }) {
     boxShadow: isDragging ? '0 6px 14px rgba(0,0,0,0.12)' : undefined,
   }
 
+  const isSide = !!pick.is_side
+  const rowCls = isSide
+    ? 'flex items-center gap-2 bg-white/70 rounded-xl p-1.5 ml-6 border-l-2 border-gray-200'
+    : 'flex items-center gap-2 bg-white rounded-xl p-2'
+  const photoCls = isSide ? 'w-7 h-7 rounded-md' : 'w-10 h-10 rounded-lg'
+  const photoFallbackCls = isSide
+    ? 'w-7 h-7 rounded-md bg-orange-50 flex items-center justify-center shrink-0'
+    : 'w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0'
+  const titleCls = isSide
+    ? 'font-medium text-[11px] text-gray-600 truncate text-left w-full'
+    : 'font-semibold text-xs text-orange-600 truncate text-left w-full'
+
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2 bg-white rounded-xl p-2">
+    <div ref={setNodeRef} style={style} className={rowCls}>
       {/* Dedicated drag handle — touch-friendly, keyboard accessible,
           doesn't steal clicks from the title. */}
       <button
         type="button"
-        className="shrink-0 w-7 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none"
+        className={`shrink-0 ${isSide ? 'w-5 h-7' : 'w-7 h-10'} flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none`}
         title="Drag to reorder"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
       >
-        <span className="text-base leading-none">⋮⋮</span>
+        <span className={`leading-none ${isSide ? 'text-xs' : 'text-base'}`}>⋮⋮</span>
       </button>
       {pick.photo_url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img loading="lazy" decoding="async" src={pick.photo_url} alt={pick.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+        <img loading="lazy" decoding="async" src={pick.photo_url} alt={pick.title} className={`${photoCls} object-cover shrink-0`} />
       ) : (
-        <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
-          <span className="text-lg">🍽️</span>
+        <div className={photoFallbackCls}>
+          <span className={isSide ? 'text-sm' : 'text-lg'}>🍽️</span>
         </div>
       )}
       <div className="flex-1 min-w-0">
         <button onClick={() => window.location.href=`/secret?recipe=${pick.recipe_id}`}
-          className="font-semibold text-xs text-orange-600 truncate text-left w-full">{pick.title} →</button>
+          className={titleCls}>{pick.title} →</button>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1 items-center">
+        {/* Side toggle — flips the row's visual treatment. ↳ to mark
+            as side, ↑ to flip back to main. Tooltip explains the
+            framing so it's discoverable without needing to read docs. */}
+        <button
+          onClick={() => onToggleSide(pick)}
+          title={isSide ? 'Mark as main' : 'Mark as side'}
+          aria-label={isSide ? 'Mark as main' : 'Mark as side'}
+          className={`text-xs px-1.5 py-0.5 rounded border font-semibold transition-colors ${
+            isSide
+              ? 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'
+              : 'bg-white border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-600'
+          }`}
+        >
+          {isSide ? '↑' : '↳'}
+        </button>
         {bucketKey !== 'top'   && <button onClick={() => onMove(pick, 'top')}   title="Move to To Make — your main focus for now"      className="text-xs px-1.5 py-0.5 rounded border-2 border-amber-400 text-amber-700 font-semibold">⭐</button>}
         {bucketKey !== 'nice'  && <button onClick={() => onMove(pick, 'nice')}  title="Move to Maybe — if you get to it"               className="text-xs px-1.5 py-0.5 rounded border-2 border-violet-400 text-violet-700 font-semibold">📋</button>}
         {bucketKey !== 'later' && <button onClick={() => onMove(pick, 'later')} title="Move to Later — still saved, not forgotten"     className="text-xs px-1.5 py-0.5 rounded border-2 border-sky-400 text-sky-700 font-semibold">🗂</button>}
@@ -133,6 +167,20 @@ export default function MealPlanPage() {
     await supabase.from('my_picks').delete().eq('id', id)
     setPicks(prev => prev.filter(p => p.id !== id))
     showToast('Removed from Meal Plan')
+  }
+
+  // Flip a pick between main and side (purely cosmetic — see
+  // SortablePick comment + migration 018). Optimistic state update;
+  // the DB write happens in the background and rolls back on error.
+  async function toggleSide(pick) {
+    const next = !pick.is_side
+    setPicks(prev => prev.map(p => p.id === pick.id ? { ...p, is_side: next } : p))
+    const { error } = await supabase.from('my_picks').update({ is_side: next }).eq('id', pick.id)
+    if (error) {
+      // Roll back on failure.
+      setPicks(prev => prev.map(p => p.id === pick.id ? { ...p, is_side: !next } : p))
+      showToast('Could not update — try again')
+    }
   }
 
   // Persist new order within a single bucket. Rewrites sort_order densely
@@ -204,7 +252,7 @@ export default function MealPlanPage() {
       <main className="max-w-2xl mx-auto px-4 py-4 pb-16">
         <div className="text-center px-2 mb-4">
           <p className="text-sm text-gray-600 leading-snug">What you&apos;re cooking soon, organized your way.</p>
-          <p className="text-[11px] text-gray-400 mt-1">Tip: use <span className="font-semibold">⋮⋮</span> to drag a meal up or down inside its bucket.</p>
+          <p className="text-[11px] text-gray-400 mt-1">Tip: drag with <span className="font-semibold">⋮⋮</span> to reorder · tap <span className="font-semibold">↳</span> to mark a side dish</p>
         </div>
 
         {loading ? (
@@ -244,6 +292,7 @@ export default function MealPlanPage() {
                           bucketKey={bucket.key}
                           onMove={moveTo}
                           onRemove={removePick}
+                          onToggleSide={toggleSide}
                         />
                       ))}
                     </div>
