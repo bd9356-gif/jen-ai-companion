@@ -663,6 +663,18 @@ export default function CardsPage() {
                 return (
                   <div key={recipe.id}
                     className="relative bg-rose-50 border-2 border-rose-200 rounded-2xl overflow-hidden hover:border-rose-400 hover:shadow-md transition-all shadow-sm flex flex-col">
+                    {/* Decorative botanical glyph in the top-right —
+                        balances the "Recipe" cursive flourish on the
+                        left so the header reads symmetrically (Bill's
+                        ask, May 2026). Slight rotation + soft opacity
+                        so it reads as ornament, not a button. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-1.5 right-2 text-xl pointer-events-none select-none opacity-80"
+                      style={{ transform: 'rotate(12deg)' }}
+                    >
+                      🌿
+                    </span>
                     {/* Red dashed top rule — three thin stacked lines
                         give the printed-stationery border feel that a
                         single solid bar can't. Pure decoration. */}
