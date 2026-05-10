@@ -158,9 +158,18 @@ export default function MealPlanPage() {
     setPicks(data || [])
   }
 
+  // Move a pick to another bucket and place it LAST in the destination
+  // (May 2026, Bill's ask). Promoted items shouldn't crowd the top of
+  // a carefully-ordered list — they go to the back of the line and the
+  // user can drag them up if they want to push them forward. Sort
+  // order = max(dest bucket) + 1 keeps the existing items unchanged.
   async function moveTo(pick, bucket) {
-    await supabase.from('my_picks').update({ bucket }).eq('id', pick.id)
-    setPicks(prev => prev.map(p => p.id === pick.id ? { ...p, bucket } : p))
+    if (pick.bucket === bucket) return
+    const destItems = picks.filter(p => p.bucket === bucket && p.id !== pick.id)
+    const maxOrder = destItems.reduce((m, p) => Math.max(m, p.sort_order ?? 0), -1)
+    const newOrder = maxOrder + 1
+    await supabase.from('my_picks').update({ bucket, sort_order: newOrder }).eq('id', pick.id)
+    setPicks(prev => prev.map(p => p.id === pick.id ? { ...p, bucket, sort_order: newOrder } : p))
   }
 
   async function removePick(id) {
