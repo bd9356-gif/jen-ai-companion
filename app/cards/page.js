@@ -671,9 +671,8 @@ export default function CardsPage() {
                     <span
                       aria-hidden="true"
                       className="absolute top-1.5 right-2 text-xl pointer-events-none select-none opacity-80"
-                      style={{ transform: 'rotate(12deg)' }}
                     >
-                      🌿
+                      🍴
                     </span>
                     {/* Red dashed top rule — three thin stacked lines
                         give the printed-stationery border feel that a
