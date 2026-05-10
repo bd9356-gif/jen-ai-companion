@@ -289,36 +289,47 @@ export default function KitchenPage() {
           choice; on the landing they were dropped because the hub
           itself ships the long-form copy). */}
       <main className="px-4 pt-3 pb-6 max-w-lg mx-auto space-y-5">
-        {KITCHEN_SECTIONS.map(section => (
-          <div key={section.name}>
-            {/* Section header */}
-            <div className="mb-2 px-1">
-              <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
-              {section.subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
-            </div>
-            {/* Section items — px-3 py-2.5 rounded-xl, 22px emoji,
-                text-sm title, text-xs description. Same rhythm as
-                the landing's tiles so the two pages read identically. */}
-            <div className="space-y-2">
-              {section.items.map(item => (
-                <a
-                  key={item.title}
-                  href={item.href}
-                  className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-xl px-3 py-2.5 transition-all active:scale-[0.98]"
-                >
-                  <div className="flex items-center gap-3">
-                    <span style={{fontSize:'22px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
-                      <p className="text-xs text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
+        {KITCHEN_SECTIONS.map(section => {
+          // Per-section color (May 2026 split). Cook tiles wear the
+          // orange brand stripe, Learn Your Way tiles wear sky — same
+          // sky already used for 🎓 Teach across Chef TV / Chef Jen, so
+          // the hub previews the color of the classroom you'll land in.
+          const c = section.color || {
+            label: 'text-orange-600',
+            stripe: 'border-l-orange-600',
+            hover: 'hover:border-orange-300',
+          }
+          return (
+            <div key={section.name}>
+              {/* Section header — color matches the section's tile stripe. */}
+              <div className="mb-2 px-1">
+                <h2 className={`text-[11px] font-extrabold uppercase tracking-wider ${c.label}`}>{section.name}</h2>
+                {section.subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
+              </div>
+              {/* Section items — px-3 py-2.5 rounded-xl, 22px emoji,
+                  text-sm title, text-xs description. Same rhythm as
+                  the landing's tiles so the two pages read identically. */}
+              <div className="space-y-2">
+                {section.items.map(item => (
+                  <a
+                    key={item.title}
+                    href={item.href}
+                    className={`block w-full bg-white border-2 border-gray-200 border-l-8 ${c.stripe} ${c.hover} hover:shadow-sm rounded-xl px-3 py-2.5 transition-all active:scale-[0.98]`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span style={{fontSize:'22px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
+                        <p className="text-xs text-gray-600 mt-0.5 leading-snug truncate">{item.description}</p>
+                      </div>
+                      <span className="text-gray-300 text-lg font-light shrink-0">›</span>
                     </div>
-                    <span className="text-gray-300 text-lg font-light shrink-0">›</span>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </main>
     </div>
   )

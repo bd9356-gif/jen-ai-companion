@@ -210,31 +210,40 @@ export default function HomePage() {
             of the app on one phone screen". The section name plus the
             emoji + title is enough to telegraph what's inside. */}
         <div className="space-y-3">
-          {KITCHEN_SECTIONS.map(section => (
-            <div key={section.name}>
-              {/* Section header — label only, no subtitle. */}
-              <div className="mb-1.5 px-1">
-                <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-orange-600">{section.name}</h2>
+          {KITCHEN_SECTIONS.map(section => {
+            // Per-section color (May 2026): same color story as the
+            // hub tiles — Cook = orange, Learn Your Way = sky.
+            const c = section.color || {
+              label: 'text-orange-600',
+              stripe: 'border-l-orange-600',
+              hover: 'hover:border-orange-300',
+            }
+            return (
+              <div key={section.name}>
+                {/* Section header — label only, no subtitle. */}
+                <div className="mb-1.5 px-1">
+                  <h2 className={`text-[11px] font-extrabold uppercase tracking-wider ${c.label}`}>{section.name}</h2>
+                </div>
+                {/* Section items — single-line tiles (emoji + title +
+                    chevron). py-2 instead of py-2.5; no description row. */}
+                <div className="space-y-1.5">
+                  {section.items.map(item => (
+                    <a
+                      key={item.title}
+                      href={tileHref}
+                      className={`block w-full bg-white border-2 border-gray-200 border-l-8 ${c.stripe} ${c.hover} hover:shadow-sm rounded-xl px-3 py-2 transition-all active:scale-[0.98]`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span style={{fontSize:'20px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
+                        <h3 className="flex-1 min-w-0 font-semibold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
+                        <span className="text-gray-300 text-lg font-light shrink-0">›</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </div>
-              {/* Section items — single-line tiles (emoji + title +
-                  chevron). py-2 instead of py-2.5; no description row. */}
-              <div className="space-y-1.5">
-                {section.items.map(item => (
-                  <a
-                    key={item.title}
-                    href={tileHref}
-                    className="block w-full bg-white border-2 border-gray-200 border-l-8 border-l-orange-600 hover:border-orange-300 hover:shadow-sm rounded-xl px-3 py-2 transition-all active:scale-[0.98]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span style={{fontSize:'20px', lineHeight:1}} className="shrink-0">{item.emoji}</span>
-                      <h3 className="flex-1 min-w-0 font-semibold text-sm text-gray-900 leading-tight truncate">{item.title}</h3>
-                      <span className="text-gray-300 text-lg font-light shrink-0">›</span>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Footer */}
