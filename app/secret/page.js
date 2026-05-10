@@ -1170,6 +1170,31 @@ export default function MyRecipeVaultPage() {
     }
   }
 
+  // Toggle a recipe in/out of the Meal Plan (top bucket). Same logic
+  // as the detail-view header button, exposed here as a helper so the
+  // 📅 button on Card Box / Grid / Story tiles can reuse it without
+  // duplicating the upsert/delete + state-flip + toast for every
+  // surface. Used by the inline "📅 Meal Plan" button on tiles.
+  async function toggleMealPlanPick(recipe) {
+    if (!user || !recipe) return
+    if (picksIds.includes(recipe.id)) {
+      await supabase.from('my_picks').delete().eq('user_id', user.id).eq('recipe_id', recipe.id)
+      setPicksIds(prev => prev.filter(id => id !== recipe.id))
+      showToast('Removed from Meal Plan')
+    } else {
+      await supabase.from('my_picks').upsert({
+        user_id: user.id,
+        recipe_id: recipe.id,
+        title: recipe.title,
+        photo_url: recipe.photo_url || '',
+        category: recipe.category || '',
+        bucket: 'top',
+      }, { onConflict: 'user_id,recipe_id' })
+      setPicksIds(prev => prev.includes(recipe.id) ? prev : [...prev, recipe.id])
+      showToast('Added to Meal Plan ✓')
+    }
+  }
+
   async function loadNotes(userId) {
     const { data } = await supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
     setNotes(data || [])
@@ -3343,7 +3368,7 @@ export default function MyRecipeVaultPage() {
                         {surpriseRecipe.title}
                       </button>
                       <p className="text-xs text-gray-500 mt-0.5">From your &ldquo;haven&rsquo;t favorited yet&rdquo; pile</p>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 mt-2 flex-wrap">
                         <button
                           onClick={() => toggleCardPin(surpriseRecipe.id)}
                           className={`text-xs font-semibold rounded-lg px-2.5 py-1 border transition-colors ${
@@ -3353,6 +3378,17 @@ export default function MyRecipeVaultPage() {
                           }`}
                         >
                           {pinnedCards.includes(surpriseRecipe.id) ? '🃏 Pinned' : '🃏 Pin to Cards'}
+                        </button>
+                        <button
+                          onClick={() => toggleMealPlanPick(surpriseRecipe)}
+                          title={picksIds.includes(surpriseRecipe.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                          className={`text-xs font-semibold rounded-lg px-2.5 py-1 border transition-colors ${
+                            picksIds.includes(surpriseRecipe.id)
+                              ? 'bg-amber-500 text-white border-amber-500'
+                              : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
+                          }`}
+                        >
+                          {picksIds.includes(surpriseRecipe.id) ? '📅 In Meal Plan' : '📅 Meal Plan'}
                         </button>
                         <button
                           onClick={rollSurprise}
@@ -3419,7 +3455,7 @@ export default function MyRecipeVaultPage() {
                                     )}
                                   </div>
                                 </button>
-                                <div className="px-2 pb-2">
+                                <div className="px-2 pb-2 space-y-1">
                                   <button
                                     onClick={(e) => { e.stopPropagation(); toggleCardPin(r.id) }}
                                     className={`w-full text-[10px] font-semibold rounded-md py-1 border transition-colors ${
@@ -3429,6 +3465,17 @@ export default function MyRecipeVaultPage() {
                                     }`}
                                   >
                                     {pinned ? '🃏 Pinned' : '🃏 Pin to Cards'}
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); toggleMealPlanPick(r) }}
+                                    title={picksIds.includes(r.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                                    className={`w-full text-[10px] font-semibold rounded-md py-1 border transition-colors ${
+                                      picksIds.includes(r.id)
+                                        ? 'bg-amber-500 text-white border-amber-500'
+                                        : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    {picksIds.includes(r.id) ? '📅 In Meal Plan' : '📅 Meal Plan'}
                                   </button>
                                 </div>
                               </div>
@@ -3516,6 +3563,17 @@ export default function MyRecipeVaultPage() {
                                   className="flex-1 py-3 rounded-full bg-white text-gray-900 text-sm font-bold shadow-lg hover:bg-gray-100 transition-colors"
                                 >
                                   View recipe →
+                                </button>
+                                <button
+                                  onClick={() => toggleMealPlanPick(r)}
+                                  title={picksIds.includes(r.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                                  className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-lg transition-colors ${
+                                    picksIds.includes(r.id)
+                                      ? 'bg-amber-500 text-white'
+                                      : 'bg-white/20 text-white border border-white/40 backdrop-blur hover:bg-white/30'
+                                  }`}
+                                >
+                                  📅
                                 </button>
                                 <button
                                   onClick={() => toggleCardPin(r.id)}
@@ -3612,7 +3670,7 @@ export default function MyRecipeVaultPage() {
                                 )}
                               </div>
                             </button>
-                            <div className="px-2 pb-2">
+                            <div className="px-2 pb-2 space-y-1">
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleCardPin(r.id) }}
                                 className={`w-full text-[11px] font-semibold rounded-md py-1 border transition-colors ${
@@ -3622,6 +3680,17 @@ export default function MyRecipeVaultPage() {
                                 }`}
                               >
                                 {pinned ? '🃏 Pinned' : '🃏 Pin to Cards'}
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleMealPlanPick(r) }}
+                                title={picksIds.includes(r.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                                className={`w-full text-[11px] font-semibold rounded-md py-1 border transition-colors ${
+                                  picksIds.includes(r.id)
+                                    ? 'bg-amber-500 text-white border-amber-500'
+                                    : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
+                                }`}
+                              >
+                                {picksIds.includes(r.id) ? '📅 In Meal Plan' : '📅 Meal Plan'}
                               </button>
                             </div>
                           </div>
@@ -3852,6 +3921,25 @@ export default function MyRecipeVaultPage() {
                           }`}
                         >
                           {pinned ? '🃏 Pinned' : '🃏 Pin to Cards'}
+                        </div>
+                        {/* 📅 Meal Plan pill — mirror position bottom-left
+                            so it doesn't collide with 🃏 Pin in the
+                            bottom-right. Same pattern: absolute over the
+                            photo, white-with-amber-border when off,
+                            filled amber when in the plan. */}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); toggleMealPlanPick(recipe) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleMealPlanPick(recipe) } }}
+                          title={picksIds.includes(recipe.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                          className={`absolute bottom-2 left-2 z-10 text-[10px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
+                            picksIds.includes(recipe.id)
+                              ? 'bg-amber-500 text-white border-amber-500'
+                              : 'bg-white/95 text-amber-700 border-amber-300 hover:bg-amber-50'
+                          }`}
+                        >
+                          {picksIds.includes(recipe.id) ? '📅 Planned' : '📅 Meal Plan'}
                         </div>
                       </div>
                     )})}
