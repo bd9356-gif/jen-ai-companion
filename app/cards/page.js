@@ -672,16 +672,17 @@ export default function CardsPage() {
                       className="text-left active:scale-[0.98] transition-transform"
                     >
                       <div className="px-3 pt-2 pb-1">
-                        {/* "Recipe" eyebrow in cursive — the recipe-card
+                        {/* "Recipe" flourish in cursive — the recipe-card
                             stationery hallmark. Caveat font already
-                            loaded for /cards Family Notes. */}
+                            loaded for /cards Family Notes. Sized to read
+                            as a calligraphic header, not a tiny eyebrow. */}
                         <p
-                          className="text-red-600 leading-none mb-0.5"
-                          style={{ fontFamily: 'var(--font-caveat)', fontSize: '13px' }}
+                          className="text-red-600 leading-none -mb-1"
+                          style={{ fontFamily: 'var(--font-caveat)', fontSize: '26px', fontWeight: 600 }}
                         >
-                          recipe
+                          Recipe
                         </p>
-                        <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
+                        <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem] mt-1">{recipe.title}</p>
                       </div>
                       <div className="px-3 pb-2">
                         {recipe.photo_url ? (
