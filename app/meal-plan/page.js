@@ -141,6 +141,16 @@ export default function MealPlanPage() {
   const [loading, setLoading] = useState(true)
   const [picks, setPicks] = useState([])
   const [toast, setToast] = useState(null)
+  // Mise en Place — when set, the modal shows the prep list for this
+  // meal. Shape: { mealNumber, picks: [main, ...sides] }. recipes is
+  // populated by openMise() with the full personal_recipes rows
+  // (ingredients + title) so the modal can render without re-fetching.
+  // checked is a per-line tick state, scoped to this modal session
+  // (clears on close — it's a working surface, not persisted).
+  const [miseMeal, setMiseMeal] = useState(null)
+  const [miseRecipes, setMiseRecipes] = useState([])
+  const [miseChecked, setMiseChecked] = useState(new Set())
+  const [miseLoading, setMiseLoading] = useState(false)
 
   // Pointer + touch sensors. The 8px distance gate on PointerSensor prevents
   // accidental drags when the user is just tapping a move button next to
@@ -189,6 +199,49 @@ export default function MealPlanPage() {
     await supabase.from('my_picks').delete().eq('id', id)
     setPicks(prev => prev.filter(p => p.id !== id))
     showToast('Removed from Meal Plan')
+  }
+
+  // Open the Mise en Place modal for one meal — main + all its
+  // sides. Fetches the recipe rows so we can render full ingredient
+  // lists (my_picks rows only carry title/photo, not ingredients).
+  // Idempotent: re-tapping while the modal is open just refreshes.
+  async function openMise(mealNumber, mealPicks) {
+    setMiseMeal({ mealNumber, picks: mealPicks })
+    setMiseChecked(new Set())
+    setMiseLoading(true)
+    const ids = mealPicks.map(p => p.recipe_id).filter(Boolean)
+    if (ids.length === 0) {
+      setMiseRecipes([])
+      setMiseLoading(false)
+      return
+    }
+    const { data } = await supabase
+      .from('personal_recipes')
+      .select('id, title, ingredients')
+      .in('id', ids)
+    // Preserve meal-pick order (main first, then sides) when
+    // rendering the recipe blocks, regardless of DB row order.
+    const byId = new Map((data || []).map(r => [r.id, r]))
+    const ordered = mealPicks
+      .map(p => byId.get(p.recipe_id))
+      .filter(Boolean)
+    setMiseRecipes(ordered)
+    setMiseLoading(false)
+  }
+
+  function closeMise() {
+    setMiseMeal(null)
+    setMiseRecipes([])
+    setMiseChecked(new Set())
+  }
+
+  function toggleMiseLine(key) {
+    setMiseChecked(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
   }
 
   // Flip a pick between main and side (purely cosmetic — see
@@ -317,6 +370,7 @@ export default function MealPlanPage() {
                         onMove={moveTo}
                         onRemove={removePick}
                         onToggleSide={toggleSide}
+                        onMise={openMise}
                       />
                     ) : (
                       <div className="space-y-2">
@@ -339,6 +393,106 @@ export default function MealPlanPage() {
           </DndContext>
         )}
       </main>
+
+      {/* 🥣 Mise en Place modal — full-screen overlay listing every
+          ingredient from a meal (main + sides), grouped by recipe with
+          a checkbox per line. Tap-checked lines strike-through so the
+          cook can tick prep work as it gets done. Local-state only —
+          checks reset when the modal closes; this is a working surface
+          for a single cook session, not persisted. */}
+      {miseMeal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center sm:p-6"
+          onClick={closeMise}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[88vh] flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200">
+              <div>
+                <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
+                  🥣 Mise en Place
+                </p>
+                <h2 className="text-base font-bold text-gray-900 leading-tight">
+                  Meal {miseMeal.mealNumber} — prep list
+                </h2>
+              </div>
+              <button
+                onClick={closeMise}
+                aria-label="Close"
+                className="shrink-0 text-gray-400 hover:text-gray-600 text-2xl leading-none px-2"
+              >
+                ×
+              </button>
+            </div>
+            {/* Body — scrollable */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {miseLoading ? (
+                <p className="text-sm text-gray-400 text-center py-8">Loading prep list…</p>
+              ) : miseRecipes.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-8">No ingredients found for this meal.</p>
+              ) : (
+                <div className="space-y-5">
+                  {miseRecipes.map((recipe, ri) => {
+                    const ings = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+                    return (
+                      <div key={recipe.id}>
+                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                          {ri === 0 ? '🍽 ' : '↳ '}{recipe.title}
+                        </p>
+                        {ings.length === 0 ? (
+                          <p className="text-xs text-gray-400 italic pl-4">No ingredients listed</p>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {ings.map((ing, idx) => {
+                              const measure = (typeof ing === 'object' && ing?.measure) || ''
+                              const name = (typeof ing === 'object' && ing?.name) || (typeof ing === 'string' ? ing : '')
+                              const text = [measure, name].filter(Boolean).join(' ').trim()
+                              const key = `${recipe.id}-${idx}`
+                              const checked = miseChecked.has(key)
+                              return (
+                                <li key={key}>
+                                  <button
+                                    onClick={() => toggleMiseLine(key)}
+                                    className="w-full flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 text-left"
+                                  >
+                                    <span className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'bg-amber-500 border-amber-500 text-white' : 'border-gray-300 bg-white'}`}>
+                                      {checked && <span className="text-xs">✓</span>}
+                                    </span>
+                                    <span className={`text-sm ${checked ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                                      {measure && <span className="font-semibold">{measure} </span>}
+                                      {name}
+                                      {!text && <span className="italic text-gray-400">(no text)</span>}
+                                    </span>
+                                  </button>
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between gap-3">
+              <p className="text-[11px] text-gray-500">
+                {miseChecked.size} / {miseRecipes.reduce((n, r) => n + (Array.isArray(r.ingredients) ? r.ingredients.length : 0), 0)} prepped
+              </p>
+              <button
+                onClick={closeMise}
+                className="text-sm font-semibold bg-amber-500 text-white rounded-xl px-4 py-2 hover:bg-amber-600"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -351,7 +505,7 @@ export default function MealPlanPage() {
 //
 // The drag-reorder + move/remove buttons all keep working — this is
 // purely a render-time transformation of the same picks array.
-function ToMakeMeals({ picks, bucketKey, onMove, onRemove, onToggleSide }) {
+function ToMakeMeals({ picks, bucketKey, onMove, onRemove, onToggleSide, onMise }) {
   // Walk top-to-bottom; collect (main, sides[]) tuples. Sides before
   // the first main go in `orphans`.
   const orphans = []
@@ -390,9 +544,23 @@ function ToMakeMeals({ picks, bucketKey, onMove, onRemove, onToggleSide }) {
       )}
       {meals.map((meal, i) => (
         <div key={meal.main.id} className={i > 0 ? 'pt-3 border-t-2 border-amber-300/50' : ''}>
-          <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700 px-1 mb-1.5">
-            🍽 Meal {i + 1}
-          </p>
+          <div className="flex items-center justify-between px-1 mb-1.5">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700">
+              🍽 Meal {i + 1}
+            </p>
+            {/* 🥣 Mise en Place — French chef move: prep all the
+                ingredients before you start cooking. Tap to open a
+                modal with every ingredient from this meal's main +
+                sides, with a checkbox per line so you tick as you
+                prep. Works on a phone in the kitchen. */}
+            <button
+              onClick={() => onMise(i + 1, [meal.main, ...meal.sides])}
+              title="Mise en place — prep list for this meal"
+              className="text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-300 rounded-md px-2 py-0.5 hover:bg-amber-50"
+            >
+              🥣 Mise
+            </button>
+          </div>
           <div className="space-y-1.5">
             <SortablePick
               pick={meal.main}
