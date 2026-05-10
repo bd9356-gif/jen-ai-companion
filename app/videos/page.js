@@ -599,6 +599,17 @@ export default function VideosPage() {
               >
                 📘
               </button>
+              {/* Cross-classroom hop — Chef TV ↔ Chef Jennifer. The two
+                  classrooms work as a pair, so a one-tap switch beats
+                  going back to MyKitchen first. */}
+              <button
+                onClick={() => window.location.href='/chef'}
+                title="Open Chef Jennifer's Classroom"
+                aria-label="Open Chef Jennifer's Classroom"
+                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+              >
+                👨‍🍳
+              </button>
               <div className="min-w-0 leading-none">
                 <h1 className="text-base font-bold text-gray-900 truncate leading-tight">🎬 Chef TV&rsquo;s</h1>
                 <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate pl-6">Classroom</p>
