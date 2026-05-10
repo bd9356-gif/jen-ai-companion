@@ -1,12 +1,55 @@
 'use client'
 import { useState } from 'react'
+import { categorizeIngredient, AISLES, AISLE_OTHER } from '@/lib/grocery_aisle'
 
 // Renders the shopping list grouped by store. Items with no store_id
-// land in an "Unsorted" bucket so nothing gets lost. Each row has a
-// checkbox (mark bought), a store picker (reassign), and a remove button.
+// land in an "Unsorted" bucket so nothing gets lost. Inside each
+// store, items are SUB-GROUPED BY AISLE (May 2026, Bill's three-phase
+// workflow: build → assign-stores → shop). When you're physically at
+// Trader Joe's, you see the TJ items already arranged Produce →
+// Meat → Dairy → Pantry, so the walk through the store is natural.
+//
+// Each row has a checkbox (mark bought), a store picker (reassign),
+// and a remove button. Aisle is auto-categorized from the item text;
+// no manual aisle assignment needed (per Bill's workflow, aisle is
+// just an organizing layer for the shopping phase, not a planning
+// concept).
 //
 // Also exports StoreEditor and StoreRow from the same file so the
 // /shopping-list page can import everything from one spot.
+
+// Canonical aisle order. Used to sort items within a store so the
+// natural walk path is reflected. Built from AISLES + the catch-all.
+const AISLE_ORDER_BY_KEY = (() => {
+  const map = new Map()
+  AISLES.forEach((a, i) => map.set(a.key, i))
+  map.set(AISLE_OTHER.key, AISLES.length)
+  return map
+})()
+
+function aisleSortIndex(item) {
+  const aisle = categorizeIngredient(item.ingredient)
+  return AISLE_ORDER_BY_KEY.get(aisle.key) ?? AISLES.length
+}
+
+// Group items in a single store into aisle buckets, returning an
+// array of { aisle, items } in canonical aisle order. Within each
+// bucket items keep their original order (insertion order).
+function bucketByAisle(items) {
+  const buckets = new Map()
+  for (const item of items) {
+    const aisle = categorizeIngredient(item.ingredient)
+    if (!buckets.has(aisle.key)) buckets.set(aisle.key, { aisle, items: [] })
+    buckets.get(aisle.key).items.push(item)
+  }
+  // Order: AISLES then OTHER last.
+  const out = []
+  for (const aisle of AISLES) {
+    if (buckets.has(aisle.key)) out.push(buckets.get(aisle.key))
+  }
+  if (buckets.has(AISLE_OTHER.key)) out.push(buckets.get(AISLE_OTHER.key))
+  return out
+}
 
 export default function ShoppingByStore({ shoppingList, stores, onToggle, onRemove, onSetItemStore }) {
   // Build map: storeId -> array of items, plus "unsorted"
@@ -35,6 +78,10 @@ export default function ShoppingByStore({ shoppingList, stores, onToggle, onRemo
             </div>
           )
         }
+        // Sort items by canonical aisle order, then bucket them so
+        // we can render aisle sub-headers within the store group.
+        const sorted = [...items].sort((a, b) => aisleSortIndex(a) - aisleSortIndex(b))
+        const aisleBuckets = bucketByAisle(sorted)
         return (
           <div key={String(store.id)} className="rounded-xl border-2 border-gray-200 overflow-hidden">
             <div className="flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200">
@@ -55,30 +102,44 @@ export default function ShoppingByStore({ shoppingList, stores, onToggle, onRemo
                 </a>
               )}
             </div>
-            <div className="divide-y divide-gray-50">
-              {items.map(item => (
-                <div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-white hover:bg-gray-50">
-                  <button
-                    onClick={() => onToggle(item)}
-                    title={item.checked ? 'Mark as not bought' : 'Mark as bought'}
-                    className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}
-                  >
-                    {item.checked && <span className="text-xs">✓</span>}
-                  </button>
-                  <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.ingredient}</span>
-                  {item.recipe_title && <span className="text-xs text-gray-400 truncate max-w-24">{item.recipe_title}</span>}
-                  <select
-                    value={item.store_id || ''}
-                    onChange={e => onSetItemStore(item.id, e.target.value || null)}
-                    title="Assign this item to a store"
-                    className="shrink-0 text-xs border border-gray-200 rounded-lg px-1.5 py-0.5 bg-white text-gray-600 max-w-[5.5rem]"
-                  >
-                    <option value="">Unsorted</option>
-                    {stores.map(s => (
-                      <option key={s.id} value={s.id}>{s.emoji || '🛒'} {s.name}</option>
+            <div>
+              {aisleBuckets.map(({ aisle, items: aisleItems }) => (
+                <div key={aisle.key}>
+                  {/* Aisle sub-header — small label inside the store
+                      block so the walk through the store reads as
+                      Produce → Meat → Dairy → … without leaving the
+                      grouping you cared about (the store). */}
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-white border-b border-gray-100 text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                    <span className="text-xs">{aisle.emoji}</span>
+                    <span>{aisle.label}</span>
+                  </div>
+                  <div className="divide-y divide-gray-50">
+                    {aisleItems.map(item => (
+                      <div key={item.id} className="flex items-center gap-3 px-3 py-2 bg-white hover:bg-gray-50">
+                        <button
+                          onClick={() => onToggle(item)}
+                          title={item.checked ? 'Mark as not bought' : 'Mark as bought'}
+                          className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300'}`}
+                        >
+                          {item.checked && <span className="text-xs">✓</span>}
+                        </button>
+                        <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-700'}`}>{item.ingredient}</span>
+                        {item.recipe_title && <span className="text-xs text-gray-400 truncate max-w-24">{item.recipe_title}</span>}
+                        <select
+                          value={item.store_id || ''}
+                          onChange={e => onSetItemStore(item.id, e.target.value || null)}
+                          title="Assign this item to a store"
+                          className="shrink-0 text-xs border border-gray-200 rounded-lg px-1.5 py-0.5 bg-white text-gray-600 max-w-[5.5rem]"
+                        >
+                          <option value="">Unsorted</option>
+                          {stores.map(s => (
+                            <option key={s.id} value={s.id}>{s.emoji || '🛒'} {s.name}</option>
+                          ))}
+                        </select>
+                        <button onClick={() => onRemove(item.id)} title="Remove from shopping list" className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+                      </div>
                     ))}
-                  </select>
-                  <button onClick={() => onRemove(item.id)} title="Remove from shopping list" className="shrink-0 text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
+                  </div>
                 </div>
               ))}
             </div>
