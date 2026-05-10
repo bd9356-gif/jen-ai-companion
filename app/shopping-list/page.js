@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import ShoppingByStore, { StoreEditor } from '@/components/ShoppingByStore'
+import { categorizeIngredient, AISLES, AISLE_OTHER } from '@/lib/grocery_aisle'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -90,33 +91,60 @@ export default function ShoppingListPage() {
     showToast('Shopping list cleared')
   }
 
-  // Build a plain-text version of the list, grouped by store. Used for
-  // both Copy-to-clipboard and Print.
+  // Build a plain-text version of the list, grouped by store with
+  // aisle sub-sections inside each store — mirrors the on-screen
+  // presentation (May 2026, Bill's ask). The output reads like the
+  // walk-through-the-store experience, so a printed/pasted list is
+  // useful in the actual grocery store.
   function buildShoppingListText() {
     if (!shoppingList.length) return ''
-    const groups = new Map()
+    // Step 1 — bucket every item by store.
+    const byStore = new Map()
     for (const item of shoppingList) {
       const key = item.store_id || '__unsorted__'
-      if (!groups.has(key)) groups.set(key, [])
-      groups.get(key).push(item)
+      if (!byStore.has(key)) byStore.set(key, [])
+      byStore.get(key).push(item)
     }
     const storeById = Object.fromEntries(stores.map(s => [s.id, s]))
-    const sortedKeys = [...groups.keys()].sort((a, b) => {
+    const sortedStoreKeys = [...byStore.keys()].sort((a, b) => {
       if (a === '__unsorted__') return 1
       if (b === '__unsorted__') return -1
       const sa = storeById[a]?.sort_order ?? 0
       const sb = storeById[b]?.sort_order ?? 0
       return sa - sb
     })
+
+    // Step 2 — within each store, bucket items by aisle in canonical
+    // walk order so the output reads Produce → Meat → Dairy → ...
+    const aisleOrder = new Map()
+    AISLES.forEach((a, i) => aisleOrder.set(a.key, i))
+    aisleOrder.set(AISLE_OTHER.key, AISLES.length)
+
     const lines = ['Shopping List', '']
-    for (const key of sortedKeys) {
-      const header = key === '__unsorted__'
+    for (const storeKey of sortedStoreKeys) {
+      const storeHeader = storeKey === '__unsorted__'
         ? '📦 Unsorted'
-        : `${storeById[key]?.emoji || '🏪'} ${storeById[key]?.name || 'Store'}`
-      lines.push(header)
-      for (const item of groups.get(key)) {
-        const prefix = item.checked ? '[x]' : '[ ]'
-        lines.push(`${prefix} ${item.ingredient}`)
+        : `${storeById[storeKey]?.emoji || '🏪'} ${storeById[storeKey]?.name || 'Store'}`
+      lines.push(storeHeader)
+
+      // Group this store's items by aisle.
+      const byAisle = new Map()
+      for (const item of byStore.get(storeKey)) {
+        const aisle = categorizeIngredient(item.ingredient)
+        if (!byAisle.has(aisle.key)) byAisle.set(aisle.key, { aisle, items: [] })
+        byAisle.get(aisle.key).items.push(item)
+      }
+      // Render aisles in canonical order; OTHER lands last.
+      const sortedAisleKeys = [...byAisle.keys()].sort(
+        (a, b) => (aisleOrder.get(a) ?? 99) - (aisleOrder.get(b) ?? 99)
+      )
+      for (const aisleKey of sortedAisleKeys) {
+        const { aisle, items } = byAisle.get(aisleKey)
+        lines.push(`  ${aisle.emoji} ${aisle.label}`)
+        for (const item of items) {
+          const prefix = item.checked ? '[x]' : '[ ]'
+          lines.push(`    ${prefix} ${item.ingredient}`)
+        }
       }
       lines.push('')
     }
