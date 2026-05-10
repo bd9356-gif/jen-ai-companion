@@ -2,6 +2,24 @@
 import { useState } from 'react'
 import { categorizeIngredient, AISLES, AISLE_OTHER } from '@/lib/grocery_aisle'
 
+// Per-aisle visual treatment for the sub-headers inside each store
+// group. A colored top stripe + soft tinted background makes each
+// aisle visually distinct as you walk through the store list. Tailwind
+// v4 needs the full class strings present at lint time, so each color
+// is mapped to a literal class group here rather than built from
+// template strings at render time.
+const AISLE_COLORS = {
+  green:   { stripe: 'bg-green-500',   bg: 'bg-green-50',   text: 'text-green-800' },
+  red:     { stripe: 'bg-red-500',     bg: 'bg-red-50',     text: 'text-red-800' },
+  sky:     { stripe: 'bg-sky-500',     bg: 'bg-sky-50',     text: 'text-sky-800' },
+  amber:   { stripe: 'bg-amber-500',   bg: 'bg-amber-50',   text: 'text-amber-800' },
+  orange:  { stripe: 'bg-orange-500',  bg: 'bg-orange-50',  text: 'text-orange-800' },
+  purple:  { stripe: 'bg-purple-500',  bg: 'bg-purple-50',  text: 'text-purple-800' },
+  stone:   { stripe: 'bg-stone-500',   bg: 'bg-stone-50',   text: 'text-stone-800' },
+  gray:    { stripe: 'bg-gray-400',    bg: 'bg-gray-50',    text: 'text-gray-700' },
+  slate:   { stripe: 'bg-slate-400',   bg: 'bg-slate-50',   text: 'text-slate-700' },
+}
+
 // Renders the shopping list grouped by store. Items with no store_id
 // land in an "Unsorted" bucket so nothing gets lost. Inside each
 // store, items are SUB-GROUPED BY AISLE (May 2026, Bill's three-phase
@@ -103,14 +121,18 @@ export default function ShoppingByStore({ shoppingList, stores, onToggle, onRemo
               )}
             </div>
             <div>
-              {aisleBuckets.map(({ aisle, items: aisleItems }) => (
+              {aisleBuckets.map(({ aisle, items: aisleItems }) => {
+                const c = AISLE_COLORS[aisle.color] || AISLE_COLORS.gray
+                return (
                 <div key={aisle.key}>
-                  {/* Aisle sub-header — small label inside the store
-                      block so the walk through the store reads as
-                      Produce → Meat → Dairy → … without leaving the
-                      grouping you cared about (the store). */}
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-white border-b border-gray-100 text-[10px] uppercase tracking-wider font-bold text-gray-400">
-                    <span className="text-xs">{aisle.emoji}</span>
+                  {/* Colored top stripe + tinted aisle sub-header inside
+                      the store block. Stripe makes each aisle visually
+                      distinct as you scroll (Bill's ask, May 2026); the
+                      tinted background carries the same color softly so
+                      the items below clearly belong to that section. */}
+                  <div className={`h-1 ${c.stripe}`} />
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 ${c.bg} text-[11px] uppercase tracking-wider font-bold ${c.text}`}>
+                    <span className="text-sm">{aisle.emoji}</span>
                     <span>{aisle.label}</span>
                   </div>
                   <div className="divide-y divide-gray-50">
@@ -141,7 +163,8 @@ export default function ShoppingByStore({ shoppingList, stores, onToggle, onRemo
                     ))}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )
