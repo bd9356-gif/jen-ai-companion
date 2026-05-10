@@ -3972,21 +3972,12 @@ export default function MyRecipeVaultPage() {
                 </div>
               )}
 
-              {/* Education Videos Section */}
-              {educationVideos.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-base">📚</span>
-                    <h2 className="text-sm font-bold text-gray-700">Videos Only</h2>
-                    <span className="text-xs text-gray-500">({educationVideos.length})</span>
-                  </div>
-                  <div className="space-y-3">
-                    {educationVideos.map(item => (
-                      <EducationVideoCard key={item.id} item={item} onDelete={deleteEducationVideo} />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* "Videos Only" section retired May 2026 — video-only
+                  saves now live in 💎 Chef Portfolio's Learning Videos
+                  section (filed from My Playbook with 💎 Move to
+                  Portfolio). The educationVideos state + loader still
+                  populate so Portfolio reads them, but they're not
+                  rendered here on the Vault list view anymore. */}
 
             </div>
           )
