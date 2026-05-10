@@ -802,10 +802,11 @@ export default function MyRecipeVaultPage() {
   // don't apply there. Synced to ?view=grid|portfolio via
   // history.replaceState so refresh/share preserves the user's choice.
   // Distinct from Recipe Cards (/cards), a separate "chef card" concept.
-  // 'cardbox' is the default for new visits — splayed Favorites + Surprise
-  // me + collapsed All-recipes drawer. Existing list / grid / portfolio
-  // modes stay available via the toggle.
-  const [listStyle, setListStyle] = useState('cardbox')
+  // Default is 'grid' (May 2026, Bill's call) — the index-card-style
+  // photo-first tile view reads as the front door of the vault. The
+  // What's Cooking? cardbox + Portfolio still live one tap away in the
+  // toggle; they're just not what you land on by default.
+  const [listStyle, setListStyle] = useState('grid')
   // Surprise me — random recipe pulled from non-favorites when the user
   // taps 🎲. Stored as a recipe object so the result card can render
   // without re-querying. Cleared when user picks a different list mode.
@@ -3167,10 +3168,12 @@ export default function MyRecipeVaultPage() {
                     key={opt.key}
                     onClick={() => {
                       setListStyle(opt.key)
-                      // Cardbox is the default — no ?view= param needed.
-                      // Other modes get the explicit view param.
+                      // Grid is the default (May 2026) — no ?view= param
+                      // needed when landing there. Other modes get the
+                      // explicit view param so refresh / share preserves
+                      // the user's choice.
                       const url = new URL(window.location.href)
-                      if (opt.key === 'cardbox') url.searchParams.delete('view')
+                      if (opt.key === 'grid') url.searchParams.delete('view')
                       else url.searchParams.set('view', opt.key)
                       window.history.replaceState({}, '', url.toString())
                       if (opt.key === 'portfolio' && user) loadPortfolioNotes(user.id)
