@@ -177,7 +177,7 @@ export default function ShoppingByStore({ shoppingList, stores, onToggle, onRemo
 // StoreEditor — inline "My Stores" manager.
 // Add, rename, emoji-pick, set a website URL, or remove a store.
 // ──────────────────────────────────────────────────────────────
-export function StoreEditor({ stores, onAdd, onUpdate, onRemove, onClose }) {
+export function StoreEditor({ stores, onAdd, onUpdate, onRemove, onClose, onSetDefault }) {
   const [newName, setNewName] = useState('')
   const [newEmoji, setNewEmoji] = useState('🛒')
   const [newUrl, setNewUrl] = useState('')
@@ -198,11 +198,14 @@ export function StoreEditor({ stores, onAdd, onUpdate, onRemove, onClose }) {
       {stores.length === 0 ? (
         <p className="text-xs text-sky-700">No stores yet. Add Publix, ShopRite, Costco, or wherever you shop below.</p>
       ) : (
-        <div className="space-y-2">
-          {stores.map(s => (
-            <StoreRow key={s.id} store={s} onUpdate={onUpdate} onRemove={onRemove} />
-          ))}
-        </div>
+        <>
+          <p className="text-[10px] text-sky-700/80 italic">Tap ⭐ to make a store the default — new shopping items land there instead of Unsorted.</p>
+          <div className="space-y-2">
+            {stores.map(s => (
+              <StoreRow key={s.id} store={s} onUpdate={onUpdate} onRemove={onRemove} onSetDefault={onSetDefault} />
+            ))}
+          </div>
+        </>
       )}
 
       <div className="border-t-2 border-sky-200 pt-3">
@@ -243,7 +246,7 @@ export function StoreEditor({ stores, onAdd, onUpdate, onRemove, onClose }) {
   )
 }
 
-function StoreRow({ store, onUpdate, onRemove }) {
+function StoreRow({ store, onUpdate, onRemove, onSetDefault }) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(store.name)
   const [emoji, setEmoji] = useState(store.emoji || '🛒')
@@ -271,12 +274,25 @@ function StoreRow({ store, onUpdate, onRemove }) {
   }
 
   return (
-    <div className="flex items-center gap-2 bg-white rounded-lg border border-sky-100 px-2 py-1.5">
+    <div className={`flex items-center gap-2 bg-white rounded-lg px-2 py-1.5 ${store.is_default ? 'border-2 border-amber-300' : 'border border-sky-100'}`}>
       <span className="text-lg shrink-0">{store.emoji || '🛒'}</span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-900 truncate">{store.name}</p>
+        <p className="text-sm font-semibold text-gray-900 truncate">
+          {store.name}
+          {store.is_default && <span className="ml-1.5 text-[10px] uppercase tracking-wider font-bold text-amber-700">⭐ Default</span>}
+        </p>
         {store.website_url && <p className="text-xs text-sky-700 truncate">{store.website_url}</p>}
       </div>
+      {onSetDefault && (
+        <button
+          onClick={() => onSetDefault(store.id)}
+          title={store.is_default ? 'Already the default store' : 'Set as the default store for new shopping items'}
+          className={`text-base shrink-0 leading-none px-1 ${store.is_default ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400'}`}
+          aria-label={store.is_default ? 'Default store' : 'Make default store'}
+        >
+          {store.is_default ? '⭐' : '☆'}
+        </button>
+      )}
       <button onClick={() => setEditing(true)} title="Edit this store" className="text-xs text-sky-700 font-semibold">Edit</button>
       <button onClick={() => onRemove(store.id)} title="Remove this store" className="text-gray-300 hover:text-red-400 text-lg leading-none">×</button>
     </div>

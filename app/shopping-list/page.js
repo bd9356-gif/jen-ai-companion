@@ -69,6 +69,20 @@ export default function ShoppingListPage() {
     setShoppingList(prev => prev.map(i => i.store_id === id ? { ...i, store_id: null } : i))
   }
 
+  // Set one store as the user's default for new shopping_list rows.
+  // The DB has a partial unique index on (user_id) WHERE is_default,
+  // so we can only have one — clear any existing default first, then
+  // set the new one. Two-step write keeps the unique-index honored
+  // even if the second write fails (worst case: zero defaults, which
+  // is a valid state that just falls back to Unsorted on inserts).
+  async function setDefaultStore(storeId) {
+    if (!user) return
+    await supabase.from('stores').update({ is_default: false }).eq('user_id', user.id).eq('is_default', true)
+    await supabase.from('stores').update({ is_default: true }).eq('id', storeId)
+    setStores(prev => prev.map(s => ({ ...s, is_default: s.id === storeId })))
+    showToast('Default store set ⭐')
+  }
+
   async function setItemStore(itemId, storeId) {
     await supabase.from('shopping_list').update({ store_id: storeId }).eq('id', itemId)
     setShoppingList(prev => prev.map(i => i.id === itemId ? { ...i, store_id: storeId } : i))
@@ -308,6 +322,7 @@ export default function ShoppingListPage() {
                 onAdd={addStore}
                 onUpdate={updateStore}
                 onRemove={removeStore}
+                onSetDefault={setDefaultStore}
                 onClose={() => setShowStoreEditor(false)}
               />
             )}

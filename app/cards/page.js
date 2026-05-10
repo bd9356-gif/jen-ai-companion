@@ -37,6 +37,11 @@ export default function CardsPage() {
   const [logNotes, setLogNotes] = useState('')
   const [savingLog, setSavingLog] = useState(false)
   const [showLogForm, setShowLogForm] = useState(false)
+  // Default shopping store — when set, new shopping_list rows land
+  // here instead of NULL/Unsorted. Loaded on mount; null means user
+  // hasn't picked a default. Set via the 🏬 Manage Stores editor on
+  // /shopping-list.
+  const [defaultStoreId, setDefaultStoreId] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,9 +50,21 @@ export default function CardsPage() {
       /* eslint-disable react-hooks/immutability -- hoisted function declarations are safe to call here */
       loadCards(session.user.id)
       loadPicks(session.user.id)
+      loadDefaultStore(session.user.id)
       /* eslint-enable react-hooks/immutability */
     })
   }, [])
+
+  async function loadDefaultStore(userId) {
+    const { data } = await supabase
+      .from('stores')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_default', true)
+      .limit(1)
+      .maybeSingle()
+    setDefaultStoreId(data?.id || null)
+  }
 
   async function loadCards(userId) {
     const { data } = await supabase
@@ -251,7 +268,7 @@ export default function CardsPage() {
       setAddedToList(prev => { const n = new Set(prev); n.delete(key); return n })
       showToast('Removed from Shopping List')
     } else {
-      await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing.title || '', checked: false })
+      await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing.title || '', checked: false, store_id: defaultStoreId || null })
       setAddedToList(prev => new Set([...prev, key]))
       showToast('Added to Shopping List')
     }
@@ -265,7 +282,8 @@ export default function CardsPage() {
       user_id: user.id,
       ingredient: [ing.measure, ing.name].filter(Boolean).join(' ') || String(ing),
       recipe_title: viewing.title || '',
-      checked: false
+      checked: false,
+      store_id: defaultStoreId || null,
     }))
     await supabase.from('shopping_list').insert(rows)
     setAddedToList(new Set(rows.map(r => r.ingredient.toLowerCase())))

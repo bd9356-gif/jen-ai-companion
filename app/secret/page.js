@@ -880,6 +880,11 @@ export default function MyRecipeVaultPage() {
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [pinnedCards, setPinnedCards] = useState([])
   const [picksIds, setPicksIds] = useState([])
+  // Default shopping store — when set, new shopping_list rows land
+  // here instead of NULL/Unsorted (May 2026, Bill's ask). Loaded on
+  // mount; null means user hasn't picked a default. Set via the
+  // 🏬 Manage Stores editor on /shopping-list.
+  const [defaultStoreId, setDefaultStoreId] = useState(null)
   const [toastMsg, setToastMsg] = useState(null)
   // When navigator.clipboard.read() can't see the image (iOS Photos +
   // some Windows sources put images in legacy formats the async API
@@ -932,6 +937,7 @@ export default function MyRecipeVaultPage() {
       loadPortfolioNotes(session.user.id)
       loadPinnedCards(session.user.id)
       loadPicksIds(session.user.id)
+      loadDefaultStore(session.user.id)
     })
   }, [])
 
@@ -1134,7 +1140,10 @@ export default function MyRecipeVaultPage() {
       setAddedToList(prev => { const n = new Set(prev); n.delete(key); return n })
       showToast('Removed from Shopping List')
     } else {
-      await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing?.title || '' })
+      // Default to the user's preferred shopping store when set, so
+      // the new row lands in that store's section instead of 📦
+      // Unsorted. The store editor on /shopping-list controls this.
+      await supabase.from('shopping_list').insert({ user_id: user.id, ingredient, recipe_title: viewing?.title || '', store_id: defaultStoreId || null })
       setAddedToList(prev => new Set([...prev, key]))
       showToast('Added to Shopping List')
     }
@@ -1144,10 +1153,22 @@ export default function MyRecipeVaultPage() {
     if (!user || !viewing) return
     const ings = viewing.ingredients || []
     if (!ings.length) return
-    const rows = ings.map(ing => ({ user_id: user.id, ingredient: [ing.measure, ing.name].filter(Boolean).join(' '), recipe_title: viewing.title || '' }))
+    const rows = ings.map(ing => ({ user_id: user.id, ingredient: [ing.measure, ing.name].filter(Boolean).join(' '), recipe_title: viewing.title || '', store_id: defaultStoreId || null }))
     await supabase.from('shopping_list').insert(rows)
     setAddedToList(new Set(ings.map(ing => [ing.measure, ing.name].filter(Boolean).join(' ').toLowerCase())))
     showToast(`Added ${ings.length} ingredients to Shopping List`)
+  }
+
+  // Pull the user's default-store id (if any). Light query — id only.
+  async function loadDefaultStore(userId) {
+    const { data } = await supabase
+      .from('stores')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_default', true)
+      .limit(1)
+      .maybeSingle()
+    setDefaultStoreId(data?.id || null)
   }
 
   async function loadPinnedCards(userId) {
