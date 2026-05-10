@@ -92,9 +92,12 @@ export default function CardsPage() {
         title: recipe.title,
         photo_url: recipe.photo_url || '',
         category: recipe.category || '',
-        bucket: 'top'
+        // New picks default to 'nice' (Maybe) so they don't crowd the
+        // carefully-ordered ⭐ To Make list. Promote to To Make from
+        // /meal-plan when actually ready to cook.
+        bucket: 'nice'
       }, { onConflict: 'user_id,recipe_id' })
-      showToast('Added to Meal Plan ✓')
+      showToast('Added to Maybe ✓')
     }
   }
 

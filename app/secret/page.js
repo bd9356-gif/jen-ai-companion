@@ -1188,10 +1188,13 @@ export default function MyRecipeVaultPage() {
         title: recipe.title,
         photo_url: recipe.photo_url || '',
         category: recipe.category || '',
-        bucket: 'top',
+        // New picks default to 'nice' (Maybe) so they don't crowd the
+        // carefully-ordered ⭐ To Make list. The user promotes to To
+        // Make from /meal-plan when they're actually ready to cook.
+        bucket: 'nice',
       }, { onConflict: 'user_id,recipe_id' })
       setPicksIds(prev => prev.includes(recipe.id) ? prev : [...prev, recipe.id])
-      showToast('Added to Meal Plan ✓')
+      showToast('Added to Maybe ✓')
     }
   }
 
@@ -1964,9 +1967,9 @@ export default function MyRecipeVaultPage() {
                   setPicksIds(prev => prev.filter(id => id !== viewing.id))
                   showToast('Removed from Meal Plan')
                 } else {
-                  await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'top' }, { onConflict: 'user_id,recipe_id' })
+                  await supabase.from('my_picks').upsert({ user_id: user.id, recipe_id: viewing.id, title: viewing.title, photo_url: viewing.photo_url || '', category: viewing.category || '', bucket: 'nice' }, { onConflict: 'user_id,recipe_id' })
                   setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
-                  showToast('Added to Meal Plan ✓')
+                  showToast('Added to Maybe ✓')
                 }
               }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>📅 {picksIds.includes(viewing.id) ? 'In Meal Plan' : 'Meal Plan'}</button>
               <button onClick={() => deleteRecipe(viewing)}
