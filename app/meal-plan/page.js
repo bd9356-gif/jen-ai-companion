@@ -151,6 +151,10 @@ export default function MealPlanPage() {
   const [miseRecipes, setMiseRecipes] = useState([])
   const [miseChecked, setMiseChecked] = useState(new Set())
   const [miseLoading, setMiseLoading] = useState(false)
+  // Print uses an in-page hidden container instead of a popup window
+  // so iOS Safari doesn't strand a popup tab when the user dismisses
+  // the print sheet. Mirror of the Shopping List pattern.
+  const [misePrintText, setMisePrintText] = useState('')
 
   // Pointer + touch sensors. The 8px distance gate on PointerSensor prevents
   // accidental drags when the user is just tapping a move button next to
@@ -242,6 +246,66 @@ export default function MealPlanPage() {
       else next.add(key)
       return next
     })
+  }
+
+  // Build a plain-text mise en place. Used by both Copy-to-clipboard
+  // and Print so the two paths show identical output. Format mirrors
+  // the on-screen layout: header, then each recipe with a [ ] / [x]
+  // checkbox per ingredient. Checkbox state reflects the current
+  // miseChecked set so a half-prepped list copies/prints with the
+  // user's progress preserved.
+  function buildMiseText() {
+    if (!miseMeal || !miseRecipes.length) return ''
+    const lines = [`Mise en Place — Meal ${miseMeal.mealNumber}`, '']
+    miseRecipes.forEach((recipe, ri) => {
+      lines.push(`${ri === 0 ? '🍽' : '↳'} ${recipe.title}`)
+      const ings = Array.isArray(recipe.ingredients) ? recipe.ingredients : []
+      if (ings.length === 0) {
+        lines.push('  (no ingredients listed)')
+      } else {
+        ings.forEach((ing, idx) => {
+          const measure = (typeof ing === 'object' && ing?.measure) || ''
+          const name = (typeof ing === 'object' && ing?.name) || (typeof ing === 'string' ? ing : '')
+          const text = [measure, name].filter(Boolean).join(' ').trim() || '(no text)'
+          const key = `${recipe.id}-${idx}`
+          const prefix = miseChecked.has(key) ? '[x]' : '[ ]'
+          lines.push(`  ${prefix} ${text}`)
+        })
+      }
+      lines.push('')
+    })
+    return lines.join('\n').trim()
+  }
+
+  async function copyMise() {
+    const text = buildMiseText()
+    if (!text) { showToast('Nothing to copy'); return }
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast('Mise en place copied ✓')
+    } catch {
+      showToast('Copy failed — try Print instead')
+    }
+  }
+
+  function printMise() {
+    const text = buildMiseText()
+    if (!text) { showToast('Nothing to print'); return }
+    setMisePrintText(text)
+    // One-tick wait so the hidden print container has rendered with
+    // the text before the print dialog opens. afterprint fires whether
+    // the user prints or cancels (every browser, including iOS Safari)
+    // so the container is cleared either way. Same in-page pattern as
+    // the Shopping List — popup-based print previews can leave a
+    // stranded popup tab on iOS.
+    setTimeout(() => {
+      const cleanup = () => { setMisePrintText(''); window.removeEventListener('afterprint', cleanup) }
+      window.addEventListener('afterprint', cleanup)
+      window.print()
+      // Belt-and-braces fallback in case afterprint never fires
+      // (older mobile browsers occasionally swallow it).
+      setTimeout(() => { setMisePrintText(''); window.removeEventListener('afterprint', cleanup) }, 5000)
+    }, 50)
   }
 
   // Flip a pick between main and side (purely cosmetic — see
@@ -478,21 +542,73 @@ export default function MealPlanPage() {
                 </div>
               )}
             </div>
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between gap-3">
-              <p className="text-[11px] text-gray-500">
+            {/* Footer — counter on the left, action buttons on the
+                right (Copy, Print, Done). Copy + Print use the same
+                buildMiseText() so the output matches the on-screen
+                layout. */}
+            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[11px] text-gray-500 shrink-0">
                 {miseChecked.size} / {miseRecipes.reduce((n, r) => n + (Array.isArray(r.ingredients) ? r.ingredients.length : 0), 0)} prepped
               </p>
-              <button
-                onClick={closeMise}
-                className="text-sm font-semibold bg-amber-500 text-white rounded-xl px-4 py-2 hover:bg-amber-600"
-              >
-                Done
-              </button>
+              <div className="flex items-center gap-2">
+                {miseRecipes.length > 0 && (
+                  <button
+                    onClick={copyMise}
+                    title="Copy as plain text — paste into Notes / Reminders / etc."
+                    className="text-xs font-semibold text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 hover:bg-emerald-50"
+                  >
+                    📋 Copy
+                  </button>
+                )}
+                {miseRecipes.length > 0 && (
+                  <button
+                    onClick={printMise}
+                    title="Print this prep list"
+                    className="text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg px-2.5 py-1 hover:bg-gray-50"
+                  >
+                    🖨️ Print
+                  </button>
+                )}
+                <button
+                  onClick={closeMise}
+                  className="text-sm font-semibold bg-amber-500 text-white rounded-xl px-4 py-2 hover:bg-amber-600"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Print container — invisible in normal view; becomes the only
+          visible element during print via the @media print rules below.
+          misePrintText is cleared on afterprint so this stays empty
+          between prints. Same pattern as the Shopping List's printer. */}
+      <div id="print-mise" aria-hidden="true" style={{ display: misePrintText ? 'block' : 'none' }}>
+        <pre style={{
+          fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+          whiteSpace: 'pre-wrap',
+          fontSize: '14px',
+          lineHeight: '1.7',
+          margin: 0,
+          padding: '24px',
+          color: '#111',
+        }}>{misePrintText}</pre>
+      </div>
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #print-mise, #print-mise * { visibility: visible !important; }
+          #print-mise {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            display: block !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
