@@ -161,15 +161,28 @@ export default function MealPlanPage() {
   // Move a pick to another bucket and place it LAST in the destination
   // (May 2026, Bill's ask). Promoted items shouldn't crowd the top of
   // a carefully-ordered list — they go to the back of the line and the
-  // user can drag them up if they want to push them forward. Sort
-  // order = max(dest bucket) + 1 keeps the existing items unchanged.
+  // user can drag them up if they want to push them forward.
+  //
+  // Two-step state update: (1) flip bucket + bump sort_order on the
+  // moved row, (2) re-sort the whole picks array so the visual order
+  // matches the DB order. Without (2), the array still has the moved
+  // item wherever it was before, and the buckets render in stale
+  // order — which is what made it look like the item landed at the
+  // TOP of the destination instead of the bottom.
   async function moveTo(pick, bucket) {
     if (pick.bucket === bucket) return
     const destItems = picks.filter(p => p.bucket === bucket && p.id !== pick.id)
     const maxOrder = destItems.reduce((m, p) => Math.max(m, p.sort_order ?? 0), -1)
     const newOrder = maxOrder + 1
     await supabase.from('my_picks').update({ bucket, sort_order: newOrder }).eq('id', pick.id)
-    setPicks(prev => prev.map(p => p.id === pick.id ? { ...p, bucket, sort_order: newOrder } : p))
+    setPicks(prev => {
+      const updated = prev.map(p => p.id === pick.id ? { ...p, bucket, sort_order: newOrder } : p)
+      // Re-sort by sort_order ASC so the moved row visually lands
+      // at the end of its new bucket. picks is filtered (not sorted)
+      // when the buckets render, so the array's own order drives the
+      // displayed order.
+      return [...updated].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    })
   }
 
   async function removePick(id) {
