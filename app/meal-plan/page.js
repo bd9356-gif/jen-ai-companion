@@ -304,20 +304,34 @@ export default function MealPlanPage() {
                   </div>
                   {/* Each bucket is its own SortableContext so drags never
                       escape the bucket — cross-bucket moves stay on the
-                      colored emoji buttons where the user can't misfire. */}
+                      colored emoji buttons where the user can't misfire.
+                      For ⭐ To Make, picks are auto-grouped into "Meal 1,
+                      Meal 2…" sections (each main starts a new meal; sides
+                      attach to the most recent main). Other buckets stay
+                      flat — they're not the weekly plan, just storage. */}
                   <SortableContext items={bPicks.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-2">
-                      {bPicks.map(pick => (
-                        <SortablePick
-                          key={pick.id}
-                          pick={pick}
-                          bucketKey={bucket.key}
-                          onMove={moveTo}
-                          onRemove={removePick}
-                          onToggleSide={toggleSide}
-                        />
-                      ))}
-                    </div>
+                    {bucket.key === 'top' ? (
+                      <ToMakeMeals
+                        picks={bPicks}
+                        bucketKey={bucket.key}
+                        onMove={moveTo}
+                        onRemove={removePick}
+                        onToggleSide={toggleSide}
+                      />
+                    ) : (
+                      <div className="space-y-2">
+                        {bPicks.map(pick => (
+                          <SortablePick
+                            key={pick.id}
+                            pick={pick}
+                            bucketKey={bucket.key}
+                            onMove={moveTo}
+                            onRemove={removePick}
+                            onToggleSide={toggleSide}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </SortableContext>
                 </div>
               ))}
@@ -325,6 +339,81 @@ export default function MealPlanPage() {
           </DndContext>
         )}
       </main>
+    </div>
+  )
+}
+
+// Auto-group "To Make" picks into Meal 1, Meal 2, ... where each main
+// starts a new meal and any sides that follow attach to that meal.
+// Sides that appear before any main go in a "🌾 Sides" pre-section
+// at the top so nothing gets lost. Visual: small "MEAL N" eyebrow +
+// a thin amber divider between meals.
+//
+// The drag-reorder + move/remove buttons all keep working — this is
+// purely a render-time transformation of the same picks array.
+function ToMakeMeals({ picks, bucketKey, onMove, onRemove, onToggleSide }) {
+  // Walk top-to-bottom; collect (main, sides[]) tuples. Sides before
+  // the first main go in `orphans`.
+  const orphans = []
+  const meals = []
+  let current = null
+  for (const p of picks) {
+    if (p.is_side) {
+      if (current) current.sides.push(p)
+      else orphans.push(p)
+    } else {
+      current = { main: p, sides: [] }
+      meals.push(current)
+    }
+  }
+
+  // Empty bucket — render nothing; the parent already shows the bucket
+  // header + count, so an empty inner section reads cleanly.
+  if (!picks.length) return <div className="space-y-2" />
+
+  return (
+    <div className="space-y-3">
+      {orphans.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400 px-1">🌾 Sides (no main yet)</p>
+          {orphans.map(pick => (
+            <SortablePick
+              key={pick.id}
+              pick={pick}
+              bucketKey={bucketKey}
+              onMove={onMove}
+              onRemove={onRemove}
+              onToggleSide={onToggleSide}
+            />
+          ))}
+        </div>
+      )}
+      {meals.map((meal, i) => (
+        <div key={meal.main.id} className={i > 0 ? 'pt-3 border-t-2 border-amber-300/50' : ''}>
+          <p className="text-[10px] uppercase tracking-wider font-bold text-amber-700 px-1 mb-1.5">
+            🍽 Meal {i + 1}
+          </p>
+          <div className="space-y-1.5">
+            <SortablePick
+              pick={meal.main}
+              bucketKey={bucketKey}
+              onMove={onMove}
+              onRemove={onRemove}
+              onToggleSide={onToggleSide}
+            />
+            {meal.sides.map(side => (
+              <SortablePick
+                key={side.id}
+                pick={side}
+                bucketKey={bucketKey}
+                onMove={onMove}
+                onRemove={onRemove}
+                onToggleSide={onToggleSide}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
