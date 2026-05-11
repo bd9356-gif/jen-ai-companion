@@ -662,7 +662,7 @@ export default function PlaybookPage() {
               You have two cooking teachers, and a notebook for each.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              Each notebook has a 🎓 <span className="font-bold">Teach</span> book and a 🍳 <span className="font-bold">Practice</span> book &mdash; the label tells you where you are.
+              Each notebook has a 🎓 <span className="font-bold">Teach</span>{' '}book and a 🍳 <span className="font-bold">Practice</span>{' '}book &mdash; the label tells you where you are.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
               👨‍🍳 <span className="font-bold">Chef Jennifer (AI)</span>: save the answers she teaches in 🎓 Teach, and the recipes she creates in 🍳 Practice.
