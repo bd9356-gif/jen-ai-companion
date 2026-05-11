@@ -416,11 +416,35 @@ export default function VideosPage() {
 
   // Helper: drop a video out of Playbook entirely. Used by saveToKitchen
   // under MOVE semantics — the Vault is the new home, so the notebook
-  // doesn't keep a copy. Deletes the bucket placement and the legacy
-  // saved_videos row. Favorites-sourced video rows aren't expected here
-  // (Chef TV → Vault on /videos is currently legacy-saved-video only).
+  // doesn't keep a copy. Two save paths exist on this page:
+  //
+  //   1. MODERN (Teach/Practice button) — INSERTs into favorites with
+  //      ref_id=video.id and a cooking_skill_items row keyed on
+  //      item_type='favorite' AND item_id=favorites.id.
+  //   2. LEGACY (pre-favorites era) — INSERTs into saved_videos, with
+  //      cooking_skill_items.item_type='cooking_video' AND item_id=video.id.
+  //
+  // Earlier version of this helper only cleaned LEGACY rows, so MODERN
+  // saves leaked orphan favorites + cooking_skill_items rows when the
+  // user tapped Save to My Kitchen — the Practice button on subsequent
+  // visits then saw the orphans and got stuck in a stale toggled state.
+  // This handles both paths (May 2026 fix).
   async function removeFromPlaybook(video) {
     if (!user) return
+    const videoId = String(video.id)
+    const current = savedMap.get(videoId)
+    // MODERN path — delete by favorites.id. FK cascade on
+    // loved_recipe_urls clears the ingestion-signal row automatically.
+    if (current?.favId) {
+      await supabase.from('cooking_skill_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('item_type', 'favorite')
+        .eq('item_id', current.favId)
+      await supabase.from('favorites').delete().eq('id', current.favId)
+    }
+    // LEGACY path — separate save table + cooking_video item_type.
+    // Safe to run unconditionally; deletes 0 rows if not legacy.
     await supabase.from('cooking_skill_items')
       .delete()
       .eq('user_id', user.id)
@@ -430,6 +454,15 @@ export default function VideosPage() {
       .delete()
       .eq('user_id', user.id)
       .eq('video_id', video.id)
+    // Clear the in-memory state so the Practice button on this page
+    // reflects the new "not saved" state immediately — without this,
+    // the button would still read "Saved to Practice" until the user
+    // refreshed the page even though the DB row is gone.
+    setSavedMap(prev => {
+      const n = new Map(prev)
+      n.delete(videoId)
+      return n
+    })
   }
 
   function toggleExpand(videoId) {
