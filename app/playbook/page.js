@@ -650,7 +650,7 @@ export default function PlaybookPage() {
           <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
             Everything you&rsquo;ve saved
           </p>
-          <p className="text-sm text-gray-500 mt-2">from your two teaching classrooms.</p>
+          <p className="text-sm text-gray-500 mt-2">in your two teaching notebooks.</p>
         </div>
 
         {/* Intro callout — explains the two-classroom framing. Each
