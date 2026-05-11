@@ -395,11 +395,15 @@ export default function ChefPage() {
             user sends their first message so the conversation
             has full vertical room. */}
         {messages.length === 0 && (
-          <div className="text-center pb-3">
-            <p className={`font-bold text-base leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
+          /* Centered headline + subline \u2014 matches the Chef TV "room you're
+             in" treatment (May 2026 weight bump). Same visual rhythm
+             across both learning surfaces so the user reads the active
+             mode at a glance, no matter which classroom they're in. */
+          <div className="text-center pb-4">
+            <p className={`text-xl sm:text-2xl font-bold leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
               {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
             </p>
-            <p className="text-gray-600 text-sm mt-1 leading-snug max-w-md mx-auto">
+            <p className="text-xs sm:text-sm text-gray-600 mt-1.5 leading-snug max-w-md mx-auto">
               {isPractice
                 ? 'Class just ended \u2014 you\u2019re in the practice kitchen. Pick an assignment or ask Chef Jennifer for a custom one.'
                 : 'You\u2019re in the classroom with your chef \u2014 ask your question, learn the skill, then head to \ud83c\udf73 Practice for your homework.'}
