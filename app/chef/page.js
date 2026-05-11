@@ -324,13 +324,19 @@ export default function ChefPage() {
             🎬 cross-link / title-with-subtitle / optional Clear.
             Row 2: full-width mode pill row centered. Splits the
             visual weight so neither row truncates. */}
-        {/* auto/1fr/auto grid — side columns hug their button content,
-            middle column gets all the leftover space so the title
-            doesn't truncate. Title is centered within the middle
-            column; on phone the left+right groups are similar widths
-            so the title reads near-page-centered. */}
-        <div className="max-w-2xl mx-auto px-3 pt-2.5 pb-1.5 grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          <div className="flex items-center gap-2 justify-start min-w-0">
+        {/* Three-row header (May 2026 — Bill's ask: split the
+            crowded top line so each piece has its own space).
+            Row 1: centered title with subtitle.
+            Row 2: nav buttons (← / 📘 / 🎬) left, Clear (if any) right.
+            Row 3: centered mode pill row. */}
+        {/* Row 1 — title, centered, full width */}
+        <div className="max-w-2xl mx-auto px-3 pt-2 pb-1 text-center leading-none">
+          <h1 className="text-base font-bold text-gray-900 leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</h1>
+          <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5">Classroom</p>
+        </div>
+        {/* Row 2 — nav buttons left, optional Clear right */}
+        <div className="max-w-2xl mx-auto px-3 pb-1 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => window.location.href='/kitchen'}
               aria-label="Back to MyKitchen"
@@ -355,17 +361,11 @@ export default function ChefPage() {
               🎬
             </button>
           </div>
-          <div className="min-w-0 leading-none text-center">
-            <h1 className="text-base font-bold text-gray-900 truncate leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</h1>
-            <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate">Classroom</p>
-          </div>
-          <div className="flex items-center gap-2 justify-end min-w-0">
-            {messages.length > 0 && (
-              <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
-                Clear
-              </button>
-            )}
-          </div>
+          {messages.length > 0 && (
+            <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
+              Clear
+            </button>
+          )}
         </div>
         <div className="max-w-2xl mx-auto px-3 pb-2 flex justify-center">
           <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
