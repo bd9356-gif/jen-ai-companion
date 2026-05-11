@@ -64,8 +64,11 @@ const supabase = createClient(
 // + `bodyName` + `desc`, so the pill stays scannable but the cell
 // itself reads like a labeled room ("Learning Videos / Watch & Cook").
 const BUCKETS = [
-  { key: 'teach',    emoji: '🎓', label: 'Teach',    bodyEmoji: '📺',  bodyName: 'Learning Videos', desc: 'Watch cooking lessons and learning videos.' },
-  { key: 'practice', emoji: '🍳', label: 'Practice', bodyEmoji: '🍽️', bodyName: 'Watch & Cook',     desc: 'Watch videos that include recipes and move them into your Recipe Vault.' },
+  // Body section names + taglines kept consistent with the info-callout
+  // phrasing (May 2026): each notebook has a 🎓 Teach book and a 🍳
+  // Practice book; the descriptor says what's saved in this one.
+  { key: 'teach',    emoji: '🎓', label: 'Teach',    bodyEmoji: '🎓', bodyName: 'Teach',    desc: 'Technique videos to learn from.' },
+  { key: 'practice', emoji: '🍳', label: 'Practice', bodyEmoji: '🍳', bodyName: 'Practice', desc: 'Recipe videos you want to cook.' },
 ]
 
 // Full Tailwind class literals per bucket — v4 JIT requires complete strings.
@@ -818,10 +821,10 @@ export default function PlaybookPage() {
                 <div className={`${RECIPES_COLOR.header} px-3 py-2.5`}>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">👨‍🍳</span>
-                    <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Jennifer &middot; 🍳 Test Kitchen</span>
+                    <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Jennifer &middot; 🍳 Practice</span>
                     <span className={`text-xs font-semibold ${RECIPES_COLOR.pill} px-2 py-0.5 rounded-full`}>{recipes.length}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-7">Where you practice what you learned — the room after class.</p>
+                  <p className="text-xs text-gray-600 mt-1 ml-7">Recipes she creates for you.</p>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {recipes.length === 0 ? (
@@ -849,10 +852,10 @@ export default function PlaybookPage() {
                 <div className={`${NOTES_COLOR.header} px-3 py-2.5`}>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">👨‍🍳</span>
-                    <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Jennifer &middot; 🎓 Lesson Notes</span>
+                    <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Jennifer &middot; 🎓 Teach</span>
                     <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-7">Where your AI lesson notes land — the classroom notebook. File the keepers, × the rest.</p>
+                  <p className="text-xs text-gray-600 mt-1 ml-7">Answers she teaches you. File the keepers, × the rest.</p>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {notes.length === 0 ? (
