@@ -590,10 +590,10 @@ export default function VideosPage() {
               👨‍🍳 cross-link / title-with-subtitle / ℹ️ About.
               Row 2: full-width mode pill row centered (Teach /
               Practice). Same pattern Chef Jennifer's header uses. */}
-          {/* grid-cols-3 lays the row out as three equal columns so the
-              title block is always page-centered, regardless of how
-              many buttons sit on either side. */}
-          <div className="grid grid-cols-3 items-center gap-2 mb-1.5">
+          {/* auto/1fr/auto grid — side columns hug their button content,
+              middle column gets all the leftover space so the title
+              doesn't truncate. */}
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 mb-1.5">
             <div className="flex items-center gap-2 justify-start min-w-0">
               <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
               <button

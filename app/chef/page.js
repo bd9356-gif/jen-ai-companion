@@ -324,11 +324,12 @@ export default function ChefPage() {
             🎬 cross-link / title-with-subtitle / optional Clear.
             Row 2: full-width mode pill row centered. Splits the
             visual weight so neither row truncates. */}
-        {/* grid-cols-3 lays the row out as three equal columns so the
-            title block is always page-centered, regardless of how
-            many buttons sit on either side. min-w-0 + truncate keeps
-            long titles from breaking the layout. */}
-        <div className="max-w-2xl mx-auto px-3 pt-2.5 pb-1.5 grid grid-cols-3 items-center gap-2">
+        {/* auto/1fr/auto grid — side columns hug their button content,
+            middle column gets all the leftover space so the title
+            doesn't truncate. Title is centered within the middle
+            column; on phone the left+right groups are similar widths
+            so the title reads near-page-centered. */}
+        <div className="max-w-2xl mx-auto px-3 pt-2.5 pb-1.5 grid grid-cols-[auto_1fr_auto] items-center gap-2">
           <div className="flex items-center gap-2 justify-start min-w-0">
             <button
               onClick={() => window.location.href='/kitchen'}
