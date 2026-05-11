@@ -303,7 +303,7 @@ export default function KitchenPage() {
             <div key={section.name}>
               {/* Section header — color matches the section's tile stripe. */}
               <div className="mb-2 px-1">
-                <h2 className={`text-[11px] font-extrabold uppercase tracking-wider ${c.label}`}>{section.name}</h2>
+                <h2 className={`text-sm font-extrabold uppercase tracking-wider ${c.label}`}>{section.name}</h2>
                 {section.subtitle && <p className="text-sm text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
               </div>
               {/* Section items — px-3 py-2.5 rounded-xl, 22px emoji,

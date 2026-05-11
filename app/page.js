@@ -222,7 +222,7 @@ export default function HomePage() {
               <div key={section.name}>
                 {/* Section header — label only, no subtitle. */}
                 <div className="mb-1.5 px-1">
-                  <h2 className={`text-[11px] font-extrabold uppercase tracking-wider ${c.label}`}>{section.name}</h2>
+                  <h2 className={`text-sm font-extrabold uppercase tracking-wider ${c.label}`}>{section.name}</h2>
                 </div>
                 {/* Section items — single-line tiles (emoji + title +
                     chevron). py-2 instead of py-2.5; no description row. */}
