@@ -324,39 +324,47 @@ export default function ChefPage() {
             🎬 cross-link / title-with-subtitle / optional Clear.
             Row 2: full-width mode pill row centered. Splits the
             visual weight so neither row truncates. */}
-        <div className="max-w-2xl mx-auto px-3 pt-2.5 pb-1.5 flex items-center gap-2">
-          <button
-            onClick={() => window.location.href='/kitchen'}
-            aria-label="Back to MyKitchen"
-            className="text-base text-gray-500 hover:text-gray-700 shrink-0 px-1"
-          >
-            ←
-          </button>
-          <button
-            onClick={() => window.location.href='/playbook'}
-            title="Open My Playbook"
-            aria-label="Open My Playbook"
-            className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
-          >
-            📘
-          </button>
-          <button
-            onClick={() => window.location.href='/videos'}
-            title="Open Chef TV's Classroom"
-            aria-label="Open Chef TV's Classroom"
-            className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
-          >
-            🎬
-          </button>
-          <div className="flex-1 min-w-0 leading-none">
-            <h1 className="text-base font-bold text-gray-900 truncate leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</h1>
-            <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate pl-6">Classroom</p>
-          </div>
-          {messages.length > 0 && (
-            <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
-              Clear
+        {/* grid-cols-3 lays the row out as three equal columns so the
+            title block is always page-centered, regardless of how
+            many buttons sit on either side. min-w-0 + truncate keeps
+            long titles from breaking the layout. */}
+        <div className="max-w-2xl mx-auto px-3 pt-2.5 pb-1.5 grid grid-cols-3 items-center gap-2">
+          <div className="flex items-center gap-2 justify-start min-w-0">
+            <button
+              onClick={() => window.location.href='/kitchen'}
+              aria-label="Back to MyKitchen"
+              className="text-base text-gray-500 hover:text-gray-700 shrink-0 px-1"
+            >
+              ←
             </button>
-          )}
+            <button
+              onClick={() => window.location.href='/playbook'}
+              title="Open My Playbook"
+              aria-label="Open My Playbook"
+              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+            >
+              📘
+            </button>
+            <button
+              onClick={() => window.location.href='/videos'}
+              title="Open Chef TV's Classroom"
+              aria-label="Open Chef TV's Classroom"
+              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+            >
+              🎬
+            </button>
+          </div>
+          <div className="min-w-0 leading-none text-center">
+            <h1 className="text-base font-bold text-gray-900 truncate leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</h1>
+            <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate">Classroom</p>
+          </div>
+          <div className="flex items-center gap-2 justify-end min-w-0">
+            {messages.length > 0 && (
+              <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
+                Clear
+              </button>
+            )}
+          </div>
         </div>
         <div className="max-w-2xl mx-auto px-3 pb-2 flex justify-center">
           <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">

@@ -590,39 +590,46 @@ export default function VideosPage() {
               👨‍🍳 cross-link / title-with-subtitle / ℹ️ About.
               Row 2: full-width mode pill row centered (Teach /
               Practice). Same pattern Chef Jennifer's header uses. */}
-          <div className="flex items-center gap-2 mb-1.5">
-            <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
-            <button
-              onClick={() => window.location.href='/playbook'}
-              title="Open My Playbook"
-              aria-label="Open My Playbook"
-              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
-            >
-              📘
-            </button>
-            <button
-              onClick={() => window.location.href='/chef'}
-              title="Open Chef Jennifer's Classroom"
-              aria-label="Open Chef Jennifer's Classroom"
-              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
-            >
-              👨‍🍳
-            </button>
-            <div className="min-w-0 leading-none flex-1">
-              <h1 className="text-base font-bold text-gray-900 truncate leading-tight">🎬 Chef TV&rsquo;s</h1>
-              <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate pl-6">Classroom</p>
+          {/* grid-cols-3 lays the row out as three equal columns so the
+              title block is always page-centered, regardless of how
+              many buttons sit on either side. */}
+          <div className="grid grid-cols-3 items-center gap-2 mb-1.5">
+            <div className="flex items-center gap-2 justify-start min-w-0">
+              <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
+              <button
+                onClick={() => window.location.href='/playbook'}
+                title="Open My Playbook"
+                aria-label="Open My Playbook"
+                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+              >
+                📘
+              </button>
+              <button
+                onClick={() => window.location.href='/chef'}
+                title="Open Chef Jennifer's Classroom"
+                aria-label="Open Chef Jennifer's Classroom"
+                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+              >
+                👨‍🍳
+              </button>
             </div>
-            <button
-              onClick={() => setShowAbout(s => !s)}
-              aria-label={showAbout ? 'Close about' : 'About Chef TV'}
-              className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                showAbout
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
-              }`}
-            >
-              {showAbout ? '✕' : 'ℹ️'}
-            </button>
+            <div className="min-w-0 leading-none text-center">
+              <h1 className="text-base font-bold text-gray-900 truncate leading-tight">🎬 Chef TV&rsquo;s</h1>
+              <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate">Classroom</p>
+            </div>
+            <div className="flex items-center gap-2 justify-end min-w-0">
+              <button
+                onClick={() => setShowAbout(s => !s)}
+                aria-label={showAbout ? 'Close about' : 'About Chef TV'}
+                className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                  showAbout
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
+                }`}
+              >
+                {showAbout ? '✕' : 'ℹ️'}
+              </button>
+            </div>
           </div>
           <div className="flex justify-center mb-2">
             <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
