@@ -3141,12 +3141,18 @@ export default function MyRecipeVaultPage() {
           scrolls. The other view headers (detail, import) don't have
           tile-level z-10 elements underneath them, so their z-10 is fine. */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
+        <div className="max-w-4xl mx-auto px-4 pt-3 pb-3">
+          {/* Row 1: title centered (avoids "Recipe Vault" wrapping on phones
+              when the right-side action cluster gets crowded). */}
+          <div className="text-center mb-2">
+            <h1 className="text-xl font-bold text-gray-900">🔐 Recipe Vault</h1>
+          </div>
+          {/* Row 2: ← Back on the left, action cluster on the right. Action
+              cluster carries 🔍 search, the 3-segment view toggle (🍽 / 🖼 /
+              💎), and 📥 Import Tools — all room for them to breathe now
+              that the title is on its own row. */}
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900">Recipe Vault</h1>
-            </div>
+            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <div className="flex gap-1.5">
               {/* Search 🔍 — hidden on Portfolio view (notes have no
                   searchable title; tags don't apply). */}
