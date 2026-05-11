@@ -643,11 +643,17 @@ export default function VideosPage() {
               where their saves end up. Replaces the old generic lede
               ("Watch the latest cooking videos…") which didn't reflect
               the room context. */}
-          <div className="mb-3">
-            <h2 className={`text-base font-bold mb-1 ${filter === 'teach' ? 'text-sky-700' : 'text-orange-700'}`}>
+          {/* Centered headline + subline — the "room you're in" framing.
+              Question changes with the tab (Teach asks what to learn,
+              Practice asks what to cook); color matches the tab so the
+              eye reads the room from across the page. Matches the
+              Vault / Cards hero rhythm — title-as-question on its own
+              centered line with a quieter subtitle below. */}
+          <div className="text-center mb-4">
+            <h2 className={`text-xl sm:text-2xl font-bold leading-tight ${filter === 'teach' ? 'text-sky-700' : 'text-orange-700'}`}>
               {filter === 'teach' ? 'What do you want to learn?' : 'What should we cook?'}
             </h2>
-            <p className="text-sm text-gray-600 leading-snug">
+            <p className="text-xs sm:text-sm text-gray-600 leading-snug mt-1.5">
               {filter === 'teach'
                 ? "You're in the video room — watch skill videos, pick what you want to learn, and they'll save to your Playbook."
                 : "You're in the recipe room — watch a video, open the recipe, and save it to your Kitchen — it lands in your Playbook too."}
