@@ -758,7 +758,7 @@ export default function CardsPage() {
                         so it reads as ornament, not a button. */}
                     <span
                       aria-hidden="true"
-                      className="absolute top-3 right-2 text-3xl pointer-events-none select-none opacity-80"
+                      className="absolute top-2 right-2 text-2xl pointer-events-none select-none opacity-80"
                     >
                       🍴
                     </span>
@@ -777,20 +777,20 @@ export default function CardsPage() {
                             as a calligraphic header, not a tiny eyebrow. */}
                         <p
                           className="text-red-600 leading-none -mb-1"
-                          style={{ fontFamily: 'var(--font-caveat)', fontSize: '26px', fontWeight: 600 }}
+                          style={{ fontFamily: 'var(--font-caveat)', fontSize: '22px', fontWeight: 600 }}
                         >
                           Recipe
                         </p>
-                        <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem] mt-1">{recipe.title}</p>
+                        <p className="font-bold text-xs text-gray-900 leading-snug line-clamp-2 min-h-[2rem] mt-1">{recipe.title}</p>
                       </div>
                       <div className="px-3 pb-2">
                         {recipe.photo_url ? (
-                          <div style={{height:'100px'}} className="rounded-xl overflow-hidden border border-rose-200">
+                          <div style={{height:'88px'}} className="rounded-xl overflow-hidden border border-rose-200">
                             <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div style={{height:'100px'}} className="rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center">
-                            <span style={{fontSize:'32px'}}>🍓</span>
+                          <div style={{height:'88px'}} className="rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center">
+                            <span style={{fontSize:'28px'}}>🍓</span>
                           </div>
                         )}
                       </div>
