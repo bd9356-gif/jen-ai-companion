@@ -709,7 +709,7 @@ export default function CardsPage() {
             line so it lands rather than whispers. */}
         <div className="text-center px-2 mb-5">
           <p
-            className="text-rose-700 leading-none mb-1"
+            className="text-gray-900 leading-none mb-1"
             style={{ fontFamily: 'var(--font-caveat)', fontSize: '32px', fontWeight: 600 }}
           >
             Your modern recipe box.
