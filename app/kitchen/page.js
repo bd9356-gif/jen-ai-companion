@@ -274,7 +274,7 @@ export default function KitchenPage() {
       <div className="px-5 py-3 flex items-center justify-between max-w-lg mx-auto">
         <div>
           <h1 className="text-lg font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Everything you need — all in one place.</p>
         </div>
         <button onClick={() => window.location.href='/profile'}
           className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold">
@@ -304,7 +304,7 @@ export default function KitchenPage() {
               {/* Section header — color matches the section's tile stripe. */}
               <div className="mb-2 px-1">
                 <h2 className={`text-[11px] font-extrabold uppercase tracking-wider ${c.label}`}>{section.name}</h2>
-                {section.subtitle && <p className="text-xs text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
+                {section.subtitle && <p className="text-sm text-gray-500 mt-0.5 leading-snug">{section.subtitle}</p>}
               </div>
               {/* Section items — px-3 py-2.5 rounded-xl, 22px emoji,
                   text-sm title, text-xs description. Same rhythm as

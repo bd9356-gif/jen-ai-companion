@@ -799,13 +799,13 @@ export default function CardsPage() {
                       <button
                         onClick={(e) => toggleMealPlan(recipe, e)}
                         title={inPlan ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
-                        className={`w-full text-xs font-semibold rounded-md py-1 border transition-colors ${
+                        className={`w-full text-[11px] font-semibold rounded-md py-1 border transition-colors ${
                           inPlan
                             ? 'bg-orange-600 text-white border-orange-600'
                             : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
                         }`}
                       >
-                        {inPlan ? '📅 In Meal Plan' : '📅 Meal Plan'}
+                        {inPlan ? 'In Meal Plan' : 'Meal Plan'}
                       </button>
                     </div>
                   </div>

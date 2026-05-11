@@ -390,7 +390,7 @@ export default function MealPlanPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-4 pb-16">
         <div className="text-center px-2 mb-4">
-          <p className="text-sm text-gray-600 leading-snug">What you&apos;re cooking soon, organized your way.</p>
+          <p className="text-base text-gray-600 leading-snug">What you&apos;re cooking soon, organized your way.</p>
           <p className="text-xs text-gray-400 mt-1">Tip: drag with <span className="font-semibold">⋮⋮</span> to reorder · tap <span className="font-semibold">↳</span> to mark a side dish</p>
         </div>
 

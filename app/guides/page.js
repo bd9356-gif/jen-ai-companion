@@ -194,7 +194,7 @@ export default function GuidesPage() {
           <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 leading-tight">
             The Library
           </h2>
-          <p className="text-sm text-stone-500 mt-1">
+          <p className="text-base text-stone-500 mt-1">
             Reference reading for everything in the kitchen.
           </p>
         </div>

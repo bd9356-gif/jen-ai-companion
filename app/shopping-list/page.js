@@ -265,7 +265,7 @@ export default function ShoppingListPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-4 pb-16">
         <div className="text-center px-2 mb-3">
-          <p className="text-sm text-gray-600 leading-snug">Your ingredients, organized and ready to shop.</p>
+          <p className="text-base text-gray-600 leading-snug">Your ingredients, organized and ready to shop.</p>
         </div>
 
         {loading ? (
