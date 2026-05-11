@@ -585,40 +585,50 @@ export default function VideosPage() {
               content left, leaving only ~40px for the title cluster
               before things slid off the left edge). Same compact
               pattern Chef Jennifer's header uses. */}
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
-              {/* Quick jump back to My Playbook — same pattern as
-                  Chef Jennifer's header so users have a one-tap way to
-                  see where their just-saved video landed. */}
-              <button
-                onClick={() => window.location.href='/playbook'}
-                title="Open My Playbook"
-                aria-label="Open My Playbook"
-                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
-              >
-                📘
-              </button>
-              {/* Cross-classroom hop — Chef TV ↔ Chef Jennifer. The two
-                  classrooms work as a pair, so a one-tap switch beats
-                  going back to MyKitchen first. */}
-              <button
-                onClick={() => window.location.href='/chef'}
-                title="Open Chef Jennifer's Classroom"
-                aria-label="Open Chef Jennifer's Classroom"
-                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
-              >
-                👨‍🍳
-              </button>
-              <div className="min-w-0 leading-none">
-                <h1 className="text-base font-bold text-gray-900 truncate leading-tight">🎬 Chef TV&rsquo;s</h1>
-                <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate pl-6">Classroom</p>
-              </div>
+          {/* Two-row header (May 2026, Bill's ask — single row was
+              too crowded on phone). Row 1: ← back / 📘 Playbook /
+              👨‍🍳 cross-link / title-with-subtitle / ℹ️ About.
+              Row 2: full-width mode pill row centered (Teach /
+              Practice). Same pattern Chef Jennifer's header uses. */}
+          <div className="flex items-center gap-2 mb-1.5">
+            <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
+            <button
+              onClick={() => window.location.href='/playbook'}
+              title="Open My Playbook"
+              aria-label="Open My Playbook"
+              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+            >
+              📘
+            </button>
+            <button
+              onClick={() => window.location.href='/chef'}
+              title="Open Chef Jennifer's Classroom"
+              aria-label="Open Chef Jennifer's Classroom"
+              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+            >
+              👨‍🍳
+            </button>
+            <div className="min-w-0 leading-none flex-1">
+              <h1 className="text-base font-bold text-gray-900 truncate leading-tight">🎬 Chef TV&rsquo;s</h1>
+              <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate pl-6">Classroom</p>
             </div>
-            <div className="shrink-0 flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+            <button
+              onClick={() => setShowAbout(s => !s)}
+              aria-label={showAbout ? 'Close about' : 'About Chef TV'}
+              className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                showAbout
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
+              }`}
+            >
+              {showAbout ? '✕' : 'ℹ️'}
+            </button>
+          </div>
+          <div className="flex justify-center mb-2">
+            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
               <button
                 onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
-                className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                   filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -626,24 +636,11 @@ export default function VideosPage() {
               </button>
               <button
                 onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
-                className={`px-2 py-1 rounded-full text-xs font-semibold transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                   filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 🍳 Practice
-              </button>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={() => setShowAbout(s => !s)}
-                aria-label={showAbout ? 'Close about' : 'About Chef TV'}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                  showAbout
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
-                }`}
-              >
-                {showAbout ? '✕' : 'ℹ️'}
               </button>
             </div>
           </div>

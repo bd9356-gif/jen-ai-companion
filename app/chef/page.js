@@ -319,7 +319,12 @@ export default function ChefPage() {
           scrolling. Toggle order is locked Teach → Practice (the loop
           reads left-to-right) and pill colors match (sky / orange). */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-3 py-2.5 flex items-center gap-2">
+        {/* Two-row header (May 2026, Bill's ask — single row was
+            too crowded on phone). Row 1: ← back / 📘 Playbook /
+            🎬 cross-link / title-with-subtitle / optional Clear.
+            Row 2: full-width mode pill row centered. Splits the
+            visual weight so neither row truncates. */}
+        <div className="max-w-2xl mx-auto px-3 pt-2.5 pb-1.5 flex items-center gap-2">
           <button
             onClick={() => window.location.href='/kitchen'}
             aria-label="Back to MyKitchen"
@@ -327,9 +332,6 @@ export default function ChefPage() {
           >
             ←
           </button>
-          {/* Quick jump back to My Playbook — surfaces the natural return
-              path for users who came from Playbook (or who want to see
-              where their just-saved Chef Jennifer answer / recipe landed). */}
           <button
             onClick={() => window.location.href='/playbook'}
             title="Open My Playbook"
@@ -338,9 +340,6 @@ export default function ChefPage() {
           >
             📘
           </button>
-          {/* Cross-classroom hop — Chef Jennifer ↔ Chef TV. The two
-              classrooms work as a pair, so a one-tap switch beats
-              going back to MyKitchen first. */}
           <button
             onClick={() => window.location.href='/videos'}
             title="Open Chef TV's Classroom"
@@ -353,10 +352,17 @@ export default function ChefPage() {
             <h1 className="text-base font-bold text-gray-900 truncate leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</h1>
             <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5 truncate pl-6">Classroom</p>
           </div>
-          <div className="shrink-0 ml-auto flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+          {messages.length > 0 && (
+            <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
+              Clear
+            </button>
+          )}
+        </div>
+        <div className="max-w-2xl mx-auto px-3 pb-2 flex justify-center">
+          <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
             <button
               onClick={() => setMode('teach')}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                 mode === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -364,18 +370,13 @@ export default function ChefPage() {
             </button>
             <button
               onClick={() => setMode('practice')}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                 mode === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               🍳 Practice
             </button>
           </div>
-          {messages.length > 0 && (
-            <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
-              Clear
-            </button>
-          )}
         </div>
       </header>
 
