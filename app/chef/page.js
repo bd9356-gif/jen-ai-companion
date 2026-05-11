@@ -324,19 +324,19 @@ export default function ChefPage() {
             🎬 cross-link / title-with-subtitle / optional Clear.
             Row 2: full-width mode pill row centered. Splits the
             visual weight so neither row truncates. */}
-        {/* Three-row header (May 2026 — Bill's ask: split the
-            crowded top line so each piece has its own space).
-            Row 1: centered title with subtitle.
-            Row 2: nav buttons (← / 📘 / 🎬) left, Clear (if any) right.
-            Row 3: centered mode pill row. */}
-        {/* Row 1 — title, centered, full width */}
+        {/* Two-row header (May 2026, Bill's ask).
+            Row 1: centered title with subtitle — alone so it has
+                   full breathing room and never truncates.
+            Row 2: nav buttons left / mode pill row right.
+            Clear button (when any messages) tucks in between. */}
+        {/* Row 1 — title alone, centered, full width */}
         <div className="max-w-2xl mx-auto px-3 pt-2 pb-1 text-center leading-none">
           <h1 className="text-base font-bold text-gray-900 leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</h1>
           <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5">Classroom</p>
         </div>
-        {/* Row 2 — nav buttons left, optional Clear right */}
-        <div className="max-w-2xl mx-auto px-3 pb-1 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        {/* Row 2 — nav left, mode pills + optional Clear right */}
+        <div className="max-w-2xl mx-auto px-3 pb-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => window.location.href='/kitchen'}
               aria-label="Back to MyKitchen"
@@ -361,30 +361,30 @@ export default function ChefPage() {
               🎬
             </button>
           </div>
-          {messages.length > 0 && (
-            <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
-              Clear
-            </button>
-          )}
-        </div>
-        <div className="max-w-2xl mx-auto px-3 pb-2 flex justify-center">
-          <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
-            <button
-              onClick={() => setMode('teach')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                mode === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              🎓 Teach
-            </button>
-            <button
-              onClick={() => setMode('practice')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                mode === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              🍳 Practice
-            </button>
+          <div className="flex items-center gap-1.5">
+            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+              <button
+                onClick={() => setMode('teach')}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                  mode === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🎓 Teach
+              </button>
+              <button
+                onClick={() => setMode('practice')}
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                  mode === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🍳 Practice
+              </button>
+            </div>
+            {messages.length > 0 && (
+              <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
+                Clear
+              </button>
+            )}
           </div>
         </div>
       </header>

@@ -590,18 +590,18 @@ export default function VideosPage() {
               👨‍🍳 cross-link / title-with-subtitle / ℹ️ About.
               Row 2: full-width mode pill row centered (Teach /
               Practice). Same pattern Chef Jennifer's header uses. */}
-          {/* Three-row header (May 2026 — Bill's ask: split the
-              crowded top line). Row 1: centered title with subtitle.
-              Row 2: nav buttons (← / 📘 / 👨‍🍳) left, ℹ️ About right.
-              Row 3: centered mode pill row (Teach / Practice). */}
-          {/* Row 1 — title, centered, full width */}
+          {/* Two-row header (May 2026, Bill's ask).
+              Row 1: centered title with subtitle — alone so it has
+                     full breathing room and never truncates.
+              Row 2: nav buttons left / mode pill row + ℹ️ About right. */}
+          {/* Row 1 — title alone, centered, full width */}
           <div className="text-center leading-none pb-1">
             <h1 className="text-base font-bold text-gray-900 leading-tight">🎬 Chef TV&rsquo;s</h1>
             <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5">Classroom</p>
           </div>
-          {/* Row 2 — nav buttons left, About right */}
+          {/* Row 2 — nav left, mode pills + About right */}
           <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
               <button
                 onClick={() => window.location.href='/playbook'}
@@ -620,35 +620,35 @@ export default function VideosPage() {
                 👨‍🍳
               </button>
             </div>
-            <button
-              onClick={() => setShowAbout(s => !s)}
-              aria-label={showAbout ? 'Close about' : 'About Chef TV'}
-              className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                showAbout
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
-              }`}
-            >
-              {showAbout ? '✕' : 'ℹ️'}
-            </button>
-          </div>
-          <div className="flex justify-center mb-2">
-            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+            <div className="flex items-center gap-1.5">
+              <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
+                <button
+                  onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                    filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  🎓 Teach
+                </button>
+                <button
+                  onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                    filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  🍳 Practice
+                </button>
+              </div>
               <button
-                onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                  filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                onClick={() => setShowAbout(s => !s)}
+                aria-label={showAbout ? 'Close about' : 'About Chef TV'}
+                className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                  showAbout
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
                 }`}
               >
-                🎓 Teach
-              </button>
-              <button
-                onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                  filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                🍳 Practice
+                {showAbout ? '✕' : 'ℹ️'}
               </button>
             </div>
           </div>
