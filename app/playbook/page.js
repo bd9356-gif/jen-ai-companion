@@ -659,13 +659,16 @@ export default function PlaybookPage() {
         {showAbout && (
           <div className="mb-6 rounded-2xl border-2 border-slate-400 bg-slate-50 p-4 space-y-3">
             <p className="text-sm text-slate-900 leading-relaxed">
-              You have two cooking teachers, and a notebook for each. Both teachers have a 🎓 <span className="font-bold">Teach</span> side and a 🍳 <span className="font-bold">Practice</span> side &mdash; the row label tells you which classroom you&rsquo;re in.
+              You have two cooking teachers, and a notebook for each.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              👨‍🍳 <span className="font-bold">Chef Jennifer</span> is your AI instructor. Save the answers she teaches you (🎓 Teach) and the recipes she cooks up for you (🍳 Practice).
+              Each notebook has a 🎓 <span className="font-bold">Teach</span> book and a 🍳 <span className="font-bold">Practice</span> book &mdash; the label tells you where you are.
             </p>
             <p className="text-sm text-slate-900 leading-relaxed">
-              🎬 <span className="font-bold">Chef TV</span> is your video instructor. Save the technique videos that teach you (🎓 Teach) and the recipe videos you want to cook (🍳 Practice).
+              👨‍🍳 <span className="font-bold">Chef Jennifer (AI)</span>: save the answers she teaches in 🎓 Teach, and the recipes she creates in 🍳 Practice.
+            </p>
+            <p className="text-sm text-slate-900 leading-relaxed">
+              🎬 <span className="font-bold">Chef TV (video)</span>: save technique videos in 🎓 Teach, and recipe videos you want to cook in 🍳 Practice.
             </p>
           </div>
         )}
