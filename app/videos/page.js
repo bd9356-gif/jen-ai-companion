@@ -376,93 +376,12 @@ export default function VideosPage() {
     })
   }
 
-  // Idempotent: make sure this video sits in 🍳 Practice, regardless of
-  // where (or whether) it was saved before. Used as a side-effect of Save
-  // to My Kitchen — saving a recipe to the Vault means the user wants to
-  // cook it, and Practice is the "recipes to cook" bucket. No-op if
-  // already in Practice. Unlike setBucket(), this never toggles off — it
-  // only ensures the Practice placement. Writes the loved_recipe_urls
-  // capture row when the video has a recipe (same semantics as
-  // setBucket's Practice path).
-  async function ensureInPractice(video) {
-    if (!user) return
-    const videoId = String(video.id)
-    const current = savedMap.get(videoId)
-    const meta = metadata[video.id]
-    const hasRecipe = meta?.ingredients?.length > 0
-    if (current?.bucket === 'practice') return
-
-    async function writeLovedUrl(favId) {
-      if (!hasRecipe) return
-      await supabase.from('loved_recipe_urls').upsert({
-        user_id: user.id,
-        favorite_id: favId,
-        video_id: videoId,
-        youtube_id: video.youtube_id,
-        youtube_url: `https://www.youtube.com/watch?v=${video.youtube_id}`,
-        title: video.title,
-        channel: video.channel,
-      }, { onConflict: 'user_id,favorite_id' })
-    }
-
-    if (current) {
-      // Move to Practice
-      const { error } = await supabase.from('cooking_skill_items').upsert({
-        user_id: user.id,
-        item_type: 'favorite',
-        item_id: current.favId,
-        bucket: 'practice',
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,item_type,item_id' })
-      if (error) return
-      await writeLovedUrl(current.favId)
-      setSavedMap(prev => {
-        const n = new Map(prev)
-        n.set(videoId, { ...current, bucket: 'practice' })
-        return n
-      })
-      return
-    }
-
-    // First save — insert favorites + cooking_skill_items in Practice
-    const { data: inserted, error: favErr } = await supabase.from('favorites').insert({
-      user_id: user.id,
-      type: hasRecipe ? 'video_recipe' : 'video_education',
-      ref_id: videoId,
-      title: video.title,
-      thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
-      source: hasRecipe ? 'chef' : 'education',
-      metadata: {
-        channel: video.channel,
-        duration: video.duration,
-        youtube_id: video.youtube_id,
-        ingredients: meta?.ingredients || [],
-        instructions: meta?.instructions || '',
-        ai_summary: meta?.ai_summary || '',
-      }
-    }).select('id').single()
-    if (favErr || !inserted) return
-    await supabase.from('cooking_skill_items').insert({
-      user_id: user.id,
-      item_type: 'favorite',
-      item_id: inserted.id,
-      bucket: 'practice',
-    })
-    await writeLovedUrl(inserted.id)
-    setSavedMap(prev => {
-      const n = new Map(prev)
-      n.set(videoId, { favId: inserted.id, bucket: 'practice' })
-      return n
-    })
-  }
-
   // "Save to My Kitchen" — copy this Chef TV recipe into the user's
-  // personal Recipe Vault AND place the underlying video in 🍳 Practice
-  // in My Playbook. Saving a recipe to the Vault implies the user wants
-  // to cook it, and Practice is "recipes to cook" — keeping the placement
-  // automatic reinforces the teaching loop (see → cook → improve) without
-  // asking the user to tap twice. Only shown in the expanded Recipe view
-  // when the video has ingredients.
+  // personal Recipe Vault. Under MOVE semantics (May 2026), the Vault is
+  // the home — if the video was sitting in My Playbook (Teach or Practice)
+  // before this save, it leaves the notebook on save. The user's notebook
+  // stays an inbox of "still to deal with" items, not a parallel archive.
+  // Vault delete is permanent — see AGENTS.md "Notebook delete semantics".
   async function saveToKitchen(video) {
     if (!user) return
     const meta = metadata[video.id]
@@ -486,10 +405,31 @@ export default function VideosPage() {
     })
     if (error) { showToast('Could not save to Kitchen'); return }
     setVaultIds(prev => new Set(prev).add(String(video.id)))
-    // Auto-place the video in Practice — best-effort; don't block the
-    // Vault save on a Playbook write failure.
-    ensureInPractice(video).catch(() => {})
-    showToast('Saved to Recipe Vault + 🍳 Practice ✓')
+    // MOVE: clean up Playbook placement so this video leaves the
+    // notebook entirely. Best-effort — a Playbook cleanup failure
+    // shouldn't undo the Vault save the user just made. The cleanup
+    // covers: cooking_skill_items (bucket placement) + saved_videos
+    // (legacy save row), so the video stops appearing in Teach/Practice.
+    removeFromPlaybook(video).catch(() => {})
+    showToast('Saved to Recipe Vault ✓')
+  }
+
+  // Helper: drop a video out of Playbook entirely. Used by saveToKitchen
+  // under MOVE semantics — the Vault is the new home, so the notebook
+  // doesn't keep a copy. Deletes the bucket placement and the legacy
+  // saved_videos row. Favorites-sourced video rows aren't expected here
+  // (Chef TV → Vault on /videos is currently legacy-saved-video only).
+  async function removeFromPlaybook(video) {
+    if (!user) return
+    await supabase.from('cooking_skill_items')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('item_type', 'cooking_video')
+      .eq('item_id', video.id)
+    await supabase.from('saved_videos')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('video_id', video.id)
   }
 
   function toggleExpand(videoId) {

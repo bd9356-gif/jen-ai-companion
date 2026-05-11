@@ -261,10 +261,20 @@ export default function PlaybookPage() {
       return base
     }).filter(Boolean)
 
-    setItems([...legacyCooking, ...legacyEducation, ...favItems])
-    // Show all Chef Jennifer recipes — moved or not. Same as Chef TV
-    // Teach: row stays visible, button locks when is_in_vault=true.
-    setRecipes(recipeFavs || [])
+    // MOVE semantics (May 2026): items that have been moved to Vault or
+    // Portfolio leave the notebook. Filter at load time so legacy rows
+    // from the old "stay+lock" pattern also drop out — no migration
+    // needed, the filter catches them. New saves (under MOVE) already
+    // delete the cooking_skill_items / favorites row, so this filter is
+    // a belt-and-suspenders cleanup for any orphaned legacy data.
+    const visibleItems = [...legacyCooking, ...legacyEducation, ...favItems]
+      .filter(i => !i._inVault && !i._inPortfolio)
+    setItems(visibleItems)
+    // Chef Jennifer Practice tab — only show recipes that haven't been
+    // moved to the Vault. Mirrors Chef Notes' inbox semantics. Vault
+    // delete is permanent (no round-trip), so the favorites row's
+    // is_in_vault flag stays true forever once moved.
+    setRecipes((recipeFavs || []).filter(r => !r.is_in_vault))
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
     // the row), the note is moved to /secret?view=portfolio and
@@ -302,28 +312,34 @@ export default function PlaybookPage() {
   async function moveVideoToPortfolio(item) {
     if (!user) return
     if (item._favoriteId) {
-      // Already a favorites row — flip the flag, keep cooking_skill_items
-      // intact so the video stays visible in Teach.
+      // Already a favorites row — flip is_in_vault=true so the video
+      // shows on /secret?view=portfolio, AND delete the bucket placement
+      // so it leaves Chef TV · Teach entirely. MOVE semantics (May 2026):
+      // the notebook is an inbox; once filed, the video leaves. Un-filing
+      // from Portfolio (× on the row in the Vault) re-creates the
+      // cooking_skill_items row with bucket='teach' so the round-trip
+      // is preserved — see removeVideoFromPortfolio in /secret.
       const { error } = await supabase
         .from('favorites')
         .update({ is_in_vault: true })
         .eq('id', item._favoriteId)
       if (error) { showToast('Could not move to Portfolio'); return }
-      setItems(prev => prev.map(i =>
-        (i._item_type === item._item_type && i._item_id === item._item_id)
-          ? { ...i, _inPortfolio: true }
-          : i
-      ))
+      await supabase.from('cooking_skill_items')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('item_type', item._item_type)
+        .eq('item_id', item._item_id)
+      setItems(prev => prev.filter(i => !(i._item_type === item._item_type && i._item_id === item._item_id)))
       showToast('💎 Moved to Portfolio')
       return
     }
     if (item._legacy_src) {
       // Legacy cooking_video / education_video → synthesize a favorites
-      // row with is_in_vault=true, then re-point the cooking_skill_items
-      // bucket placement at the new favorites id so the video keeps
-      // showing up in Teach (now as a favorites-sourced item). Drop the
-      // legacy saved-video row since the favorites entry is the
-      // canonical record going forward.
+      // row with is_in_vault=true so the video shows up on the Portfolio
+      // surface, then DROP the bucket placement (and the legacy save row)
+      // so the video leaves Teach entirely under MOVE semantics. If the
+      // user un-files from Portfolio later, removeVideoFromPortfolio
+      // restores the bucket placement so the video returns to Teach.
       const favType = item._legacy_src === 'education' ? 'video_education' : 'video_recipe'
       const { data: inserted, error: insErr } = await supabase.from('favorites').insert({
         user_id: user.id,
@@ -335,30 +351,17 @@ export default function PlaybookPage() {
         is_in_vault: true,
       }).select('id').single()
       if (insErr || !inserted) { showToast('Could not move to Portfolio'); return }
-      // Re-point the bucket placement to the new favorites row.
+      // Drop the bucket placement — the video is leaving Teach.
       await supabase.from('cooking_skill_items')
-        .update({ item_type: 'favorite', item_id: inserted.id, updated_at: new Date().toISOString() })
+        .delete()
         .eq('user_id', user.id)
         .eq('item_type', item._item_type)
         .eq('item_id', item._item_id)
       // Remove the legacy saved-video row.
       const legacyTable = item._legacy_src === 'education' ? 'saved_education_videos' : 'saved_videos'
       await supabase.from(legacyTable).delete().eq('user_id', user.id).eq('video_id', item._item_id)
-      // Re-key the local item from legacy to favorites and flip
-      // _inPortfolio so the row stays visible with the new badge.
-      setItems(prev => prev.map(i =>
-        (i._item_type === item._item_type && i._item_id === item._item_id)
-          ? {
-              ...i,
-              _item_type: 'favorite',
-              _item_id: inserted.id,
-              _legacy_src: null,
-              _favoriteId: inserted.id,
-              _favType: favType,
-              _inPortfolio: true,
-            }
-          : i
-      ))
+      // Filter from local state — the row leaves Teach immediately.
+      setItems(prev => prev.filter(i => !(i._item_type === item._item_type && i._item_id === item._item_id)))
       showToast('💎 Moved to Portfolio')
     }
   }
@@ -458,14 +461,26 @@ export default function PlaybookPage() {
       servings: null,
     })
     if (error) { showToast('Could not save to Vault'); return }
-    // Update the item's `_inVault` flag so the PlaybookRow flips to the
-    // "✓ In Recipe Vault" confirmation. Single source of truth — same
-    // flag the load-time scan + visibility-change refresh both write.
-    setItems(prev => prev.map(it =>
-      (it._item_type === item._item_type && it._item_id === item._item_id)
-        ? { ...it, _inVault: true }
-        : it
-    ))
+    // MOVE semantics (May 2026): the Vault is the home — delete the
+    // Playbook bucket placement AND the underlying favorite/legacy save
+    // row so the video leaves the notebook entirely. Vault delete is
+    // permanent; the round-trip back to Practice doesn't exist by design
+    // (the Vault is the working cookbook, not an archive).
+    await supabase.from('cooking_skill_items')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('item_type', item._item_type)
+      .eq('item_id', item._item_id)
+    if (item._legacy_src === 'cooking') {
+      await supabase.from('saved_videos').delete().eq('user_id', user.id).eq('video_id', item._item_id)
+    } else if (item._legacy_src === 'education') {
+      await supabase.from('saved_education_videos').delete().eq('user_id', user.id).eq('video_id', item._item_id)
+    } else if (item._favoriteId) {
+      await supabase.from('favorites').delete().eq('id', item._favoriteId)
+    }
+    // Filter (not map) — the row disappears from Playbook on save, same
+    // as Chef Notes → Portfolio. The user's notebook stays an inbox.
+    setItems(prev => prev.filter(i => !(i._item_type === item._item_type && i._item_id === item._item_id)))
     showToast('Saved to Recipe Vault ✓')
   }
 
@@ -507,17 +522,16 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
-    // Mirrors moveVideoToPortfolio for Chef TV Teach — flip
-    // favorites.is_in_vault=true and mark the local row. Row stays
-    // visible in Practice with the button locked. Deleting from the
-    // Vault flips is_in_vault=false (handled in /secret deleteRecipe)
-    // and the row's button unlocks on next visit.
+    // MOVE semantics (May 2026): flip favorites.is_in_vault=true so the
+    // recipe disappears from this Practice tab (loadAll filters by the
+    // flag, mirroring the Chef Notes → Portfolio pattern). Vault delete
+    // is permanent — no round-trip back to Practice. If the user wants
+    // a recipe back, ask Chef Jennifer for it again; the corpus mining
+    // cache will likely surface it on the next adapt pass.
     const { error: lockErr } = await supabase
       .from('favorites').update({ is_in_vault: true }).eq('id', item.id)
-    if (lockErr) { showToast('Could not lock recipe'); return }
-    setRecipes(prev => prev.map(r =>
-      r.id === item.id ? { ...r, is_in_vault: true } : r
-    ))
+    if (lockErr) { showToast('Could not move recipe'); return }
+    setRecipes(prev => prev.filter(r => r.id !== item.id))
     showToast('Saved to Recipe Vault ✓')
   }
 

@@ -1635,24 +1635,20 @@ export default function MyRecipeVaultPage() {
     return data
   }
 
-  // Delete a recipe from the Vault. If it was originally promoted from
-  // a Chef Jennifer recipe (family_notes includes the attribution), also
-  // flip the source favorite's is_in_vault=false so it reappears in
-  // Playbook's ✨ Practice tab. Mirrors the un-file pattern for Chef
-  // Notes from Portfolio.
+  // Delete a recipe from the Vault. MOVE semantics (May 2026): Vault
+  // delete is PERMANENT. We don't un-set is_in_vault on the source
+  // favorites row, so a Chef Jennifer recipe deleted from the Vault
+  // stays gone from Playbook · Practice too. The Vault is the working
+  // cookbook — if you delete a recipe here, you wanted it gone. If you
+  // want a similar recipe back, ask Chef Jennifer again (the corpus
+  // mining cache will likely surface it on the next adapt pass).
+  // Portfolio (saved Chef Notes / videos) uses a separate un-file path
+  // and still round-trips — see removeFromPortfolio / removeVideoFromPortfolio.
   async function deleteRecipe(recipeOrId) {
     const recipe = typeof recipeOrId === 'object' ? recipeOrId : recipes.find(r => r.id === recipeOrId)
     const id = recipe?.id || recipeOrId
     if (!id) return
     await supabase.from('personal_recipes').delete().eq('id', id)
-    if (user && recipe?.title && (recipe.family_notes || '').includes('Saved from Chef Jennifer.')) {
-      await supabase
-        .from('favorites')
-        .update({ is_in_vault: false })
-        .eq('user_id', user.id)
-        .eq('type', 'ai_recipe')
-        .eq('title', recipe.title)
-    }
     setRecipes(prev => prev.filter(r => r.id !== id))
     setView('list'); setViewing(null)
   }
