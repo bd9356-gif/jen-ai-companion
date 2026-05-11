@@ -3169,9 +3169,9 @@ export default function MyRecipeVaultPage() {
                 }`}
                 title="Filter recipes"
               >
-                <option value="">All recipes ({recipes.length})</option>
+                <option value="">All recipes</option>
                 {favoritesCount > 0 && (
-                  <option value="__favorites__">❤️ Favorites ({favoritesCount})</option>
+                  <option value="__favorites__">❤️ Favorites</option>
                 )}
                 {TAG_GROUPS.map(group => {
                   const usedInGroup = group.tags.filter(t => allTags.includes(t))
