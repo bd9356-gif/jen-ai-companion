@@ -700,13 +700,23 @@ export default function CardsPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pt-3 pb-6">
-        <div className="text-center px-2 mb-4">
-          <p className="text-sm font-semibold text-gray-700 leading-snug">
+      <main className="max-w-4xl mx-auto px-4 pt-4 pb-6">
+        {/* Intro block — gets some real weight because the heritage idea
+            is the emotional core of this page. Title in cursive (Caveat,
+            same script already used on Family Notes entries) so the page
+            announces itself as a card before you even see one. Subtitle
+            promoted to base size with red accent on the family-recipe
+            line so it lands rather than whispers. */}
+        <div className="text-center px-2 mb-5">
+          <p
+            className="text-rose-700 leading-none mb-1"
+            style={{ fontFamily: 'var(--font-caveat)', fontSize: '32px', fontWeight: 600 }}
+          >
             Your modern recipe box.
           </p>
-          <p className="text-xs text-gray-500 leading-snug mt-0.5">
-            Your keep-forever recipes &mdash; mom&rsquo;s, aunt&rsquo;s, yours.
+          <p className="text-sm sm:text-base text-gray-700 leading-snug">
+            Your <span className="font-semibold text-rose-700">keep-forever</span> recipes
+            <span className="block sm:inline"> &mdash; mom&rsquo;s, aunt&rsquo;s, <span className="italic">yours</span>.</span>
           </p>
         </div>
 
