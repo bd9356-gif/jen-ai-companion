@@ -11,6 +11,10 @@ const TAG_GROUPS = [
   { label: 'Meal',        emoji: '🍽', tags: ['breakfast', 'lunch', 'dinner', 'dessert', 'side', 'snack'] },
   { label: 'Food Groups', emoji: '🥩', tags: ['chicken', 'beef', 'seafood', 'pasta', 'vegetarian'] },
   { label: 'Style',       emoji: '✨', tags: ['quick', 'comfort', 'healthy', 'baking', 'holiday'] },
+  // Source — auto-stamped at save-to-Vault time on /videos and /playbook
+  // (chef-jen / chef-tv). Mirrors /secret's TAG_GROUPS so the same group
+  // shows in the Cards filter pulldown.
+  { label: 'Source',      emoji: '🍳', tags: ['chef-jen', 'chef-tv'] },
 ]
 const CURATED_TAGS = TAG_GROUPS.flatMap(g => g.tags)
 

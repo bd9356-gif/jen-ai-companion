@@ -474,7 +474,11 @@ export default function VideosPage() {
       ingredients: meta.ingredients,
       instructions: meta.instructions || '',
       category: '',
-      tags: [],
+      // Source-stamping tag so the user can one-tap filter their Vault
+      // (and Cards) down to "show me everything I pulled from Chef TV".
+      // Mirrors the family_notes attribution but in a structured field
+      // so the filter pulldown can group it under "Source".
+      tags: ['chef-tv'],
       family_notes: `Saved from Chef TV — ${video.channel}.`,
       photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
       difficulty: '',

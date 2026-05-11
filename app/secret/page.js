@@ -34,6 +34,16 @@ const TAG_GROUPS = [
     emoji: '✨',
     tags: ['quick', 'comfort', 'healthy', 'baking', 'holiday'],
   },
+  // Source — auto-stamped when a recipe is promoted into the Vault from
+  // a Cooking School surface. Lets the user one-tap filter the Vault
+  // (or Cards) down to "everything from Chef Jen" or "everything from
+  // Chef TV". Writes happen in `saveRecipeToVault` / `saveVideoToVault`
+  // on /playbook and `saveToKitchen` on /videos.
+  {
+    label: 'Source',
+    emoji: '🍳',
+    tags: ['chef-jen', 'chef-tv'],
+  },
 ]
 const CURATED_TAGS = TAG_GROUPS.flatMap(g => g.tags)
 

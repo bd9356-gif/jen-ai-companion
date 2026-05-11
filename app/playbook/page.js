@@ -450,7 +450,8 @@ export default function PlaybookPage() {
       ingredients: recipe.ingredients,
       instructions: recipe.instructions || '',
       category: '',
-      tags: [],
+      // Source-stamp — see saveToKitchen on /videos for the rationale.
+      tags: ['chef-tv'],
       family_notes: `Saved from Chef TV — ${item.channel || ''}.`.replace(' — .', '.'),
       photo_url: item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : '',
       difficulty: '',
@@ -492,7 +493,9 @@ export default function PlaybookPage() {
       ingredients,
       instructions: instructionsToString(meta.instructions),
       category: '',
-      tags: [],
+      // Source-stamp so the user can one-tap filter their Vault (and
+      // Cards) down to "show me everything Chef Jennifer made for me".
+      tags: ['chef-jen'],
       family_notes: familyNotes,
       // Branded default photo for Chef Jennifer recipes promoted to
       // the Vault. Lives in /public so it ships with the build; user
