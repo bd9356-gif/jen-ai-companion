@@ -3142,14 +3142,19 @@ export default function MyRecipeVaultPage() {
           tile-level z-10 elements underneath them, so their z-10 is fine. */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 pt-3 pb-3">
-          {/* Single header row — Back on the left, title centered (flex-1),
-              action cluster on the right. The title gets `truncate` + `min-w-0`
-              so it shrinks to fit rather than wraps onto a second line when
-              the action cluster is wide. Action buttons use compact padding
-              (px-2 py-1.5) so 5 items fit on a phone. */}
-          <div className="flex items-center gap-2 mb-3">
+          {/* Row 1: ← Back tucked into the title row's left side, title
+              centered (flex-1). Keeps "Recipe Vault" at the visual top of
+              the page and uses the empty space next to it for the back
+              affordance. Right side mirrors the back button's width to
+              keep the title geometrically centered. */}
+          <div className="flex items-center gap-2 mb-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600 shrink-0">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900 flex-1 text-center truncate min-w-0">🔐 Recipe Vault</h1>
+            <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">🔐 Recipe Vault</h1>
+            <span className="w-12 shrink-0" aria-hidden="true" />
+          </div>
+          {/* Row 2: action cluster right-aligned (was on its own with back
+              before — back moved up to row 1 so this row is just controls). */}
+          <div className="flex items-center justify-end mb-3">
             <div className="flex gap-1 shrink-0">
               {/* Search 🔍 — hidden on Portfolio view (notes have no
                   searchable title; tags don't apply). */}
@@ -3165,7 +3170,7 @@ export default function MyRecipeVaultPage() {
                     }
                   }}
                   title={(showSearch || searchText) ? 'Close search' : 'Search by name'}
-                  className={`text-base font-semibold border rounded-lg px-2 py-1.5 ${
+                  className={`text-base font-semibold border rounded-lg px-2.5 py-1.5 ${
                     (showSearch || searchText)
                       ? 'bg-orange-600 text-white border-orange-600'
                       : 'text-gray-500 border-gray-200'
@@ -3211,7 +3216,7 @@ export default function MyRecipeVaultPage() {
                       }
                     }}
                     title={opt.title}
-                    className={`text-base font-semibold px-2 py-1.5 ${
+                    className={`text-base font-semibold px-2.5 py-1.5 ${
                       listStyle === opt.key
                         ? 'bg-orange-600 text-white'
                         : 'text-gray-500 bg-white hover:bg-gray-50'
@@ -3221,7 +3226,7 @@ export default function MyRecipeVaultPage() {
                   </button>
                 ))}
               </div>
-              <button onClick={openImportFromClipboard} title="Import Tools" className="text-lg font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-2.5 py-1.5">📥</button>
+              <button onClick={openImportFromClipboard} title="Import Tools" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>
             </div>
           </div>
           {/* Row below the header swaps between the chip scroller and the
