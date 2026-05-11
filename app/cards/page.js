@@ -2,6 +2,18 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
+// Tag taxonomy — mirrors `app/secret/page.js`. Duplicated here so the
+// filter pulldown can group the same way the Vault's does, without
+// pulling in the whole Vault module. Same three labelled groups: 🍽 Meal,
+// 🥩 Food Groups, ✨ Style — anything else a recipe carries is a
+// "custom" tag and collapses to the single "✏️ Custom tags" option.
+const TAG_GROUPS = [
+  { label: 'Meal',        emoji: '🍽', tags: ['breakfast', 'lunch', 'dinner', 'dessert', 'side', 'snack'] },
+  { label: 'Food Groups', emoji: '🥩', tags: ['chicken', 'beef', 'seafood', 'pasta', 'vegetarian'] },
+  { label: 'Style',       emoji: '✨', tags: ['quick', 'comfort', 'healthy', 'baking', 'holiday'] },
+]
+const CURATED_TAGS = TAG_GROUPS.flatMap(g => g.tags)
+
 export default function CardsPage() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -13,6 +25,11 @@ export default function CardsPage() {
   const [viewing, setViewing] = useState(null)
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
+  // Tag/favorites filter — mirrors the Vault's pulldown. Empty string =
+  // "All recipes". Sentinel "__favorites__" = is_favorite. Sentinel
+  // "__custom__" = any tag not in CURATED_TAGS. Anything else = exact
+  // curated tag match.
+  const [searchTag, setSearchTag] = useState('')
   const [addedToList, setAddedToList] = useState(new Set())
   const [familyNotes, setFamilyNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
@@ -301,7 +318,23 @@ export default function CardsPage() {
     setTimeout(() => setToast(null), 2500)
   }
 
-  const filtered = recipes.filter(r => search === '' || r.title.toLowerCase().includes(search.toLowerCase()))
+  // Available tags across all cards — drives which optgroup options
+  // actually render in the filter pulldown (empty groups vanish).
+  const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
+  const hasCustomTags = allTags.some(t => !CURATED_TAGS.includes(t))
+  const favoritesCount = recipes.filter(r => r.is_favorite).length
+
+  const filtered = recipes.filter(r => {
+    // Text search (title contains)
+    if (search !== '' && !r.title.toLowerCase().includes(search.toLowerCase())) return false
+    // Tag/favorites filter
+    if (searchTag === '') return true
+    if (searchTag === '__favorites__') return !!r.is_favorite
+    if (searchTag === '__custom__') {
+      return (r.tags || []).some(t => !CURATED_TAGS.includes(t))
+    }
+    return (r.tags || []).includes(searchTag)
+  })
 
   // ── CARD DETAIL VIEW ──
   if (viewing) {
@@ -587,14 +620,55 @@ export default function CardsPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-              <h1 className="text-lg font-bold text-gray-900">🃏 Recipe Cards</h1>
-              {recipes.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{recipes.length}</span>}
-            </div>
-            <div className="flex gap-2">
+        <div className="max-w-4xl mx-auto px-4 pt-3 pb-3">
+          {/* Row 1: ← Back left, title centered, invisible spacer right —
+              keeps "🃏 Recipe Cards" prominent at the visual top, mirrors
+              the Vault header rhythm so the two recipe surfaces feel like
+              one app. */}
+          <div className="flex items-center gap-2 mb-2">
+            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600 shrink-0">← Back</button>
+            <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">🃏 Recipe Cards</h1>
+            <span className="w-12 shrink-0" aria-hidden="true" />
+          </div>
+          {/* Row 2: filter pulldown on the left (All / ❤️ Favorites / tag
+              groups / Custom), action cluster on the right (🔍 + Add).
+              Mirrors Vault — native <select> on mobile gives a clean
+              full-screen picker for free. Color shifts (gray → orange →
+              rose) keep the active filter visible after scroll. */}
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <select
+              value={searchTag}
+              onChange={e => setSearchTag(e.target.value)}
+              style={{ fontSize: '16px' }}
+              className={`flex-1 min-w-0 border-2 rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-200 ${
+                searchTag === '__favorites__'
+                  ? 'bg-rose-50 border-rose-300 text-rose-700'
+                  : searchTag
+                    ? 'bg-orange-50 border-orange-300 text-orange-700'
+                    : 'bg-white border-gray-200 text-gray-600'
+              }`}
+              title="Filter cards"
+            >
+              <option value="">All recipes</option>
+              {favoritesCount > 0 && (
+                <option value="__favorites__">❤️ Favorites</option>
+              )}
+              {TAG_GROUPS.map(group => {
+                const usedInGroup = group.tags.filter(t => allTags.includes(t))
+                if (usedInGroup.length === 0) return null
+                return (
+                  <optgroup key={group.label} label={`${group.emoji} ${group.label}`}>
+                    {usedInGroup.map(tag => (
+                      <option key={tag} value={tag}>#{tag}</option>
+                    ))}
+                  </optgroup>
+                )
+              })}
+              {hasCustomTags && (
+                <option value="__custom__">✏️ Custom tags</option>
+              )}
+            </select>
+            <div className="flex gap-1 shrink-0">
               <button
                 onClick={() => {
                   if (showSearch || search) {
@@ -605,7 +679,7 @@ export default function CardsPage() {
                   }
                 }}
                 title={(showSearch || search) ? 'Close search' : 'Search by name'}
-                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 ${
+                className={`text-base font-semibold border rounded-lg px-2.5 py-1.5 ${
                   (showSearch || search)
                     ? 'bg-orange-600 text-white border-orange-600'
                     : 'text-gray-500 border-gray-200'
@@ -613,7 +687,7 @@ export default function CardsPage() {
               >
                 {(showSearch || search) ? '✕' : '🔍'}
               </button>
-              <a href="/secret" className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">+ Add</a>
+              <a href="/secret" className="text-sm font-semibold text-orange-600 border-2 border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">+ Add</a>
             </div>
           </div>
           {(showSearch || search) && (
@@ -621,7 +695,7 @@ export default function CardsPage() {
               autoFocus
               value={search} onChange={e => setSearch(e.target.value)}
               style={{ fontSize: '16px' }}
-              className="w-full border-2 border-orange-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200 mb-2" />
+              className="w-full border-2 border-orange-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200 mt-2 mb-1" />
           )}
         </div>
       </header>
