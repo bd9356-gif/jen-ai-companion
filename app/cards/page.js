@@ -706,7 +706,7 @@ export default function CardsPage() {
             Your modern recipe box.
           </p>
           <p className="text-xs text-gray-500 leading-snug mt-0.5">
-            A fresh take on the old kitchen card box — notes, photos, and tips saved to every recipe.
+            Your keep-forever recipes &mdash; mom&rsquo;s, aunt&rsquo;s, yours.
           </p>
         </div>
 
