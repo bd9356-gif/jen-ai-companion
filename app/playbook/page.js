@@ -67,8 +67,8 @@ const BUCKETS = [
   // Body section names + taglines kept consistent with the info-callout
   // phrasing (May 2026): each notebook has a 🎓 Teach book and a 🍳
   // Practice book; the descriptor says what's saved in this one.
-  { key: 'teach',    emoji: '🎓', label: 'Teach',    bodyEmoji: '🎓', bodyName: 'Teach',    desc: 'Technique videos to learn from.' },
-  { key: 'practice', emoji: '🍳', label: 'Practice', bodyEmoji: '🍳', bodyName: 'Practice', desc: 'Recipe videos you want to cook.' },
+  { key: 'teach',    emoji: '🎓', label: 'Teach',    bodyEmoji: '🎓', bodyName: 'Teach',    desc: 'Technique videos to learn from. File the keepers, × the rest.' },
+  { key: 'practice', emoji: '🍳', label: 'Practice', bodyEmoji: '🍳', bodyName: 'Practice', desc: 'Recipe videos to cook. Save the keepers, × the rest.' },
 ]
 
 // Full Tailwind class literals per bucket — v4 JIT requires complete strings.
@@ -824,7 +824,7 @@ export default function PlaybookPage() {
                     <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Jennifer &middot; 🍳 Practice</span>
                     <span className={`text-xs font-semibold ${RECIPES_COLOR.pill} px-2 py-0.5 rounded-full`}>{recipes.length}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-7">Recipes she creates for you.</p>
+                  <p className="text-xs text-gray-600 mt-1 ml-7">Recipes she creates. Save the keepers, × the rest.</p>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {recipes.length === 0 ? (
