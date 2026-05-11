@@ -834,6 +834,11 @@ export default function MyRecipeVaultPage() {
   // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
   // whenever the user toggles between listStyle modes.
   const [portfolioNotes, setPortfolioNotes] = useState([])
+  // Settings → 🗑 Recently Deleted (May 2026, migration 020). Recipes
+  // soft-deleted from the Vault (deleted_at IS NOT NULL) stay
+  // recoverable for 30 days. Loaded lazily when the user opens
+  // Settings, not on auth, since most sessions never touch the trash.
+  const [trashRecipes, setTrashRecipes] = useState([])
   // Portfolio also holds Chef TV Teach videos the user moved over from
   // Playbook (April 2026). Same `favorites.is_in_vault=true` flag as
   // notes; type is `video_education` or `video_recipe` instead of
@@ -1269,6 +1274,20 @@ export default function MyRecipeVaultPage() {
     setPortfolioVideos(videoRows || [])
   }
 
+  // Load soft-deleted recipes for the Settings → 🗑 Recently Deleted
+  // view. Filters to rows the auto-purge hasn't grabbed yet (within
+  // the 30-day window). Ordered by deleted_at desc so the most-recent
+  // delete is at the top of the trash.
+  async function loadTrashRecipes(userId) {
+    const { data } = await supabase
+      .from('personal_recipes')
+      .select('*')
+      .eq('user_id', userId)
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false })
+    setTrashRecipes(data || [])
+  }
+
   // Un-file a note: send it back to the Chef Notes inbox in Playbook.
   // Does NOT delete the underlying saved note — flips is_in_vault to false
   // so the note disappears from this Portfolio surface and reappears as
@@ -1312,9 +1331,30 @@ export default function MyRecipeVaultPage() {
   }
 
   async function loadRecipes(userId) {
-    const { data } = await supabase.from('personal_recipes').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+    // Soft-delete filter — only show recipes the user hasn't deleted.
+    // Migration 020 added the `deleted_at` column; older rows have it
+    // NULL by default, so the filter is a no-op for pre-migration data.
+    const { data } = await supabase
+      .from('personal_recipes')
+      .select('*')
+      .eq('user_id', userId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
     setRecipes(data || [])
     setLoading(false)
+    // Auto-purge: hard-delete any soft-deleted rows older than the
+    // 30-day recovery window. Best-effort, fire-and-forget — a failure
+    // here doesn't block the Vault from rendering. Runs on every load
+    // so cleanup happens incrementally as users open the Vault. The
+    // user's session has RLS scoped to their own rows so this only
+    // touches their soft-deleted data.
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    supabase
+      .from('personal_recipes')
+      .delete()
+      .eq('user_id', userId)
+      .lt('deleted_at', thirtyDaysAgo)
+      .then(() => {})
     // Auto-open recipe if ?recipe=ID in URL
     const searchParams = new URLSearchParams(window.location.search)
     const recipeParam = searchParams.get('recipe')
@@ -1635,22 +1675,59 @@ export default function MyRecipeVaultPage() {
     return data
   }
 
-  // Delete a recipe from the Vault. MOVE semantics (May 2026): Vault
-  // delete is PERMANENT. We don't un-set is_in_vault on the source
-  // favorites row, so a Chef Jennifer recipe deleted from the Vault
-  // stays gone from Playbook · Practice too. The Vault is the working
-  // cookbook — if you delete a recipe here, you wanted it gone. If you
-  // want a similar recipe back, ask Chef Jennifer again (the corpus
-  // mining cache will likely surface it on the next adapt pass).
-  // Portfolio (saved Chef Notes / videos) uses a separate un-file path
-  // and still round-trips — see removeFromPortfolio / removeVideoFromPortfolio.
+  // Delete a recipe from the Vault. Soft-delete (May 2026, migration 020):
+  // sets `deleted_at = now()` instead of hard-deleting the row. The
+  // recipe disappears from the main list (loadRecipes filters
+  // `deleted_at IS NULL`) but stays recoverable for 30 days via the
+  // Settings → 🗑 Recently Deleted view. Auto-purge in loadRecipes
+  // hard-deletes anything older than that window. This protects the
+  // user's modifications — once a Vault recipe carries personal tweaks
+  // (adjusted ingredients, family notes, cook-log entries), it's no
+  // longer just an AI suggestion and a hard-delete would lose real
+  // work. Mirrors iOS Notes / Gmail Trash.
+  //
+  // We do NOT un-set is_in_vault on the source Chef Jennifer favorite
+  // — the MOVE semantics (Vault → permanent) still apply. If the user
+  // wants the original AI version back, they Restore from Recently
+  // Deleted (preferred — keeps modifications) or ask Chef Jen again
+  // (loses modifications).
   async function deleteRecipe(recipeOrId) {
     const recipe = typeof recipeOrId === 'object' ? recipeOrId : recipes.find(r => r.id === recipeOrId)
     const id = recipe?.id || recipeOrId
     if (!id) return
-    await supabase.from('personal_recipes').delete().eq('id', id)
+    await supabase
+      .from('personal_recipes')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
     setRecipes(prev => prev.filter(r => r.id !== id))
     setView('list'); setViewing(null)
+    showToast('Moved to Recently Deleted — recoverable for 30 days')
+  }
+
+  // Hard delete + restore for the Settings → Recently Deleted surface.
+  // restoreRecipe clears `deleted_at` so the recipe reappears in the
+  // main Vault list. purgeRecipe does the real DELETE — gone forever.
+  async function restoreRecipe(id) {
+    if (!user || !id) return
+    const { error } = await supabase
+      .from('personal_recipes')
+      .update({ deleted_at: null })
+      .eq('id', id)
+    if (error) { showToast('Could not restore'); return }
+    setTrashRecipes(prev => prev.filter(r => r.id !== id))
+    // Refresh the main list so the restored recipe shows up next time
+    // the user goes back to the Vault.
+    if (user) loadRecipes(user.id)
+    showToast('Restored to Recipe Vault ✓')
+  }
+
+  async function purgeRecipe(id) {
+    if (!user || !id) return
+    if (!window.confirm('Delete this recipe forever? This cannot be undone.')) return
+    const { error } = await supabase.from('personal_recipes').delete().eq('id', id)
+    if (error) { showToast('Could not delete'); return }
+    setTrashRecipes(prev => prev.filter(r => r.id !== id))
+    showToast('Deleted forever')
   }
 
   // Toggle ❤️ favorite on a recipe — used by the detail-view header
@@ -2696,6 +2773,91 @@ export default function MyRecipeVaultPage() {
   }
 
   // ── IMPORT VIEW ──
+  // ── SETTINGS VIEW ──
+  // First-class Vault settings page. v1 ships with one section:
+  // 🗑 Recently Deleted (soft-delete recovery, migration 020). Designed
+  // to grow — future cards (preferences, default tags, account stuff)
+  // slot in as additional sections in the same container.
+  if (view === 'settings') {
+    // Days remaining before auto-purge, rounded down. Hint copy on
+    // each row so the user knows their window is shrinking.
+    function daysLeft(deletedAt) {
+      if (!deletedAt) return 30
+      const ms = new Date(deletedAt).getTime() + 30 * 24 * 60 * 60 * 1000 - Date.now()
+      return Math.max(0, Math.floor(ms / (24 * 60 * 60 * 1000)))
+    }
+    return (
+      <div className="min-h-screen bg-white">
+        {toastEl}
+        <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
+            <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
+            <h1 className="text-lg font-bold text-gray-900">⚙️ Vault Settings</h1>
+          </div>
+        </header>
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+          {/* 🗑 Recently Deleted — soft-delete recovery window. */}
+          <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden">
+            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🗑</span>
+                <h2 className="text-base font-bold text-gray-900">Recently Deleted</h2>
+                {trashRecipes.length > 0 && (
+                  <span className="text-xs font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{trashRecipes.length}</span>
+                )}
+              </div>
+              <p className="text-xs text-gray-600 mt-1 ml-7">
+                Deleted recipes stay here for 30 days, then go forever. Restore the keepers; delete the rest.
+              </p>
+            </div>
+            {trashRecipes.length === 0 ? (
+              <p className="text-center text-sm text-gray-400 py-8 px-4">Nothing here. Deleted recipes will show up for 30 days.</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {trashRecipes.map(r => {
+                  const days = daysLeft(r.deleted_at)
+                  return (
+                    <div key={r.id} className="px-4 py-3">
+                      <div className="flex items-start gap-3">
+                        {r.photo_url ? (
+                          <img src={r.photo_url} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" loading="lazy" />
+                        ) : (
+                          <div className="w-14 h-14 rounded-lg bg-orange-50 flex items-center justify-center text-2xl shrink-0">{categoryEmoji(r)}</div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{r.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {days > 0
+                              ? `Auto-deletes in ${days} ${days === 1 ? 'day' : 'days'}`
+                              : 'Auto-deletes today'}
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => restoreRecipe(r.id)}
+                              className="text-xs font-semibold text-orange-700 border-2 border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50"
+                            >
+                              ↩ Restore
+                            </button>
+                            <button
+                              onClick={() => purgeRecipe(r.id)}
+                              className="text-xs font-semibold text-red-600 border-2 border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50"
+                            >
+                              🗑 Delete Forever
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   if (view === 'import') {
     return (
       <div className="min-h-screen bg-white">
@@ -3150,7 +3312,16 @@ export default function MyRecipeVaultPage() {
           <div className="flex items-center gap-2 mb-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600 shrink-0">← Back</button>
             <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">🔐 Recipe Vault</h1>
-            <span className="w-12 shrink-0" aria-hidden="true" />
+            {/* ⚙️ Settings — opens the Vault settings view (Recently
+                Deleted recovery, future preferences). Matches the back
+                button's width so the title stays geometrically centered. */}
+            <button
+              onClick={() => { if (user) loadTrashRecipes(user.id); setView('settings') }}
+              title="Vault settings"
+              className="text-sm text-gray-500 hover:text-gray-600 shrink-0 w-12 text-right"
+            >
+              ⚙️
+            </button>
           </div>
           {/* Row 2: filter pulldown on the left (uses the empty space that
               used to be a dedicated chip-scroller row below the header),
