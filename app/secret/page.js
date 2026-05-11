@@ -4068,16 +4068,16 @@ export default function MyRecipeVaultPage() {
                           className="w-full text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
                           <div className="bg-red-600 h-1.5" />
                           <div className="px-3 pt-3 pb-1">
-                            <p className="font-bold text-sm text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{recipe.title}</p>
+                            <p className="font-bold text-xs text-gray-900 leading-snug line-clamp-2 min-h-[2rem]">{recipe.title}</p>
                           </div>
                           <div className="px-3 pb-3">
                             {recipe.photo_url ? (
-                              <div style={{height:'100px'}} className="rounded-xl overflow-hidden">
+                              <div style={{height:'88px'}} className="rounded-xl overflow-hidden">
                                 <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                               </div>
                             ) : (
-                              <div style={{height:'100px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
-                                <span style={{fontSize:'32px'}}>{categoryEmoji(recipe)}</span>
+                              <div style={{height:'88px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+                                <span style={{fontSize:'28px'}}>{categoryEmoji(recipe)}</span>
                               </div>
                             )}
                           </div>
