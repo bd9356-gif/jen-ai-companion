@@ -1933,12 +1933,6 @@ export default function MyRecipeVaultPage() {
   // single "✏️ Custom" option at the bottom of the filter dropdown.
   const hasCustomTags = allTags.some(t => !CURATED_TAGS.includes(t))
 
-  // Top 5 most-used tags for the chip row above search
-  const topTags = (() => {
-    const counts = new Map()
-    recipes.forEach(r => (r.tags || []).forEach(t => counts.set(t, (counts.get(t) || 0) + 1)))
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([t]) => t)
-  })()
 
   // ── DETAIL VIEW ──
   if (view === 'detail' && viewing) {
@@ -3152,9 +3146,51 @@ export default function MyRecipeVaultPage() {
             <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">🔐 Recipe Vault</h1>
             <span className="w-12 shrink-0" aria-hidden="true" />
           </div>
-          {/* Row 2: action cluster right-aligned (was on its own with back
-              before — back moved up to row 1 so this row is just controls). */}
-          <div className="flex items-center justify-end mb-3">
+          {/* Row 2: filter pulldown on the left (uses the empty space that
+              used to be a dedicated chip-scroller row below the header),
+              action cluster on the right. The pulldown is a single native
+              <select> that combines what used to be three separate UI
+              elements — the "All / Favorites / #tag" chips, the top-5 chip
+              shortcut row, and the overflow tag dropdown — into one
+              compact control. Native <select> on mobile gives us a clean
+              full-screen picker for free. Hidden on Portfolio (no tags). */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            {listStyle !== 'portfolio' ? (
+              <select
+                value={searchTag}
+                onChange={e => setSearchTag(e.target.value)}
+                style={{ fontSize: '16px' }}
+                className={`flex-1 min-w-0 border-2 rounded-lg px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-orange-200 ${
+                  searchTag === '__favorites__'
+                    ? 'bg-rose-50 border-rose-300 text-rose-700'
+                    : searchTag
+                      ? 'bg-orange-50 border-orange-300 text-orange-700'
+                      : 'bg-white border-gray-200 text-gray-600'
+                }`}
+                title="Filter recipes"
+              >
+                <option value="">All recipes ({recipes.length})</option>
+                {favoritesCount > 0 && (
+                  <option value="__favorites__">❤️ Favorites ({favoritesCount})</option>
+                )}
+                {TAG_GROUPS.map(group => {
+                  const usedInGroup = group.tags.filter(t => allTags.includes(t))
+                  if (usedInGroup.length === 0) return null
+                  return (
+                    <optgroup key={group.label} label={`${group.emoji} ${group.label}`}>
+                      {usedInGroup.map(tag => (
+                        <option key={tag} value={tag}>#{tag}</option>
+                      ))}
+                    </optgroup>
+                  )
+                })}
+                {hasCustomTags && (
+                  <option value="__custom__">✏️ Custom tags</option>
+                )}
+              </select>
+            ) : (
+              <div className="flex-1" />
+            )}
             <div className="flex gap-1 shrink-0">
               {/* Search 🔍 — hidden on Portfolio view (notes have no
                   searchable title; tags don't apply). */}
@@ -3229,91 +3265,17 @@ export default function MyRecipeVaultPage() {
               <button onClick={openImportFromClipboard} title="Import Tools" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>
             </div>
           </div>
-          {/* Row below the header swaps between the chip scroller and the
-              full-width search input. The search toggle lives up in the
-              header (see 🔍/✕ button above), so the input takes 100% of
-              this row and never has to share horizontal space.
-              Hidden entirely on the Portfolio view — tags are recipe
-              metadata, not note metadata, so the chips/dropdown don't
-              apply when the page is showing Chef Notes. */}
-          {listStyle === 'portfolio' ? null : (showSearch || searchText) ? (
+          {/* Conditional search input — only renders when the 🔍 button is
+              toggled on, OR when there's an active query. Hidden on the
+              Portfolio view (notes have no searchable title). The tag
+              filter has moved up to row 2 as a compact dropdown, so this
+              is the only thing that can ever appear below the action row. */}
+          {listStyle !== 'portfolio' && (showSearch || searchText) && (
             <input type="text" placeholder="Search recipes..." value={searchText}
               autoFocus
               onChange={e => setSearchText(e.target.value)}
               style={{ fontSize: '16px' }}
               className="w-full border-2 border-orange-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-200 mb-2" />
-          ) : (
-            (topTags.length > 0 || favoritesCount > 0) && (
-              <div className="flex gap-2 overflow-x-auto pb-1 mb-2 -mx-1 px-1 scrollbar-thin">
-                <button
-                  onClick={() => setSearchTag('')}
-                  title="Show all recipes"
-                  className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                    !searchTag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-                  }`}
-                >
-                  All
-                </button>
-                {favoritesCount > 0 && (
-                  <button
-                    onClick={() => setSearchTag(searchTag === '__favorites__' ? '' : '__favorites__')}
-                    title="Show only favorited recipes"
-                    className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                      searchTag === '__favorites__'
-                        ? 'bg-rose-500 text-white border-rose-500'
-                        : 'bg-white text-rose-500 border-rose-200 hover:bg-rose-50'
-                    }`}
-                  >
-                    ❤️ Favorites ({favoritesCount})
-                  </button>
-                )}
-                {topTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => setSearchTag(searchTag === tag ? '' : tag)}
-                    title={`Filter by #${tag}`}
-                    className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border-2 transition-colors ${
-                      searchTag === tag ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-                    }`}
-                  >
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-            )
-          )}
-          {/* Tag overflow dropdown — also hidden on Portfolio view.
-              Tags don't apply to Chef Notes. */}
-          {listStyle !== 'portfolio' && allTags.length > topTags.length && (
-            // Filter dropdown — mirrors the form's three groups via
-            // <optgroup>. Each group lists only the curated tags the
-            // user has actually applied to their recipes (so we don't
-            // show empty options). Custom tags collapse to a single
-            // "✏️ Custom" entry at the bottom — picking it filters to
-            // every recipe with any non-curated tag, matching how
-            // custom tags render as one row in the form.
-            <select
-              value={searchTag}
-              onChange={e => setSearchTag(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 text-gray-600"
-              title="All tags (overflow)"
-            >
-              <option value="">All tags…</option>
-              {TAG_GROUPS.map(group => {
-                const usedInGroup = group.tags.filter(t => allTags.includes(t))
-                if (usedInGroup.length === 0) return null
-                return (
-                  <optgroup key={group.label} label={`${group.emoji} ${group.label}`}>
-                    {usedInGroup.map(tag => (
-                      <option key={tag} value={tag}>#{tag}</option>
-                    ))}
-                  </optgroup>
-                )
-              })}
-              {hasCustomTags && (
-                <option value="__custom__">✏️ Custom</option>
-              )}
-            </select>
           )}
         </div>
       </header>
