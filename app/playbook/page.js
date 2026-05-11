@@ -159,12 +159,18 @@ export default function PlaybookPage() {
       supabase.from('cooking_skill_items').select('*').eq('user_id', userId),
       supabase.from('favorites').select('*').eq('user_id', userId).eq('type', 'ai_recipe').order('created_at', { ascending: false }),
       supabase.from('favorites').select('*').eq('user_id', userId).eq('type', 'ai_answer').order('created_at', { ascending: false }),
-      // Pull every Vault recipe's photo_url so we can detect which
-      // Chef TV videos already in the Vault flip the per-row Practice
-      // button to "✓ In Recipe Vault". Match is by youtube_id parsed
-      // out of the photo_url (saveToKitchen / saveVideoToVault both
-      // write the YouTube hqdefault URL).
-      supabase.from('personal_recipes').select('photo_url').eq('user_id', userId),
+      // Pull every ACTIVE Vault recipe's photo_url so we can detect
+      // which Chef TV videos already in the Vault flip the per-row
+      // "✓ In Recipe Vault" badge. Soft-deleted rows (deleted_at IS
+      // NOT NULL) are intentionally excluded — a recipe sitting in
+      // Settings → Recently Deleted isn't really "in the Vault"; the
+      // badge would be stale. Match is by youtube_id parsed out of
+      // the photo_url (saveToKitchen / saveVideoToVault both write
+      // the YouTube hqdefault URL).
+      supabase.from('personal_recipes')
+        .select('photo_url')
+        .eq('user_id', userId)
+        .is('deleted_at', null),
     ])
 
     const vaultYoutubeIds = new Set()
@@ -261,14 +267,20 @@ export default function PlaybookPage() {
       return base
     }).filter(Boolean)
 
-    // MOVE semantics (May 2026): items that have been moved to Vault or
-    // Portfolio leave the notebook. Filter at load time so legacy rows
-    // from the old "stay+lock" pattern also drop out — no migration
-    // needed, the filter catches them. New saves (under MOVE) already
-    // delete the cooking_skill_items / favorites row, so this filter is
-    // a belt-and-suspenders cleanup for any orphaned legacy data.
+    // MOVE semantics (May 2026): items filed to Portfolio leave the
+    // notebook (_inPortfolio filters them out). We deliberately do NOT
+    // filter by _inVault — under proper MOVE semantics saving to the
+    // Vault deletes the Playbook rows, so an item can't be in both
+    // places. For LEGACY data where an old broken saveToKitchen left
+    // favorites + cooking_skill_items behind alongside a Vault row,
+    // the user still expects to see the Practice save they made — so
+    // we show it. If the duplicate bugs the user, they can manage it
+    // from either side (the modern saveToKitchen + saveVideoToVault
+    // both clean the Playbook rows on use). Filtering by _inVault
+    // hid legitimate saves and was the cause of the May 2026 "videos
+    // I once had don't show in MyPlaybook" report.
     const visibleItems = [...legacyCooking, ...legacyEducation, ...favItems]
-      .filter(i => !i._inVault && !i._inPortfolio)
+      .filter(i => !i._inPortfolio)
     setItems(visibleItems)
     // Chef Jennifer Practice tab — only show recipes that haven't been
     // moved to the Vault. Mirrors Chef Notes' inbox semantics. Vault
