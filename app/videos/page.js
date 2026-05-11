@@ -602,12 +602,18 @@ export default function VideosPage() {
           {/* Row 2 — nav left, mode pills + About right */}
           <div className="flex items-center justify-between gap-2 mb-1.5">
             <div className="flex items-center gap-1.5">
-              <button onClick={() => window.location.href='/kitchen'} aria-label="Back to MyKitchen" className="text-base text-gray-400 hover:text-gray-600 shrink-0 px-1">←</button>
+              <button
+                onClick={() => window.location.href='/kitchen'}
+                aria-label="Back to MyKitchen"
+                className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1"
+              >
+                ← Back
+              </button>
               <button
                 onClick={() => window.location.href='/playbook'}
                 title="Open My Playbook"
                 aria-label="Open My Playbook"
-                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
               >
                 📘
               </button>
@@ -615,7 +621,7 @@ export default function VideosPage() {
                 onClick={() => window.location.href='/chef'}
                 title="Open Chef Jennifer's Classroom"
                 aria-label="Open Chef Jennifer's Classroom"
-                className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
               >
                 👨‍🍳
               </button>

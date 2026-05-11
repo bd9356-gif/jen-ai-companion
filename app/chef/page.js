@@ -340,15 +340,15 @@ export default function ChefPage() {
             <button
               onClick={() => window.location.href='/kitchen'}
               aria-label="Back to MyKitchen"
-              className="text-base text-gray-500 hover:text-gray-700 shrink-0 px-1"
+              className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1"
             >
-              ←
+              ← Back
             </button>
             <button
               onClick={() => window.location.href='/playbook'}
               title="Open My Playbook"
               aria-label="Open My Playbook"
-              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+              className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
             >
               📘
             </button>
@@ -356,7 +356,7 @@ export default function ChefPage() {
               onClick={() => window.location.href='/videos'}
               title="Open Chef TV's Classroom"
               aria-label="Open Chef TV's Classroom"
-              className="shrink-0 text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-1 hover:border-orange-300 hover:text-orange-700"
+              className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
             >
               🎬
             </button>
