@@ -3614,7 +3614,7 @@ export default function MyRecipeVaultPage() {
                                   className="block w-full text-left"
                                 >
                                   <div className="px-2 pt-2">
-                                    <p className="font-bold text-[11px] text-gray-900 leading-snug line-clamp-2 min-h-[1.85rem]">{r.title}</p>
+                                    <p className="font-bold text-xs text-gray-900 leading-snug line-clamp-2 min-h-[2rem]">{r.title}</p>
                                   </div>
                                   <div className="p-2">
                                     {r.photo_url ? (
@@ -3632,7 +3632,7 @@ export default function MyRecipeVaultPage() {
                                 <div className="px-2 pb-2 space-y-1">
                                   <button
                                     onClick={(e) => { e.stopPropagation(); toggleCardPin(r.id) }}
-                                    className={`w-full text-[10px] font-semibold rounded-md py-1 border transition-colors ${
+                                    className={`w-full text-xs font-semibold rounded-md py-1 border transition-colors ${
                                       pinned
                                         ? 'bg-orange-600 text-white border-orange-600'
                                         : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
@@ -3643,7 +3643,7 @@ export default function MyRecipeVaultPage() {
                                   <button
                                     onClick={(e) => { e.stopPropagation(); toggleMealPlanPick(r) }}
                                     title={picksIds.includes(r.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
-                                    className={`w-full text-[10px] font-semibold rounded-md py-1 border transition-colors ${
+                                    className={`w-full text-xs font-semibold rounded-md py-1 border transition-colors ${
                                       picksIds.includes(r.id)
                                         ? 'bg-amber-500 text-white border-amber-500'
                                         : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
@@ -3847,7 +3847,7 @@ export default function MyRecipeVaultPage() {
                             <div className="px-2 pb-2 space-y-1">
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleCardPin(r.id) }}
-                                className={`w-full text-[11px] font-semibold rounded-md py-1 border transition-colors ${
+                                className={`w-full text-xs font-semibold rounded-md py-1 border transition-colors ${
                                   pinned
                                     ? 'bg-orange-600 text-white border-orange-600'
                                     : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
@@ -3858,7 +3858,7 @@ export default function MyRecipeVaultPage() {
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleMealPlanPick(r) }}
                                 title={picksIds.includes(r.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
-                                className={`w-full text-[11px] font-semibold rounded-md py-1 border transition-colors ${
+                                className={`w-full text-xs font-semibold rounded-md py-1 border transition-colors ${
                                   picksIds.includes(r.id)
                                     ? 'bg-amber-500 text-white border-amber-500'
                                     : 'bg-white text-amber-700 border-amber-300 hover:bg-amber-50'
@@ -4088,7 +4088,7 @@ export default function MyRecipeVaultPage() {
                           onClick={(e) => { e.stopPropagation(); toggleCardPin(recipe.id) }}
                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleCardPin(recipe.id) } }}
                           title={pinned ? 'Pinned to Recipe Cards' : 'Pin to Recipe Cards'}
-                          className={`absolute bottom-2 right-2 z-10 text-[10px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
+                          className={`absolute bottom-2 right-2 z-10 text-xs font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
                             pinned
                               ? 'bg-orange-600 text-white border-orange-600'
                               : 'bg-white/95 text-orange-700 border-orange-300 hover:bg-orange-50'
@@ -4107,7 +4107,7 @@ export default function MyRecipeVaultPage() {
                           onClick={(e) => { e.stopPropagation(); toggleMealPlanPick(recipe) }}
                           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleMealPlanPick(recipe) } }}
                           title={picksIds.includes(recipe.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
-                          className={`absolute bottom-2 left-2 z-10 text-[10px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
+                          className={`absolute bottom-2 left-2 z-10 text-xs font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
                             picksIds.includes(recipe.id)
                               ? 'bg-amber-500 text-white border-amber-500'
                               : 'bg-white/95 text-amber-700 border-amber-300 hover:bg-amber-50'

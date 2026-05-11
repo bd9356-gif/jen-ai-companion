@@ -274,7 +274,7 @@ export default function KitchenPage() {
       <div className="px-5 py-3 flex items-center justify-between max-w-lg mx-auto">
         <div>
           <h1 className="text-lg font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
-          <p className="text-[11px] text-gray-500 mt-0.5">Everything you need — all in one place.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Everything you need — all in one place.</p>
         </div>
         <button onClick={() => window.location.href='/profile'}
           className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold">

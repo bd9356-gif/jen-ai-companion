@@ -442,7 +442,7 @@ export default function ChefPage() {
               </svg>
             </button>
           </div>
-          <p className="text-[11px] text-gray-400 mt-2 text-center">
+          <p className="text-xs text-gray-400 mt-2 text-center">
             {isPractice ? '🍳 Recipes save to Chef Jennifer Recipes.' : '📝 Answers save to Chef Notes (on My Playbook).'}
           </p>
         </div>

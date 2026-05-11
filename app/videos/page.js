@@ -798,7 +798,7 @@ export default function VideosPage() {
                           href={`https://www.youtube.com/results?search_query=${encodeURIComponent(video.channel)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 hover:text-orange-700 mb-3"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-orange-700 mb-3"
                           title={`Visit ${video.channel}'s channel on YouTube`}
                         >
                           ↗ More from {video.channel} on YouTube
@@ -873,8 +873,8 @@ export default function VideosPage() {
                                       >
                                         {isInVault ? '✓ Saved to My Kitchen' : '💾 Save to My Kitchen'}
                                       </button>
-                                      <p className="text-[11px] text-gray-500 text-center mt-2">
-                                        Adds to your Recipe Vault and drops the video in 🍳 Practice.
+                                      <p className="text-xs text-gray-500 text-center mt-2">
+                                        Adds to your Recipe Vault.
                                       </p>
                                     </div>
                                   </>

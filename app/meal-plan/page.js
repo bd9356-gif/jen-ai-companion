@@ -82,7 +82,7 @@ function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
     ? 'w-7 h-7 rounded-md bg-orange-50 flex items-center justify-center shrink-0'
     : 'w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0'
   const titleCls = isSide
-    ? 'font-medium text-[11px] text-gray-600 truncate text-left w-full'
+    ? 'font-medium text-xs text-gray-600 truncate text-left w-full'
     : 'font-semibold text-xs text-orange-600 truncate text-left w-full'
 
   return (
@@ -391,7 +391,7 @@ export default function MealPlanPage() {
       <main className="max-w-2xl mx-auto px-4 py-4 pb-16">
         <div className="text-center px-2 mb-4">
           <p className="text-sm text-gray-600 leading-snug">What you&apos;re cooking soon, organized your way.</p>
-          <p className="text-[11px] text-gray-400 mt-1">Tip: drag with <span className="font-semibold">⋮⋮</span> to reorder · tap <span className="font-semibold">↳</span> to mark a side dish</p>
+          <p className="text-xs text-gray-400 mt-1">Tip: drag with <span className="font-semibold">⋮⋮</span> to reorder · tap <span className="font-semibold">↳</span> to mark a side dish</p>
         </div>
 
         {loading ? (
@@ -547,7 +547,7 @@ export default function MealPlanPage() {
                 buildMiseText() so the output matches the on-screen
                 layout. */}
             <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[11px] text-gray-500 shrink-0">
+              <p className="text-xs text-gray-500 shrink-0">
                 {miseChecked.size} / {miseRecipes.reduce((n, r) => n + (Array.isArray(r.ingredients) ? r.ingredients.length : 0), 0)} prepped
               </p>
               <div className="flex items-center gap-2">
