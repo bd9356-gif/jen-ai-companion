@@ -88,16 +88,19 @@ function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
   return (
     <div ref={setNodeRef} style={style} className={rowCls}>
       {/* Dedicated drag handle — touch-friendly, keyboard accessible,
-          doesn't steal clicks from the title. */}
+          doesn't steal clicks from the title. Orange-500 ⋮⋮ glyph
+          (May 2026) so the handle is actually discoverable; the matching
+          orange chip in the tip callout above teaches the user to look
+          for this exact icon. */}
       <button
         type="button"
-        className={`shrink-0 ${isSide ? 'w-5 h-7' : 'w-7 h-10'} flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing touch-none`}
+        className={`shrink-0 ${isSide ? 'w-5 h-7' : 'w-7 h-10'} flex items-center justify-center text-orange-500 hover:text-orange-700 cursor-grab active:cursor-grabbing touch-none`}
         title="Drag to reorder"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
       >
-        <span className={`leading-none ${isSide ? 'text-xs' : 'text-base'}`}>⋮⋮</span>
+        <span className={`leading-none font-bold ${isSide ? 'text-sm' : 'text-lg'}`}>⋮⋮</span>
       </button>
       {pick.photo_url ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -113,16 +116,18 @@ function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
       </div>
       <div className="flex gap-1 items-center">
         {/* Side toggle — flips the row's visual treatment. ↳ to mark
-            as side, ↑ to flip back to main. Tooltip explains the
-            framing so it's discoverable without needing to read docs. */}
+            as side, ↑ to flip back to main. Orange chip styling (May
+            2026) matches the icon shown in the tip callout above so the
+            user maps "the orange ↳ icon I saw in the tip" to "the orange
+            ↳ button right here". */}
         <button
           onClick={() => onToggleSide(pick)}
           title={isSide ? 'Mark as main' : 'Mark as side'}
           aria-label={isSide ? 'Mark as main' : 'Mark as side'}
-          className={`text-xs px-1.5 py-0.5 rounded border font-semibold transition-colors ${
+          className={`text-sm font-bold w-7 h-7 flex items-center justify-center rounded-md border-2 transition-colors leading-none ${
             isSide
-              ? 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'
-              : 'bg-white border-gray-200 text-gray-400 hover:border-gray-400 hover:text-gray-600'
+              ? 'bg-orange-600 border-orange-600 text-white hover:bg-orange-700'
+              : 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
           }`}
         >
           {isSide ? '↑' : '↳'}
@@ -391,7 +396,23 @@ export default function MealPlanPage() {
       <main className="max-w-2xl mx-auto px-4 py-4 pb-16">
         <div className="text-center px-2 mb-4">
           <p className="text-base text-gray-600 leading-snug">What you&apos;re cooking soon, organized your way.</p>
-          <p className="text-xs text-gray-400 mt-1">Tip: drag with <span className="font-semibold">⋮⋮</span> to reorder · tap <span className="font-semibold">↳</span> to mark a side dish</p>
+          {/* Tip callout — promoted from a quiet gray line to a real soft
+              amber pill so the two affordances (drag handle + side toggle)
+              are actually discoverable. The two glyphs render in
+              orange-600 chips that mirror the real on-row controls so the
+              user can match icon ↔ tip ↔ button at a glance. */}
+          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5 mt-2 text-sm text-amber-900">
+            <span className="font-semibold">Tip:</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-orange-100 border border-orange-300 text-orange-700 font-bold text-sm leading-none">⋮⋮</span>
+              <span>drag to reorder</span>
+            </span>
+            <span className="text-amber-300">·</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-orange-100 border border-orange-300 text-orange-700 font-bold text-sm leading-none">↳</span>
+              <span>mark as side</span>
+            </span>
+          </div>
         </div>
 
         {loading ? (
