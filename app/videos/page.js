@@ -651,12 +651,12 @@ export default function VideosPage() {
               centered line with a quieter subtitle below. */}
           <div className="text-center mb-4">
             <h2 className={`text-xl sm:text-2xl font-bold leading-tight ${filter === 'teach' ? 'text-sky-700' : 'text-orange-700'}`}>
-              {filter === 'teach' ? 'What do you want to learn?' : 'What should we cook?'}
+              {filter === 'teach' ? 'What are you ready to learn today?' : 'What should we cook today?'}
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 leading-snug mt-1.5">
               {filter === 'teach'
-                ? "You're in the video room — watch skill videos, pick what you want to learn, and they'll save to your Playbook."
-                : "You're in the recipe room — watch a video, open the recipe, and save it to your Kitchen — it lands in your Playbook too."}
+                ? 'Your Chef learning videos are here — watch and choose what helps you, then head to 🍳 Practice for your homework.'
+                : 'Your Chef recipes and cooking videos go here — watch, choose, and save what helps you.'}
             </p>
           </div>
 
