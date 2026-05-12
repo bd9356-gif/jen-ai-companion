@@ -2061,9 +2061,10 @@ export default function MyRecipeVaultPage() {
                 {viewing.is_favorite ? '❤️' : '🤍'}
               </button>
               <button onClick={() => toggleCardPin(viewing.id)}
+                title={pinnedCards.includes(viewing.id) ? 'Pinned to Cards — tap to remove' : 'Pin to Cards'}
                 className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${
                   pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200'}`}>
-                {pinnedCards.includes(viewing.id) ? 'In Cards' : 'Cards'}
+                Cards
               </button>
               <button onClick={async () => {
                 if (picksIds.includes(viewing.id)) {
@@ -2075,7 +2076,11 @@ export default function MyRecipeVaultPage() {
                   setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
                   showToast('Added to Maybe ✓')
                 }
-              }} className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>{picksIds.includes(viewing.id) ? 'In Plan' : 'Meal Plan'}</button>
+              }}
+                title={picksIds.includes(viewing.id) ? 'In Meal Plan — tap to remove' : 'Add to Meal Plan'}
+                className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>
+                Meal Plan
+              </button>
               <button onClick={() => deleteRecipe(viewing)}
                 className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-2.5 py-1">Delete</button>
             </div>
