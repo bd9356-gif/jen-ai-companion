@@ -325,7 +325,6 @@ export default function CardsPage() {
   // Available tags across all cards — drives which optgroup options
   // actually render in the filter pulldown (empty groups vanish).
   const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
-  const hasCustomTags = allTags.some(t => !CURATED_TAGS.includes(t))
   const favoritesCount = recipes.filter(r => r.is_favorite).length
 
   const filtered = recipes.filter(r => {
@@ -668,9 +667,20 @@ export default function CardsPage() {
                   </optgroup>
                 )
               })}
-              {hasCustomTags && (
-                <option value="__custom__">✏️ Custom tags</option>
-              )}
+              {/* Custom tags — list each non-curated tag individually
+                  (was collapsed to a sentinel "Custom tags" option;
+                  May 2026: Bill wanted to filter to specific custom tags). */}
+              {(() => {
+                const customTags = allTags.filter(t => !CURATED_TAGS.includes(t)).sort()
+                if (customTags.length === 0) return null
+                return (
+                  <optgroup label="✏️ Custom">
+                    {customTags.map(tag => (
+                      <option key={tag} value={tag}>#{tag}</option>
+                    ))}
+                  </optgroup>
+                )
+              })()}
             </select>
             <div className="flex gap-1 shrink-0">
               <button

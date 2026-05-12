@@ -2012,10 +2012,6 @@ export default function MyRecipeVaultPage() {
   const favoritesCount = recipes.filter(r => r.is_favorite).length
 
   const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
-  // Whether the user has any custom tags in their vault — drives the
-  // single "✏️ Custom" option at the bottom of the filter dropdown.
-  const hasCustomTags = allTags.some(t => !CURATED_TAGS.includes(t))
-
 
   // ── DETAIL VIEW ──
   if (view === 'detail' && viewing) {
@@ -3375,9 +3371,23 @@ export default function MyRecipeVaultPage() {
                     </optgroup>
                   )
                 })}
-                {hasCustomTags && (
-                  <option value="__custom__">✏️ Custom tags</option>
-                )}
+                {/* Custom tags — list each non-curated tag the user has
+                    actually applied to a recipe (was collapsed to a
+                    single "Custom tags" sentinel option, but Bill wanted
+                    individual entries so users can filter to a specific
+                    custom tag). Sorted alphabetically for predictable
+                    scanning. */}
+                {(() => {
+                  const customTags = allTags.filter(t => !CURATED_TAGS.includes(t)).sort()
+                  if (customTags.length === 0) return null
+                  return (
+                    <optgroup label="✏️ Custom">
+                      {customTags.map(tag => (
+                        <option key={tag} value={tag}>#{tag}</option>
+                      ))}
+                    </optgroup>
+                  )
+                })()}
               </select>
             ) : (
               <div className="flex-1" />
