@@ -2053,7 +2053,7 @@ export default function MyRecipeVaultPage() {
                 title={viewing.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
                 className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
                   viewing.is_favorite ? 'bg-rose-500 text-white border-rose-500' : 'text-rose-500 border-rose-200 hover:bg-rose-50'}`}>
-                {viewing.is_favorite ? '❤️ Favorite' : '🤍 Favorite'}
+                {viewing.is_favorite ? '❤️' : '🤍'}
               </button>
               <button onClick={() => toggleCardPin(viewing.id)}
                 className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
