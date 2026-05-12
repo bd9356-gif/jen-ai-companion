@@ -578,21 +578,21 @@ export default function CardsPage() {
             </div>
           </div>
 
-          {/* AI Suggestions */}
+          {/* Chef Jen Suggestions — was "AI Suggestions" / "AI-powered". */}
           <div className="bg-purple-50 border border-purple-100 rounded-2xl p-5 mb-5">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">✨</span>
-              <h2 className="text-sm font-bold text-gray-900">Chef Suggestions</h2>
-              <span className="text-xs text-purple-600">AI-powered</span>
+              <h2 className="text-sm font-bold text-gray-900">Chef Jen&rsquo;s Tips</h2>
+              <span className="text-xs text-purple-600">picked just for this card</span>
             </div>
             {!suggestions && !loadingSuggestions && (
               <button onClick={getSuggestions}
                 className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors">
-                ✨ Get Smart Suggestions
+                ✨ Ask Chef Jen for tips
               </button>
             )}
             {loadingSuggestions && (
-              <div className="text-center py-4 text-gray-500 text-sm">Your chef is thinking...</div>
+              <div className="text-center py-4 text-gray-500 text-sm">Chef Jen is thinking&hellip;</div>
             )}
             {suggestions && (
               <div className="space-y-3">
@@ -604,7 +604,7 @@ export default function CardsPage() {
                 ))}
                 <button onClick={getSuggestions}
                   className="w-full py-2 text-xs text-purple-600 font-semibold hover:text-purple-800">
-                  ↺ Get new suggestions
+                  ↺ Ask Chef Jen again
                 </button>
               </div>
             )}

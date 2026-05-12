@@ -1824,6 +1824,12 @@ export default function MyRecipeVaultPage() {
 
     await updateRecipe(viewing.id, updates)
     setEnhanceResult(null); setGeneratedInfo(null); setView('detail')
+    // Toast names Chef Jen so the AI work feels like a person did it,
+    // not "an AI process ran." Both Polish and Resize go through
+    // applyEnhancement — distinguish by whether the result included
+    // new instructions text (Polish does, Resize doesn't).
+    const wasPolish = !!enhanceResult.instructions
+    showToast(wasPolish ? 'Chef Jen polished your recipe ✓' : `Chef Jen resized to ${servings} servings ✓`)
   }
 
   async function applyInfo() {
@@ -1837,6 +1843,7 @@ export default function MyRecipeVaultPage() {
     if (generatedInfo.nutrition_estimate) updates.nutrition = generatedInfo.nutrition_estimate
     await updateRecipe(viewing.id, updates)
     setGeneratedInfo(null); setEnhanceResult(null); setView('detail')
+    showToast('Chef Jen filled in the recipe details ✓')
   }
 
   // ── "Make This Recipe More..." ──
@@ -1900,7 +1907,7 @@ export default function MyRecipeVaultPage() {
       setTransformPrefs([])
       setViewing(data)
       setView('detail')
-      showToast('Saved as new recipe ✓')
+      showToast("Saved — Chef Jen's adjusted version ✓")
     }
   }
 
@@ -1917,7 +1924,7 @@ export default function MyRecipeVaultPage() {
     setTransformResult(null)
     setTransformPrefs([])
     setView('detail')
-    showToast('Recipe updated ✓')
+    showToast("Replaced with Chef Jen's adjusted version ✓")
   }
 
   // Optional `urlOverride` lets the auto-import-on-paste flows fire
@@ -2010,6 +2017,10 @@ export default function MyRecipeVaultPage() {
         fat_g: data.fat_g ?? null,
       })
       setImportText(''); setImportUrl(''); setImportTab('add')
+      // Tell the user Chef Jen did the work. Toast fires AFTER the form
+      // is pre-filled so the user sees the recipe arrive + the
+      // confirmation in the same beat.
+      showToast('Chef Jen pulled this in ✓ — review and save')
     } catch (err) { console.error(err) }
     setImporting(false)
   }
