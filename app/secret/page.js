@@ -348,7 +348,7 @@ async function readClipboardSmart() {
 // kid's name). Custom tags that aren't in CURATED_TAGS render as their
 // own chip row underneath, removable via × — same data model as before
 // (a flat string array on the recipe).
-function TagSelector({ tags, onChange }) {
+function TagSelector({ tags, onChange, libraryCustomTags = [] }) {
   const [customInput, setCustomInput] = useState('')
 
   function toggleTag(tag) {
@@ -367,9 +367,14 @@ function TagSelector({ tags, onChange }) {
     setCustomInput('')
   }
 
-  // Anything in `tags` that isn't a curated suggestion is a custom tag —
-  // render it in its own row so the curated chips stay tidy.
-  const customTags = tags.filter(t => !CURATED_TAGS.includes(t))
+  // Custom-tag chip pool — union of (every custom tag in the user's
+  // library) + (any custom tag already on THIS recipe). Lets the user
+  // re-use a tag they applied to another recipe without retyping (May
+  // 2026, Bill's ask). Sorted alphabetically. Just-typed tags land in
+  // local `tags` and show up here immediately because they're
+  // unioned in.
+  const onThisRecipeCustom = tags.filter(t => !CURATED_TAGS.includes(t))
+  const allCustomChips = [...new Set([...libraryCustomTags, ...onThisRecipeCustom])].sort()
 
   return (
     <div>
@@ -406,9 +411,36 @@ function TagSelector({ tags, onChange }) {
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
             ✏️ Custom
           </p>
+          {/* Custom-tag chip row — every custom tag the user has used
+              anywhere in their vault renders here as a toggleable chip,
+              same treatment as curated chips. Filled orange = applied to
+              this recipe. Tap to toggle. Just-typed tags appear in the
+              row immediately via `allCustomChips` (union of library +
+              this recipe's custom tags). */}
+          {allCustomChips.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {allCustomChips.map(tag => {
+                const selected = tags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={
+                      selected
+                        ? 'px-3 py-1.5 bg-orange-600 text-white border-2 border-orange-600 rounded-full text-xs font-semibold transition-colors'
+                        : 'px-3 py-1.5 bg-white text-gray-700 border-2 border-gray-200 hover:border-orange-300 rounded-full text-xs font-semibold transition-colors'
+                    }
+                  >
+                    #{tag}
+                  </button>
+                )
+              })}
+            </div>
+          )}
           <div className="flex gap-2">
             <input
-              placeholder="Add your own tag…"
+              placeholder="Add a new custom tag…"
               value={customInput}
               onChange={e => setCustomInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom() }}}
@@ -421,16 +453,6 @@ function TagSelector({ tags, onChange }) {
               className="px-4 py-2 bg-orange-600 text-white rounded-xl text-sm font-semibold"
             >Add</button>
           </div>
-          {customTags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {customTags.map(tag => (
-                <span key={tag} className="flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                  #{tag}
-                  <button type="button" onClick={() => toggleTag(tag)} className="ml-1 text-orange-400 hover:text-orange-700" aria-label={`Remove ${tag}`}>×</button>
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -438,7 +460,7 @@ function TagSelector({ tags, onChange }) {
 }
 
 // ── EDIT FORM ──
-function EditForm({ initial, initialIngredients, onSave, onCancel, photoUrl, onUploadImage, onPasteImage, uploadingPhoto }) {
+function EditForm({ initial, initialIngredients, onSave, onCancel, photoUrl, onUploadImage, onPasteImage, uploadingPhoto, libraryCustomTags }) {
   const editPhotoInputRef = useRef(null)
   const [title, setTitle] = useState(initial.title || '')
   const [description, setDescription] = useState(initial.description || '')
@@ -582,7 +604,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel, photoUrl, onU
           className={fieldBase} />
       </div>
 
-      <TagSelector tags={tags} onChange={setTags} />
+      <TagSelector tags={tags} onChange={setTags} libraryCustomTags={libraryCustomTags} />
 
       <div>
         <label className={labelClass}>Ingredients</label>
@@ -2012,6 +2034,10 @@ export default function MyRecipeVaultPage() {
   const favoritesCount = recipes.filter(r => r.is_favorite).length
 
   const allTags = [...new Set(recipes.flatMap(r => r.tags || []))]
+  // Custom tags the user has used anywhere — feeds TagSelector so the
+  // user can reuse them on a new recipe without retyping. Sorted in
+  // the component; the unsorted union is fine here.
+  const libraryCustomTags = allTags.filter(t => !CURATED_TAGS.includes(t))
 
   // ── DETAIL VIEW ──
   if (view === 'detail' && viewing) {
@@ -2426,6 +2452,7 @@ export default function MyRecipeVaultPage() {
           <EditForm initial={viewing} initialIngredients={editIngredients}
             photoUrl={viewing.photo_url || ''}
             uploadingPhoto={uploadingPhoto}
+            libraryCustomTags={libraryCustomTags}
             onUploadImage={(file) => attachImageBlobToRecipe(file, viewing.id, user.id)}
             onPasteImage={() => pasteImageFromClipboard(viewing.id)}
             onSave={async (updates) => { await updateRecipe(viewing.id, updates); setView('detail') }}
@@ -3131,7 +3158,7 @@ export default function MyRecipeVaultPage() {
                   className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors" />
               </div>
 
-              <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} />
+              <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} libraryCustomTags={libraryCustomTags} />
 
               <div>
                 <label className="block text-base font-bold text-gray-800 mb-2">Ingredients</label>
