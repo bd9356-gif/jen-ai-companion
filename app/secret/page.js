@@ -3531,14 +3531,21 @@ export default function MyRecipeVaultPage() {
             )
             const favs = cardBoxList.filter(r => r.is_favorite)
             const nonFavs = cardBoxList.filter(r => !r.is_favorite)
+            // Surprise me pool — only dinner-tagged non-favorites (May
+            // 2026, Bill's ask). This is the "what should I cook
+            // tonight?" surface, so the wildcard should land on actual
+            // dinner options, not desserts or sides. Recipes without a
+            // dinner tag never appear in the surprise rotation; they're
+            // still browsable via the All Recipes drawer.
+            const surprisePool = nonFavs.filter(r => (r.tags || []).includes('dinner'))
             function rollSurprise() {
-              if (nonFavs.length === 0) return
-              let pick = nonFavs[Math.floor(Math.random() * nonFavs.length)]
+              if (surprisePool.length === 0) return
+              let pick = surprisePool[Math.floor(Math.random() * surprisePool.length)]
               // Try to avoid landing on the same one twice in a row.
-              if (surpriseRecipe && nonFavs.length > 1) {
+              if (surpriseRecipe && surprisePool.length > 1) {
                 let safety = 5
                 while (pick?.id === surpriseRecipe.id && safety-- > 0) {
-                  pick = nonFavs[Math.floor(Math.random() * nonFavs.length)]
+                  pick = surprisePool[Math.floor(Math.random() * surprisePool.length)]
                 }
               }
               setSurpriseRecipe(pick)
@@ -3556,8 +3563,8 @@ export default function MyRecipeVaultPage() {
                   <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
                     What&rsquo;s Cooking?
                   </p>
-                  <p className="text-sm text-gray-500 mt-1 leading-snug">
-                    Favorites up top, a wildcard when you&rsquo;re stuck, the whole vault one tap below.
+                  <p className="text-base text-gray-600 mt-2 leading-snug">
+                    Favorites you love, a surprise pick when you want one, and your full vault &mdash; cards or stories &mdash; just a tap away.
                   </p>
                 </div>
                 {/* Surprise me — header chip + result card */}
@@ -3568,8 +3575,10 @@ export default function MyRecipeVaultPage() {
                   </p>
                   <button
                     onClick={rollSurprise}
-                    disabled={nonFavs.length === 0}
-                    title="Pick a random non-favorite recipe"
+                    disabled={surprisePool.length === 0}
+                    title={surprisePool.length === 0
+                      ? 'No dinner-tagged recipes yet — tag one as #dinner to unlock'
+                      : 'Pick a random dinner recipe'}
                     className="text-xs font-semibold border-2 border-sky-300 bg-sky-50 text-sky-800 rounded-lg px-3 py-1.5 hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
                     🎲 Surprise me
