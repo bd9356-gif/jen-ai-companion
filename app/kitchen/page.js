@@ -273,7 +273,7 @@ export default function KitchenPage() {
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="px-5 py-3 flex items-center justify-between max-w-lg mx-auto">
         <div>
-          <h1 className="text-lg font-bold text-gray-900">👨‍🍳 MyKitchen</h1>
+          <h1 className="text-lg font-bold text-gray-900">🍽️ MyRecipe Companion</h1>
           <p className="text-sm text-gray-500 mt-0.5">Everything you need — all in one place.</p>
         </div>
         <button onClick={() => window.location.href='/profile'}

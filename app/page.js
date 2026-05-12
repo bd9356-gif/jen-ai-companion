@@ -119,7 +119,7 @@ export default function HomePage() {
           </div>
           {user ? (
             <a href="/kitchen" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
-              MyKitchen →
+              Enter →
             </a>
           ) : (
             <a href="/login" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
