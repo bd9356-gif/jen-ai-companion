@@ -285,7 +285,7 @@ export default function ShoppingListPage() {
                   <button
                     onClick={cleanUpList}
                     disabled={cleaningList}
-                    title="Use AI to consolidate fractions into whole store units, strip cooking-only measures (tsp/tbsp/pinch), and dedupe repeats"
+                    title="Ask Chef Jen to consolidate fractions into whole store units, strip cooking-only measures (tsp/tbsp/pinch), and dedupe repeats"
                     className="text-xs font-semibold text-purple-700 border border-purple-200 rounded-lg px-2.5 py-1 hover:bg-purple-50 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {cleaningList ? '✨ Cleaning…' : '✨ Clean Up List'}

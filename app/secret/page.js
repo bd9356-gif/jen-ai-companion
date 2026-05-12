@@ -2075,7 +2075,7 @@ export default function MyRecipeVaultPage() {
               <button onClick={() => setView('edit')}
                 className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1">Edit</button>
               <button onClick={() => setView('enhance')}
-                className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2.5 py-1">AI</button>
+                className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2.5 py-1">Chef Jen</button>
               <button onClick={() => toggleFavorite(viewing)}
                 title={viewing.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
                 className={`text-sm font-semibold border rounded-lg px-2 py-1 transition-colors leading-none ${
@@ -2472,7 +2472,7 @@ export default function MyRecipeVaultPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null); setTransformResult(null); setTransformPrefs([]) }}
               className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">✨ AI Kitchen Helpers</h1>
+            <h1 className="text-lg font-bold text-gray-900">✨ Chef Jen Kitchen Helpers</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16 space-y-5">
@@ -2526,7 +2526,7 @@ export default function MyRecipeVaultPage() {
               <span className="text-2xl">🧹</span>
               <div>
                 <p className="font-bold text-gray-900">Polish this recipe</p>
-                <p className="text-xs text-gray-600 mt-0.5">AI tidies up your steps, fixes wording, and makes instructions easier to follow.</p>
+                <p className="text-xs text-gray-600 mt-0.5">Chef Jen tidies up your steps, fixes the wording, and makes instructions easier to follow.</p>
               </div>
             </div>
             <button onClick={() => handleEnhance('enhance')} disabled={enhancing}
@@ -2607,7 +2607,7 @@ export default function MyRecipeVaultPage() {
               <span className="text-2xl">📊</span>
               <div>
                 <p className="font-bold text-gray-900">Add cooking details</p>
-                <p className="text-xs text-gray-600 mt-0.5">AI estimates prep & cook time, difficulty, equipment, and nutrition.</p>
+                <p className="text-xs text-gray-600 mt-0.5">Chef Jen estimates prep & cook time, difficulty, equipment, and nutrition.</p>
               </div>
             </div>
             <button onClick={() => handleEnhance('generate_info')} disabled={enhancing}
@@ -2677,7 +2677,7 @@ export default function MyRecipeVaultPage() {
               <span className="text-2xl">🌿</span>
               <div>
                 <p className="font-bold text-gray-900">Make this recipe more…</p>
-                <p className="text-xs text-gray-600 mt-0.5">Pick one or more cooking-style preferences — AI will adjust the recipe to match.</p>
+                <p className="text-xs text-gray-600 mt-0.5">Pick one or more cooking-style preferences — Chef Jen will adjust the recipe to match.</p>
               </div>
             </div>
 
@@ -2907,7 +2907,7 @@ export default function MyRecipeVaultPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          <p className="text-sm text-gray-600">Pick a way to bring a recipe in. AI will extract and clean it up.</p>
+          <p className="text-sm text-gray-600">Pick a way to bring a recipe in. Chef Jen will extract and clean it up.</p>
 
           {/* Tab strip — four alternatives, one at a time. URL is the
               default and most common; Paste is the "site blocked the
@@ -3037,7 +3037,7 @@ export default function MyRecipeVaultPage() {
                   open. Chevron flips ▸/▾ to telegraph state. */}
               {[
                 { key: 'text', emoji: '📝', title: 'Option 1 — Paste Text', body: 'Copy the recipe from the site (Select All works great) and paste it here.' },
-                { key: 'print', emoji: '🖨️', title: 'Option 2 — Print Capture', body: 'Open the site’s Print Capture, save it, copy all, and paste it here. AI cleans it automatically.' },
+                { key: 'print', emoji: '🖨️', title: 'Option 2 — Print Capture', body: 'Open the site’s Print Capture, save it, copy all, and paste it here. Chef Jen cleans it automatically.' },
                 { key: 'shortcut', emoji: '📲', title: 'Option 3 — Share Shortcut', body: 'Tap Share → choose the app’s Share Shortcut to send the recipe straight in — no copying needed, just click paste.' },
               ].map(opt => {
                 const open = pasteOption === opt.key
