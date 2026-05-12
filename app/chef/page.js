@@ -405,7 +405,7 @@ export default function ChefPage() {
              mode at a glance, no matter which classroom they're in. */
           <div className="text-center pb-4">
             <p className={`text-xl sm:text-2xl font-bold leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
-              {isPractice ? 'What should I cook for you?' : 'What can I teach you?'}
+              {isPractice ? 'Let’s cook something great.' : 'What can I teach you?'}
             </p>
             <p className="text-xs sm:text-sm text-gray-600 mt-1.5 leading-snug max-w-md mx-auto">
               {isPractice
