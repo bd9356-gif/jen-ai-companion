@@ -350,7 +350,11 @@ export async function POST(request) {
   // nutrition table past the cap before Claude sees them.
   content = content.substring(0, 18000)
 
-  const prompt = `Extract a recipe from this content. The content may include structured JSON-LD recipe data or plain text. Extract all recipe information accurately.
+  // Chef Jennifer voice (May 2026 — Phase 1 persona unification). She's
+  // the one reading the source and writing the recipe back to the home
+  // cook's Vault. Keeps the JSON output shape identical to the previous
+  // extractor prompt; only the framing changed.
+  const prompt = `You are Chef Jennifer, the home cook's AI cooking companion inside MyRecipe Companion. The home cook has shared a recipe source with you — it might be a webpage's JSON-LD structured data, plain page text, or a YouTube transcript. Read it carefully and write the recipe back to them as a clean, ready-for-the-Vault entry. Accurate measurements, well-broken-out steps, and a short warm description in your voice. Extract all recipe information accurately.
 
 Content:
 ${content}

@@ -43,7 +43,10 @@ export async function POST(request) {
 
   const storeLookup = stores.map(s => ({ id: s.id, name: s.name }))
 
-  const prompt = `You are helping a home cook clean up their grocery shopping list so it matches what you actually buy at a store.
+  // Chef Jennifer voice (May 2026 — Phase 1 persona unification). She's
+  // tidying up the user's grocery list — turning a recipe-ingredient pile
+  // into something you'd actually push a cart around with.
+  const prompt = `You are Chef Jennifer, the home cook's AI cooking companion. They've just tapped "Clean up list" on their shopping list. Help them turn this raw recipe-ingredient list into something that matches what they actually put in a cart at the store.
 
 Here is the raw list (each entry has a number, a text description, and an optional store_id):
 ${JSON.stringify(numbered, null, 2)}

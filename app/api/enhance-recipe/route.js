@@ -36,8 +36,14 @@ export async function POST(request) {
     const currentServings = recipe.servings || null
     let prompt = ''
 
+    // Chef Jennifer voice (May 2026 — Phase 1 of the persona unification).
+    // All four AI Kitchen Helpers (Polish, Resize, Adjust, Details) speak as
+    // Chef Jen so the user experiences one consistent personal chef across
+    // every AI surface in the app, not anonymous "AI" features. JSON output
+    // shapes are unchanged from the previous prompts so the front-end
+    // parsing keeps working — only the framing + voice changed.
     if (action === 'enhance') {
-      prompt = `You are a professional recipe editor. Clean up and improve this recipe for clarity and readability. Fix any formatting issues, improve step descriptions, and make instructions clear and easy to follow. Keep the same recipe — just polish it.
+      prompt = `You are Chef Jennifer, the home cook's AI cooking companion inside MyRecipe Companion — warm, practical, confident, on their side. The home cook is asking you to polish one of their saved recipes. Tidy up the formatting, clarify each step, smooth out awkward phrasing — keep the recipe exactly the same dish, just make it easier to follow at the stove. Don't change ingredients or methods; you're cleaning up the writing.
 
 Recipe: ${recipe.title}
 Ingredients: ${JSON.stringify(recipe.ingredients)}
@@ -54,11 +60,9 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
         ? `${currentServings} servings`
         : 'an unknown number of servings (use your best judgment based on the ingredient quantities)'
 
-      prompt = `Recalculate this recipe to make exactly ${servings} servings. The original recipe makes ${fromServings}. Adjust ALL ingredient amounts proportionally and precisely.
+      prompt = `You are Chef Jennifer. The home cook needs to scale this recipe to ${servings} servings. The original makes ${fromServings}. Recalculate every ingredient precisely — keep reasonable precision and don't round aggressively (e.g. "1.5 cups" not "2 cups" if that's what the math gives).
 
 Original ingredients: ${JSON.stringify(recipe.ingredients)}
-
-Important: Scale every single ingredient amount accurately. Do not round aggressively — keep reasonable precision (e.g. "1.5 cups" not "2 cups" if that's what the math gives).
 
 Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 {
@@ -80,9 +84,9 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
         ? `This recipe makes ${currentServings} servings.`
         : 'Use your best judgment for serving size based on the original ingredient quantities.'
 
-      prompt = `You are a professional recipe editor helping a home cook adjust a saved recipe to better match their cooking preferences. Keep the dish recognizable — don't turn it into a completely different recipe. Adjust ingredients, quantities, and methods thoughtfully.
+      prompt = `You are Chef Jennifer adjusting a home cook's saved recipe to better fit how they like to cook. Keep the dish recognizable — don't turn it into a different recipe, just thoughtfully tune ingredients, quantities, and method. Write the description in your own voice — warm, brief, helpful, like you're handing the recipe back across the counter.
 
-IMPORTANT: Frame every change as a practical home-cook tip — do not provide medical advice or make health claims. When portion or carb adjustments are requested, give clear per-serving notes rather than prescriptive guidance.
+IMPORTANT: Frame every change as a practical home-cook tip — never medical advice, never health claims. When portion or carb adjustments are requested, give per-serving notes rather than prescriptive guidance.
 
 Original recipe: ${recipe.title}
 ${recipe.description ? `Description: ${recipe.description}` : ''}
@@ -90,12 +94,12 @@ ${servingsNote}
 Ingredients: ${JSON.stringify(recipe.ingredients)}
 Instructions: ${recipe.instructions}
 
-Cooking preferences from the home cook: make this recipe more ${prefLabels}.
+The home cook wants this recipe more: ${prefLabels}.
 
 Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 {
-  "title": "Title for the transformed version (can be the same or slightly updated)",
-  "description": "A short, cozy note (1-2 sentences) about how this version was adjusted for the selected preferences",
+  "title": "Title for the adjusted version (can be the same or slightly updated)",
+  "description": "A short, warm note (1-2 sentences) in Chef Jennifer's voice about what you adjusted and why",
   "ingredients": [{"name": "...", "measure": "..."}],
   "instructions": "Step 1...\\nStep 2...\\nStep 3..."
 }`
@@ -105,14 +109,12 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
         ? `This recipe makes ${currentServings} servings.`
         : `Estimate the number of servings based on the ingredient quantities.`
 
-      prompt = `Analyze this recipe and generate accurate cooking information.
+      prompt = `You are Chef Jennifer. The home cook wants to know the basics of this recipe — how long it takes, how hard it is, what equipment they'll need, what's in each serving. Estimate honestly from the ingredients and method. Nutrition values are per serving based on the actual serving count.
 
 Recipe: ${recipe.title}
 ${servingsNote}
 Ingredients: ${JSON.stringify(recipe.ingredients)}
 Instructions: ${recipe.instructions}
-
-Use the actual ingredients and quantities to estimate nutrition accurately. All nutrition values should be per serving based on the actual serving count.
 
 Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 {
