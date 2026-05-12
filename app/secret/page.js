@@ -2044,21 +2044,26 @@ export default function MyRecipeVaultPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => { setView('list'); setViewing(null); setEnhanceResult(null); setGeneratedInfo(null) }}
               className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <div className="flex gap-2">
+            {/* Detail-view action cluster — text-only labels (May 2026).
+                Heart kept as an icon because ❤️ vs 🤍 communicates state
+                at a glance better than any word. All other buttons drop
+                the leading emoji and tighten padding (px-2.5 py-1) so
+                six buttons fit a phone without wrapping. */}
+            <div className="flex gap-1.5">
               <button onClick={() => setView('edit')}
-                className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">✏️ Edit</button>
+                className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1">Edit</button>
               <button onClick={() => setView('enhance')}
-                className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5">✨ AI</button>
+                className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2.5 py-1">AI</button>
               <button onClick={() => toggleFavorite(viewing)}
                 title={viewing.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
-                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
+                className={`text-sm font-semibold border rounded-lg px-2 py-1 transition-colors leading-none ${
                   viewing.is_favorite ? 'bg-rose-500 text-white border-rose-500' : 'text-rose-500 border-rose-200 hover:bg-rose-50'}`}>
                 {viewing.is_favorite ? '❤️' : '🤍'}
               </button>
               <button onClick={() => toggleCardPin(viewing.id)}
-                className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${
+                className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${
                   pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200'}`}>
-                {pinnedCards.includes(viewing.id) ? '🃏 In Cards' : '🃏 Cards'}
+                {pinnedCards.includes(viewing.id) ? 'In Cards' : 'Cards'}
               </button>
               <button onClick={async () => {
                 if (picksIds.includes(viewing.id)) {
@@ -2070,9 +2075,9 @@ export default function MyRecipeVaultPage() {
                   setPicksIds(prev => prev.includes(viewing.id) ? prev : [...prev, viewing.id])
                   showToast('Added to Maybe ✓')
                 }
-              }} className={`text-xs font-semibold border rounded-lg px-3 py-1.5 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>📅 {picksIds.includes(viewing.id) ? 'In Meal Plan' : 'Meal Plan'}</button>
+              }} className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>{picksIds.includes(viewing.id) ? 'In Plan' : 'Meal Plan'}</button>
               <button onClick={() => deleteRecipe(viewing)}
-                className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Delete</button>
+                className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-2.5 py-1">Delete</button>
             </div>
           </div>
         </header>
