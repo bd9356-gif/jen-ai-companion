@@ -611,7 +611,10 @@ function RecipeMessage({ msg, saved, onSave }) {
       <div className="w-full">
         <div className="rounded-2xl rounded-bl-sm bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 border-2 border-orange-200 overflow-hidden">
           <div className="px-4 pt-3 pb-2">
-            <p className="text-xs text-orange-700 font-semibold mb-1">🍳 Chef Jennifer made you a recipe</p>
+            {/* Eyebrow speaks AS Chef Jen — "Made you a recipe" reads as
+                her handing it over, not as a third-person announcement
+                about her. */}
+            <p className="text-xs text-orange-700 font-semibold mb-1">🍳 Made you a recipe</p>
             <h3 className="text-lg font-bold text-gray-900 leading-tight">{r.title || 'Recipe'}</h3>
             <div className="flex flex-wrap gap-1.5 mt-2">
               {r.difficulty && (
@@ -659,6 +662,13 @@ function RecipeMessage({ msg, saved, onSave }) {
               </ol>
             </div>
           )}
+          {/* Closing line in Chef Jen's voice — she hands the recipe back
+              with a small personal note, like a friend who just wrote it
+              out for you. Subtle italic so it reads as a signature line,
+              not another section header. */}
+          <div className="px-4 pb-3">
+            <p className="text-sm text-orange-800 italic">Hope you like it &mdash; let me know how it turns out.</p>
+          </div>
         </div>
 
         {/* Save row + post-save exit cue. Once `saved === true`, the
