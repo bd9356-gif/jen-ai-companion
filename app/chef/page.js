@@ -295,7 +295,7 @@ export default function ChefPage() {
   // in the same voice, not as a third-person service prompt.
   const placeholder = isPractice
     ? 'What are you in the mood for?'
-    : 'Ask me anything…'
+    : 'What’s on your mind?'
 
   // h-dvh + min-h-0 chain — locks the page to the visible viewport
   // (excluding iOS Safari's bottom URL bar) and lets only the message
@@ -405,7 +405,7 @@ export default function ChefPage() {
              mode at a glance, no matter which classroom they're in. */
           <div className="text-center pb-4">
             <p className={`text-xl sm:text-2xl font-bold leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
-              {isPractice ? 'Let’s cook something great.' : 'What can I teach you?'}
+              {isPractice ? 'Let’s cook something great.' : 'Let’s learn something new.'}
             </p>
             <p className="text-xs sm:text-sm text-gray-600 mt-1.5 leading-snug max-w-md mx-auto">
               {isPractice
