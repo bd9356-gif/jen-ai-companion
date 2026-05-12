@@ -2457,12 +2457,16 @@ export default function MyRecipeVaultPage() {
               them all on the page made it long and busy. Active tab fills
               with orange; inactive tabs are gray. 2-column grid on phones
               so the labels don't truncate. */}
-          <div className="grid grid-cols-2 gap-1.5 bg-gray-100 rounded-2xl p-1">
+          {/* Tab strip — four helpers, one at a time. Text-only labels
+              (May 2026 — emojis dropped, the tab name says enough and the
+              row gets tighter). 4-column grid so the four short labels
+              fit one row on a phone without stacking. */}
+          <div className="grid grid-cols-4 gap-1 bg-gray-100 rounded-xl p-1">
             {[
-              { key: 'polish', label: '🧹 Polish' },
-              { key: 'resize', label: '⚖️ Resize' },
-              { key: 'info', label: '📊 Details' },
-              { key: 'transform', label: '🌿 Make more…' },
+              { key: 'polish', label: 'Polish' },
+              { key: 'resize', label: 'Resize' },
+              { key: 'info', label: 'Details' },
+              { key: 'transform', label: 'Adjust' },
             ].map(t => {
               const active = helperTab === t.key
               return (
@@ -2472,8 +2476,8 @@ export default function MyRecipeVaultPage() {
                   onClick={() => setHelperTab(t.key)}
                   className={
                     active
-                      ? 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm'
-                      : 'py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800'
+                      ? 'py-1.5 rounded-lg text-sm font-semibold bg-orange-600 text-white shadow-sm'
+                      : 'py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-800'
                   }
                 >
                   {t.label}
