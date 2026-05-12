@@ -294,7 +294,7 @@ export default function ChefPage() {
   // "What should I cook for you?"), so the input invites the answer
   // in the same voice, not as a third-person service prompt.
   const placeholder = isPractice
-    ? 'Tell me what to cook…'
+    ? 'What are you in the mood for?'
     : 'Ask me anything…'
 
   // h-dvh + min-h-0 chain — locks the page to the visible viewport
