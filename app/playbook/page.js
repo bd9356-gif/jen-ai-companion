@@ -67,8 +67,8 @@ const BUCKETS = [
   // Body section names + taglines kept consistent with the info-callout
   // phrasing (May 2026): each notebook has a 🎓 Teach book and a 🍳
   // Practice book; the descriptor says what's saved in this one.
-  { key: 'teach',    emoji: '🎓', label: 'Teach',    bodyEmoji: '🎓', bodyName: 'Teach',    desc: 'Technique videos to learn from. File the keepers, × the rest.' },
-  { key: 'practice', emoji: '🍳', label: 'Practice', bodyEmoji: '🍳', bodyName: 'Practice', desc: 'Recipe videos to cook. Save the keepers, × the rest.' },
+  { key: 'teach',    emoji: '🎓', label: 'Teach',    bodyEmoji: '🎓', bodyName: 'Teach',    desc: 'Your technique videos go here — keep what helps, clear the rest.' },
+  { key: 'practice', emoji: '🍳', label: 'Practice', bodyEmoji: '🍳', bodyName: 'Practice', desc: 'Your cooking videos go here — save the keepers, clear the rest.' },
 ]
 
 // Full Tailwind class literals per bucket — v4 JIT requires complete strings.
