@@ -229,7 +229,7 @@ export default function ShoppingListPage() {
       const { data: inserted, error: insErr } = await supabase.from('shopping_list').insert(rows).select()
       if (insErr) { showToast('Could not save cleaned list'); return }
       setShoppingList(inserted || [])
-      showToast(`Chef Jen cleaned your list ✨ — ${data.items.length} item${data.items.length === 1 ? '' : 's'}`)
+      showToast(`All tidied up ✨ — ${data.items.length} item${data.items.length === 1 ? '' : 's'} ready to shop`)
     } catch (err) {
       showToast('Cleanup failed: ' + err.message)
     } finally {

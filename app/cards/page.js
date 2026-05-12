@@ -592,7 +592,7 @@ export default function CardsPage() {
               </button>
             )}
             {loadingSuggestions && (
-              <div className="text-center py-4 text-gray-500 text-sm">Chef Jen is thinking&hellip;</div>
+              <div className="text-center py-4 text-gray-500 text-sm">Hold on, thinking on this one&hellip;</div>
             )}
             {suggestions && (
               <div className="space-y-3">
@@ -604,7 +604,7 @@ export default function CardsPage() {
                 ))}
                 <button onClick={getSuggestions}
                   className="w-full py-2 text-xs text-purple-600 font-semibold hover:text-purple-800">
-                  ↺ Ask Chef Jen again
+                  ↺ Want a different take? Try again.
                 </button>
               </div>
             )}
