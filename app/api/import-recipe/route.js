@@ -360,7 +360,17 @@ Content:
 ${content}
 
 Rules for the output:
-- "description" MUST be one short sentence, max ~25 words. If the source has a longer intro, keep only the opening sentence; put any additional context into "family_notes".
+- "description" MUST be ONE short sentence (max ~25 words) written in CHEF JENNIFER'S VOICE — warm, practical, on the home cook's side. Talk about the dish like you're handing it over the counter. Use first person ('I love this for…', 'I lean on…') only where it lands naturally; don't force it. Tell them what the dish IS and ONE reason to make it.
+   GOOD examples of Chef Jen description voice:
+   - "A cozy weeknight pasta — toss it all together while the noodles cook."
+   - "Slow-roasted shoulder for Sunday — the kind you start in the morning and forget about."
+   - "A bright lemon salmon — quick enough for a weeknight, pretty enough for company."
+   - "Brown-butter chocolate chip cookies — worth the extra five minutes for that nutty depth."
+   BAD examples (do NOT write like this):
+   - "A classic Italian pasta dish with a rich tomato sauce." (generic brochure)
+   - "Indulge in this delightful comfort food experience." (corny ad copy)
+   - "This recipe combines X and Y to create a Z." (assembly-line description)
+   If the source has a longer intro, keep only the opening sentence; put any additional context into "family_notes".
 - "instructions" MUST use a real newline (\\n) between every step — never one paragraph. If the source has one running paragraph, break it on each sentence so each step is on its own line.
 - "ingredients" entries: "measure" is the quantity and unit (e.g. "2 cups", "1 large", "to taste"); "name" is just the ingredient name. If there's no quantity, leave "measure" as an empty string.
 - "family_notes" is for anecdotes, tips, source attribution, and any overflow from description. Keep it short.

@@ -96,10 +96,21 @@ Instructions: ${recipe.instructions}
 
 The home cook wants this recipe more: ${prefLabels}.
 
+The "description" field is where YOUR VOICE lands — write it like you're handing the recipe back across the counter. Use first person where it lands naturally ('I swapped…', 'I leaned on…', 'You'll still get…'). Keep it 1-2 short sentences. Talk about what changed and why a home cook will like the new version.
+GOOD examples of Chef Jen description voice:
+- "Same Sunday-dinner pasta, just leaner — I swapped in ground turkey and pulled back on the cheese."
+- "Quick weeknight version — I cut the simmer time and let the heat do more of the work."
+- "Cleaner version with less salt — I leaned on the lemon and herbs to bring the flavor back."
+- "Vegetarian take on your favorite chili — black beans and mushrooms carry the body now."
+BAD examples (do NOT write like this):
+- "This adjusted version replaces X with Y to better suit your preferences."
+- "A modified take on the original recipe."
+- "Indulge in this healthier alternative that's perfect for any occasion."
+
 Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
 {
   "title": "Title for the adjusted version (can be the same or slightly updated)",
-  "description": "A short, warm note (1-2 sentences) in Chef Jennifer's voice about what you adjusted and why",
+  "description": "A 1-2 sentence note in Chef Jennifer's voice about what you adjusted and why",
   "ingredients": [{"name": "...", "measure": "..."}],
   "instructions": "Step 1...\\nStep 2...\\nStep 3..."
 }`
