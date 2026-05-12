@@ -289,9 +289,13 @@ export default function ChefPage() {
   const accentChip  = isPractice
     ? 'hover:bg-orange-50 hover:border-orange-200 text-gray-700'
     : 'hover:bg-sky-50 hover:border-sky-200 text-gray-700'
+  // Placeholder speaks AS Chef Jen, not about her — the heading just
+  // asked the user a question in her voice ("What can I teach you?" /
+  // "What should I cook for you?"), so the input invites the answer
+  // in the same voice, not as a third-person service prompt.
   const placeholder = isPractice
-    ? 'Tell Chef Jennifer what to cook…'
-    : 'Ask Chef Jennifer anything…'
+    ? 'Tell me what to cook…'
+    : 'Ask me anything…'
 
   // h-dvh + min-h-0 chain — locks the page to the visible viewport
   // (excluding iOS Safari's bottom URL bar) and lets only the message
