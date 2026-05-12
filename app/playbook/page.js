@@ -853,7 +853,7 @@ export default function PlaybookPage() {
                     <span className={`text-sm font-bold ${RECIPES_COLOR.title}`}>Chef Jennifer &middot; 🍳 Practice</span>
                     <span className={`text-xs font-semibold ${RECIPES_COLOR.pill} px-2 py-0.5 rounded-full`}>{recipes.length}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-7">Recipes she creates. Save the keepers, × the rest.</p>
+                  <p className="text-xs text-gray-600 mt-1 ml-7">The recipes we make together go here &mdash; save the keepers, clear the rest.</p>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {recipes.length === 0 ? (
@@ -884,7 +884,7 @@ export default function PlaybookPage() {
                     <span className={`text-sm font-bold ${NOTES_COLOR.title}`}>Chef Jennifer &middot; 🎓 Teach</span>
                     <span className={`text-xs font-semibold ${NOTES_COLOR.pill} px-2 py-0.5 rounded-full`}>{notes.length}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 ml-7">Answers she teaches you. File the keepers, × the rest.</p>
+                  <p className="text-xs text-gray-600 mt-1 ml-7">Your questions go here &mdash; keep what helps, clear the rest.</p>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {notes.length === 0 ? (
