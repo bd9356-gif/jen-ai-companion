@@ -3431,7 +3431,17 @@ export default function MyRecipeVaultPage() {
                 })()}
               </select>
             ) : (
-              <div className="flex-1" />
+              /* Portfolio-side counter pill — balances the action
+                 cluster on the right by filling the row 2 left side
+                 with a count of filed items. Without this, Portfolio
+                 view's row 2 had a 5-button cluster floating right with
+                 a big white-space hole on the left. */
+              <div className="flex-1 flex items-center min-w-0">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-50 border-2 border-orange-200 rounded-lg px-2.5 py-1.5 whitespace-nowrap">
+                  <span>💎</span>
+                  <span>{portfolioNotes.length + portfolioVideos.length} filed from Playbook</span>
+                </span>
+              </div>
             )}
             <div className="flex gap-1 shrink-0">
               {/* Search 🔍 — hidden on Portfolio view (notes have no
