@@ -1,8 +1,9 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { normalizeInstructionsArray, instructionsToString } from '@/lib/normalize_instructions'
 import { searchLibrary } from '@/lib/library_search'
+import { pickPrompts } from '@/lib/chef_prompt_bank'
 
 /* ─────────────────────────────────────────────────────────────
    Chef Jennifer — single chat-first surface (Cooking School #2).
@@ -30,23 +31,9 @@ import { searchLibrary } from '@/lib/library_search'
    common questions.
    ─────────────────────────────────────────────────────────── */
 
-const TEACH_PROMPTS = [
-  'How do I know when oil is hot enough for frying?',
-  "What's a good substitute for buttermilk?",
-  'How do I make pasta not stick together?',
-  'How do I fix a sauce that\'s too salty?',
-  "What's the difference between baking soda and baking powder?",
-  'How long does cooked chicken last in the fridge?',
-]
-
-const PRACTICE_PROMPTS = [
-  'A cozy weeknight dinner with chicken',
-  "Something light for lunch with what's in the fridge",
-  'A 30-minute pasta with bold flavors',
-  'A make-ahead breakfast for busy mornings',
-  'An impressive dinner for date night',
-  'Something quick and vegetarian',
-]
+// Suggestion-chip prompts moved to lib/chef_prompt_bank.js (May 2026,
+// Bill's "100-question rotating bank" ask). The bank is large enough
+// to feel fresh on every visit; pickPrompts() shuffles + slices 6.
 
 export default function ChefPage() {
   const supabase = createClient(
@@ -282,7 +269,12 @@ export default function ChefPage() {
 
   // Mode-aware styling helpers — fully literal class strings so v4 JIT picks them up.
   const isPractice = mode === 'practice'
-  const promptList = isPractice ? PRACTICE_PROMPTS : TEACH_PROMPTS
+  // Pull 6 random prompts from the bank. useMemo locks the pick per
+  // mode-change so the chips don't re-shuffle on every render
+  // (otherwise the user would see them jump as they type). Switching
+  // Teach ↔ Practice draws a fresh set; reloading the page draws a
+  // fresh set; staying on the page leaves the set stable.
+  const promptList = useMemo(() => pickPrompts(mode, 6), [mode])
   const accentBubble = isPractice ? 'bg-orange-600' : 'bg-sky-600'
   const accentRing  = isPractice ? 'focus:ring-orange-300' : 'focus:ring-sky-300'
   const accentSend  = isPractice ? 'bg-orange-600 hover:bg-orange-700' : 'bg-sky-600 hover:bg-sky-700'
