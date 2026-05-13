@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 
@@ -479,15 +479,16 @@ export default function VideosPage() {
   // all AND together. Shorts (under 3 min) are always excluded — no
   // toggle.
   //
-  // Sort strategy varies by tab so each view highlights its best content:
-  //   teach    → teachScore (teaching-channel boost × popularity)
-  //   practice → practiceScore (recipe completeness × popularity)
-  //
-  // Featured chip (both tabs): strictly is_featured only — the curator's
-  // picks, no fillers. Curator rows go to /admin/featured (or
-  // /admin/library) → flips cooking_videos.is_featured.
-  const afterFilter = videos
-    .filter(v => {
+  // Order strategy (May 2026, Bill's "make all selection random" ask):
+  // Videos render in a stable random shuffle within each tab + topic
+  // combo. Reshuffles when the user changes tab or topic chip; stable
+  // during scroll / re-renders so the page doesn't jump under them.
+  // This turns every visit into discovery — the user encounters a
+  // different mix each time, not the same top-scored set every time.
+  // The Featured chip (handled below) still does its job — strict
+  // is_featured filter for the curator's picks.
+  const afterFilter = useMemo(() => {
+    const matching = videos.filter(v => {
       const meta = metadata[v.id]
       const hasRecipe = meta?.ingredients?.length > 0
       const matchFilter = (filter === 'practice' && hasRecipe) || (filter === 'teach' && !hasRecipe)
@@ -509,14 +510,17 @@ export default function VideosPage() {
       })()
       return matchFilter && matchShorts && matchTopic
     })
-    .sort((a, b) => {
-      // Featured videos always lead, regardless of tab or topic chip.
-      // Within featured (and within not-featured), the tab-specific
-      // score takes over so the rest of the list stays meaningful.
-      if (!!a.is_featured !== !!b.is_featured) return a.is_featured ? -1 : 1
-      if (filter === 'practice') return practiceScore(b, metadata[b.id]) - practiceScore(a, metadata[a.id])
-      return teachScore(b) - teachScore(a)
-    })
+    // Fisher-Yates shuffle on a copy. useMemo's dep list (filter,
+    // topic, videos, metadata) controls when this re-runs — change
+    // tab or chip = fresh shuffle; otherwise the order stays put.
+    const shuffled = [...matching]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videos, metadata, filter, topic])
   let filtered = afterFilter
   // Featured chip — strictly is_featured only. Earlier the chip used a
   // featured-first-then-fill pattern that padded with the auto top-by-score

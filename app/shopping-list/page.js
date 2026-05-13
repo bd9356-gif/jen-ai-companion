@@ -342,12 +342,27 @@ export default function ShoppingListPage() {
         )}
       </main>
 
-      {/* Print container — invisible in normal view, becomes the only
-          visible element during print via the @media print rules below.
-          Text comes from buildShoppingListText() which already groups by
-          store and includes [ ] checkboxes. printText is cleared on
-          afterprint so this stays empty between prints. */}
-      <div id="print-shopping-list" aria-hidden="true" style={{ display: printText ? 'block' : 'none' }}>
+      {/* Print container — ALWAYS rendered with the latest print text,
+          parked off-screen via fixed positioning so it doesn't take up
+          any visual space in normal view. @media print rules below
+          pull it back on-screen and hide everything else.
+          Why always-rendered (not display-toggled): the previous version
+          had `style={{ display: printText ? 'block' : 'none' }}` which
+          relied on React committing the state change BEFORE
+          window.print() fires. On slow devices the 50ms setTimeout
+          wasn't enough — the printer captured the DOM with display:none
+          still applied and printed blank pages. Always-rendered +
+          off-screen + visibility-only print rules has no race. */}
+      <div
+        id="print-shopping-list"
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: 0,
+          width: '8.5in',
+        }}
+      >
         <pre style={{
           fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
           whiteSpace: 'pre-wrap',
@@ -363,11 +378,11 @@ export default function ShoppingListPage() {
           body * { visibility: hidden !important; }
           #print-shopping-list, #print-shopping-list * { visibility: visible !important; }
           #print-shopping-list {
-            position: absolute !important;
+            position: fixed !important;
             left: 0 !important;
             top: 0 !important;
+            right: 0 !important;
             width: 100% !important;
-            display: block !important;
           }
         }
       `}</style>
