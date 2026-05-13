@@ -25,8 +25,6 @@ export default function ShoppingListPage() {
   // behind the app when the user dismisses the sheet without printing —
   // and there's no obvious way out from a phone. Printing the current
   // window with @media print rules avoids the popup entirely.
-  const [printText, setPrintText] = useState('')
-
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
   async function loadShoppingList(userId) {
@@ -179,20 +177,75 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
-    setPrintText(text)
-    // One-tick wait so the hidden print container has rendered with the
-    // text before the print dialog opens. afterprint fires whether the
-    // user prints or cancels (in every browser including iOS Safari),
-    // so the container is cleared either way and the page returns to
-    // its normal state.
+    // Direct-DOM print path (May 2026 rewrite). Earlier attempts
+    // relied on a React-state-controlled print container hidden via
+    // CSS visibility — that combination produced 3 blank pages
+    // because visibility:hidden elements still take up document
+    // flow and the printer paginated them across pages without
+    // ever stamping the print container. The fix: write the print
+    // container directly to <body> so it's a true sibling of the
+    // app's root, and use display:none on every other body child to
+    // actually remove them from the print layout. No React race,
+    // no @media-print selector games — printer sees one element
+    // exactly where we put it.
+    const TEMP_ID = 'print-shopping-list-temp'
+    const STYLE_ID = 'print-shopping-list-style-temp'
+    // Defensive cleanup of any leftovers from a previous run.
+    document.getElementById(TEMP_ID)?.remove()
+    document.getElementById(STYLE_ID)?.remove()
+
+    const container = document.createElement('div')
+    container.id = TEMP_ID
+    Object.assign(container.style, {
+      position: 'fixed',
+      inset: '0',
+      background: 'white',
+      zIndex: '99999',
+      padding: '24px',
+      fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+      fontSize: '14px',
+      lineHeight: '1.7',
+      color: '#111',
+      whiteSpace: 'pre-wrap',
+      overflow: 'auto',
+    })
+    container.textContent = text
+
+    const styleEl = document.createElement('style')
+    styleEl.id = STYLE_ID
+    styleEl.textContent = `
+      @media print {
+        body > *:not(#${TEMP_ID}) { display: none !important; }
+        #${TEMP_ID} {
+          position: static !important;
+          inset: auto !important;
+          background: white !important;
+          padding: 24px !important;
+          overflow: visible !important;
+        }
+      }
+      @media screen {
+        #${TEMP_ID} { display: none !important; }
+      }
+    `
+
+    document.body.appendChild(container)
+    document.head.appendChild(styleEl)
+
+    const cleanup = () => {
+      container.remove()
+      styleEl.remove()
+      window.removeEventListener('afterprint', cleanup)
+    }
+    window.addEventListener('afterprint', cleanup)
+
+    // Wait one frame so the new node + style are applied before the
+    // print dialog opens. Fallback cleanup at 30s in case afterprint
+    // never fires (older mobile browsers occasionally swallow it).
     setTimeout(() => {
-      const cleanup = () => { setPrintText(''); window.removeEventListener('afterprint', cleanup) }
-      window.addEventListener('afterprint', cleanup)
       window.print()
-      // Belt-and-braces fallback in case afterprint never fires
-      // (older mobile browsers occasionally swallow it).
-      setTimeout(() => { setPrintText(''); window.removeEventListener('afterprint', cleanup) }, 5000)
-    }, 50)
+      setTimeout(cleanup, 30000)
+    }, 100)
   }
 
   // AI cleanup — round fractions, strip cooking-only measures, merge dupes.
@@ -342,50 +395,9 @@ export default function ShoppingListPage() {
         )}
       </main>
 
-      {/* Print container — ALWAYS rendered with the latest print text,
-          parked off-screen via fixed positioning so it doesn't take up
-          any visual space in normal view. @media print rules below
-          pull it back on-screen and hide everything else.
-          Why always-rendered (not display-toggled): the previous version
-          had `style={{ display: printText ? 'block' : 'none' }}` which
-          relied on React committing the state change BEFORE
-          window.print() fires. On slow devices the 50ms setTimeout
-          wasn't enough — the printer captured the DOM with display:none
-          still applied and printed blank pages. Always-rendered +
-          off-screen + visibility-only print rules has no race. */}
-      <div
-        id="print-shopping-list"
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: 0,
-          width: '8.5in',
-        }}
-      >
-        <pre style={{
-          fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-          whiteSpace: 'pre-wrap',
-          fontSize: '14px',
-          lineHeight: '1.7',
-          margin: 0,
-          padding: '24px',
-          color: '#111',
-        }}>{printText}</pre>
-      </div>
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          #print-shopping-list, #print-shopping-list * { visibility: visible !important; }
-          #print-shopping-list {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-          }
-        }
-      `}</style>
+      {/* (Print path is direct-DOM now — printShoppingList() builds
+          the print container at document.body level and tears it down
+          on afterprint. No persistent JSX print container needed.) */}
     </div>
   )
 }
