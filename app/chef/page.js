@@ -395,15 +395,31 @@ export default function ChefPage() {
              in" treatment (May 2026 weight bump). Same visual rhythm
              across both learning surfaces so the user reads the active
              mode at a glance, no matter which classroom they're in. */
-          <div className="text-center pb-4">
-            <p className={`text-xl sm:text-2xl font-bold leading-tight ${isPractice ? 'text-orange-700' : 'text-sky-700'}`}>
-              {isPractice ? 'Let’s cook something great.' : 'Let’s learn something new.'}
-            </p>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1.5 leading-snug max-w-md mx-auto">
-              {isPractice
-                ? 'Class just ended \u2014 you\u2019re in the practice kitchen. Pick an assignment or ask Chef Jennifer for a custom one.'
-                : 'You\u2019re in the classroom with your chef \u2014 ask your question, learn the skill, then head to \ud83c\udf73 Practice for your homework.'}
-            </p>
+          {/* Blackboard at the front of the room (May 2026, Bill's
+              framing). Dark slate panel with Caveat-font "chalk"
+              welcome line + a readable subline below. Per-mode accent
+              stripe (sky for Teach, orange for Practice) keeps the
+              color cue from the mode pills. The Caveat font is already
+              loaded app-wide for Cards/heritage surfaces; reusing it
+              here lands the chalk-on-slate feel without any new asset. */}
+          <div className="pb-4">
+            <div className={`rounded-2xl px-5 py-4 shadow-lg bg-slate-800 border-l-4 ${
+              isPractice ? 'border-l-orange-500' : 'border-l-sky-500'
+            }`}>
+              <p
+                className="text-white leading-snug text-center"
+                style={{ fontFamily: 'var(--font-caveat)', fontSize: '26px', fontWeight: 600 }}
+              >
+                {isPractice
+                  ? 'Welcome to the kitchen — your practice starts when you’re ready.'
+                  : 'Welcome to my classroom — class starts when you’re ready.'}
+              </p>
+              <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-snug max-w-md mx-auto text-center">
+                {isPractice
+                  ? 'Try the skill, make the dish, save the keepers, clear the rest.'
+                  : 'Ask your question, learn the technique, then cook it in 🍳 Practice.'}
+              </p>
+            </div>
           </div>
         )}
 
