@@ -345,15 +345,13 @@ export default function ShoppingListPage() {
                     📋 Copy
                   </button>
                 )}
-                {shoppingList.length > 0 && (
-                  <button
-                    onClick={printShoppingList}
-                    title="Open a printable version of the shopping list in a new window"
-                    className="text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg px-2.5 py-1 hover:bg-gray-50"
-                  >
-                    🖨️ Print
-                  </button>
-                )}
+                {/* Print button hidden (May 2026) — iOS Safari's print
+                    stack produces blank trailer pages for dynamically-
+                    injected print content and we couldn't find a JS-only
+                    workaround that holds up across devices. Copy works
+                    perfectly and lets users paste anywhere printable.
+                    When we wrap with Capacitor for iOS, swap in the
+                    native print API and bring this button back. */}
               </div>
               {shoppingList.length > 0 && (
                 <button onClick={clearShoppingList} title="Clear every item from the shopping list" className="text-xs text-red-400 hover:text-red-600 font-semibold">Clear All</button>
