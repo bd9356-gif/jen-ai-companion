@@ -159,7 +159,6 @@ export default function MealPlanPage() {
   // Print uses an in-page hidden container instead of a popup window
   // so iOS Safari doesn't strand a popup tab when the user dismisses
   // the print sheet. Mirror of the Shopping List pattern.
-  const [misePrintText, setMisePrintText] = useState('')
 
   // Pointer + touch sensors. The 8px distance gate on PointerSensor prevents
   // accidental drags when the user is just tapping a move button next to
@@ -296,21 +295,67 @@ export default function MealPlanPage() {
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
-    setMisePrintText(text)
-    // One-tick wait so the hidden print container has rendered with
-    // the text before the print dialog opens. afterprint fires whether
-    // the user prints or cancels (every browser, including iOS Safari)
-    // so the container is cleared either way. Same in-page pattern as
-    // the Shopping List — popup-based print previews can leave a
-    // stranded popup tab on iOS.
+    // Direct-DOM print path. Earlier React-state-controlled version
+    // produced blank pages because the inline display:none toggle
+    // hadn't committed before window.print() captured the DOM.
+    // This builds the print container directly on document.body so
+    // it's a true sibling of the app root, hides every other body
+    // child via @media print's display:none, and cleans up on
+    // afterprint. Same pattern Shopping List uses.
+    const TEMP_ID = 'print-mise-temp'
+    const STYLE_ID = 'print-mise-style-temp'
+    document.getElementById(TEMP_ID)?.remove()
+    document.getElementById(STYLE_ID)?.remove()
+
+    const container = document.createElement('div')
+    container.id = TEMP_ID
+    Object.assign(container.style, {
+      position: 'fixed',
+      inset: '0',
+      background: 'white',
+      zIndex: '99999',
+      padding: '24px',
+      fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+      fontSize: '14px',
+      lineHeight: '1.7',
+      color: '#111',
+      whiteSpace: 'pre-wrap',
+      overflow: 'auto',
+    })
+    container.textContent = text
+
+    const styleEl = document.createElement('style')
+    styleEl.id = STYLE_ID
+    styleEl.textContent = `
+      @media print {
+        body > *:not(#${TEMP_ID}) { display: none !important; }
+        #${TEMP_ID} {
+          position: static !important;
+          inset: auto !important;
+          background: white !important;
+          padding: 24px !important;
+          overflow: visible !important;
+        }
+      }
+      @media screen {
+        #${TEMP_ID} { display: none !important; }
+      }
+    `
+
+    document.body.appendChild(container)
+    document.head.appendChild(styleEl)
+
+    const cleanup = () => {
+      container.remove()
+      styleEl.remove()
+      window.removeEventListener('afterprint', cleanup)
+    }
+    window.addEventListener('afterprint', cleanup)
+
     setTimeout(() => {
-      const cleanup = () => { setMisePrintText(''); window.removeEventListener('afterprint', cleanup) }
-      window.addEventListener('afterprint', cleanup)
       window.print()
-      // Belt-and-braces fallback in case afterprint never fires
-      // (older mobile browsers occasionally swallow it).
-      setTimeout(() => { setMisePrintText(''); window.removeEventListener('afterprint', cleanup) }, 5000)
-    }, 50)
+      setTimeout(cleanup, 30000)
+    }, 100)
   }
 
   // Flip a pick between main and side (purely cosmetic — see
@@ -605,34 +650,10 @@ export default function MealPlanPage() {
         </div>
       )}
 
-      {/* Print container — invisible in normal view; becomes the only
-          visible element during print via the @media print rules below.
-          misePrintText is cleared on afterprint so this stays empty
-          between prints. Same pattern as the Shopping List's printer. */}
-      <div id="print-mise" aria-hidden="true" style={{ display: misePrintText ? 'block' : 'none' }}>
-        <pre style={{
-          fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-          whiteSpace: 'pre-wrap',
-          fontSize: '14px',
-          lineHeight: '1.7',
-          margin: 0,
-          padding: '24px',
-          color: '#111',
-        }}>{misePrintText}</pre>
-      </div>
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          #print-mise, #print-mise * { visibility: visible !important; }
-          #print-mise {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            display: block !important;
-          }
-        }
-      `}</style>
+      {/* (Mise print path is direct-DOM now — printMise() builds the
+          print container at document.body level and tears it down on
+          afterprint. Old JSX container + @media-visibility CSS was
+          causing blank pages on iOS Safari.) */}
     </div>
   )
 }
