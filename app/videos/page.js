@@ -643,20 +643,24 @@ export default function VideosPage() {
               where their saves end up. Replaces the old generic lede
               ("Watch the latest cooking videos…") which didn't reflect
               the room context. */}
-          {/* Centered headline + subline — the "room you're in" framing.
-              Question changes with the tab (Teach asks what to learn,
-              Practice asks what to cook); color matches the tab so the
-              eye reads the room from across the page. Matches the
-              Vault / Cards hero rhythm — title-as-question on its own
-              centered line with a quieter subtitle below. */}
-          <div className="text-center mb-4">
-            <h2 className={`text-xl sm:text-2xl font-bold leading-tight ${filter === 'teach' ? 'text-sky-700' : 'text-orange-700'}`}>
-              {filter === 'teach' ? 'What are you ready to learn today?' : 'What should we cook today?'}
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-600 leading-snug mt-1.5">
-              {filter === 'teach'
-                ? 'Your Chef learning videos are here — watch and choose what helps you, then head to 🍳 Practice for your homework.'
-                : 'Your Chef recipes and cooking videos go here — watch, choose, and save what helps you.'}
+          {/* Auditorium marquee (May 2026, Bill's framing). Chef TV is
+              the third room in the school — not a classroom (chalkboard)
+              or kitchen (counter) but a screening room with a marquee
+              out front. Deep theater red + gold accent border + uppercase
+              "NOW SHOWING" eyebrow give it the cinema-marquee feel
+              without being cartoonish. Same marquee across Teach and
+              Practice — it's the same auditorium; what's on tonight
+              differs. The Teach/Practice pill row below carries the
+              mode-specific sky/orange color signal. */}
+          <div className="mb-5 rounded-2xl bg-red-900 border-2 border-amber-400/70 px-5 py-4 shadow-lg">
+            <p className="text-[11px] font-bold text-amber-300 uppercase tracking-[0.25em] text-center mb-2">
+              🎬 Now Showing
+            </p>
+            <p className="text-xl sm:text-2xl font-bold text-white text-center leading-tight">
+              {filter === 'teach' ? "Tonight's lessons are in." : "Tonight's cooking show."}
+            </p>
+            <p className="text-sm text-amber-100 text-center mt-1.5 leading-snug">
+              {filter === 'teach' ? 'Pick a technique to learn.' : 'Pick a dish to cook along with.'}
             </p>
           </div>
 
