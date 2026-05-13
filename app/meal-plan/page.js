@@ -384,14 +384,14 @@ export default function MealPlanPage() {
 
       <header className="bg-white border-b-2 border-gray-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">📅 Meal Plan</h1>
-            {picks.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{picks.length}</span>}
+          <div className="flex items-center gap-2 min-w-0">
+            <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600 shrink-0">← Back</button>
+            <h1 className="text-lg font-bold text-gray-900 whitespace-nowrap">📅 Meal Plan</h1>
+            {picks.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full shrink-0">{picks.length}</span>}
           </div>
-          <div className="flex gap-1.5">
-            <button onClick={() => window.location.href='/cards'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50">Recipe Cards</button>
-            <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50">Recipe Vault</button>
+          <div className="flex gap-1 shrink-0">
+            <button onClick={() => window.location.href='/cards'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1.5 hover:bg-gray-50">🃏 Cards</button>
+            <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1.5 hover:bg-gray-50">🔐 Vault</button>
           </div>
         </div>
       </header>
