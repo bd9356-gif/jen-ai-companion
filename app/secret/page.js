@@ -3360,7 +3360,9 @@ export default function MyRecipeVaultPage() {
               keep the title geometrically centered. */}
           <div className="flex items-center gap-2 mb-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600 shrink-0">← Back</button>
-            <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">🔐 Recipe Vault</h1>
+            <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">
+              {listStyle === 'portfolio' ? '💎 Chef Portfolio' : '🔐 Recipe Vault'}
+            </h1>
             {/* ⚙️ Settings — opens the Vault settings view (Recently
                 Deleted recovery, future preferences). Matches the back
                 button's width so the title stays geometrically centered. */}
@@ -3955,16 +3957,18 @@ export default function MyRecipeVaultPage() {
              Tap a row to expand; tap the × to remove from the Portfolio
              (the underlying note stays in Playbook). */
           <div>
-            {/* Tagline: plain prose, no surrounding card. Keeps the
-                page light at the top and lets the Learning Videos +
-                Notes sections below carry the visual weight. Mentions
-                both kinds of content so users know Portfolio holds
-                more than just notes. */}
+            {/* Tagline (no inline title — the page header already shows
+                "💎 Chef Portfolio" when listStyle is portfolio). Just
+                the explainer prose + a back-link to My Playbook, which
+                is the source for everything that lives in here. */}
             <div className="mb-4 px-1">
-              <p className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <span>💎</span><span>Chef Portfolio</span>
-              </p>
-              <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+              <a
+                href="/playbook"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-2"
+              >
+                ← Back to My Playbook
+              </a>
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Your saved <strong>My Playbook</strong>{' '}lesson notes and learning videos, all in one place. <span className="font-bold text-orange-700">Tap <span className="bg-orange-100 px-1.5 py-0.5 rounded">×</span> on a row to send it back.</span>
               </p>
             </div>
