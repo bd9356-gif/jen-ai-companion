@@ -714,39 +714,26 @@ export default function CardsPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pt-4 pb-6 relative">
-        {/* "Recipe Box" corner label — frames the page as a literal
-            recipe box. Sits in the top-right of the main content
-            area like a paper label on the lid of a real wooden box.
-            Slight rotation for a handmade-tag feel; cream paper +
-            rose accent ties into the Cards' stationery palette. */}
-        <div
-          className="absolute top-2 right-2 sm:right-4 z-10 pointer-events-none select-none"
-          style={{ transform: 'rotate(4deg)' }}
-        >
-          <div className="bg-amber-50 border-2 border-rose-300 rounded-md px-2.5 py-1 shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-rose-700 leading-none">
-              📦 Recipe Box
-            </p>
-          </div>
-        </div>
-
-        {/* Intro block — gets some real weight because the heritage idea
-            is the emotional core of this page. Title in cursive (Caveat,
-            same script already used on Family Notes entries) so the page
-            announces itself as a card before you even see one. Subtitle
-            promoted to base size with red accent on the family-recipe
-            line so it lands rather than whispers. */}
-        <div className="text-center px-2 mb-5">
+      <main className="max-w-4xl mx-auto px-4 pt-4 pb-6">
+        {/* Intro block — framed as a recipe-box "lid." Cream paper
+            background + rose border + rounded corners visually contain
+            the title and lineage line so the user reads the intro as
+            the *front of a recipe box*, not a generic page header.
+            The frame replaces the earlier corner-label experiment —
+            framing the whole intro lands the box metaphor more cleanly
+            than a sticker in the corner. */}
+        <div className="mx-auto max-w-md bg-amber-50 border-2 border-rose-200 rounded-2xl px-6 py-5 mb-5 shadow-sm text-center">
           <p
-            className="text-gray-900 leading-none mb-1"
+            className="text-gray-900 leading-none mb-2"
             style={{ fontFamily: 'var(--font-caveat)', fontSize: '32px', fontWeight: 600 }}
           >
             Your modern recipe box.
           </p>
           <p className="text-sm sm:text-base text-gray-700 leading-snug">
             Your <span className="font-semibold text-rose-700">keep-forever</span> recipes
-            <span className="block sm:inline"> &mdash; grandmother&rsquo;s, mom&rsquo;s, aunt&rsquo;s, <span className="italic">yours</span>.</span>
+          </p>
+          <p className="text-sm sm:text-base text-gray-700 leading-snug">
+            Grandmother&rsquo;s, mom&rsquo;s, aunt&rsquo;s, <span className="italic">yours</span>.
           </p>
         </div>
 
