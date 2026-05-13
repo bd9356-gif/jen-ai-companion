@@ -225,13 +225,17 @@ export default function ShoppingListPage() {
     }
     window.addEventListener('afterprint', cleanup)
 
-    // Wait a frame so the DOM updates land before the print dialog
-    // opens. Fallback cleanup at 30s in case afterprint never fires
+    // Call print() SYNCHRONOUSLY in the same tick as the user's tap.
+    // Two reasons:
+    //   1. setTimeout breaks the user-gesture chain → iOS Safari shows
+    //      "This website has been blocked from auto printing" prompt.
+    //   2. setTimeout delay let iOS take its print snapshot BEFORE the
+    //      DOM mutations landed → blank pages because the snapshot was
+    //      pre-hide. Synchronous call uses the post-mutation state.
+    window.print()
+    // Fallback cleanup at 30s in case afterprint never fires
     // (older mobile browsers occasionally swallow it).
-    setTimeout(() => {
-      window.print()
-      setTimeout(cleanup, 30000)
-    }, 50)
+    setTimeout(cleanup, 30000)
   }
 
   // AI cleanup — round fractions, strip cooking-only measures, merge dupes.
