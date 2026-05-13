@@ -389,7 +389,10 @@ export default function MealPlanPage() {
             <h1 className="text-lg font-bold text-gray-900">📅 Meal Plan</h1>
             {picks.length > 0 && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">{picks.length}</span>}
           </div>
-          <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Recipe Vault</button>
+          <div className="flex gap-1.5">
+            <button onClick={() => window.location.href='/cards'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50">Recipe Cards</button>
+            <button onClick={() => window.location.href='/secret'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50">Recipe Vault</button>
+          </div>
         </div>
       </header>
 
