@@ -629,15 +629,11 @@ export default function MealPlanPage() {
                     📋 Copy
                   </button>
                 )}
-                {miseRecipes.length > 0 && (
-                  <button
-                    onClick={printMise}
-                    title="Print this prep list"
-                    className="text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg px-2.5 py-1 hover:bg-gray-50"
-                  >
-                    🖨️ Print
-                  </button>
-                )}
+                {/* Print button removed (May 2026) — iOS Safari's
+                    print stack wouldn't cooperate with the modal-style
+                    print container. Copy still works; users paste it
+                    wherever they want to print. Native print returns
+                    when the app moves to Capacitor / iOS. */}
                 <button
                   onClick={closeMise}
                   className="text-sm font-semibold bg-amber-500 text-white rounded-xl px-4 py-2 hover:bg-amber-600"
