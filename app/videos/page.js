@@ -657,7 +657,7 @@ export default function VideosPage() {
               🎬 Now Showing
             </p>
             <p className="text-xl sm:text-2xl font-bold text-white text-center leading-tight">
-              {filter === 'teach' ? "Tonight's lessons are in." : "Tonight's cooking show."}
+              {filter === 'teach' ? "Today's lessons are in." : "Today's cooking lessons."}
             </p>
             <p className="text-sm text-amber-100 text-center mt-1.5 leading-snug">
               {filter === 'teach' ? 'Pick a technique to learn.' : 'Pick a dish to cook along with.'}
