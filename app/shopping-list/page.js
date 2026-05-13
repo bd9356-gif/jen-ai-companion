@@ -177,103 +177,61 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
-    // Direct-DOM print path (May 2026 rewrite). Earlier attempts
-    // relied on a React-state-controlled print container hidden via
-    // CSS visibility — that combination produced 3 blank pages
-    // because visibility:hidden elements still take up document
-    // flow and the printer paginated them across pages without
-    // ever stamping the print container. The fix: write the print
-    // container directly to <body> so it's a true sibling of the
-    // app's root, and use display:none on every other body child to
-    // actually remove them from the print layout. No React race,
-    // no @media-print selector games — printer sees one element
-    // exactly where we put it.
+    // Nuclear-option print path (May 2026 rewrite, third attempt).
+    // Previous CSS-based hide ("visibility: hidden" → 3 blank pages,
+    // "display: none via @media print" → still 3 blank pages on iOS
+    // Safari) kept leaving phantom paginated space. The fix: skip
+    // @media print rules entirely. Hide every existing body child
+    // via inline display:none BEFORE printing, then append a fresh
+    // container with the text. Printer only sees our container —
+    // no @media bugs, no selector specificity battles, no extra
+    // paper. Restore everything on afterprint.
     const TEMP_ID = 'print-shopping-list-temp'
-    const STYLE_ID = 'print-shopping-list-style-temp'
     // Defensive cleanup of any leftovers from a previous run.
     document.getElementById(TEMP_ID)?.remove()
-    document.getElementById(STYLE_ID)?.remove()
 
+    // Snapshot every body child's current inline display so we can
+    // restore them exactly as they were on cleanup. Iterating .children
+    // (live HTMLCollection) once into an Array fixes the index.
+    const bodyChildren = Array.from(document.body.children)
+    const snapshot = bodyChildren.map(el => ({ el, display: el.style.display }))
+
+    // Hide everything that's currently in <body>.
+    bodyChildren.forEach(el => { el.style.display = 'none' })
+
+    // Build the print container and append it as a fresh body child.
     const container = document.createElement('div')
     container.id = TEMP_ID
     Object.assign(container.style, {
-      position: 'fixed',
-      inset: '0',
-      background: 'white',
-      zIndex: '99999',
       padding: '24px',
       fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
       fontSize: '14px',
       lineHeight: '1.7',
       color: '#111',
       whiteSpace: 'pre-wrap',
-      overflow: 'auto',
+      background: 'white',
     })
     container.textContent = text
-
-    const styleEl = document.createElement('style')
-    styleEl.id = STYLE_ID
-    styleEl.textContent = `
-      @media print {
-        /* Reset html + body so leftover viewport heights don't reserve
-           empty paper pages. Without this, "one correct page + N blank
-           pages" — the browser was paginating invisible-but-still-tall
-           ancestor containers. */
-        html, body {
-          height: auto !important;
-          min-height: 0 !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: visible !important;
-        }
-        body > *:not(#${TEMP_ID}) { display: none !important; }
-        #${TEMP_ID} {
-          position: static !important;
-          inset: auto !important;
-          top: auto !important;
-          left: auto !important;
-          right: auto !important;
-          bottom: auto !important;
-          width: auto !important;
-          height: auto !important;
-          max-height: none !important;
-          background: white !important;
-          padding: 24px !important;
-          margin: 0 !important;
-          overflow: visible !important;
-          page-break-after: avoid !important;
-          break-after: avoid-page !important;
-        }
-        #${TEMP_ID} * {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        /* Tight @page margins — printer uses these instead of any
-           default minimum that could create extra paper. */
-        @page { margin: 0.5in; size: auto; }
-      }
-      @media screen {
-        #${TEMP_ID} { display: none !important; }
-      }
-    `
-
     document.body.appendChild(container)
-    document.head.appendChild(styleEl)
 
+    let cleanedUp = false
     const cleanup = () => {
+      if (cleanedUp) return
+      cleanedUp = true
+      // Restore every body child to its prior display value.
+      snapshot.forEach(({ el, display }) => { el.style.display = display })
       container.remove()
-      styleEl.remove()
       window.removeEventListener('afterprint', cleanup)
     }
     window.addEventListener('afterprint', cleanup)
 
-    // Wait one frame so the new node + style are applied before the
-    // print dialog opens. Fallback cleanup at 30s in case afterprint
-    // never fires (older mobile browsers occasionally swallow it).
+    // Wait a frame so the DOM updates land before the print dialog
+    // opens. Fallback cleanup at 30s in case afterprint never fires
+    // (older mobile browsers occasionally swallow it).
     setTimeout(() => {
       window.print()
       setTimeout(cleanup, 30000)
-    }, 100)
+    }, 50)
   }
 
   // AI cleanup — round fractions, strip cooking-only measures, merge dupes.
