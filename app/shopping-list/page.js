@@ -177,65 +177,67 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
-    // Nuclear-option print path (May 2026 rewrite, third attempt).
-    // Previous CSS-based hide ("visibility: hidden" → 3 blank pages,
-    // "display: none via @media print" → still 3 blank pages on iOS
-    // Safari) kept leaving phantom paginated space. The fix: skip
-    // @media print rules entirely. Hide every existing body child
-    // via inline display:none BEFORE printing, then append a fresh
-    // container with the text. Printer only sees our container —
-    // no @media bugs, no selector specificity battles, no extra
-    // paper. Restore everything on afterprint.
+    // Direct-DOM print path with @media print rules. Known behavior:
+    // produces 1 correct page + 2 trailing blank pages on iOS Safari
+    // (the auto-print prompt + blank trailer is an iOS print bug we
+    // haven't been able to fully solve from JS land). Reverting to
+    // this version because the nuclear inline-display approach was
+    // even worse — full blanks instead of 1 correct + blanks. User
+    // dismisses the blanks at the printer.
     const TEMP_ID = 'print-shopping-list-temp'
-    // Defensive cleanup of any leftovers from a previous run.
+    const STYLE_ID = 'print-shopping-list-style-temp'
     document.getElementById(TEMP_ID)?.remove()
+    document.getElementById(STYLE_ID)?.remove()
 
-    // Snapshot every body child's current inline display so we can
-    // restore them exactly as they were on cleanup. Iterating .children
-    // (live HTMLCollection) once into an Array fixes the index.
-    const bodyChildren = Array.from(document.body.children)
-    const snapshot = bodyChildren.map(el => ({ el, display: el.style.display }))
-
-    // Hide everything that's currently in <body>.
-    bodyChildren.forEach(el => { el.style.display = 'none' })
-
-    // Build the print container and append it as a fresh body child.
     const container = document.createElement('div')
     container.id = TEMP_ID
     Object.assign(container.style, {
+      position: 'fixed',
+      inset: '0',
+      background: 'white',
+      zIndex: '99999',
       padding: '24px',
       fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
       fontSize: '14px',
       lineHeight: '1.7',
       color: '#111',
       whiteSpace: 'pre-wrap',
-      background: 'white',
+      overflow: 'auto',
     })
     container.textContent = text
-    document.body.appendChild(container)
 
-    let cleanedUp = false
+    const styleEl = document.createElement('style')
+    styleEl.id = STYLE_ID
+    styleEl.textContent = `
+      @media print {
+        body > *:not(#${TEMP_ID}) { display: none !important; }
+        #${TEMP_ID} {
+          position: static !important;
+          inset: auto !important;
+          background: white !important;
+          padding: 24px !important;
+          overflow: visible !important;
+        }
+      }
+      @media screen {
+        #${TEMP_ID} { display: none !important; }
+      }
+    `
+
+    document.body.appendChild(container)
+    document.head.appendChild(styleEl)
+
     const cleanup = () => {
-      if (cleanedUp) return
-      cleanedUp = true
-      // Restore every body child to its prior display value.
-      snapshot.forEach(({ el, display }) => { el.style.display = display })
       container.remove()
+      styleEl.remove()
       window.removeEventListener('afterprint', cleanup)
     }
     window.addEventListener('afterprint', cleanup)
 
-    // Call print() SYNCHRONOUSLY in the same tick as the user's tap.
-    // Two reasons:
-    //   1. setTimeout breaks the user-gesture chain → iOS Safari shows
-    //      "This website has been blocked from auto printing" prompt.
-    //   2. setTimeout delay let iOS take its print snapshot BEFORE the
-    //      DOM mutations landed → blank pages because the snapshot was
-    //      pre-hide. Synchronous call uses the post-mutation state.
-    window.print()
-    // Fallback cleanup at 30s in case afterprint never fires
-    // (older mobile browsers occasionally swallow it).
-    setTimeout(cleanup, 30000)
+    setTimeout(() => {
+      window.print()
+      setTimeout(cleanup, 30000)
+    }, 100)
   }
 
   // AI cleanup — round fractions, strip cooking-only measures, merge dupes.
