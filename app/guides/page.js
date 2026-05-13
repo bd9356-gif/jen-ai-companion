@@ -190,13 +190,31 @@ export default function GuidesPage() {
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
         {/* Tagline — frames Guides as the school library that pairs
             with the two classrooms (Chef TV + Chef Jennifer). */}
-        <div className="text-center px-2 mb-6">
+        <div className="text-center px-2 mb-5">
           <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 leading-tight">
             The Library
           </h2>
           <p className="text-base text-stone-500 mt-1">
             Reference reading for everything in the kitchen.
           </p>
+        </div>
+
+        {/* 📝 Study Hall highlight — without this card, users wouldn't
+            know Chef Jen quizzes them; the Study Hall button is buried
+            at the bottom of an expanded article. Promotes the feature
+            on the Library landing so first-time visitors notice it,
+            with a soft visual (no big banner) that doesn't crowd the
+            topic accordions below. */}
+        <div className="mb-6 rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-50/30 px-4 py-3.5">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl shrink-0">🎓</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-emerald-900">Study Hall is open.</p>
+              <p className="text-xs text-emerald-800/80 leading-relaxed mt-1">
+                After you read an article, tap <span className="font-semibold">📝 Ask Chef Jen to quiz me</span> at the bottom. Three quick questions to see what stuck. Your results land in <span className="font-semibold">My Playbook</span>.
+              </p>
+            </div>
+          </div>
         </div>
 
         {loading ? (
