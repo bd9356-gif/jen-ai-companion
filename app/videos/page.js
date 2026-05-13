@@ -108,6 +108,42 @@ function isShort(duration) {
   return false
 }
 
+// Daily-stable shuffle for the Featured chip (May 2026 — Level 1
+// automation for "Today's lessons are in"). Produces the same order
+// for every user on the same calendar day; changes overnight. Lets
+// the curator's manually-featured pool feel actually-daily without
+// any extra work — same set, rotating face. Cap the pool at the top
+// of the day's shuffle so the marquee feels like a focused selection
+// rather than a long list.
+function todaySeed() {
+  // Local ISO date — YYYY-MM-DD. Day boundary follows the user's
+  // local midnight, which is what "today" should mean.
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function djb2Hash(str) {
+  let h = 5381
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) + h) + str.charCodeAt(i)
+    h |= 0
+  }
+  return Math.abs(h)
+}
+
+// Stable shuffle of `arr` deterministic from `seed`. Two users on
+// the same day with the same `seed` see the same order. Different
+// `seed` (= different day) shuffles differently.
+function dailyShuffle(arr, seed) {
+  return [...arr]
+    .map(item => ({ item, key: djb2Hash(seed + ':' + (item?.id || '')) }))
+    .sort((a, b) => a.key - b.key)
+    .map(x => x.item)
+}
+
 function viewCount(n) {
   if (!n) return ''
   if (n >= 1000000) return `${(n/1000000).toFixed(1)}M views`
@@ -476,17 +512,20 @@ export default function VideosPage() {
   const activeChip = chipSet?.find(c => c.key === topic) || null
 
   // Filters stack: search + teach/practice + topic chip keyword match,
-  // all AND together. Shorts (under 3 min) are always excluded — no
-  // toggle.
+  // all AND together. Shorts (under 3 min) are always excluded.
   //
-  // Order strategy (May 2026, Bill's "make all selection random" ask):
-  // Videos render in a stable random shuffle within each tab + topic
-  // combo. Reshuffles when the user changes tab or topic chip; stable
-  // during scroll / re-renders so the page doesn't jump under them.
-  // This turns every visit into discovery — the user encounters a
-  // different mix each time, not the same top-scored set every time.
-  // The Featured chip (handled below) still does its job — strict
-  // is_featured filter for the curator's picks.
+  // Order strategy (May 2026):
+  //   - Default (any non-Featured chip): session-random shuffle. Each
+  //     visit is a different mix; the order stays stable while you
+  //     scroll. Discovery without slot-machine reshuffling.
+  //   - Featured chip: daily-stable shuffle (Level 1 automation for
+  //     "Today's lessons are in"). Same order for everyone on the same
+  //     day; different order tomorrow. The manually-curated pool stays
+  //     as the source — the rotation is purely cosmetic, no DB writes.
+  //     If the pool grows, today's user still sees the full set, just
+  //     in today's order. Admin curation at /admin/featured is the
+  //     sole authority over what's featured at all.
+  const isFeaturedChip = !!activeChip?.feature
   const afterFilter = useMemo(() => {
     const matching = videos.filter(v => {
       const meta = metadata[v.id]
@@ -508,11 +547,18 @@ export default function VideosPage() {
         }
         return false
       })()
-      return matchFilter && matchShorts && matchTopic
+      // Featured chip also requires is_featured=true on the row.
+      const matchFeatured = !isFeaturedChip || !!v.is_featured
+      return matchFilter && matchShorts && matchTopic && matchFeatured
     })
-    // Fisher-Yates shuffle on a copy. useMemo's dep list (filter,
-    // topic, videos, metadata) controls when this re-runs — change
-    // tab or chip = fresh shuffle; otherwise the order stays put.
+
+    if (isFeaturedChip) {
+      // Today's lessons — deterministic per-day order, same for
+      // everyone, changes overnight at local midnight.
+      return dailyShuffle(matching, todaySeed())
+    }
+
+    // Default — session-random shuffle (Fisher-Yates on a copy).
     const shuffled = [...matching]
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
@@ -520,17 +566,8 @@ export default function VideosPage() {
     }
     return shuffled
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videos, metadata, filter, topic])
-  let filtered = afterFilter
-  // Featured chip — strictly is_featured only. Earlier the chip used a
-  // featured-first-then-fill pattern that padded with the auto top-by-score
-  // slice when there weren't yet enough curator picks; that turned the chip
-  // into a "best of" view instead of a curator-only view, so users couldn't
-  // see at a glance what had actually been featured. Now Featured = exactly
-  // the videos the curator picked, nothing more.
-  if (activeChip?.feature) {
-    filtered = afterFilter.filter(v => v.is_featured)
-  }
+  }, [videos, metadata, filter, topic, isFeaturedChip])
+  const filtered = afterFilter
 
   // Used by the ℹ️ About panel — total real (non-Shorts) videos in the
   // library so visitors can see the catalog size at a glance.
