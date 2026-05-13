@@ -395,13 +395,13 @@ export default function ChefPage() {
              in" treatment (May 2026 weight bump). Same visual rhythm
              across both learning surfaces so the user reads the active
              mode at a glance, no matter which classroom they're in. */
-          {/* Blackboard at the front of the room (May 2026, Bill's
-              framing). Dark slate panel with Caveat-font "chalk"
-              welcome line + a readable subline below. Per-mode accent
-              stripe (sky for Teach, orange for Practice) keeps the
-              color cue from the mode pills. The Caveat font is already
-              loaded app-wide for Cards/heritage surfaces; reusing it
-              here lands the chalk-on-slate feel without any new asset. */}
+          /* Blackboard at the front of the room (May 2026, Bill's
+             framing). Dark slate panel with Caveat-font "chalk"
+             welcome line + a readable subline below. Per-mode accent
+             stripe (sky for Teach, orange for Practice) keeps the
+             color cue from the mode pills. The Caveat font is already
+             loaded app-wide for Cards/heritage surfaces; reusing it
+             here lands the chalk-on-slate feel without any new asset. */
           <div className="pb-4">
             <div className={`rounded-2xl px-5 py-4 shadow-lg bg-slate-800 border-l-4 ${
               isPractice ? 'border-l-orange-500' : 'border-l-sky-500'
