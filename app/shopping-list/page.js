@@ -215,14 +215,42 @@ export default function ShoppingListPage() {
     styleEl.id = STYLE_ID
     styleEl.textContent = `
       @media print {
+        /* Reset html + body so leftover viewport heights don't reserve
+           empty paper pages. Without this, "one correct page + N blank
+           pages" — the browser was paginating invisible-but-still-tall
+           ancestor containers. */
+        html, body {
+          height: auto !important;
+          min-height: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+        }
         body > *:not(#${TEMP_ID}) { display: none !important; }
         #${TEMP_ID} {
           position: static !important;
           inset: auto !important;
+          top: auto !important;
+          left: auto !important;
+          right: auto !important;
+          bottom: auto !important;
+          width: auto !important;
+          height: auto !important;
+          max-height: none !important;
           background: white !important;
           padding: 24px !important;
+          margin: 0 !important;
           overflow: visible !important;
+          page-break-after: avoid !important;
+          break-after: avoid-page !important;
         }
+        #${TEMP_ID} * {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        /* Tight @page margins — printer uses these instead of any
+           default minimum that could create extra paper. */
+        @page { margin: 0.5in; size: auto; }
       }
       @media screen {
         #${TEMP_ID} { display: none !important; }
