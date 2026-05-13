@@ -77,7 +77,7 @@ function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
   const rowCls = isSide
     ? 'flex items-center gap-2 bg-white/70 rounded-xl p-1.5 ml-6 border-l-2 border-gray-200'
     : 'flex items-center gap-2 bg-white rounded-xl p-2'
-  const photoCls = isSide ? 'w-7 h-7 rounded-md' : 'w-10 h-10 rounded-lg'
+  const photoCls = isSide ? 'w-9 h-9 rounded-md' : 'w-12 h-12 rounded-lg'
   const photoFallbackCls = isSide
     ? 'w-7 h-7 rounded-md bg-orange-50 flex items-center justify-center shrink-0'
     : 'w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0'
@@ -107,7 +107,7 @@ function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
         <img loading="lazy" decoding="async" src={pick.photo_url} alt={pick.title} className={`${photoCls} object-cover shrink-0`} />
       ) : (
         <div className={photoFallbackCls}>
-          <span className={isSide ? 'text-sm' : 'text-lg'}>🍽️</span>
+          <span className={isSide ? 'text-base' : 'text-2xl'}>🍽️</span>
         </div>
       )}
       <div className="flex-1 min-w-0">
