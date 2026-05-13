@@ -108,6 +108,13 @@ function isShort(duration) {
   return false
 }
 
+// How many videos surface in the daily Featured chip view. Capped so
+// "Today's lessons" feels like a focused daily selection even when
+// the underlying curator pool grows large. Bump this number when the
+// pool gets big enough to justify showing more per day; lower it for
+// a tighter daily cut.
+const DAILY_FEATURED_CAP = 12
+
 // Daily-stable shuffle for the Featured chip (May 2026 — Level 1
 // automation for "Today's lessons are in"). Produces the same order
 // for every user on the same calendar day; changes overnight. Lets
@@ -554,8 +561,11 @@ export default function VideosPage() {
 
     if (isFeaturedChip) {
       // Today's lessons — deterministic per-day order, same for
-      // everyone, changes overnight at local midnight.
-      return dailyShuffle(matching, todaySeed())
+      // everyone, changes overnight at local midnight. Capped at
+      // DAILY_FEATURED_CAP so the marquee shows a focused daily set
+      // even when the underlying curator pool grows large. Pool < cap
+      // just shows everything; the slice is a no-op in that case.
+      return dailyShuffle(matching, todaySeed()).slice(0, DAILY_FEATURED_CAP)
     }
 
     // Default — session-random shuffle (Fisher-Yates on a copy).
