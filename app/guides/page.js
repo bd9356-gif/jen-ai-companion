@@ -260,6 +260,24 @@ export default function GuidesPage() {
                                   className="text-base text-gray-700 leading-relaxed"
                                   dangerouslySetInnerHTML={{ __html: `<p class="mb-4">${renderMarkdown(article.content)}</p>` }}
                                 />
+                                {/* 📝 Study Hall — Chef Jennifer quizzes
+                                    you on what you just read. 3-question
+                                    multiple choice, immediate feedback,
+                                    result saves to My Playbook. Lives at
+                                    the bottom of every expanded article
+                                    so it shows up right when the reading
+                                    momentum is fresh. */}
+                                <div className="mt-6 pt-4 border-t border-dashed border-gray-200">
+                                  <a
+                                    href={`/study/${article.id}`}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-sm font-semibold hover:bg-orange-700 transition-colors"
+                                  >
+                                    📝 Ask Chef Jen to quiz me
+                                  </a>
+                                  <p className="text-xs text-gray-500 mt-2">
+                                    Three quick questions on what you just read.
+                                  </p>
+                                </div>
                               </div>
                             )}
                           </div>

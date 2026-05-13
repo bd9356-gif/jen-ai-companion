@@ -118,6 +118,7 @@ export default function PlaybookPage() {
   const [items, setItems] = useState([])          // normalized video items with _bucket
   const [recipes, setRecipes] = useState([])      // ai_recipe favorites
   const [notes, setNotes] = useState([])          // ai_answer favorites
+  const [studyResults, setStudyResults] = useState([]) // 🎓 Study Hall history
   // Active tab: 'teach' | 'practice' | 'chef_recipes' | 'chef_notes'.
   // Default to chef_notes — the top-left cell in the 2×2 (Chef Jen's
   // Teach surface). Two reasons: (1) Jen leads in Learning Journey,
@@ -152,7 +153,7 @@ export default function PlaybookPage() {
   //   _favType     : favorites.type for 'favorite' items, else null
   //   _bucket      : resolved bucket key (default chosen by defaultBucketFor)
   async function loadAll(userId) {
-    const [{ data: sv1 }, { data: sv2 }, { data: vidFavs }, { data: bucketRows }, { data: recipeFavs }, { data: answerFavs }, { data: vaultRecipes }] = await Promise.all([
+    const [{ data: sv1 }, { data: sv2 }, { data: vidFavs }, { data: bucketRows }, { data: recipeFavs }, { data: answerFavs }, { data: vaultRecipes }, { data: studyHall }] = await Promise.all([
       supabase.from('saved_videos').select('video_id').eq('user_id', userId),
       supabase.from('saved_education_videos').select('video_id').eq('user_id', userId),
       supabase.from('favorites').select('*').eq('user_id', userId).in('type', ['video_recipe','video_education']),
@@ -171,6 +172,14 @@ export default function PlaybookPage() {
         .select('photo_url')
         .eq('user_id', userId)
         .is('deleted_at', null),
+      // 🎓 Study Hall history — every completed quiz attempt. Renders
+      // as a "Lessons Learned" section on Playbook. Limit to recent
+      // history to keep the section scannable.
+      supabase.from('study_hall_results')
+        .select('*')
+        .eq('user_id', userId)
+        .order('taken_at', { ascending: false })
+        .limit(50),
     ])
 
     const vaultYoutubeIds = new Set()
@@ -293,6 +302,7 @@ export default function PlaybookPage() {
     // disappears from this list. Filing = move (not copy), matching
     // Bill's "zip through, file the keepers, delete the rest" workflow.
     setNotes((answerFavs || []).filter(n => !n.is_in_vault))
+    setStudyResults(studyHall || [])
   }
 
   async function moveToBucket(item, bucket) {
@@ -907,6 +917,54 @@ export default function PlaybookPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 🎓 Lessons Learned — Study Hall history. Lives outside the
+            2×2 classroom grid because it's neither Teach nor Practice
+            content; it's the *record* of what you've studied. Shows
+            up only after the user has taken at least one quiz. Each
+            row is one attempt — date, article, score. Clicking the
+            article title returns the user to Library so they can
+            re-read and re-take. */}
+        {studyResults.length > 0 && (
+          <div className="mt-6">
+            <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 overflow-hidden shadow-sm">
+              <div className="bg-emerald-50 px-3 py-2.5 border-b border-emerald-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🎓</span>
+                  <span className="text-sm font-bold text-emerald-900">Lessons Learned</span>
+                  <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">{studyResults.length}</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1 ml-7">Your Study Hall history &mdash; every quiz Chef Jen gave you.</p>
+              </div>
+              <div className="divide-y divide-emerald-100">
+                {studyResults.map(r => {
+                  const pct = r.total ? Math.round((r.score / r.total) * 100) : 0
+                  const date = new Date(r.taken_at)
+                  const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                  return (
+                    <a
+                      key={r.id}
+                      href={`/guides?article=${r.article_id}`}
+                      className="block px-3 py-2.5 hover:bg-emerald-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="shrink-0 w-12 h-12 rounded-full bg-white border-2 border-emerald-200 flex flex-col items-center justify-center">
+                          <span className="text-sm font-bold text-emerald-700 leading-none">{r.score}/{r.total}</span>
+                          <span className="text-[10px] text-emerald-600 leading-none mt-0.5">{pct}%</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{r.article_title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{dateStr}</p>
+                        </div>
+                        <span className="text-gray-300 text-sm shrink-0">›</span>
+                      </div>
+                    </a>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
       </main>
