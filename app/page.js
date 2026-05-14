@@ -118,9 +118,9 @@ export default function HomePage() {
             <img
               src="/brand/icon-192-transparent.png"
               alt=""
-              width="48"
-              height="48"
-              className="w-12 h-12 shrink-0"
+              width="64"
+              height="64"
+              className="w-16 h-16 shrink-0"
             />
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
