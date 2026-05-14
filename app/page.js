@@ -113,9 +113,19 @@ export default function HomePage() {
           read as siblings. */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-5 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">🍽️ MyRecipe Companion</h1>
-            <p className="text-[11px] text-gray-500 mt-0.5">Your AI guide to better cooking.</p>
+          <div className="flex items-start gap-2.5 min-w-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/icon-192-transparent.png"
+              alt=""
+              width="32"
+              height="32"
+              className="w-8 h-8 shrink-0 mt-0.5"
+            />
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Your AI guide to better cooking.</p>
+            </div>
           </div>
           {user ? (
             <a href="/kitchen" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
