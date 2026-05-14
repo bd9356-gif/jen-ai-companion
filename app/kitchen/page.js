@@ -272,14 +272,14 @@ export default function KitchenPage() {
           continuous, not like jumping into a roomier page. */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="px-5 py-3 flex items-center justify-between max-w-lg mx-auto">
-        <div className="flex items-start gap-2.5 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/icon-192-transparent.png"
             alt=""
-            width="32"
-            height="32"
-            className="w-8 h-8 shrink-0 mt-0.5"
+            width="48"
+            height="48"
+            className="w-12 h-12 shrink-0"
           />
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
