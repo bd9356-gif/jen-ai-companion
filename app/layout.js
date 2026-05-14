@@ -24,6 +24,7 @@ const caveat = Caveat({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://recipe.mycompanionapps.com"),
   title: "MyRecipe Companion",
   description:
     "A cozy cooking companion — save recipes, plan meals, learn new skills, and cook alongside an AI chef.",
@@ -44,6 +45,31 @@ export const metadata = {
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
+  },
+  // Open Graph + Twitter Card metadata. Drives the preview image,
+  // title, and description that appear when the URL is shared on
+  // iMessage, WhatsApp, Twitter/X, LinkedIn, Slack, Facebook, etc.
+  // The banner image is the brand banner (icon + name + tagline,
+  // pre-composed) — every shared link instantly markets the app.
+  openGraph: {
+    type: "website",
+    siteName: "MyRecipe Companion",
+    title: "MyRecipe Companion",
+    description: "Where your cooking life and your learning journey meet.",
+    images: [
+      {
+        url: "/banner.jpg",
+        width: 1200,
+        height: 630,
+        alt: "MyRecipe Companion — where your cooking life and your learning journey meet.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MyRecipe Companion",
+    description: "Where your cooking life and your learning journey meet.",
+    images: ["/banner.jpg"],
   },
 };
 
