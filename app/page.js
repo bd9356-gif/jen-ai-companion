@@ -124,7 +124,7 @@ export default function HomePage() {
             />
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Your AI guide to better cooking.</p>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Where your cooking life and your learning journey meet.</p>
             </div>
           </div>
           {user ? (
@@ -194,7 +194,7 @@ export default function HomePage() {
                     Cooking, figured out.
                   </h2>
                   <p className="text-stone-100 text-xs sm:text-sm drop-shadow mt-1 max-w-sm">
-                    Recipes, meal plans, and an AI chef &mdash; one cozy kitchen.
+                    Recipes, meal plans, and Chef Jen at your side &mdash; one cozy kitchen.
                   </p>
                 </>
               )}

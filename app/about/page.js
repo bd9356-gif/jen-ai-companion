@@ -51,13 +51,18 @@ export default function AboutPage() {
 
         {/* Brand identity card. */}
         <div className="bg-white rounded-2xl border-2 border-gray-200 border-l-8 border-l-orange-600 p-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-orange-50 flex items-center justify-center mx-auto mb-3">
-            <span style={{ fontSize: '32px' }}>🍽️</span>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/icon-192-transparent.png"
+            alt=""
+            width="80"
+            height="80"
+            className="w-20 h-20 mx-auto mb-3"
+          />
           <h2 className="text-2xl font-bold text-gray-900">MyRecipe Companion</h2>
-          <p className="text-sm text-orange-600 mt-1 font-semibold">Cooking, figured out.</p>
+          <p className="text-sm text-orange-600 mt-1 font-semibold">Where your cooking life and your learning journey meet.</p>
           <p className="text-sm text-gray-600 mt-3 leading-relaxed max-w-md mx-auto">
-            A cozy, modern cooking companion — save recipes, plan meals, learn skills, and cook alongside an AI chef who&apos;s always ready to help.
+            A cozy, modern cooking companion — save recipes, plan meals, learn skills, and cook alongside Chef Jennifer who&apos;s always ready to help.
           </p>
         </div>
 
