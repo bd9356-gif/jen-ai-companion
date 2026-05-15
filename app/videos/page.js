@@ -805,6 +805,15 @@ export default function VideosPage() {
                               <svg viewBox="0 0 24 24" className="w-6 h-6 ml-0.5" fill="#dc2626"><path d="M8 5v14l11-7z"/></svg>
                             </div>
                           </div>
+                          {/* Featured pill — top-left overlay, mirrors Golf TV's
+                              pattern (★ Featured tag on the thumbnail itself
+                              rather than a small star inline next to the title).
+                              Orange brand color carries the curator's vote. */}
+                          {video.is_featured && (
+                            <span className="absolute top-2 left-2 text-[10px] font-bold uppercase tracking-wide text-white bg-orange-600/95 rounded-full px-2 py-0.5 shadow">
+                              ★ Featured
+                            </span>
+                          )}
                           {video.duration && (
                             <div className="absolute bottom-2 right-2 bg-black/85 text-white text-[11px] px-2 py-0.5 rounded-md font-semibold">{video.duration}</div>
                           )}
@@ -838,9 +847,6 @@ export default function VideosPage() {
                           )
                         })()}
                         <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 min-h-[2.5rem]">
-                          {video.is_featured && (
-                            <span className="text-amber-500 mr-1" title="Featured by curator">⭐</span>
-                          )}
                           {video.title}
                         </h3>
                         <p className="text-xs text-orange-600 font-medium">{video.channel}</p>
