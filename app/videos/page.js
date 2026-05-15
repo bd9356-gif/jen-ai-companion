@@ -694,6 +694,23 @@ export default function VideosPage() {
               where their saves end up. Replaces the old generic lede
               ("Watch the latest cooking videos…") which didn't reflect
               the room context. */}
+          {/* Curtain banner (May 2026). The auditorium gets a real
+              proscenium — a deep red velvet stage curtain with twin
+              amber spotlights, cropped to a 3:1 marquee band so it
+              reads as a banner across the top of Chef TV, not as a
+              hero image competing with the video grid. Sits flush
+              above the "Now Showing" marquee below, so the visual
+              story reads top-to-bottom: theater (where you are) →
+              marquee (what's playing) → grid (the show itself). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/curtain.png"
+            alt="Chef TV — the show is about to begin."
+            className="w-full h-auto block rounded-2xl mb-4 shadow-md"
+            width={961}
+            height={320}
+          />
+
           {/* Auditorium marquee (May 2026, Bill's framing). Chef TV is
               the third room in the school — not a classroom (chalkboard)
               or kitchen (counter) but a screening room with a marquee
