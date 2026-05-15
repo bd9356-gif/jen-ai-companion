@@ -740,19 +740,19 @@ export default function CardsPage() {
               need a separate count row below the banner. */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
             <p
-              className="text-gray-900 leading-none mb-1.5"
-              style={{ fontFamily: 'var(--font-caveat)', fontSize: 'clamp(28px, 7vw, 40px)', fontWeight: 600 }}
+              className="text-gray-900 leading-none mb-1"
+              style={{ fontFamily: 'var(--font-caveat)', fontSize: 'clamp(22px, 5.5vw, 30px)', fontWeight: 600 }}
             >
               Your modern recipe box.
             </p>
-            <p className="text-xs sm:text-base text-gray-700 leading-snug">
+            <p className="text-[11px] sm:text-sm text-gray-700 leading-snug">
               Your <span className="font-semibold text-rose-700">keep-forever</span> recipes
             </p>
-            <p className="text-xs sm:text-base text-gray-700 leading-snug italic">
+            <p className="text-[11px] sm:text-sm text-gray-700 leading-snug italic">
               Grandmother&rsquo;s, mom&rsquo;s, aunt&rsquo;s, yours.
             </p>
             {!loading && filtered.length > 0 && (
-              <p className="text-[11px] sm:text-sm text-rose-700 font-semibold mt-1.5 tracking-wide">
+              <p className="text-[10px] sm:text-xs text-rose-700 font-semibold mt-1 tracking-wide">
                 {filtered.length} {filtered.length === 1 ? 'card' : 'cards'} in the box
               </p>
             )}
