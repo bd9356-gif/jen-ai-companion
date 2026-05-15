@@ -715,26 +715,43 @@ export default function CardsPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 pt-4 pb-6">
-        {/* Intro block — framed as a recipe-box "lid." Cream paper
-            background + rose border + rounded corners visually contain
-            the title and lineage line so the user reads the intro as
-            the *front of a recipe box*, not a generic page header.
-            The frame replaces the earlier corner-label experiment —
-            framing the whole intro lands the box metaphor more cleanly
-            than a sticker in the corner. */}
-        <div className="mx-auto max-w-md bg-amber-50 border-2 border-rose-200 rounded-2xl px-6 py-5 mb-5 shadow-sm text-center">
-          <p
-            className="text-gray-900 leading-none mb-2"
-            style={{ fontFamily: 'var(--font-caveat)', fontSize: '32px', fontWeight: 600 }}
-          >
-            Your modern recipe box.
-          </p>
-          <p className="text-sm sm:text-base text-gray-700 leading-snug">
-            Your <span className="font-semibold text-rose-700">keep-forever</span> recipes
-          </p>
-          <p className="text-sm sm:text-base text-gray-700 leading-snug">
-            Grandmother&rsquo;s, mom&rsquo;s, aunt&rsquo;s, <span className="italic">yours</span>.
-          </p>
+        {/* Intro banner (May 2026) — the recipe-box "lid" is now a real
+            illustrated card: pink/cream gradient, watercolor strawberries
+            with blossoms, dotted border, and a script "Recipe" already
+            baked into the top-left corner. The heritage tagline overlays
+            the empty pink space so the visual hierarchy reads:
+            illustrated card frame → handwritten tagline → lineage line.
+            Replaces the cream-paper text-only frame that came before;
+            the illustrated card lands the box metaphor faster than any
+            framed copy block could. */}
+        <div className="relative mx-auto max-w-md mb-5 rounded-2xl overflow-hidden shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/recipe-card-banner.png"
+            alt=""
+            className="w-full h-auto block"
+            width={1250}
+            height={640}
+          />
+          {/* Tagline overlay — sits in the lower-right area of the card
+              where the empty pink space is most uninterrupted (the script
+              "Recipe" is top-left, strawberries are top-right). Padded so
+              it doesn't bump the dotted border or the strawberries on a
+              phone. */}
+          <div className="absolute inset-0 flex flex-col items-center justify-end text-center pb-5 sm:pb-7 px-6">
+            <p
+              className="text-gray-900 leading-none mb-1"
+              style={{ fontFamily: 'var(--font-caveat)', fontSize: 'clamp(24px, 6vw, 34px)', fontWeight: 600 }}
+            >
+              Your modern recipe box.
+            </p>
+            <p className="text-[11px] sm:text-sm text-gray-700 leading-snug">
+              Your <span className="font-semibold text-rose-700">keep-forever</span> recipes
+            </p>
+            <p className="text-[11px] sm:text-sm text-gray-700 leading-snug italic">
+              Grandmother&rsquo;s, mom&rsquo;s, aunt&rsquo;s, yours.
+            </p>
+          </div>
         </div>
 
         {loading ? (
