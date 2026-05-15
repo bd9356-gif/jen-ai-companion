@@ -694,42 +694,42 @@ export default function VideosPage() {
               where their saves end up. Replaces the old generic lede
               ("Watch the latest cooking videos…") which didn't reflect
               the room context. */}
-          {/* Curtain banner (May 2026). The auditorium gets a real
-              proscenium — a deep red velvet stage curtain with twin
-              amber spotlights, cropped to a 3:1 marquee band so it
-              reads as a banner across the top of Chef TV, not as a
-              hero image competing with the video grid. Sits flush
-              above the "Now Showing" marquee below, so the visual
-              story reads top-to-bottom: theater (where you are) →
-              marquee (what's playing) → grid (the show itself). */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/curtain.png"
-            alt="Chef TV — the show is about to begin."
-            className="w-full h-auto block rounded-2xl mb-4 shadow-md"
-            width={961}
-            height={320}
-          />
-
-          {/* Auditorium marquee (May 2026, Bill's framing). Chef TV is
-              the third room in the school — not a classroom (chalkboard)
-              or kitchen (counter) but a screening room with a marquee
-              out front. Deep theater red + gold accent border + uppercase
-              "NOW SHOWING" eyebrow give it the cinema-marquee feel
-              without being cartoonish. Same marquee across Teach and
-              Practice — it's the same auditorium; what's on tonight
-              differs. The Teach/Practice pill row below carries the
-              mode-specific sky/orange color signal. */}
-          <div className="mb-5 rounded-2xl bg-red-900 border-2 border-amber-400/70 px-5 py-4 shadow-lg">
-            <p className="text-[11px] font-bold text-amber-300 uppercase tracking-[0.25em] text-center mb-2">
-              🎬 Now Showing
-            </p>
-            <p className="text-xl sm:text-2xl font-bold text-white text-center leading-tight">
-              {filter === 'teach' ? "Today's lessons are in." : "Today's cooking lessons."}
-            </p>
-            <p className="text-sm text-amber-100 text-center mt-1.5 leading-snug">
-              {filter === 'teach' ? 'Pick a technique to learn.' : 'Pick a dish to cook along with.'}
-            </p>
+          {/* Curtain marquee (May 2026). The auditorium gets a real
+              proscenium — deep red velvet stage curtain with twin amber
+              spotlights — and the marquee text is overlaid directly in
+              the spotlight V. The old standalone red-900 "Now Showing"
+              box was retired in the same pass: the curtain IS the
+              marquee now, the spotlights point at the words, and the
+              two visuals stop competing for attention. Same image,
+              two modes (Teach/Practice) — text changes, curtain
+              doesn't. */}
+          <div className="relative mb-5 rounded-2xl overflow-hidden shadow-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/curtain.png"
+              alt="Chef TV — the show is about to begin."
+              className="w-full h-auto block"
+              width={961}
+              height={320}
+            />
+            {/* Text overlay sits in the spotlight V — slightly above
+                vertical center because the V crests near the upper
+                third of the curtain. text-shadow gives the words depth
+                against the velvet without needing a backing plate. */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
+              style={{ textShadow: '0 2px 8px rgba(0,0,0,0.65)' }}
+            >
+              <p className="text-[10px] sm:text-xs font-bold text-amber-300 uppercase tracking-[0.25em] mb-1 sm:mb-2">
+                🎬 Now Showing
+              </p>
+              <p className="text-lg sm:text-2xl md:text-3xl font-bold text-white leading-tight">
+                {filter === 'teach' ? "Today's lessons are in." : "Today's cooking lessons."}
+              </p>
+              <p className="text-xs sm:text-sm text-amber-100 mt-1 sm:mt-1.5 leading-snug">
+                {filter === 'teach' ? 'Pick a technique to learn.' : 'Pick a dish to cook along with.'}
+              </p>
+            </div>
           </div>
 
 
