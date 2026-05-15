@@ -731,17 +731,18 @@ export default function CardsPage() {
             alt=""
             className="w-full h-auto block"
             width={1250}
-            height={640}
+            height={360}
           />
-          {/* Tagline overlay — sits in the lower-right area of the card
-              where the empty pink space is most uninterrupted (the script
-              "Recipe" is top-left, strawberries are top-right). Padded so
-              it doesn't bump the dotted border or the strawberries on a
-              phone. */}
-          <div className="absolute inset-0 flex flex-col items-center justify-end text-center pb-5 sm:pb-7 px-6">
+          {/* Tagline overlay — centered vertically inside the card.
+              The image is now cropped to 3.5:1 (240px of top content
+              with the script + strawberries, joined to 120px of bottom
+              dotted border with the empty middle gradient removed). With
+              the empty space pulled out, the tagline lands center-center
+              with no asymmetric padding. */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
             <p
               className="text-gray-900 leading-none mb-1"
-              style={{ fontFamily: 'var(--font-caveat)', fontSize: 'clamp(24px, 6vw, 34px)', fontWeight: 600 }}
+              style={{ fontFamily: 'var(--font-caveat)', fontSize: 'clamp(22px, 5.5vw, 30px)', fontWeight: 600 }}
             >
               Your modern recipe box.
             </p>
