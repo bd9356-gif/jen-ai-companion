@@ -731,14 +731,13 @@ export default function CardsPage() {
             alt=""
             className="w-full h-auto block"
             width={1250}
-            height={360}
+            height={300}
           />
-          {/* Tagline overlay — centered vertically inside the card.
-              The image is now cropped to 3.5:1 (240px of top content
-              with the script + strawberries, joined to 120px of bottom
-              dotted border with the empty middle gradient removed). With
-              the empty space pulled out, the tagline lands center-center
-              with no asymmetric padding. */}
+          {/* Tagline overlay — centered vertically. Banner is now cropped
+              tight to 4.17:1 (220px of top content + 80px of bottom border,
+              empty middle removed). Card count rides inside the banner as
+              a small italic line below the lineage so the page doesn't
+              need a separate count row below the banner. */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
             <p
               className="text-gray-900 leading-none mb-1"
@@ -752,6 +751,11 @@ export default function CardsPage() {
             <p className="text-[11px] sm:text-sm text-gray-700 leading-snug italic">
               Grandmother&rsquo;s, mom&rsquo;s, aunt&rsquo;s, yours.
             </p>
+            {!loading && filtered.length > 0 && (
+              <p className="text-[10px] sm:text-xs text-rose-700 font-semibold mt-1 tracking-wide">
+                {filtered.length} {filtered.length === 1 ? 'card' : 'cards'} in the box
+              </p>
+            )}
           </div>
         </div>
 
@@ -766,7 +770,8 @@ export default function CardsPage() {
           </div>
         ) : (
           <>
-            <p className="text-sm text-gray-500 mb-4">{filtered.length} {filtered.length === 1 ? 'card' : 'cards'}</p>
+            {/* Card count was here — moved up into the banner overlay so
+                the page doesn't carry a separate count row above the grid. */}
             {/* Recipe-card grid (May 2026 heritage refresh — Bill's ask).
                 Pulled away from the Vault Grid's index-card look so
                 Cards feel like the heirloom recipe-box object, not a
