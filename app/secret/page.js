@@ -899,12 +899,11 @@ export default function MyRecipeVaultPage() {
   // post-import preview surface (where parsed data lands for review).
   // JSON is power-user import/export. Values: 'url' | 'paste' | 'add' | 'json'.
   const [importTab, setImportTab] = useState('url')
-  // Paste tab — three collapsible "how to get content" instruction
-  // groups (Paste Text / Print Capture / Share Shortcut). All three end
-  // with pasting into the same textarea below; they're just different
-  // recipes for HOW you got the content. Tracks which option is open.
-  // null = none expanded; 'text' | 'print' | 'shortcut' = that one open.
-  const [pasteOption, setPasteOption] = useState(null)
+  // Paste tab — used to track which of 3 collapsible "how to get
+  // content" option groups (Text / Print Capture / Share Shortcut)
+  // was expanded. Retired May 2026: the Paste tab is now a single
+  // clean instruction line + textarea. Shortcut instructions moved
+  // to a dedicated /shortcut help page for power users who want one.
   // AI Kitchen Helpers tab — matches the Import Recipes tab pattern.
   // The four helper cards used to stack on the same scroll which made
   // the page busy on first open. Since they're alternatives (only one
@@ -3041,39 +3040,9 @@ export default function MyRecipeVaultPage() {
           {importTab === 'paste' && (
             <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-3">
               <label className="text-base font-bold text-gray-800 block">📋 Paste Recipe Text</label>
-
-              {/* Three collapsible instruction groups — Option 1, 2, 3.
-                  Each renders as a tappable header row that expands to
-                  show its instructions below. Visual: gray border + soft
-                  bg when collapsed, orange border + soft orange bg when
-                  open. Chevron flips ▸/▾ to telegraph state. */}
-              {[
-                { key: 'text', emoji: '📝', title: 'Option 1 — Paste Text', body: 'Copy the recipe from the site (Select All works great) and paste it here.' },
-                { key: 'print', emoji: '🖨️', title: 'Option 2 — Print Capture', body: 'Open the site’s Print Capture, save it, copy all, and paste it here. Chef Jen cleans it automatically.' },
-                { key: 'shortcut', emoji: '📲', title: 'Option 3 — Share Shortcut', body: 'Tap Share → choose the app’s Share Shortcut to send the recipe straight in — no copying needed, just click paste.' },
-              ].map(opt => {
-                const open = pasteOption === opt.key
-                return (
-                  <div key={opt.key} className={`rounded-xl border-2 ${open ? 'border-orange-300 bg-orange-50' : 'border-gray-200 bg-gray-50'}`}>
-                    <button
-                      type="button"
-                      onClick={() => setPasteOption(open ? null : opt.key)}
-                      className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left"
-                    >
-                      <span className="text-sm font-bold text-gray-800 flex items-center gap-2">
-                        <span className="text-base">{opt.emoji}</span>
-                        {opt.title}
-                      </span>
-                      <span className="text-xs text-gray-500">{open ? '▾' : '▸'}</span>
-                    </button>
-                    {open && (
-                      <div className="px-3 pb-3 -mt-1">
-                        <p className="text-sm text-gray-700 leading-snug">{opt.body}</p>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              <p className="text-sm text-gray-600 leading-snug">
+                Copy a recipe from anywhere &mdash; a website (Select All works great), a note, an email &mdash; and paste it below. Chef Jen will read it, clean it up, and pull out the ingredients and instructions.
+              </p>
 
               {/* One-tap paste from clipboard. User-gesture clipboard read,
                   so iOS will show its native "Paste from..." prompt
@@ -3331,6 +3300,21 @@ export default function MyRecipeVaultPage() {
               </button>
             </div>
           )}
+
+          {/* iPhone share-sheet footer (May 2026). Quiet pointer to the
+              /shortcut help page for iPhone users who want one-tap share
+              from Safari into MyRecipe. Intentionally tucked at the
+              bottom so it doesn't compete with the primary import flow;
+              the primary flow for everyone is URL or Paste. The whole
+              note retires when the native iOS app ships. */}
+          <div className="mt-2 text-center">
+            <a
+              href="/shortcut"
+              className="inline-block text-xs text-gray-500 hover:text-orange-700 underline decoration-dotted underline-offset-4"
+            >
+              On iPhone? Set up one-tap share from Safari &rarr;
+            </a>
+          </div>
         </main>
       </div>
     )
