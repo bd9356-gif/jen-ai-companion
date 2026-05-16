@@ -1,48 +1,38 @@
-// /shortcut — Optional setup guide for iPhone users who want one-tap
-// "Share to MyRecipe" from Safari. Lives off the main flow because:
-//   1. It's iOS-only (everyone else uses the Paste tab on /secret).
-//   2. It depends on the user building a Shortcut on their phone, which
-//      is more work than the primary import path (open MyRecipe → paste
-//      URL → tap Import).
-//   3. It's temporary — the native iOS app via Capacitor will register
-//      a real Share Extension and make this whole page obsolete.
+// /shortcut — Rewritten May 2026 as an iPhone-app coming-soon pitch
+// instead of a detailed Shortcut-build tutorial. The original was a
+// 6-step instruction page; in practice, the typical user wouldn't
+// follow it and the power user didn't need it. The right framing:
+// someone who lands on this page is signaling "I want a better mobile
+// experience" — answer that with what's actually coming (the native
+// MyRecipe iPhone app via Capacitor), not a DIY workaround.
 //
-// Framed honestly: a 5-minute power-user setup, not the main path.
-// Surface the trade-offs upfront so the user can decide if it's worth
-// the effort for them.
+// A tiny power-user note still appears at the bottom for the rare
+// developer-type who wants to build their own Shortcut today —
+// terse, no hand-holding, since that audience can absolutely
+// figure it out from a single paragraph.
 
 'use client'
 
-const SHORTCUT_STEPS = [
+const APP_HIGHLIGHTS = [
   {
-    n: 1,
-    title: 'Receive what you share',
-    body: 'In iOS Shortcuts, tap + (new shortcut). Tap the ⓘ info icon → Show in Share Sheet ON. Set "Accept" to URLs only.',
+    emoji: '📲',
+    title: 'One-tap recipe import',
+    body: 'Tap Share on any recipe page in Safari, choose MyRecipe, done. The recipe lands in your Vault with photo, ingredients, and instructions parsed. Even on sites that block scrapers.',
   },
   {
-    n: 2,
-    title: 'Get the page content',
-    body: 'Add action: Get Contents of Web Page. Input = Shortcut Input. This grabs the recipe page\'s HTML so we can read it even when the URL fetch fails.',
+    emoji: '🍎',
+    title: 'Sign in with Apple',
+    body: 'No magic-link emails to dig out of spam, no passwords to remember. FaceID confirms, you\'re in. The whole login flow is one tap.',
   },
   {
-    n: 3,
-    title: 'Combine URL + HTML',
-    body: 'Add action: Text. Type the URL on the first line, leave a blank line, then drag in the "Contents of Web Page" variable. Looks like:  [Shortcut Input] (blank line) [Contents of Web Page].',
+    emoji: '⚡',
+    title: 'Native speed',
+    body: 'The Vault, Recipe Cards, Chef Jennifer — everything you use on the web, now wrapped in a native iPhone app that opens instantly from your home screen.',
   },
   {
-    n: 4,
-    title: 'Copy to clipboard',
-    body: 'Add action: Copy to Clipboard. Input = the Text from step 3.',
-  },
-  {
-    n: 5,
-    title: 'Open MyRecipe',
-    body: 'Add action: Open URL. Set URL to: https://recipe.mycompanionapps.com/secret?smart_import=1',
-  },
-  {
-    n: 6,
-    title: 'Name and save',
-    body: 'Tap the shortcut name at the top, change it to "Send to MyRecipe" (or whatever you like). Tap Done.',
+    emoji: '🔔',
+    title: 'Live notifications',
+    body: 'Optional reminders when it\'s time to start dinner prep, your meal plan refreshes, or Chef Jennifer has a new lesson waiting in My Playbook.',
   },
 ]
 
@@ -57,92 +47,81 @@ export default function ShortcutPage() {
           >
             ← Back
           </button>
-          <h1 className="text-lg font-bold text-gray-900">iPhone Share Setup</h1>
+          <h1 className="text-lg font-bold text-gray-900">MyRecipe iPhone App</h1>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
-        {/* Honest framing card — sets expectations before the user
-            commits to the 5-minute build. */}
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5">
-          <p className="text-sm font-bold text-amber-900 mb-2">📲 Optional: one-tap share from Safari</p>
-          <p className="text-sm text-amber-900 leading-relaxed">
-            This is for iPhone users who want to tap <span className="font-semibold">Share → MyRecipe</span> on any recipe page and have it pulled in automatically. Most users don&rsquo;t need it &mdash; the <span className="font-semibold">📋 Paste</span> tab on the Import page works on every device and every recipe site.
+        {/* Hero — anticipation, not instruction. */}
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-2xl p-6 text-center">
+          <p className="text-5xl mb-3">📲</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+            The MyRecipe iPhone app is&nbsp;coming.
+          </h2>
+          <p className="text-base text-gray-700 leading-relaxed mt-3 max-w-md mx-auto">
+            Everything you love on the web, wrapped in a native iPhone app — one-tap recipe import from Safari, Sign in with Apple, and a Share Sheet shortcut that just&nbsp;works.
           </p>
-          <p className="text-sm text-amber-900 leading-relaxed mt-2">
-            If you cook from your phone often and want a smoother flow, it&rsquo;s a 5-minute setup using Apple&rsquo;s built-in Shortcuts app.
-          </p>
-          <p className="text-xs text-amber-800 leading-relaxed mt-3 italic">
-            When the MyRecipe iPhone app launches in the App Store, this is built in &mdash; no setup needed. Until then, this is the bridge.
-          </p>
+
+          {/* Coming Soon store buttons, same pair as the landing
+              page so the visual story is consistent. */}
+          <div className="grid grid-cols-2 gap-3 max-w-md mx-auto mt-6">
+            <div className="flex items-center gap-3 bg-stone-900 text-white rounded-xl px-3 py-2.5">
+              <svg className="w-7 h-7 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+              </svg>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-[9px] uppercase tracking-wider text-stone-400 leading-none">Coming Soon</p>
+                <p className="text-sm font-semibold leading-tight mt-0.5">App Store</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-stone-900 text-white rounded-xl px-3 py-2.5">
+              <svg className="w-7 h-7 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M5 2.92v18.16c0 .69.5 1.06 1.04.78l13.92-9.08c.5-.32.5-1.25 0-1.57L6.04 2.14C5.5 1.86 5 2.23 5 2.92z" />
+              </svg>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-[9px] uppercase tracking-wider text-stone-400 leading-none">Coming Soon</p>
+                <p className="text-sm font-semibold leading-tight mt-0.5">Google Play</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* What it does — quick reassurance before the steps. */}
-        <div className="bg-white border-2 border-gray-200 rounded-2xl p-5">
-          <p className="text-sm font-bold text-gray-900 mb-2">What it does</p>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            When you tap <span className="font-semibold">Share</span> on a recipe page in Safari, your Shortcut grabs both the URL <em>and</em> the page&rsquo;s HTML, then opens MyRecipe with the recipe ready to import. Even on sites that block our server-side fetcher (a handful of big recipe sites do), the HTML gets in &mdash; so the import works either way.
-          </p>
-        </div>
-
-        {/* Step-by-step build. Six numbered cards with the exact
-            action sequence in Apple's Shortcuts app. */}
-        <div className="bg-white border-2 border-gray-200 rounded-2xl p-5 space-y-4">
-          <p className="text-sm font-bold text-gray-900">Build the Shortcut (5 minutes)</p>
-          <ol className="space-y-3">
-            {SHORTCUT_STEPS.map(step => (
-              <li key={step.n} className="flex items-start gap-3">
-                <span className="shrink-0 w-7 h-7 rounded-full bg-orange-100 text-orange-700 font-bold text-sm flex items-center justify-center">{step.n}</span>
+        {/* What's coming — four highlights. */}
+        <div className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100">
+            <p className="text-xs font-extrabold text-orange-600 uppercase tracking-wider">What you&rsquo;ll get</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {APP_HIGHLIGHTS.map(h => (
+              <div key={h.title} className="px-5 py-4 flex items-start gap-3">
+                <span className="text-2xl shrink-0" aria-hidden="true">{h.emoji}</span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{step.title}</p>
-                  <p className="text-sm text-gray-600 leading-snug mt-0.5">{step.body}</p>
+                  <p className="text-sm font-bold text-gray-900">{h.title}</p>
+                  <p className="text-sm text-gray-600 leading-relaxed mt-1">{h.body}</p>
                 </div>
-              </li>
+              </div>
             ))}
-          </ol>
+          </div>
         </div>
 
-        {/* How to use it after building. */}
+        {/* "What changes for current web users" — reassurance. */}
         <div className="bg-white border-2 border-gray-200 rounded-2xl p-5">
-          <p className="text-sm font-bold text-gray-900 mb-2">After you save it</p>
-          <ol className="space-y-2 text-sm text-gray-700 leading-relaxed list-decimal list-inside">
-            <li>Open Safari, navigate to any recipe page.</li>
-            <li>Tap the <span className="font-semibold">Share</span> button (square with up-arrow).</li>
-            <li>Scroll down the share sheet to find <span className="font-semibold">Send to MyRecipe</span>. Tap it.</li>
-            <li>MyRecipe opens with the recipe parsed and ready to save.</li>
-          </ol>
-          <p className="text-xs text-gray-500 italic mt-3">
-            First time you use it, iOS may show a permission prompt for clipboard access. Allow it &mdash; that&rsquo;s how the recipe data moves from Safari to MyRecipe.
+          <p className="text-xs font-extrabold text-orange-600 uppercase tracking-wider mb-2">What about the web?</p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            The web version stays. The iPhone app is a smoother home for mobile cooking, but if you do your meal planning on a laptop or share recipe links with friends, the web is still where that lives. Your Vault, your Cards, your Playbook — same data, both places. Sign in with the same account, see the same recipes.
           </p>
         </div>
 
-        {/* Troubleshooting card — common gotchas. */}
-        <div className="bg-white border-2 border-gray-200 rounded-2xl p-5">
-          <p className="text-sm font-bold text-gray-900 mb-2">If something goes wrong</p>
-          <ul className="space-y-2 text-sm text-gray-700 leading-relaxed">
-            <li>
-              <span className="font-semibold">Shortcut doesn&rsquo;t appear in the share sheet:</span>{' '}
-              In Shortcuts app, tap the ⓘ icon on your shortcut and make sure <em>Show in Share Sheet</em> is ON and <em>Accept: URLs</em>.
-            </li>
-            <li>
-              <span className="font-semibold">Nothing happens when you tap it:</span>{' '}
-              The clipboard permission prompt may be hiding behind the share sheet. Try again from a fresh tab.
-            </li>
-            <li>
-              <span className="font-semibold">Imports come in empty:</span>{' '}
-              Step 3 (Combine URL + HTML) is the easiest to get wrong. Make sure the URL is on the first line, with a blank line before the page contents.
-            </li>
-            <li>
-              <span className="font-semibold">Doesn&rsquo;t fit your workflow:</span>{' '}
-              No problem &mdash; the <span className="font-semibold">📋 Paste</span> tab in MyRecipe&rsquo;s Import Tools handles every site without any setup at all.
-            </li>
-          </ul>
+        {/* Power-user footer — terse, single paragraph, no
+            hand-holding. The audience for this is small and they
+            can figure it out from this hint alone. */}
+        <div className="bg-gray-100 border border-gray-200 rounded-2xl p-5">
+          <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">For the curious</p>
+          <p className="text-xs text-gray-600 leading-relaxed">
+            Until the app lands, the web version handles every site via the <span className="font-semibold">📋 Paste</span> tab on the Import page. If you&rsquo;re comfortable with Apple Shortcuts, you can also build a 4-action share from Safari: <em>Receive URLs → Get Contents of Web Page → Combine URL + blank line + Contents → Copy to Clipboard → Open URL</em> <code className="text-[11px] bg-white border border-gray-300 rounded px-1 py-0.5 font-mono">recipe.mycompanionapps.com/secret?smart_import=1</code>. Most users won&rsquo;t bother — the iPhone app makes this built-in.
+          </p>
         </div>
-
-        <p className="text-center text-xs text-gray-500 italic">
-          Questions or stuck? Tap <a href="/notes" className="text-orange-600 underline">Tester notes</a> for help.
-        </p>
 
       </main>
     </div>

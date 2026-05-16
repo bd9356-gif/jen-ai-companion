@@ -3312,7 +3312,7 @@ export default function MyRecipeVaultPage() {
               href="/shortcut"
               className="inline-block text-xs text-gray-500 hover:text-orange-700 underline decoration-dotted underline-offset-4"
             >
-              On iPhone? Set up one-tap share from Safari &rarr;
+              On iPhone? The MyRecipe app is coming &mdash; see what&rsquo;s coming &rarr;
             </a>
           </div>
         </main>
