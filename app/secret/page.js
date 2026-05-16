@@ -3431,14 +3431,17 @@ export default function MyRecipeVaultPage() {
                 })()}
               </select>
             ) : (
-              /* Portfolio row 2 — book image moved out (May 2026) to a
-                 proper hero banner at the top of the page content; this
-                 slot now stays empty so the action buttons on the right
-                 keep their natural spacing without a competing widget
-                 fighting for visual weight. */
-              <div className="flex-1" />
+              /* Portfolio row 2 — small count label in the left white-
+                 space, restrained italic stone tone so it sits as a
+                 quiet caption rather than competing with the action
+                 buttons on the right. */
+              <div className="flex-1 flex items-center min-w-0">
+                <span className="text-xs italic text-stone-600">
+                  {portfolioNotes.length + portfolioVideos.length} filed from Playbook
+                </span>
+              </div>
             )}
-            <div className="flex gap-1 shrink-0">
+            <div className="flex gap-2 shrink-0">
               {/* Search 🔍 — hidden on Portfolio view (notes have no
                   searchable title; tags don't apply). */}
               {listStyle !== 'portfolio' && (
@@ -3989,8 +3992,8 @@ export default function MyRecipeVaultPage() {
                 className="absolute inset-0 flex flex-col items-end justify-center text-right"
                 style={{
                   textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)',
-                  paddingRight: '8%',  // % of banner width — same relative
-                                       // position on phone and desktop
+                  paddingRight: '14%',  // % of banner width — same relative
+                                        // position on phone and desktop
                 }}
               >
                 <h2
