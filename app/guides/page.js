@@ -209,11 +209,11 @@ export default function GuidesPage() {
             width={1753}
             height={471}
           />
-          <div className="absolute inset-x-0 top-0 flex flex-col items-center pt-2 sm:pt-3 px-3">
-            <h2 className="text-lg sm:text-2xl font-bold text-stone-900 bg-white/85 backdrop-blur-sm rounded-full px-4 py-0.5 leading-tight shadow-sm">
+          <div className="absolute inset-x-0 top-0 flex flex-col items-center text-center pt-3 sm:pt-4 px-4">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-emerald-900 leading-tight tracking-tight">
               The Library
             </h2>
-            <p className="text-[10px] sm:text-xs text-stone-700 bg-white/85 backdrop-blur-sm rounded-full px-3 py-0.5 mt-1 leading-snug shadow-sm">
+            <p className="text-xs sm:text-base text-emerald-800/90 font-medium mt-0.5 sm:mt-1 leading-snug">
               Reference reading for everything in the kitchen.
             </p>
           </div>
