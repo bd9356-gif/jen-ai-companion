@@ -4010,7 +4010,7 @@ export default function MyRecipeVaultPage() {
                     textShadow: '0 1px 3px rgba(255, 248, 220, 0.9), 0 0 8px rgba(255, 248, 220, 0.6)',
                   }}
                 >
-                  Your saved Playbook lesson notes and learning videos, kept here for return visits. Tap <span className="not-italic font-semibold">×</span> on a row to send it back.
+                  Your saved notes and videos are kept here until you no longer need them.<br />Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
                 </p>
               </div>
             </div>
