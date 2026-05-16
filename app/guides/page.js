@@ -200,7 +200,7 @@ export default function GuidesPage() {
             in the same pass. A soft white pill backing on each line
             keeps the type readable against the colorful book spines
             without dimming the books themselves. */}
-        <div className="relative mb-5 rounded-2xl overflow-hidden shadow-sm">
+        <div className="relative mb-3 rounded-2xl overflow-hidden shadow-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/library-banner.png"
@@ -209,15 +209,25 @@ export default function GuidesPage() {
             width={1753}
             height={471}
           />
-          <div className="absolute inset-x-0 top-0 flex flex-col items-center text-center pt-3 sm:pt-4 px-4">
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-emerald-900 leading-tight tracking-tight">
+          {/* "The Library" overlaid in white, centered over the row of
+              books. text-shadow gives the letters depth against the
+              varied book spines so they read cleanly without needing a
+              backing plate. */}
+          <div className="absolute inset-0 flex items-center justify-center text-center px-4">
+            <h2
+              className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-none"
+              style={{ textShadow: '0 2px 12px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.45)' }}
+            >
               The Library
             </h2>
-            <p className="text-xs sm:text-base text-emerald-800/90 font-medium mt-0.5 sm:mt-1 leading-snug">
-              Reference reading for everything in the kitchen.
-            </p>
           </div>
         </div>
+
+        {/* Tagline — just below the banner, plain black text. The banner
+            does the room; this line just says what's on the shelf. */}
+        <p className="text-center text-sm sm:text-base text-stone-900 font-medium mb-5">
+          Reference reading for everything in the kitchen.
+        </p>
 
         {/* 📝 Study Hall highlight — first-time users need to discover
             that Chef Jen quizzes after articles. Card is collapsible so
