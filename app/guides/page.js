@@ -188,6 +188,20 @@ export default function GuidesPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
+        {/* Library banner (May 2026) — a row of cookbooks on a wooden
+            shelf, bracketed by a small plant and a utensil crock. Lands
+            the library metaphor visually so the H2 + tagline below can
+            just say what the page is without needing to evoke a room.
+            Cropped to ~3.7:1 so it sits as a slim marquee, not a hero. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/library-banner.png"
+          alt=""
+          className="w-full h-auto block rounded-2xl mb-4 shadow-sm"
+          width={1753}
+          height={471}
+        />
+
         {/* Tagline — frames Guides as the school library that pairs
             with the two classrooms (Chef TV + Chef Jennifer). */}
         <div className="text-center px-2 mb-5">
