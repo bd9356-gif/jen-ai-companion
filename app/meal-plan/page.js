@@ -295,67 +295,79 @@ export default function MealPlanPage() {
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
-    // Direct-DOM print path. Earlier React-state-controlled version
-    // produced blank pages because the inline display:none toggle
-    // hadn't committed before window.print() captured the DOM.
-    // This builds the print container directly on document.body so
-    // it's a true sibling of the app root, hides every other body
-    // child via @media print's display:none, and cleans up on
-    // afterprint. Same pattern Shopping List uses.
-    const TEMP_ID = 'print-mise-temp'
-    const STYLE_ID = 'print-mise-style-temp'
-    document.getElementById(TEMP_ID)?.remove()
-    document.getElementById(STYLE_ID)?.remove()
+    // Iframe print path (May 2026). Earlier attempts using the
+    // direct-DOM body-overlay pattern (same as Shopping List) printed
+    // 3 blank pages on iOS Safari because the Mise UI lives inside a
+    // modal — the modal's fixed-position child interacted badly with
+    // iOS's @media print display:none cascade and the body > * rule
+    // wasn't enough to suppress it. The iframe approach sidesteps
+    // every modal/CSS interaction by giving the print engine a
+    // completely self-contained mini-document with no relationship
+    // to the parent page's layout, modal, or styles.
+    const FRAME_ID = 'print-mise-iframe'
+    document.getElementById(FRAME_ID)?.remove()
 
-    const container = document.createElement('div')
-    container.id = TEMP_ID
-    Object.assign(container.style, {
+    const iframe = document.createElement('iframe')
+    iframe.id = FRAME_ID
+    Object.assign(iframe.style, {
       position: 'fixed',
-      inset: '0',
-      background: 'white',
-      zIndex: '99999',
-      padding: '24px',
-      fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-      fontSize: '14px',
-      lineHeight: '1.7',
-      color: '#111',
-      whiteSpace: 'pre-wrap',
-      overflow: 'auto',
+      right: '0',
+      bottom: '0',
+      width: '0',
+      height: '0',
+      border: '0',
+      visibility: 'hidden',
     })
-    container.textContent = text
+    document.body.appendChild(iframe)
 
-    const styleEl = document.createElement('style')
-    styleEl.id = STYLE_ID
-    styleEl.textContent = `
-      @media print {
-        body > *:not(#${TEMP_ID}) { display: none !important; }
-        #${TEMP_ID} {
-          position: static !important;
-          inset: auto !important;
-          background: white !important;
-          padding: 24px !important;
-          overflow: visible !important;
-        }
+    // Escape angle brackets just in case a recipe title or ingredient
+    // contains them — we render the text inside <pre> so spacing and
+    // line breaks are preserved verbatim.
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Mise en Place</title>
+    <style>
+      body { margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; color: #111; }
+      pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit; }
+      @page { margin: 0.5in; }
+    </style>
+  </head>
+  <body><pre>${escaped}</pre></body>
+</html>`
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document
+    doc.open()
+    doc.write(html)
+    doc.close()
+
+    const cleanup = () => { iframe.remove() }
+
+    // Wait for the iframe document to be fully ready before invoking
+    // print(). On iOS Safari, calling print() too early can capture an
+    // empty document and produce blank pages — the symptom we were
+    // trying to fix in the first place.
+    const triggerPrint = () => {
+      try {
+        iframe.contentWindow.focus()
+        iframe.contentWindow.print()
+      } catch (err) {
+        console.error('Mise print failed', err)
+        showToast('Print failed — try Copy instead')
       }
-      @media screen {
-        #${TEMP_ID} { display: none !important; }
-      }
-    `
-
-    document.body.appendChild(container)
-    document.head.appendChild(styleEl)
-
-    const cleanup = () => {
-      container.remove()
-      styleEl.remove()
-      window.removeEventListener('afterprint', cleanup)
-    }
-    window.addEventListener('afterprint', cleanup)
-
-    setTimeout(() => {
-      window.print()
+      // Schedule cleanup. iOS Safari doesn't reliably fire afterprint
+      // on the iframe, so we just remove it after a generous delay.
       setTimeout(cleanup, 30000)
-    }, 100)
+    }
+
+    if (doc.readyState === 'complete') {
+      // Tiny delay still helps iOS finalize layout.
+      setTimeout(triggerPrint, 50)
+    } else {
+      iframe.addEventListener('load', () => setTimeout(triggerPrint, 50), { once: true })
+    }
   }
 
   // Flip a pick between main and side (purely cosmetic — see
@@ -621,19 +633,28 @@ export default function MealPlanPage() {
               </p>
               <div className="flex items-center gap-2">
                 {miseRecipes.length > 0 && (
-                  <button
-                    onClick={copyMise}
-                    title="Copy as plain text — paste into Notes / Reminders / etc."
-                    className="text-xs font-semibold text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 hover:bg-emerald-50"
-                  >
-                    📋 Copy
-                  </button>
+                  <>
+                    <button
+                      onClick={copyMise}
+                      title="Copy as plain text — paste into Notes / Reminders / etc."
+                      className="text-xs font-semibold text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 hover:bg-emerald-50"
+                    >
+                      📋 Copy
+                    </button>
+                    {/* Print button restored (May 2026) — re-implemented
+                        with an iframe print path that sidesteps the modal/
+                        iOS Safari interaction that caused blank pages on
+                        the earlier body-overlay version. See printMise()
+                        comment for the full story. */}
+                    <button
+                      onClick={printMise}
+                      title="Open a printable version of the mise en place"
+                      className="text-xs font-semibold text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1 hover:bg-amber-50"
+                    >
+                      🖨️ Print
+                    </button>
+                  </>
                 )}
-                {/* Print button removed (May 2026) — iOS Safari's
-                    print stack wouldn't cooperate with the modal-style
-                    print container. Copy still works; users paste it
-                    wherever they want to print. Native print returns
-                    when the app moves to Capacitor / iOS. */}
                 <button
                   onClick={closeMise}
                   className="text-sm font-semibold bg-amber-500 text-white rounded-xl px-4 py-2 hover:bg-amber-600"
