@@ -736,7 +736,7 @@ function ToMakeMeals({ picks, bucketKey, onMove, onRemove, onToggleSide, onMise 
               title="Mise en place — prep list for this meal"
               className="text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-300 rounded-md px-2 py-0.5 hover:bg-amber-50"
             >
-              🥣 Mise
+              🥣 Mise En Place
             </button>
           </div>
           <div className="space-y-1.5">
