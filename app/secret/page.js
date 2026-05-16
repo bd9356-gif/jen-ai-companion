@@ -3987,22 +3987,19 @@ export default function MyRecipeVaultPage() {
               />
               {/* Explainer prose overlaid on the banner — serif italic in
                   cream so it reads as a passage from the open journal
-                  itself rather than a UI label. Right-positioned and
-                  proportional so the prose lands in the same relative
-                  spot on phone and desktop. Replaces the separate
-                  explainer paragraph that used to sit below the banner. */}
+                  itself rather than a UI label. Block sits right-of-
+                  center (away from the journal artwork on the left) but
+                  not pinned to the edge. Text reads left-to-right inside
+                  the block, natural prose flow. */}
               <div
-                className="absolute inset-0 flex items-center justify-end"
+                className="absolute inset-0 flex items-center"
                 style={{
-                  paddingRight: '6%',
-                  paddingLeft: '50%',  // pushes the text block onto the
-                                       // right half so it doesn't crash
-                                       // into the journal artwork on the
-                                       // left
+                  paddingLeft: '38%',   // right-of-center, not pure right
+                  paddingRight: '8%',
                 }}
               >
                 <p
-                  className="text-amber-50 italic text-right leading-snug"
+                  className="text-amber-50 italic leading-snug"
                   style={{
                     fontFamily: 'Georgia, "Times New Roman", serif',
                     fontSize: 'clamp(0.75rem, 1.9vw, 1.25rem)',
