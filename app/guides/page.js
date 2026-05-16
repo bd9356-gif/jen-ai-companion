@@ -94,6 +94,10 @@ export default function GuidesPage() {
   const [loading, setLoading] = useState(true)
   const [openArticleId, setOpenArticleId] = useState(null)
   const [collapsedTopics, setCollapsedTopics] = useState(new Set())
+  // Study Hall card starts collapsed — first-line "Study Hall is open." stays
+  // visible as a header; the explainer body opens on tap. Keeps the Library
+  // landing tight for return visitors who already know what Study Hall is.
+  const [studyHallOpen, setStudyHallOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -189,46 +193,55 @@ export default function GuidesPage() {
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
         {/* Library banner (May 2026) — a row of cookbooks on a wooden
-            shelf, bracketed by a small plant and a utensil crock. Lands
-            the library metaphor visually so the H2 + tagline below can
-            just say what the page is without needing to evoke a room.
-            Cropped to ~3.7:1 so it sits as a slim marquee, not a hero. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/library-banner.png"
-          alt=""
-          className="w-full h-auto block rounded-2xl mb-4 shadow-sm"
-          width={1753}
-          height={471}
-        />
-
-        {/* Tagline — frames Guides as the school library that pairs
-            with the two classrooms (Chef TV + Chef Jennifer). */}
-        <div className="text-center px-2 mb-5">
-          <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 leading-tight">
-            The Library
-          </h2>
-          <p className="text-base text-stone-500 mt-1">
-            Reference reading for everything in the kitchen.
-          </p>
+            shelf, bracketed by a small plant and a utensil crock. The
+            "The Library" title and tagline are overlaid in the cream
+            space above the books so the banner does the labeling too;
+            the standalone H2 block that used to live below was retired
+            in the same pass. A soft white pill backing on each line
+            keeps the type readable against the colorful book spines
+            without dimming the books themselves. */}
+        <div className="relative mb-5 rounded-2xl overflow-hidden shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/library-banner.png"
+            alt=""
+            className="w-full h-auto block"
+            width={1753}
+            height={471}
+          />
+          <div className="absolute inset-x-0 top-0 flex flex-col items-center pt-2 sm:pt-3 px-3">
+            <h2 className="text-lg sm:text-2xl font-bold text-stone-900 bg-white/85 backdrop-blur-sm rounded-full px-4 py-0.5 leading-tight shadow-sm">
+              The Library
+            </h2>
+            <p className="text-[10px] sm:text-xs text-stone-700 bg-white/85 backdrop-blur-sm rounded-full px-3 py-0.5 mt-1 leading-snug shadow-sm">
+              Reference reading for everything in the kitchen.
+            </p>
+          </div>
         </div>
 
-        {/* 📝 Study Hall highlight — without this card, users wouldn't
-            know Chef Jen quizzes them; the Study Hall button is buried
-            at the bottom of an expanded article. Promotes the feature
-            on the Library landing so first-time visitors notice it,
-            with a soft visual (no big banner) that doesn't crowd the
-            topic accordions below. */}
-        <div className="mb-6 rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-50/30 px-4 py-3.5">
-          <div className="flex items-start gap-3">
+        {/* 📝 Study Hall highlight — first-time users need to discover
+            that Chef Jen quizzes after articles. Card is collapsible so
+            return visitors who already know don't see the explainer on
+            every page load: the "Study Hall is open." header stays
+            visible; tap to open the body, tap again to close. */}
+        <div className="mb-6 rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-50/30 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setStudyHallOpen(v => !v)}
+            aria-expanded={studyHallOpen}
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-emerald-50/60 transition-colors"
+          >
             <span className="text-2xl shrink-0">🎓</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-emerald-900">Study Hall is open.</p>
-              <p className="text-xs text-emerald-800/80 leading-relaxed mt-1">
+            <p className="flex-1 text-sm font-bold text-emerald-900">Study Hall is open.</p>
+            <span className={`text-emerald-700 shrink-0 transition-transform ${studyHallOpen ? 'rotate-180' : ''}`} aria-hidden>▾</span>
+          </button>
+          {studyHallOpen && (
+            <div className="px-4 pb-3.5 pl-[60px]">
+              <p className="text-xs text-emerald-800/80 leading-relaxed">
                 After you read an article, tap <span className="font-semibold">📝 Ask Chef Jen to quiz me</span> at the bottom. Three quick questions to see what stuck. Your results land in <span className="font-semibold">My Playbook</span>.
               </p>
             </div>
-          </div>
+          )}
         </div>
 
         {loading ? (
