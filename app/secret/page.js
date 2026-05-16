@@ -3431,16 +3431,22 @@ export default function MyRecipeVaultPage() {
                 })()}
               </select>
             ) : (
-              /* Portfolio-side counter pill — balances the action
-                 cluster on the right by filling the row 2 left side
-                 with a count of filed items. Without this, Portfolio
-                 view's row 2 had a 5-button cluster floating right with
-                 a big white-space hole on the left. */
+              /* Portfolio corner book (May 2026) — replaces the earlier
+                 "💎 N filed from Playbook" pill. An open reference book
+                 with botanical illustrations sits in the upper-left of
+                 row 2, anchoring the Portfolio surface as the user's
+                 curated reference shelf. The count is dropped
+                 intentionally: the image is the statement, the items
+                 below speak for themselves. */
               <div className="flex-1 flex items-center min-w-0">
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-50 border-2 border-orange-200 rounded-lg px-2.5 py-1.5 whitespace-nowrap">
-                  <span>💎</span>
-                  <span>{portfolioNotes.length + portfolioVideos.length} filed from Playbook</span>
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/portfolio-book.png"
+                  alt=""
+                  className="h-12 sm:h-14 w-auto object-contain"
+                  width={1137}
+                  height={676}
+                />
               </div>
             )}
             <div className="flex gap-1 shrink-0">
