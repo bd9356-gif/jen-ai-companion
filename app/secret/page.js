@@ -4002,7 +4002,7 @@ export default function MyRecipeVaultPage() {
                   className="text-stone-900 italic font-medium leading-snug"
                   style={{
                     fontFamily: 'Georgia, "Times New Roman", serif',
-                    fontSize: 'clamp(0.75rem, 1.9vw, 1.25rem)',
+                    fontSize: 'clamp(1rem, 2.8vw, 1.75rem)',
                     // Soft cream glow rather than a dark shadow — dark
                     // text on a light/cream banner area reads cleanest
                     // with a faint light halo behind it, like printed
