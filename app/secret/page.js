@@ -3284,9 +3284,11 @@ export default function MyRecipeVaultPage() {
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">📄</span>
-                <h2 className="text-sm font-bold text-gray-900">Import JSON File</h2>
+                <h2 className="text-sm font-bold text-gray-900">Import from JSON file</h2>
               </div>
-              <p className="text-xs text-gray-500 mb-4">Import a recipe exported from this app or any compatible JSON format. Fields: title, description, ingredients, instructions, category, tags.</p>
+              <p className="text-xs text-gray-500 mb-4">
+                Bring recipes into your Vault from a JSON file — useful if you&apos;re moving data over from another app, restoring a backup, or importing a collection a friend shared. Single recipe or an array; recognized fields: <span className="font-medium text-gray-700">title, description, ingredients, instructions, category, tags, photo_url, servings, family_notes</span>.
+              </p>
               <input type="file" accept=".json,application/json" id="json-import-input" className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0]
