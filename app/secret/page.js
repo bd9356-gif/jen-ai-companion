@@ -3982,8 +3982,11 @@ export default function MyRecipeVaultPage() {
                 width={1940}
                 height={540}
               />
+              {/* Headline overlay only — pulled right-of-center (not
+                  pinned to the edge) so it sits in the open area of the
+                  banner without crashing into the right margin. */}
               <div
-                className="absolute inset-0 flex flex-col items-end justify-center text-right pr-5 sm:pr-10"
+                className="absolute inset-0 flex flex-col items-end justify-center text-right pr-12 sm:pr-20 md:pr-24"
                 style={{ textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)' }}
               >
                 <h2
@@ -3992,22 +3995,23 @@ export default function MyRecipeVaultPage() {
                 >
                   💎 Chef Portfolio
                 </h2>
-                <p className="text-xs sm:text-sm italic text-amber-300 font-medium mt-1.5 leading-snug">
-                  Your curated reference shelf.
-                </p>
               </div>
             </div>
 
-            {/* Single small back-link under the hero. The explainer
-                paragraph and N-saved count were retired — the hero
-                carries the framing now and the items below show
-                themselves. */}
-            <a
-              href="/playbook"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-4 ml-1"
-            >
-              ← Back to My Playbook
-            </a>
+            {/* Original explainer tagline + back link, restored below
+                the banner in plain black so it reads against the page
+                background instead of fighting the banner. */}
+            <div className="mb-4 px-1">
+              <a
+                href="/playbook"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-2"
+              >
+                ← Back to My Playbook
+              </a>
+              <p className="text-sm text-stone-900 leading-relaxed">
+                Your saved <strong>My Playbook</strong>{' '}lesson notes and learning videos, all in one place. <span className="font-bold">Tap <span className="bg-orange-100 px-1.5 py-0.5 rounded">×</span> on a row to send it back.</span>
+              </p>
+            </div>
 
             {/* 📺 Learning Videos section — collapsible accordion. The
                 sky-blue palette was retired (May 2026) in favor of amber
