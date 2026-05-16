@@ -3977,10 +3977,6 @@ export default function MyRecipeVaultPage() {
                 paragraph + count) was retired in the same pass — the
                 hero says everything that intro tried to say. */}
             <div className="relative -mt-6 mb-4 rounded-2xl overflow-hidden shadow-md">
-              {/* Banner with no text overlay — sticky header above
-                  already says "💎 Chef Portfolio", so duplicating it
-                  on the banner read as redundant. The image alone sets
-                  the room; the header carries the name. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/test-banner.png"
@@ -3989,22 +3985,43 @@ export default function MyRecipeVaultPage() {
                 width={1940}
                 height={540}
               />
+              {/* Explainer prose overlaid on the banner — serif italic in
+                  cream so it reads as a passage from the open journal
+                  itself rather than a UI label. Right-positioned and
+                  proportional so the prose lands in the same relative
+                  spot on phone and desktop. Replaces the separate
+                  explainer paragraph that used to sit below the banner. */}
+              <div
+                className="absolute inset-0 flex items-center justify-end"
+                style={{
+                  paddingRight: '6%',
+                  paddingLeft: '50%',  // pushes the text block onto the
+                                       // right half so it doesn't crash
+                                       // into the journal artwork on the
+                                       // left
+                }}
+              >
+                <p
+                  className="text-amber-50 italic text-right leading-snug"
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                    fontSize: 'clamp(0.75rem, 1.9vw, 1.25rem)',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)',
+                  }}
+                >
+                  Your saved Playbook lesson notes and learning videos, kept here for return visits. Tap <span className="not-italic font-semibold">×</span> on a row to send it back.
+                </p>
+              </div>
             </div>
 
-            {/* Original explainer tagline + back link, restored below
-                the banner in plain black so it reads against the page
-                background instead of fighting the banner. */}
-            <div className="mb-4 px-1">
-              <a
-                href="/playbook"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-2"
-              >
-                ← Back to My Playbook
-              </a>
-              <p className="text-sm text-stone-900 leading-relaxed">
-                Your saved <strong>My Playbook</strong>{' '}lesson notes and learning videos, all in one place. <span className="font-bold">Tap <span className="bg-orange-100 px-1.5 py-0.5 rounded">×</span> on a row to send it back.</span>
-              </p>
-            </div>
+            {/* Just a small back link below the banner — the explainer
+                lives on the banner now, in book-passage form. */}
+            <a
+              href="/playbook"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-4 ml-1"
+            >
+              ← Back to My Playbook
+            </a>
 
             {/* 📺 Learning Videos section — collapsible accordion. The
                 sky-blue palette was retired (May 2026) in favor of amber
