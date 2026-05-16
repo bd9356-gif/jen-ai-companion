@@ -3986,11 +3986,11 @@ export default function MyRecipeVaultPage() {
                   pinned to the edge) so it sits in the open area of the
                   banner without crashing into the right margin. */}
               <div
-                className="absolute inset-0 flex flex-col items-end justify-center text-right pr-12 sm:pr-20 md:pr-24"
+                className="absolute inset-0 flex flex-col items-end justify-center text-right pr-20 sm:pr-32 md:pr-40"
                 style={{ textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)' }}
               >
                 <h2
-                  className="text-2xl sm:text-4xl md:text-5xl font-bold text-amber-50 tracking-tight leading-none"
+                  className="text-3xl sm:text-5xl md:text-6xl font-bold text-amber-50 tracking-tight leading-none"
                   style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
                 >
                   💎 Chef Portfolio
