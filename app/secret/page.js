@@ -3976,23 +3976,23 @@ export default function MyRecipeVaultPage() {
             <div className="relative mb-4 rounded-2xl overflow-hidden shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/portfolio-book.png"
+                src="/test-banner.png"
                 alt=""
                 className="w-full h-auto block"
-                width={1536}
-                height={1024}
+                width={1940}
+                height={540}
               />
               <div
-                className="absolute inset-x-0 bottom-0 flex flex-col items-center text-center pb-4 sm:pb-6 px-4"
+                className="absolute inset-0 flex flex-col items-center justify-center text-center px-4"
                 style={{ textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)' }}
               >
                 <h2
-                  className="text-2xl sm:text-4xl font-bold text-amber-50 tracking-tight leading-none"
+                  className="text-2xl sm:text-4xl md:text-5xl font-bold text-amber-50 tracking-tight leading-none"
                   style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
                 >
                   💎 Chef Portfolio
                 </h2>
-                <p className="text-xs sm:text-sm italic text-amber-100/90 mt-1 leading-snug">
+                <p className="text-xs sm:text-sm italic text-amber-100/90 mt-1.5 leading-snug">
                   Your curated reference shelf.
                 </p>
               </div>
