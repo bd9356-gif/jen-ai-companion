@@ -3431,23 +3431,12 @@ export default function MyRecipeVaultPage() {
                 })()}
               </select>
             ) : (
-              /* Portfolio corner book (May 2026) — replaces the earlier
-                 "💎 N filed from Playbook" pill. An open reference book
-                 with botanical illustrations sits in the upper-left of
-                 row 2, anchoring the Portfolio surface as the user's
-                 curated reference shelf. The count is dropped
-                 intentionally: the image is the statement, the items
-                 below speak for themselves. */
-              <div className="flex-1 flex items-center min-w-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/portfolio-book.png"
-                  alt=""
-                  className="h-12 sm:h-14 w-auto object-contain"
-                  width={1137}
-                  height={676}
-                />
-              </div>
+              /* Portfolio row 2 — book image moved out (May 2026) to a
+                 proper hero banner at the top of the page content; this
+                 slot now stays empty so the action buttons on the right
+                 keep their natural spacing without a competing widget
+                 fighting for visual weight. */
+              <div className="flex-1" />
             )}
             <div className="flex gap-1 shrink-0">
               {/* Search 🔍 — hidden on Portfolio view (notes have no
@@ -3973,54 +3962,72 @@ export default function MyRecipeVaultPage() {
              Tap a row to expand; tap the × to remove from the Portfolio
              (the underlying note stays in Playbook). */
           <div>
-            {/* Tagline (no inline title — the page header already shows
-                "💎 Chef Portfolio" when listStyle is portfolio). Just
-                the explainer prose + a back-link to My Playbook, which
-                is the source for everything that lives in here. */}
-            <div className="mb-4 px-1">
-              <a
-                href="/playbook"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-2"
+            {/* Portfolio hero banner (May 2026) — open reference book with
+                botanical illustrations and foreground fruit, used as the
+                full-width hero at the top of the Portfolio. "💎 Chef
+                Portfolio" overlays in elegant serif in the dark area at
+                the bottom of the banner; small italic tagline below. The
+                page already has the brand in the sticky header, but the
+                hero is where the room is *set* — the user knows
+                immediately they're somewhere different from the working
+                Vault. The earlier intro stack (Back link + explainer
+                paragraph + count) was retired in the same pass — the
+                hero says everything that intro tried to say. */}
+            <div className="relative mb-4 rounded-2xl overflow-hidden shadow-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/portfolio-book.png"
+                alt=""
+                className="w-full h-auto block"
+                width={1536}
+                height={1024}
+              />
+              <div
+                className="absolute inset-x-0 bottom-0 flex flex-col items-center text-center pb-4 sm:pb-6 px-4"
+                style={{ textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)' }}
               >
-                ← Back to My Playbook
-              </a>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Your saved <strong>My Playbook</strong>{' '}lesson notes and learning videos, all in one place. <span className="font-bold text-orange-700">Tap <span className="bg-orange-100 px-1.5 py-0.5 rounded">×</span> on a row to send it back.</span>
-              </p>
-            </div>
-            {(() => {
-              const totalCount = portfolioNotes.length + portfolioVideos.length
-              return (
-                <p className="text-sm text-gray-500 mb-3">
-                  {totalCount === 0 ? '0 saved' : `${totalCount} saved`}
-                  {portfolioVideos.length > 0 && portfolioNotes.length > 0 && (
-                    <> ({portfolioVideos.length} {portfolioVideos.length === 1 ? 'video' : 'videos'}, {portfolioNotes.length} {portfolioNotes.length === 1 ? 'note' : 'notes'})</>
-                  )}
+                <h2
+                  className="text-2xl sm:text-4xl font-bold text-amber-50 tracking-tight leading-none"
+                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                >
+                  💎 Chef Portfolio
+                </h2>
+                <p className="text-xs sm:text-sm italic text-amber-100/90 mt-1 leading-snug">
+                  Your curated reference shelf.
                 </p>
-              )
-            })()}
+              </div>
+            </div>
 
-            {/* 📺 Learning Videos section — collapsible accordion that
-                holds Chef TV Teach videos the user moved over from
-                Playbook. Header is a tap-to-toggle button (▾/▸ chevron).
-                Each video row uses the shared <VideoItem> so playback
-                stays IN-APP (iframe expands inline). Tap × on a row to
-                un-file (returns to Chef TV · Teach in Playbook). */}
+            {/* Single small back-link under the hero. The explainer
+                paragraph and N-saved count were retired — the hero
+                carries the framing now and the items below show
+                themselves. */}
+            <a
+              href="/playbook"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-4 ml-1"
+            >
+              ← Back to My Playbook
+            </a>
+
+            {/* 📺 Learning Videos section — collapsible accordion. The
+                sky-blue palette was retired (May 2026) in favor of amber
+                to match the Portfolio's premium warm-sepia aesthetic.
+                One curated room, one color family. */}
             {portfolioVideos.length > 0 && (
-              <div className="mb-4 bg-white rounded-2xl border-2 border-sky-200 border-l-8 border-l-sky-500 overflow-hidden">
+              <div className="mb-4 bg-white rounded-2xl border-2 border-amber-200 border-l-8 border-l-amber-500 overflow-hidden">
                 <button
                   onClick={() => setPortfolioVideosOpen(o => !o)}
-                  className={`w-full flex items-center justify-between px-4 py-3 ${portfolioVideosOpen ? 'bg-sky-50' : 'bg-white'} hover:bg-sky-50 transition-colors`}
+                  className={`w-full flex items-center justify-between px-4 py-3 ${portfolioVideosOpen ? 'bg-amber-50' : 'bg-white'} hover:bg-amber-50 transition-colors`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">📺</span>
-                    <span className="font-bold text-sky-900">Learning Videos</span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">{portfolioVideos.length}</span>
+                    <span className="font-bold text-amber-900">Learning Videos</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">{portfolioVideos.length}</span>
                   </div>
-                  <span className="text-xl text-sky-900">{portfolioVideosOpen ? '▾' : '▸'}</span>
+                  <span className="text-xl text-amber-900">{portfolioVideosOpen ? '▾' : '▸'}</span>
                 </button>
                 {portfolioVideosOpen && (
-                  <div className="divide-y divide-sky-100">
+                  <div className="divide-y divide-amber-100">
                     {portfolioVideos.map(v => {
                       // Map favorites-row shape → VideoItem's expected
                       // { youtube_id, title, channel } props. Both legacy-
