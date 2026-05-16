@@ -350,7 +350,7 @@ export default function CardsPage() {
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-lg">{toast}</div>
         )}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => setViewing(null)} className="text-sm text-gray-500 hover:text-gray-600">← Cards</button>
             <div className="flex gap-2">
               <button onClick={() => removeCard(viewing.id)} className="text-xs font-semibold text-red-400 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Remove Card</button>
@@ -623,7 +623,7 @@ export default function CardsPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 pt-3 pb-3">
+        <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
           {/* Row 1: ← Back left, title centered, invisible spacer right —
               keeps "🃏 Recipe Cards" prominent at the visual top, mirrors
               the Vault header rhythm so the two recipe surfaces feel like
@@ -714,7 +714,7 @@ export default function CardsPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 pt-4 pb-6">
+      <main className="max-w-2xl mx-auto px-4 pt-4 pb-6">
         {/* Intro banner (May 2026) — the recipe-box "lid" is now a real
             illustrated card: pink/cream gradient, watercolor strawberries
             with blossoms, dotted border, and a script "Recipe" already

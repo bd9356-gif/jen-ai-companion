@@ -600,7 +600,7 @@ export default function VideosPage() {
       )}
 
       <header className="bg-white/95 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 pt-4 pb-3">
+        <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
           {/* Header row — back + title on the left, the Teach/Practice
               "classroom" toggle inline on the right (mirrors Chef
               Jennifer's mode pill exactly), and the ℹ️/🔍 utility
@@ -764,7 +764,7 @@ export default function VideosPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-4">
+      <main className="max-w-4xl mx-auto px-4 py-4">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
