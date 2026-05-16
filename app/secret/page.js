@@ -3986,12 +3986,22 @@ export default function MyRecipeVaultPage() {
                   pinned to the edge) so it sits in the open area of the
                   banner without crashing into the right margin. */}
               <div
-                className="absolute inset-0 flex flex-col items-end justify-center text-right pr-12 sm:pr-20 md:pr-28"
-                style={{ textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)' }}
+                className="absolute inset-0 flex flex-col items-end justify-center text-right"
+                style={{
+                  textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)',
+                  paddingRight: '8%',  // % of banner width — same relative
+                                       // position on phone and desktop
+                }}
               >
                 <h2
-                  className="text-3xl sm:text-5xl md:text-6xl font-bold text-amber-50 tracking-tight leading-none"
-                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                  className="font-bold text-amber-50 tracking-tight leading-none"
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                    // Font scales smoothly with viewport width instead of
+                    // jumping at Tailwind breakpoints, so the text stays in
+                    // the same relative spot on the banner at every size.
+                    fontSize: 'clamp(1.5rem, 5.5vw, 3.75rem)',
+                  }}
                 >
                   💎 Chef Portfolio
                 </h2>
