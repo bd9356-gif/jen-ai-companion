@@ -726,6 +726,57 @@ So the chip never feels empty — when the curator hasn't picked anything yet, i
 - `git push origin main` — triggers Vercel deploy to `recipe.mycompanionapps.com`.
 - Commit style: `feat: <page> - <short description>` (e.g., `feat: Shopping List - AI cleanup button`). Body uses `-` bullets for specifics.
 
+## Pricing & monetization (planned — not yet built)
+
+Decided May 2026. Lock for App Store launch; not implemented yet.
+
+**Model: Freemium via Apple IAP** (and Google Play Billing on Android when that ships). Inspired by the Canva pattern — "use the app, easy cancel, zero risk" — which Apple has trained users to expect from subscription apps. Apple's subscription infrastructure handles billing, renewals, and one-tap cancellation in iOS Settings, which builds user trust faster than a Stripe-style checkout.
+
+**Pricing tiers:**
+
+- **Monthly: $5.99**
+- **Annual: $59.99** (≈17% off monthly equivalent, ~$5/month)
+- No separate "founding member" pricing — single price across the board, kept simple.
+- After Apple's small-business 15% cut: ~$5.09 net per monthly subscriber, ~$50.99 net annual.
+
+**Free tier — generosity model.** Free has to feel genuinely useful so people stay even if they never upgrade — their continued presence is the marketing. The free tier is bounded, not crippled.
+
+Free includes (no caps):
+- **Recipe Vault** — save, organize, search, filter (with count cap, see below).
+- **Recipe Cards** — full heritage experience: Origin line, Family Notes, dated Cook Log entries. **No caps.** Heritage is the loyalty hook — three years of Cook Log entries make this the user's permanent kitchen, and that attachment compounds whether they're paying or not.
+- **Browse Chef TV** — watch any video, creator attribution intact.
+- **Guides / Library** — read every article in every topic.
+- **Meal Plan & Shopping List** — full basic functionality (no AI cleanup).
+- **Manual recipe entry** — unlimited. Typing a recipe by hand is the cheapest path and should never have a ceiling.
+
+Free with monthly caps (the conversion friction):
+- **20 total recipes in Vault.** Set in the 15-20 range Bill landed on after rejecting the original 50 proposal — 15 was too tight for a new user adding family staples in their first session ("I just signed up and you're already asking me to pay"), 20 hits the sweet spot where a regular cook bumps into the cap around month 2-3, late enough to be invested. (Optional flourish considered but not committed: 5 extra slots on signup as a welcome bonus to soften the initial impression — "your first 25 are on us, then 20 going forward." Decide at implementation time.)
+- **25 Chef Jennifer questions/month** (Teach + Practice combined).
+- **5 AI recipe imports/month** (URL or paste with AI cleanup; manual Add is uncapped).
+- **20 Chef TV saves to Playbook/month.**
+
+The caps map to real cost drivers — AI inference (Chef Jennifer, AI imports) is where YOU have variable per-user cost; Vault count and Chef TV saves are storage discipline. A free user pays you when the value they're getting starts to cost you real money.
+
+**Premium tier ($5.99/mo or $59.99/yr).** Removes all the free-tier caps (unlimited Vault, Chef Jennifer, imports, Chef TV saves) AND unlocks the premium-feel surfaces:
+
+- **✨ AI Kitchen Helpers** — Polish, Resize, Make More transformations on recipes in your Vault.
+- **✨ Shopping List AI Cleanup** — the "Clean Up List" button that consolidates and tidies.
+- **💎 Chef Portfolio** — the curated keepsake shelf. Free users can browse it; only premium users can *file* notes/videos into it. (Premium upgrade prompt fires exactly when the user says "I want to keep this forever.")
+- **🎓 Study Hall** — Chef Jen quizzes after Guides articles, results saved to Playbook.
+- **Move Chef TV technique videos to Portfolio** — same Portfolio gating.
+
+**What needs to be built (added to the Capacitor-wrap punchlist):**
+
+1. **`subscription_status` column** on user (or a separate `subscriptions` table) tracking `free | trialing | active | cancelled | expired`.
+2. **Gating helpers** — `useSubscription()` hook returning `{ isPremium, freeLimit, used }` and feature components check it.
+3. **Apple IAP integration** in the iOS app — Capacitor has plugins for this; subscriptions get processed and Supabase gets updated via webhook.
+4. **Paywall screens** — clean upgrade prompts that fire when a limit is hit. Warm and clear: "You've used your 25 questions this month. Unlock unlimited for $5.99 — cancel anytime in Settings."
+5. **Free-tier counters in the UI** — small badges showing "12/25 questions" so users see their consumption.
+
+Rough estimate: 1-1.5 weeks added to the Capacitor wrap. Worth it to lock in the revenue model from day one — much easier than adding monetization later.
+
+**Launch posture decided.** App Store v1 ships *with* the freemium tier in place, not free-forever-then-add-paywall. Reasoning: Apple's subscription infra is half the work already done for free, transparent App Store pricing builds trust, and the "founding member" framing actually works better post-launch ("we're so glad you've been here, lock in $5.99 before we go to $9.99") if you ever want to raise the price later.
+
 ## Naming canon (current state)
 
 The canonical names in use across the app are:
