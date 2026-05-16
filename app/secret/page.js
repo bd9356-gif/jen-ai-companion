@@ -3999,11 +3999,15 @@ export default function MyRecipeVaultPage() {
                 }}
               >
                 <p
-                  className="text-amber-50 italic leading-snug"
+                  className="text-stone-900 italic font-medium leading-snug"
                   style={{
                     fontFamily: 'Georgia, "Times New Roman", serif',
                     fontSize: 'clamp(0.75rem, 1.9vw, 1.25rem)',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)',
+                    // Soft cream glow rather than a dark shadow — dark
+                    // text on a light/cream banner area reads cleanest
+                    // with a faint light halo behind it, like printed
+                    // type on aged paper.
+                    textShadow: '0 1px 3px rgba(255, 248, 220, 0.9), 0 0 8px rgba(255, 248, 220, 0.6)',
                   }}
                 >
                   Your saved Playbook lesson notes and learning videos, kept here for return visits. Tap <span className="not-italic font-semibold">×</span> on a row to send it back.
