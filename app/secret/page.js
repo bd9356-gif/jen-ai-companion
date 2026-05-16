@@ -3973,7 +3973,7 @@ export default function MyRecipeVaultPage() {
                 Vault. The earlier intro stack (Back link + explainer
                 paragraph + count) was retired in the same pass — the
                 hero says everything that intro tried to say. */}
-            <div className="relative mb-4 rounded-2xl overflow-hidden shadow-md">
+            <div className="relative -mt-6 mb-4 rounded-2xl overflow-hidden shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/test-banner.png"
@@ -3983,7 +3983,7 @@ export default function MyRecipeVaultPage() {
                 height={540}
               />
               <div
-                className="absolute inset-0 flex flex-col items-center justify-center text-center px-4"
+                className="absolute inset-0 flex flex-col items-end justify-center text-right pr-5 sm:pr-10"
                 style={{ textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)' }}
               >
                 <h2
@@ -3992,7 +3992,7 @@ export default function MyRecipeVaultPage() {
                 >
                   💎 Chef Portfolio
                 </h2>
-                <p className="text-xs sm:text-sm italic text-amber-100/90 mt-1.5 leading-snug">
+                <p className="text-xs sm:text-sm italic text-amber-300 font-medium mt-1.5 leading-snug">
                   Your curated reference shelf.
                 </p>
               </div>
