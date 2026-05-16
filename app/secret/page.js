@@ -3977,6 +3977,10 @@ export default function MyRecipeVaultPage() {
                 paragraph + count) was retired in the same pass — the
                 hero says everything that intro tried to say. */}
             <div className="relative -mt-6 mb-4 rounded-2xl overflow-hidden shadow-md">
+              {/* Banner with no text overlay — sticky header above
+                  already says "💎 Chef Portfolio", so duplicating it
+                  on the banner read as redundant. The image alone sets
+                  the room; the header carries the name. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/test-banner.png"
@@ -3985,30 +3989,6 @@ export default function MyRecipeVaultPage() {
                 width={1940}
                 height={540}
               />
-              {/* Headline overlay only — pulled right-of-center (not
-                  pinned to the edge) so it sits in the open area of the
-                  banner without crashing into the right margin. */}
-              <div
-                className="absolute inset-0 flex flex-col items-end justify-center text-right"
-                style={{
-                  textShadow: '0 2px 12px rgba(0,0,0,0.85), 0 1px 2px rgba(0,0,0,0.7)',
-                  paddingRight: '14%',  // % of banner width — same relative
-                                        // position on phone and desktop
-                }}
-              >
-                <h2
-                  className="font-bold text-amber-50 tracking-tight leading-none"
-                  style={{
-                    fontFamily: 'Georgia, "Times New Roman", serif',
-                    // Font scales smoothly with viewport width instead of
-                    // jumping at Tailwind breakpoints, so the text stays in
-                    // the same relative spot on the banner at every size.
-                    fontSize: 'clamp(1.5rem, 5.5vw, 3.75rem)',
-                  }}
-                >
-                  💎 Chef Portfolio
-                </h2>
-              </div>
             </div>
 
             {/* Original explainer tagline + back link, restored below
