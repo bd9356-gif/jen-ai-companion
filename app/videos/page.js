@@ -708,7 +708,7 @@ export default function VideosPage() {
             <img
               src="/curtain.png"
               alt="Chef TV — the show is about to begin."
-              className="w-full h-auto block"
+              className="w-full h-auto block max-h-[180px] sm:max-h-[220px] md:max-h-[240px] object-cover"
               width={961}
               height={320}
             />

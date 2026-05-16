@@ -724,7 +724,7 @@ export default function CardsPage() {
             Replaces the cream-paper text-only frame that came before;
             the illustrated card lands the box metaphor faster than any
             framed copy block could. */}
-        <div className="relative mx-auto max-w-md mb-5 rounded-2xl overflow-hidden shadow-sm">
+        <div className="relative mx-auto max-w-2xl mb-5 rounded-2xl overflow-hidden shadow-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/recipe-card-banner.png"
