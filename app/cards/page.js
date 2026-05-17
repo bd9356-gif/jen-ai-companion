@@ -746,13 +746,13 @@ export default function CardsPage() {
               Your modern recipe box.
             </p>
             <p className="text-[11px] sm:text-sm text-gray-700 leading-snug">
-              Your <span className="font-semibold text-amber-800">keep-forever</span> recipes
+              Your <span className="font-semibold text-red-900">keep-forever</span> recipes
             </p>
             <p className="text-[11px] sm:text-sm text-gray-700 leading-snug italic">
               From every cook who taught you &mdash; yours.
             </p>
             {!loading && filtered.length > 0 && (
-              <p className="text-[10px] sm:text-xs text-amber-800 font-semibold mt-1 tracking-wide">
+              <p className="text-[10px] sm:text-xs text-red-900 font-semibold mt-1 tracking-wide">
                 {filtered.length} {filtered.length === 1 ? 'card' : 'cards'} in the box
               </p>
             )}
@@ -801,7 +801,7 @@ export default function CardsPage() {
                     {/* Red dashed top rule — three thin stacked lines
                         give the printed-stationery border feel that a
                         single solid bar can't. Pure decoration. */}
-                    <div className="border-t-2 border-dashed border-red-400 mt-1.5" />
+                    <div className="border-t-2 border-dashed border-red-700 mt-1.5" />
                     <button
                       onClick={() => openCard(recipe)}
                       className="text-left active:scale-[0.98] transition-transform"
@@ -812,7 +812,7 @@ export default function CardsPage() {
                             loaded for /cards Family Notes. Sized to read
                             as a calligraphic header, not a tiny eyebrow. */}
                         <p
-                          className="text-red-600 leading-none -mb-1"
+                          className="text-red-900 leading-none -mb-1"
                           style={{ fontFamily: 'var(--font-caveat)', fontSize: '22px', fontWeight: 600 }}
                         >
                           Recipe
