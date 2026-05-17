@@ -922,6 +922,10 @@ export default function MyRecipeVaultPage() {
   // Copy/Print, without going through Meal Plan first.
   const [miseOpen, setMiseOpen] = useState(false)
   const [miseChecked, setMiseChecked] = useState(new Set())
+  // Detail-view overflow menu (May 2026). Edit / Cards / Delete moved
+  // out of the primary button row into a ⋯ popover so the cooking-
+  // flow actions (Favorite, Meal Plan, Mise En Place) get to breathe.
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false)
   // Default shopping store — when set, new shopping_list rows land
   // here instead of NULL/Unsorted (May 2026, Bill's ask). Loaded on
   // mount; null means user hasn't picked a default. Set via the
@@ -2178,21 +2182,22 @@ export default function MyRecipeVaultPage() {
                 the leading emoji and tighten padding (px-2.5 py-1) so
                 six buttons fit a phone without wrapping. */}
             <div className="flex gap-1.5">
-              <button onClick={() => setView('edit')}
-                className="text-xs font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1">Edit</button>
-              <button onClick={() => setView('enhance')}
-                className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2.5 py-1">Chef Jen</button>
+              {/* Detail-view action row (May 2026 — overflow refactor).
+                  Used to be 7 buttons (Edit / Chef Jen / Favorite /
+                  Cards / Meal Plan / Mise En Place / Delete), which
+                  crowded the header on phone and looked busy on
+                  iPad. Now: three cooking-flow primaries up top
+                  (Favorite, Meal Plan, Mise En Place) plus a single
+                  ⋯ overflow that opens a popover with the four
+                  management actions (Edit / Chef Jen / Cards /
+                  Delete). Delete is intentionally inside the
+                  overflow — moving a destructive action one tap
+                  away also reduces accidental deletes. */}
               <button onClick={() => toggleFavorite(viewing)}
                 title={viewing.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
                 className={`text-sm font-semibold border rounded-lg px-2 py-1 transition-colors leading-none ${
                   viewing.is_favorite ? 'bg-rose-500 text-white border-rose-500' : 'text-rose-500 border-rose-200 hover:bg-rose-50'}`}>
                 {viewing.is_favorite ? '❤️' : '🤍'}
-              </button>
-              <button onClick={() => toggleCardPin(viewing.id)}
-                title={pinnedCards.includes(viewing.id) ? 'Pinned to Cards — tap to remove' : 'Pin to Cards'}
-                className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${
-                  pinnedCards.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-gray-500 border-gray-200'}`}>
-                Cards
               </button>
               <button onClick={async () => {
                 if (picksIds.includes(viewing.id)) {
@@ -2209,11 +2214,6 @@ export default function MyRecipeVaultPage() {
                 className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>
                 Meal Plan
               </button>
-              {/* 🥣 Mise En Place (May 2026) — opens a prep-list checklist
-                  modal for this single recipe. Mirrors the Meal Plan
-                  Mise so a user cooking directly from the Vault gets
-                  the same Copy/Print + checkbox flow without going
-                  through Meal Plan first. */}
               <button
                 onClick={openMise}
                 title="Open Mise En Place — prep list with checkboxes, Copy + Print"
@@ -2221,8 +2221,59 @@ export default function MyRecipeVaultPage() {
               >
                 🥣 Mise En Place
               </button>
-              <button onClick={() => deleteRecipe(viewing)}
-                className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-2.5 py-1">Delete</button>
+              {/* ⋯ overflow — opens a small popover with Edit, Chef Jen,
+                  Cards, Delete. Backdrop click closes it. */}
+              <div className="relative">
+                <button
+                  onClick={() => setActionsMenuOpen(o => !o)}
+                  title="More actions"
+                  aria-haspopup="menu"
+                  aria-expanded={actionsMenuOpen}
+                  className="text-base font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1 leading-none hover:bg-gray-50"
+                >
+                  ⋯
+                </button>
+                {actionsMenuOpen && (
+                  <>
+                    {/* Backdrop — tap anywhere outside the popover to close. */}
+                    <div className="fixed inset-0 z-40" onClick={() => setActionsMenuOpen(false)} aria-hidden />
+                    {/* Popover — anchored right, opens below the ⋯ button. */}
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-full mt-1 z-50 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-hidden min-w-[180px]"
+                    >
+                      <button
+                        role="menuitem"
+                        onClick={() => { setActionsMenuOpen(false); setView('edit') }}
+                        className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50"
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        role="menuitem"
+                        onClick={() => { setActionsMenuOpen(false); setView('enhance') }}
+                        className="w-full text-left text-sm font-semibold text-orange-600 px-4 py-2.5 hover:bg-orange-50 border-t border-gray-100"
+                      >
+                        ✨ Chef Jen
+                      </button>
+                      <button
+                        role="menuitem"
+                        onClick={() => { setActionsMenuOpen(false); toggleCardPin(viewing.id) }}
+                        className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50 border-t border-gray-100"
+                      >
+                        {pinnedCards.includes(viewing.id) ? '🎴 ✓ Pinned to Cards' : '🎴 Pin to Cards'}
+                      </button>
+                      <button
+                        role="menuitem"
+                        onClick={() => { setActionsMenuOpen(false); deleteRecipe(viewing) }}
+                        className="w-full text-left text-sm font-semibold text-red-600 px-4 py-2.5 hover:bg-red-50 border-t border-gray-100"
+                      >
+                        🗑 Delete
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </header>
