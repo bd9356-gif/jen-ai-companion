@@ -786,7 +786,7 @@ export default function CardsPage() {
                 const inPlan = picksIds.has(recipe.id)
                 return (
                   <div key={recipe.id}
-                    className="relative bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden hover:border-amber-600 hover:shadow-md transition-all shadow-sm flex flex-col">
+                    className="relative bg-[#fce7dd] border-2 border-[#e8b8a8] rounded-2xl overflow-hidden hover:border-[#c47868] hover:shadow-md transition-all shadow-sm flex flex-col">
                     {/* Decorative botanical glyph in the top-right —
                         balances the "Recipe" cursive flourish on the
                         left so the header reads symmetrically (Bill's
@@ -821,11 +821,11 @@ export default function CardsPage() {
                       </div>
                       <div className="px-3 pb-2">
                         {recipe.photo_url ? (
-                          <div style={{height:'88px'}} className="rounded-xl overflow-hidden border border-amber-300">
+                          <div style={{height:'88px'}} className="rounded-xl overflow-hidden border border-[#e8b8a8]">
                             <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div style={{height:'88px'}} className="rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center">
+                          <div style={{height:'88px'}} className="rounded-xl bg-[#f5d4c5] border border-[#e8b8a8] flex items-center justify-center">
                             <span style={{fontSize:'28px'}}>🍴</span>
                           </div>
                         )}
