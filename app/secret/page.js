@@ -916,6 +916,12 @@ export default function MyRecipeVaultPage() {
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [pinnedCards, setPinnedCards] = useState([])
   const [picksIds, setPicksIds] = useState([])
+  // Mise en Place modal state for the Vault detail view (May 2026).
+  // Mirrors the Meal Plan implementation but scoped to a single recipe
+  // — the user opens a recipe and wants the prep-list checklist with
+  // Copy/Print, without going through Meal Plan first.
+  const [miseOpen, setMiseOpen] = useState(false)
+  const [miseChecked, setMiseChecked] = useState(new Set())
   // Default shopping store — when set, new shopping_list rows land
   // here instead of NULL/Unsorted (May 2026, Bill's ask). Loaded on
   // mount; null means user hasn't picked a default. Set via the
@@ -1712,6 +1718,95 @@ export default function MyRecipeVaultPage() {
   // wants the original AI version back, they Restore from Recently
   // Deleted (preferred — keeps modifications) or ask Chef Jen again
   // (loses modifications).
+  // ── Mise en Place helpers (May 2026) — mirror the Meal Plan
+  //    implementation but scoped to a single recipe (the one open
+  //    in the Vault detail view). Same buildMiseText shape, same
+  //    iframe print path, same checkbox state pattern.
+
+  function openMise() {
+    setMiseChecked(new Set())
+    setMiseOpen(true)
+  }
+  function closeMise() {
+    setMiseOpen(false)
+    setMiseChecked(new Set())
+  }
+  function toggleMiseLine(key) {
+    setMiseChecked(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return next
+    })
+  }
+
+  // Plain-text build for Copy + Print. Format mirrors Meal Plan's
+  // version so users see the same shape across surfaces.
+  function buildMiseText() {
+    if (!viewing) return ''
+    const lines = [`Mise en Place — ${viewing.title}`, '']
+    const ings = Array.isArray(viewing.ingredients) ? viewing.ingredients : []
+    if (ings.length === 0) {
+      lines.push('  (no ingredients listed)')
+    } else {
+      ings.forEach((ing, idx) => {
+        const measure = (typeof ing === 'object' && ing?.measure) || ''
+        const name = (typeof ing === 'object' && ing?.name) || (typeof ing === 'string' ? ing : '')
+        const text = [measure, name].filter(Boolean).join(' ').trim() || '(no text)'
+        const key = `${viewing.id}-${idx}`
+        const prefix = miseChecked.has(key) ? '[x]' : '[ ]'
+        lines.push(`  ${prefix} ${text}`)
+      })
+    }
+    return lines.join('\n').trim()
+  }
+
+  async function copyMise() {
+    const text = buildMiseText()
+    if (!text) { showToast('Nothing to copy'); return }
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast('Mise en place copied ✓')
+    } catch {
+      showToast('Copy failed — try Print instead')
+    }
+  }
+
+  function printMise() {
+    const text = buildMiseText()
+    if (!text) { showToast('Nothing to print'); return }
+    // Iframe print path — same as Meal Plan's Mise. Self-contained
+    // mini-document sidesteps the modal/iOS-Safari interaction that
+    // produces blank pages with the body-overlay approach.
+    const FRAME_ID = 'print-vault-mise-iframe'
+    document.getElementById(FRAME_ID)?.remove()
+    const iframe = document.createElement('iframe')
+    iframe.id = FRAME_ID
+    Object.assign(iframe.style, {
+      position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0', visibility: 'hidden',
+    })
+    document.body.appendChild(iframe)
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const html = `<!doctype html>
+<html><head><meta charset="utf-8" /><title>Mise en Place</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; color: #111; }
+  pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit; }
+  @page { margin: 0.5in; }
+</style></head><body><pre>${escaped}</pre></body></html>`
+    const doc = iframe.contentDocument || iframe.contentWindow.document
+    doc.open(); doc.write(html); doc.close()
+    const triggerPrint = () => {
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print() }
+      catch (err) { console.error('Vault mise print failed', err); showToast('Print failed — try Copy instead') }
+      setTimeout(() => iframe.remove(), 30000)
+    }
+    if (doc.readyState === 'complete') {
+      setTimeout(triggerPrint, 50)
+    } else {
+      iframe.addEventListener('load', () => setTimeout(triggerPrint, 50), { once: true })
+    }
+  }
+
   async function deleteRecipe(recipeOrId) {
     const recipe = typeof recipeOrId === 'object' ? recipeOrId : recipes.find(r => r.id === recipeOrId)
     const id = recipe?.id || recipeOrId
@@ -2114,6 +2209,18 @@ export default function MyRecipeVaultPage() {
                 className={`text-xs font-semibold border rounded-lg px-2.5 py-1 transition-colors ${picksIds.includes(viewing.id) ? 'bg-orange-600 text-white border-orange-600' : 'text-orange-600 border-orange-200 hover:bg-orange-50'}`}>
                 Meal Plan
               </button>
+              {/* 🥣 Mise En Place (May 2026) — opens a prep-list checklist
+                  modal for this single recipe. Mirrors the Meal Plan
+                  Mise so a user cooking directly from the Vault gets
+                  the same Copy/Print + checkbox flow without going
+                  through Meal Plan first. */}
+              <button
+                onClick={openMise}
+                title="Open Mise En Place — prep list with checkboxes, Copy + Print"
+                className="text-xs font-semibold text-amber-700 border border-amber-300 rounded-lg px-2.5 py-1 hover:bg-amber-50"
+              >
+                🥣 Mise En Place
+              </button>
               <button onClick={() => deleteRecipe(viewing)}
                 className="text-xs text-red-400 hover:text-red-600 border border-red-200 rounded-lg px-2.5 py-1">Delete</button>
             </div>
@@ -2434,6 +2541,110 @@ export default function MyRecipeVaultPage() {
             </div>
           )}
         </main>
+
+        {/* 🥣 Mise En Place modal (May 2026) — single-recipe prep
+            checklist with Copy + Print. Mirrors the Meal Plan Mise
+            visually and functionally; the only difference is scope
+            (one recipe vs a meal's main + sides). Tap an ingredient
+            to check it off as you prep; the count at the bottom
+            reflects progress. Closes via the × in the header or by
+            tapping the overlay backdrop. */}
+        {miseOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center sm:p-6"
+            onClick={closeMise}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              {/* Header — title + close button */}
+              <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">🥣 Mise En Place</p>
+                  <p className="text-base font-bold text-gray-900 truncate">{viewing.title}</p>
+                </div>
+                <button
+                  onClick={closeMise}
+                  aria-label="Close"
+                  className="shrink-0 text-gray-400 hover:text-gray-600 text-2xl leading-none px-2"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Body — ingredient checklist */}
+              <div className="flex-1 overflow-y-auto px-4 py-3">
+                {(() => {
+                  const ings = Array.isArray(viewing.ingredients) ? viewing.ingredients : []
+                  if (ings.length === 0) {
+                    return <p className="text-sm text-gray-500 italic py-6 text-center">No ingredients listed for this recipe.</p>
+                  }
+                  return (
+                    <ul className="space-y-0.5">
+                      {ings.map((ing, idx) => {
+                        const measure = (typeof ing === 'object' && ing?.measure) || ''
+                        const name = (typeof ing === 'object' && ing?.name) || (typeof ing === 'string' ? ing : '')
+                        const key = `${viewing.id}-${idx}`
+                        const checked = miseChecked.has(key)
+                        return (
+                          <li key={key}>
+                            <button
+                              onClick={() => toggleMiseLine(key)}
+                              className="w-full flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-gray-50 text-left"
+                            >
+                              <span className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'bg-amber-500 border-amber-500 text-white' : 'border-gray-300 bg-white'}`}>
+                                {checked && <span className="text-xs leading-none">✓</span>}
+                              </span>
+                              <span className={`text-sm leading-snug ${checked ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                                {measure && <span className="font-semibold">{measure}</span>}
+                                {measure && ' '}{name || <em className="text-gray-400">(no text)</em>}
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )
+                })()}
+              </div>
+
+              {/* Footer — counter on the left, action buttons on the
+                  right (Copy, Print, Done). */}
+              <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between gap-2 flex-wrap">
+                <p className="text-xs text-gray-500 shrink-0">
+                  {miseChecked.size} / {Array.isArray(viewing.ingredients) ? viewing.ingredients.length : 0} prepped
+                </p>
+                <div className="flex items-center gap-2">
+                  {Array.isArray(viewing.ingredients) && viewing.ingredients.length > 0 && (
+                    <>
+                      <button
+                        onClick={copyMise}
+                        title="Copy as plain text — paste into Notes / Reminders / etc."
+                        className="text-xs font-semibold text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 hover:bg-emerald-50"
+                      >
+                        📋 Copy
+                      </button>
+                      <button
+                        onClick={printMise}
+                        title="Open a printable version of the mise en place"
+                        className="text-xs font-semibold text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1 hover:bg-amber-50"
+                      >
+                        🖨️ Print
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={closeMise}
+                    className="text-sm font-semibold bg-amber-500 text-white rounded-xl px-4 py-2 hover:bg-amber-600"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
