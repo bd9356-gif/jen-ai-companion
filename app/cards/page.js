@@ -746,13 +746,13 @@ export default function CardsPage() {
               Your modern recipe box.
             </p>
             <p className="text-[11px] sm:text-sm text-gray-700 leading-snug">
-              Your <span className="font-semibold text-rose-700">keep-forever</span> recipes
+              Your <span className="font-semibold text-amber-800">keep-forever</span> recipes
             </p>
             <p className="text-[11px] sm:text-sm text-gray-700 leading-snug italic">
-              Grandmother&rsquo;s, mom&rsquo;s, aunt&rsquo;s, yours.
+              From every cook who taught you &mdash; yours.
             </p>
             {!loading && filtered.length > 0 && (
-              <p className="text-[10px] sm:text-xs text-rose-700 font-semibold mt-1 tracking-wide">
+              <p className="text-[10px] sm:text-xs text-amber-800 font-semibold mt-1 tracking-wide">
                 {filtered.length} {filtered.length === 1 ? 'card' : 'cards'} in the box
               </p>
             )}
@@ -786,7 +786,7 @@ export default function CardsPage() {
                 const inPlan = picksIds.has(recipe.id)
                 return (
                   <div key={recipe.id}
-                    className="relative bg-rose-50 border-2 border-rose-200 rounded-2xl overflow-hidden hover:border-rose-400 hover:shadow-md transition-all shadow-sm flex flex-col">
+                    className="relative bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden hover:border-amber-600 hover:shadow-md transition-all shadow-sm flex flex-col">
                     {/* Decorative botanical glyph in the top-right —
                         balances the "Recipe" cursive flourish on the
                         left so the header reads symmetrically (Bill's
@@ -821,12 +821,12 @@ export default function CardsPage() {
                       </div>
                       <div className="px-3 pb-2">
                         {recipe.photo_url ? (
-                          <div style={{height:'88px'}} className="rounded-xl overflow-hidden border border-rose-200">
+                          <div style={{height:'88px'}} className="rounded-xl overflow-hidden border border-amber-300">
                             <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div style={{height:'88px'}} className="rounded-xl bg-rose-100 border border-rose-200 flex items-center justify-center">
-                            <span style={{fontSize:'28px'}}>🍓</span>
+                          <div style={{height:'88px'}} className="rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center">
+                            <span style={{fontSize:'28px'}}>🍴</span>
                           </div>
                         )}
                       </div>
