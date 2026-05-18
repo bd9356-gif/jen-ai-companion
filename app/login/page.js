@@ -78,21 +78,27 @@ export default function LoginPage() {
     if (error) { setError(error.message); setLoading(false) }
   }
 
-  // Apple OAuth (May 2026) — Sign in with Apple. Most frictionless for
-  // iPhone users (FaceID + the device's Apple ID) and required by App
-  // Store policy once we ship the native iOS app. Web side uses the
-  // OAuth round-trip through Supabase. Apple's client secret is a JWT
-  // generated via `scripts/generate-apple-jwt.mjs` and refreshed every
-  // ~6 months (see AGENTS.md for the refresh procedure).
-  async function handleApple() {
-    setError('')
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: { redirectTo: `${window.location.origin}/auth/callback${nextSuffix()}` }
-    })
-    if (error) { setError(error.message); setLoading(false) }
-  }
+  // Apple OAuth handler is staged in the codebase but not surfaced in
+  // the UI yet. Web-side Sign in with Apple is configured at the
+  // Supabase + Apple Developer Portal level, but the Services ID's
+  // registered domain needs to match the Supabase callback domain
+  // exactly before this button works. We removed the visible Apple
+  // button from /login (May 2026) to avoid showing users a broken
+  // option; bring it back when the web config is fixed, or when the
+  // native iOS app ships with Sign in with Apple via Xcode.
+  //
+  // To re-enable: uncomment this handler and the Apple button block
+  // in the JSX below (search for "Option N: Apple").
+  //
+  // async function handleApple() {
+  //   setError('')
+  //   setLoading(true)
+  //   const { error } = await supabase.auth.signInWithOAuth({
+  //     provider: 'apple',
+  //     options: { redirectTo: `${window.location.origin}/auth/callback${nextSuffix()}` }
+  //   })
+  //   if (error) { setError(error.message); setLoading(false) }
+  // }
 
   // Microsoft OAuth — covers Hotmail, Outlook.com, Live, MSN, Office365.
   // Supabase's provider name is 'azure'; user-facing brand is "Sign in
@@ -180,31 +186,16 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* ─── Option 1: Apple — placed first for iPhone users (the
-                 primary audience on App Store), follows Apple's brand
-                 guideline of black button + white "" logo + "Sign in
-                 with Apple" text. ─── */}
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2 text-center">
-              Use your Apple ID
-            </p>
-            <button
-              onClick={handleApple}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-black text-white rounded-xl text-base font-semibold hover:bg-stone-900 transition-colors shadow-sm"
-            >
-              {/* Apple silhouette per brand guidelines */}
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-              </svg>
-              {loading ? 'Signing in…' : 'Sign in with Apple'}
-            </button>
-            <p className="mt-2 text-xs text-stone-500 text-center leading-snug">
-              One tap — FaceID confirms, you&rsquo;re in.
-            </p>
-          </div>
+          {/* Apple Sign In was placed here briefly in May 2026 but
+              removed because the Services ID's registered domain didn't
+              match the Supabase callback, producing an "invalid_client"
+              error on the web. The handler is staged (commented out) at
+              the top of this file and the Supabase + Apple Developer
+              Portal setup is mostly done — when the domain config is
+              fixed OR the native iOS app ships, restore the button block
+              here and uncomment handleApple(). */}
 
-          {/* ─── Option 2: Gmail / Google ─── */}
+          {/* ─── Option 1: Gmail / Google ─── */}
           <div className="mb-4">
             <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2 text-center">
               Have a Gmail address?
@@ -227,7 +218,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* ─── Option 3: Hotmail / Microsoft ─── */}
+          {/* ─── Option 2: Hotmail / Microsoft ─── */}
           <div className="mb-5">
             <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2 text-center">
               Have a Hotmail or Outlook address?
@@ -259,7 +250,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* ─── Option 4: Any other email (magic link) ─── */}
+          {/* ─── Option 3: Any other email (magic link) ─── */}
           {sent ? (
             <div className="mb-6 px-4 py-4 bg-green-50 border-2 border-green-200 rounded-xl text-sm text-green-800">
               <p className="font-semibold mb-1">📬 Check your email</p>
