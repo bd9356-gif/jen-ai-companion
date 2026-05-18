@@ -113,7 +113,7 @@ export default function CardsPage() {
   async function loadCards(userId) {
     const { data } = await supabase
       .from('recipe_cards')
-      .select('recipe_id, personal_recipes(id, title, category, ingredients, instructions, photo_url, servings, tags, description, family_notes)')
+      .select('recipe_id, personal_recipes(id, title, category, ingredients, instructions, photo_url, servings, tags, description, family_notes, is_favorite)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
     setRecipes((data || []).map(d => d.personal_recipes).filter(Boolean))
@@ -1030,21 +1030,19 @@ export default function CardsPage() {
                 return (
                   <div key={recipe.id}
                     className="relative bg-[#fce7dd] border-2 border-[#e8b8a8] rounded-2xl overflow-hidden hover:border-[#c47868] hover:shadow-md transition-all shadow-sm flex flex-col">
-                    {/* Favorite heart in top-right (May 2026) — replaces
-                        the decorative fork glyph that used to sit here.
-                        Tap toggles is_favorite on personal_recipes; the
-                        same flag drives the ❤️ Favorites filter and
-                        Cardbox favorites drawer in Vault. */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe) }}
-                      aria-label={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
-                      title={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
-                      className="absolute top-1.5 right-1.5 z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/60 transition-colors"
+                    {/* Decorative botanical glyph in the top-right —
+                        balances the "Recipe" cursive flourish on the
+                        left so the header reads symmetrically. Slight
+                        opacity so it reads as ornament, not a button.
+                        (Favorites are managed via the ❤️ Favorites
+                        option in the filter dropdown, with two-way sync
+                        from Vault via personal_recipes.is_favorite.) */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-2 right-2 text-2xl pointer-events-none select-none opacity-80"
                     >
-                      <span className="text-xl leading-none">
-                        {recipe.is_favorite ? '❤️' : '🤍'}
-                      </span>
-                    </button>
+                      🍴
+                    </span>
                     {/* Red dashed top rule — three thin stacked lines
                         give the printed-stationery border feel that a
                         single solid bar can't. Pure decoration. */}
