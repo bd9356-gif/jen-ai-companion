@@ -720,6 +720,20 @@ So the chip never feels empty — when the curator hasn't picked anything yet, i
 - Service role key is only for ingestion scripts; app code uses the anon key.
 - **Known issue**: the GitHub Personal Access Token is currently embedded in the `origin` remote URL (`.git/config`). Rotate at https://github.com/settings/tokens and reset the remote to use SSH or a credential helper.
 
+### Apple OAuth secret expiry — 6-month refresh (May 2026)
+
+Sign in with Apple via Supabase uses an Apple-generated JWT as the client secret. **Apple caps this JWT at 6 months max lifetime** — when it expires, Apple OAuth silently breaks for all web users until the secret is refreshed in Supabase. Native iOS sign-in (via `ASAuthorizationController` once the Capacitor wrap ships) does NOT have this expiry issue because it doesn't go through the OAuth JWT flow.
+
+**Refresh procedure** (every ~5 months to stay ahead of expiry):
+
+1. Apple Developer Portal → **Keys** → either generate a fresh "Sign in with Apple" key OR re-use the existing key to derive a fresh JWT.
+2. If re-using: download the .p8 again is NOT possible (Apple only lets you download once). You'll have to either keep the .p8 stored safely from the original download or revoke the existing key and create a new one.
+3. Supabase dashboard → **Authentication → Providers → Apple** → paste the fresh secret into the **Secret Key** field → **Save**.
+
+**Where to track the deadline:** Calendar reminder on Bill's phone, set for 6 months from the initial generation date (initial setup: May 2026, so first refresh due ~Nov 2026). Repeating every 6 months.
+
+**Files to keep:** the `.p8` from the initial download is the recovery anchor for the next refresh (no way to re-download from Apple). Stored in `~/Documents/MyRecipe-Apple-Keys/` on Bill's Mac. **Do NOT commit to git** — treat with the same care as a service-role key.
+
 ## Workflow
 
 - `npm run dev` — local dev at `http://localhost:3000`.

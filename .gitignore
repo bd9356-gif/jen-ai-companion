@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+# Apple Sign In private keys — .p8 files downloaded from Apple Developer
+# Portal. Never commit; treat with the same care as a service-role key.
+*.p8
 
 # debug
 npm-debug.log*
