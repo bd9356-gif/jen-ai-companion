@@ -424,6 +424,24 @@ export default function CardsPage() {
     setViewing(null)
   }
 
+  // Toggle is_favorite on a recipe (May 2026). Mirrors the Vault's
+  // toggleFavorite — optimistic update on local state, then UPDATE on
+  // personal_recipes; rolls back on error. The favorite state is shared
+  // across Vault and Cards because both read the same column.
+  async function toggleFavorite(recipe) {
+    if (!recipe || !user) return
+    const next = !recipe.is_favorite
+    setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: next } : r))
+    if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: next } : prev)
+    showToast(next ? 'Added to Favorites ❤️' : 'Removed from Favorites')
+    const { error } = await supabase.from('personal_recipes').update({ is_favorite: next }).eq('id', recipe.id)
+    if (error) {
+      setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: !next } : r))
+      if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: !next } : prev)
+      showToast('Could not save favorite — try again')
+    }
+  }
+
   function showToast(msg) {
     setToast(msg)
     setTimeout(() => setToast(null), 2500)
@@ -1012,17 +1030,21 @@ export default function CardsPage() {
                 return (
                   <div key={recipe.id}
                     className="relative bg-[#fce7dd] border-2 border-[#e8b8a8] rounded-2xl overflow-hidden hover:border-[#c47868] hover:shadow-md transition-all shadow-sm flex flex-col">
-                    {/* Decorative botanical glyph in the top-right —
-                        balances the "Recipe" cursive flourish on the
-                        left so the header reads symmetrically (Bill's
-                        ask, May 2026). Slight rotation + soft opacity
-                        so it reads as ornament, not a button. */}
-                    <span
-                      aria-hidden="true"
-                      className="absolute top-2 right-2 text-2xl pointer-events-none select-none opacity-80"
+                    {/* Favorite heart in top-right (May 2026) — replaces
+                        the decorative fork glyph that used to sit here.
+                        Tap toggles is_favorite on personal_recipes; the
+                        same flag drives the ❤️ Favorites filter and
+                        Cardbox favorites drawer in Vault. */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe) }}
+                      aria-label={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                      title={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                      className="absolute top-1.5 right-1.5 z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/60 transition-colors"
                     >
-                      🍴
-                    </span>
+                      <span className="text-xl leading-none">
+                        {recipe.is_favorite ? '❤️' : '🤍'}
+                      </span>
+                    </button>
                     {/* Red dashed top rule — three thin stacked lines
                         give the printed-stationery border feel that a
                         single solid bar can't. Pure decoration. */}

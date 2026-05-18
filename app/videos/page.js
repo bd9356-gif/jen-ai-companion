@@ -222,6 +222,20 @@ export default function VideosPage() {
   const [showAbout, setShowAbout] = useState(false)
   const [playingId, setPlayingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
+
+  // Lock body scroll while a video is playing (May 2026). Without this,
+  // a tap anywhere outside the inline player can scroll the user off
+  // the video they're watching, breaking the "screening room" feel
+  // Chef TV is going for. When playback ends or the user closes the
+  // player, scroll restores.
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (playingId) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = prev }
+    }
+  }, [playingId])
   const [metadata, setMetadata] = useState({})
   // Pagination — 20 per page with Previous / Next controls. Page is
   // 0-indexed in state; the render shows "Page N of M" 1-indexed.
@@ -637,22 +651,12 @@ export default function VideosPage() {
               >
                 ← Back
               </button>
-              <button
-                onClick={() => window.location.href='/playbook'}
-                title="Open My Playbook"
-                aria-label="Open My Playbook"
-                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
-              >
-                📘
-              </button>
-              <button
-                onClick={() => window.location.href='/chef'}
-                title="Open Chef Jennifer's Classroom"
-                aria-label="Open Chef Jennifer's Classroom"
-                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
-              >
-                👨‍🍳
-              </button>
+              {/* 📘 Playbook and 👨‍🍳 Chef quick-jump buttons retired
+                  May 2026. Bill's framing: the buttons below the
+                  curtain felt like "a remote control blocking the
+                  screen" — they competed with the theater
+                  presentation. Users navigate to Playbook / Chef
+                  from MyKitchen instead, or via ← Back. */}
             </div>
             <div className="flex items-center gap-1.5">
               <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
