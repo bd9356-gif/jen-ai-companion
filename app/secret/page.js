@@ -4213,6 +4213,23 @@ export default function MyRecipeVaultPage() {
              Tap a row to expand; tap the × to remove from the Portfolio
              (the underlying note stays in Playbook). */
           <div>
+            {/* Back to My Playbook — top of the Portfolio, above the
+                banner (May 2026, Bill's ask). Notebook icon + label,
+                pill-styled so it reads as a deliberate "return path"
+                rather than a generic back arrow. Portfolio is sourced
+                from Playbook, so giving the link prominence at the
+                very top makes the relationship obvious. */}
+            <div className="-mt-4 mb-3">
+              <a
+                href="/playbook"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-full px-3 py-1.5 transition-colors"
+              >
+                <span aria-hidden="true">📘</span>
+                <span>My Playbook</span>
+                <span className="text-orange-400" aria-hidden="true">↩</span>
+              </a>
+            </div>
+
             {/* Portfolio hero banner (May 2026) — open reference book with
                 botanical illustrations and foreground fruit, used as the
                 full-width hero at the top of the Portfolio. "💎 Chef
@@ -4224,7 +4241,7 @@ export default function MyRecipeVaultPage() {
                 Vault. The earlier intro stack (Back link + explainer
                 paragraph + count) was retired in the same pass — the
                 hero says everything that intro tried to say. */}
-            <div className="relative -mt-6 mb-4 rounded-2xl overflow-hidden shadow-md">
+            <div className="relative mb-4 rounded-2xl overflow-hidden shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/test-banner.png"
@@ -4264,20 +4281,11 @@ export default function MyRecipeVaultPage() {
             </div>
 
             {/* "Tap × to return one to your Playbook" — moved out of the
-                banner (May 2026, Bill's ask) so the journal scene only
-                holds the kept-here line. The action hint lives just
-                below the banner as plain text. */}
-            <p className="text-center text-stone-700 italic leading-snug mb-3 px-2 text-sm sm:text-base">
+                banner so the journal scene only holds the kept-here line.
+                The action hint lives just below the banner as plain text. */}
+            <p className="text-center text-stone-700 italic leading-snug mb-4 px-2 text-sm sm:text-base">
               Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
             </p>
-
-            {/* Back link below the banner (unchanged). */}
-            <a
-              href="/playbook"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-4 ml-1"
-            >
-              ← Back to My Playbook
-            </a>
 
             {/* 📺 Learning Videos section — collapsible accordion. The
                 sky-blue palette was retired (May 2026) in favor of amber
