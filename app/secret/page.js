@@ -4233,39 +4233,44 @@ export default function MyRecipeVaultPage() {
                 width={1940}
                 height={540}
               />
-              {/* Banner image is the statement now — prose overlay
-                  moved out (May 2026, Bill's ask) so the journal scene
-                  isn't competing with text on top of it. The
-                  instruction line lives under the banner instead, as
-                  plain text that doesn't fight the artwork. */}
+              {/* Explainer prose overlaid on the banner — serif italic in
+                  cream so it reads as a passage from the open journal
+                  itself rather than a UI label. Block sits right-of-
+                  center (away from the journal artwork on the left) but
+                  not pinned to the edge. Text reads left-to-right inside
+                  the block, natural prose flow. */}
+              <div
+                className="absolute inset-0 flex items-center"
+                style={{
+                  paddingLeft: '38%',   // right-of-center, not pure right
+                  paddingRight: '8%',
+                }}
+              >
+                <p
+                  className="text-stone-900 italic font-medium leading-snug"
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                    fontSize: 'clamp(1rem, 2.8vw, 1.75rem)',
+                    // Soft cream glow rather than a dark shadow — dark
+                    // text on a light/cream banner area reads cleanest
+                    // with a faint light halo behind it, like printed
+                    // type on aged paper.
+                    textShadow: '0 1px 3px rgba(255, 248, 220, 0.9), 0 0 8px rgba(255, 248, 220, 0.6)',
+                  }}
+                >
+                  Your saved notes and videos are kept here until you no longer need them.<br />Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
+                </p>
+              </div>
             </div>
 
-            {/* Instruction line under the banner — single-line action
-                hint, no explainer prose. Bill wants the "Tap × to
-                return one to your Playbook" line and nothing else. */}
-            <p
-              className="text-center text-stone-700 italic leading-snug mb-3 px-2"
-              style={{
-                fontFamily: 'Georgia, "Times New Roman", serif',
-                fontSize: 'clamp(0.95rem, 1.8vw, 1.125rem)',
-              }}
+            {/* Just a small back link below the banner — the explainer
+                lives on the banner now, in book-passage form. */}
+            <a
+              href="/playbook"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-4 ml-1"
             >
-              Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
-            </p>
-
-            {/* Back to My Playbook — moved (May 2026, Bill's ask) to a
-                small, quiet link below the instruction. Still discoverable
-                for users who want to bounce back to the inbox without
-                scrolling, but no longer competes for visual weight with
-                the heritage banner above. */}
-            <p className="text-center mb-4">
-              <a
-                href="/playbook"
-                className="inline-block text-xs text-stone-500 hover:text-orange-700 underline decoration-dotted underline-offset-4"
-              >
-                ← Back to My Playbook
-              </a>
-            </p>
+              ← Back to My Playbook
+            </a>
 
             {/* 📺 Learning Videos section — collapsible accordion. The
                 sky-blue palette was retired (May 2026) in favor of amber

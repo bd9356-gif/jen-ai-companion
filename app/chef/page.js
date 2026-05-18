@@ -504,7 +504,7 @@ export default function ChefPage() {
             if (msg.role === 'user') {
               return (
                 <div key={i} className="flex justify-end">
-                  <div className={`max-w-[85%] px-4 py-3 rounded-2xl rounded-br-sm text-base leading-relaxed whitespace-pre-wrap ${userBubble}`}>
+                  <div className={`max-w-[85%] px-4 py-3 rounded-2xl rounded-br-sm text-sm leading-relaxed whitespace-pre-wrap ${userBubble}`}>
                     {msg.content}
                   </div>
                 </div>
@@ -527,7 +527,7 @@ export default function ChefPage() {
             return (
               <div key={i} className="flex justify-start">
                 <div className="w-full max-w-[95%]">
-                  <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-gray-800 text-base leading-relaxed whitespace-pre-wrap">
+                  <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
                     <p className="text-xs text-gray-500 font-semibold mb-1">{proseEmoji} Chef Jennifer</p>
                     {renderProseWithCitations(prose, msg.library)}
                     {practice && (

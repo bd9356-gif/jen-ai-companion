@@ -113,7 +113,7 @@ export default function CardsPage() {
   async function loadCards(userId) {
     const { data } = await supabase
       .from('recipe_cards')
-      .select('recipe_id, personal_recipes(id, title, category, ingredients, instructions, photo_url, servings, tags, description, family_notes, is_favorite)')
+      .select('recipe_id, personal_recipes(id, title, category, ingredients, instructions, photo_url, servings, tags, description, family_notes)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
     setRecipes((data || []).map(d => d.personal_recipes).filter(Boolean))
@@ -422,24 +422,6 @@ export default function CardsPage() {
     await supabase.from('recipe_cards').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
     setRecipes(prev => prev.filter(r => r.id !== recipeId))
     setViewing(null)
-  }
-
-  // Toggle is_favorite on a recipe (May 2026). Mirrors the Vault's
-  // toggleFavorite — optimistic update on local state, then UPDATE on
-  // personal_recipes; rolls back on error. The favorite state is shared
-  // across Vault and Cards because both read the same column.
-  async function toggleFavorite(recipe) {
-    if (!recipe || !user) return
-    const next = !recipe.is_favorite
-    setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: next } : r))
-    if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: next } : prev)
-    showToast(next ? 'Added to Favorites ❤️' : 'Removed from Favorites')
-    const { error } = await supabase.from('personal_recipes').update({ is_favorite: next }).eq('id', recipe.id)
-    if (error) {
-      setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: !next } : r))
-      if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: !next } : prev)
-      showToast('Could not save favorite — try again')
-    }
   }
 
   function showToast(msg) {
@@ -1032,11 +1014,9 @@ export default function CardsPage() {
                     className="relative bg-[#fce7dd] border-2 border-[#e8b8a8] rounded-2xl overflow-hidden hover:border-[#c47868] hover:shadow-md transition-all shadow-sm flex flex-col">
                     {/* Decorative botanical glyph in the top-right —
                         balances the "Recipe" cursive flourish on the
-                        left so the header reads symmetrically. Slight
-                        opacity so it reads as ornament, not a button.
-                        (Favorites are managed via the ❤️ Favorites
-                        option in the filter dropdown, with two-way sync
-                        from Vault via personal_recipes.is_favorite.) */}
+                        left so the header reads symmetrically (Bill's
+                        ask, May 2026). Slight rotation + soft opacity
+                        so it reads as ornament, not a button. */}
                     <span
                       aria-hidden="true"
                       className="absolute top-2 right-2 text-2xl pointer-events-none select-none opacity-80"

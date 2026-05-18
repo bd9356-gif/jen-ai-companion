@@ -222,20 +222,6 @@ export default function VideosPage() {
   const [showAbout, setShowAbout] = useState(false)
   const [playingId, setPlayingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
-
-  // Lock body scroll while a video is playing (May 2026). Without this,
-  // a tap anywhere outside the inline player can scroll the user off
-  // the video they're watching, breaking the "screening room" feel
-  // Chef TV is going for. When playback ends or the user closes the
-  // player, scroll restores.
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    if (playingId) {
-      const prev = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = prev }
-    }
-  }, [playingId])
   const [metadata, setMetadata] = useState({})
   // Pagination — 20 per page with Previous / Next controls. Page is
   // 0-indexed in state; the render shows "Page N of M" 1-indexed.
@@ -651,12 +637,22 @@ export default function VideosPage() {
               >
                 ← Back
               </button>
-              {/* 📘 Playbook and 👨‍🍳 Chef quick-jump buttons retired
-                  May 2026. Bill's framing: the buttons below the
-                  curtain felt like "a remote control blocking the
-                  screen" — they competed with the theater
-                  presentation. Users navigate to Playbook / Chef
-                  from MyKitchen instead, or via ← Back. */}
+              <button
+                onClick={() => window.location.href='/playbook'}
+                title="Open My Playbook"
+                aria-label="Open My Playbook"
+                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
+              >
+                📘
+              </button>
+              <button
+                onClick={() => window.location.href='/chef'}
+                title="Open Chef Jennifer's Classroom"
+                aria-label="Open Chef Jennifer's Classroom"
+                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
+              >
+                👨‍🍳
+              </button>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
@@ -738,33 +734,31 @@ export default function VideosPage() {
 
 
           {/* Topic chips — techniques for Teach, dish-types for Practice.
-              Restyled May 2026 as a slim "showtime selector" strip — a
-              subtle stone background under the chip row evokes the lip
-              of a stage rather than a remote-control strip floating in
-              white space. Active chip still pops with the tab's color
-              (sky for Teach, orange for Practice); inactive chips read
-              as quieter sepia tones that defer to the curtain above. */}
+              Horizontally scrollable on narrow viewports. Active chip uses
+              the tab's color (sky for Teach, orange for Practice);
+              inactive chips are white with a gray border.
+              Channel dropdown was removed in favor of this; the search
+              input already matches channel text, so chef-specific queries
+              still work via 🔍. */}
           {chipSet && (
-            <div className="-mx-4 px-4 py-2 bg-stone-50/80 border-y border-stone-200">
-              <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
-                {chipSet.map(c => {
-                  const isActive = topic === c.key
-                  const activeCls = filter === 'practice'
-                    ? 'bg-orange-500 text-white border-orange-500'
-                    : 'bg-sky-500 text-white border-sky-500'
-                  return (
-                    <button
-                      key={c.key}
-                      onClick={() => { setTopic(c.key); setPage(0) }}
-                      className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
-                        isActive ? activeCls : 'bg-white text-stone-600 border-stone-200 hover:border-orange-300 hover:text-orange-700'
-                      }`}
-                    >
-                      {c.label}
-                    </button>
-                  )
-                })}
-              </div>
+            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+              {chipSet.map(c => {
+                const isActive = topic === c.key
+                const activeCls = filter === 'practice'
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'bg-sky-500 text-white border-sky-500'
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => { setTopic(c.key); setPage(0) }}
+                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                      isActive ? activeCls : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -1002,36 +996,6 @@ export default function VideosPage() {
                 </button>
               </div>
             )}
-
-            {/* Next stops (May 2026) — Playbook and Chef Jennifer's
-                Classroom as "where to go next" cards after the user is
-                done browsing Chef TV. Replaces the cluttered Playbook +
-                Chef buttons that used to sit in the sticky header.
-                Reads as theater architecture: you've seen the show,
-                here's the lobby with paths to the other rooms. */}
-            <div className="mt-10 mb-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 text-center mb-3">
-                After the show
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <a
-                  href="/playbook"
-                  className="block bg-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-md rounded-2xl p-4 transition-all"
-                >
-                  <p className="text-2xl mb-1.5">📘</p>
-                  <p className="text-sm font-bold text-gray-900">My Playbook</p>
-                  <p className="text-xs text-gray-500 leading-snug mt-0.5">Saved lessons, recipes, and notes.</p>
-                </a>
-                <a
-                  href="/chef"
-                  className="block bg-white border-2 border-orange-200 hover:border-orange-400 hover:shadow-md rounded-2xl p-4 transition-all"
-                >
-                  <p className="text-2xl mb-1.5">👨‍🍳</p>
-                  <p className="text-sm font-bold text-gray-900">Chef Jennifer</p>
-                  <p className="text-xs text-gray-500 leading-snug mt-0.5">Ask anything, cook anything.</p>
-                </a>
-              </div>
-            </div>
           </>
         )}
       </main>
