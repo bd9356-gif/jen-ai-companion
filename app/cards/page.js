@@ -47,6 +47,20 @@ export default function CardsPage() {
   const [originalCard, setOriginalCard] = useState(null)
   const [uploadingOriginal, setUploadingOriginal] = useState(false)
   const originalCardInputRef = useRef(null)
+  // Collapsible panel state on the Card detail view (May 2026). The
+  // page gets long with The Original + Origin + Family Notes + Tips
+  // all expanded at once, so each heritage panel can collapse to just
+  // its header. All start collapsed; tap any header to expand. Keys:
+  // 'original' | 'origin' | 'family' | 'tips'. Ingredients stays open
+  // because it's a working surface (check items off as you shop).
+  const [openSections, setOpenSections] = useState(new Set())
+  function toggleSection(key) {
+    setOpenSections(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key); else next.add(key)
+      return next
+    })
+  }
   const [suggestions, setSuggestions] = useState(null)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [toast, setToast] = useState(null)
@@ -545,23 +559,31 @@ export default function CardsPage() {
               state displays the photo as a heirloom with corner pins
               evoking pinning a card to a board. */}
           <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
+            <div className={`flex items-center justify-between ${openSections.has('original') ? 'mb-3' : ''}`}>
+              <button
+                onClick={() => toggleSection('original')}
+                className="flex items-center gap-2 flex-1 text-left"
+                aria-expanded={openSections.has('original')}
+              >
+                <span className="text-stone-500 w-4 text-center">{openSections.has('original') ? '▾' : '▸'}</span>
                 <span className="text-lg">📷</span>
                 <h2 className="text-sm font-bold text-stone-900">The Original</h2>
-                <span className="text-xs text-stone-500 italic">— the card you have</span>
-              </div>
-              {originalCard && (
+                <span className="text-xs text-stone-500 italic hidden sm:inline">— the card you have</span>
+                {!openSections.has('original') && originalCard?.photo_url && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">photo saved</span>
+                )}
+              </button>
+              {openSections.has('original') && originalCard && (
                 <button
                   onClick={removeOriginalCard}
-                  className="text-xs font-semibold text-stone-500 border border-stone-300 bg-white rounded-lg px-2.5 py-1 hover:bg-stone-100"
+                  className="text-xs font-semibold text-stone-500 border border-stone-300 bg-white rounded-lg px-2.5 py-1 hover:bg-stone-100 shrink-0"
                   title="Remove the photo of the original card"
                 >
                   Remove
                 </button>
               )}
             </div>
-            {originalCard?.photo_url ? (
+            {openSections.has('original') && (originalCard?.photo_url ? (
               <div className="relative">
                 {/* Photo displayed with a subtle warm border to read as
                     a framed keepsake rather than a UI thumbnail. */}
@@ -591,7 +613,7 @@ export default function CardsPage() {
                   If you have it &mdash; a handwritten card, a torn-out cookbook page, a photo from grandma&rsquo;s recipe box &mdash; snap a picture and save it here forever.
                 </p>
               </button>
-            )}
+            ))}
             <input
               ref={originalCardInputRef}
               type="file"
@@ -611,22 +633,34 @@ export default function CardsPage() {
               (below) is the running, dated history; Origin is the
               introduction. */}
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 mb-5">
-            <div className="flex items-center gap-2 mb-3">
+            <button
+              onClick={() => toggleSection('origin')}
+              className={`w-full flex items-center gap-2 text-left ${openSections.has('origin') ? 'mb-3' : ''}`}
+              aria-expanded={openSections.has('origin')}
+            >
+              <span className="text-amber-700 w-4 text-center">{openSections.has('origin') ? '▾' : '▸'}</span>
               <span className="text-lg">📜</span>
               <h2 className="text-sm font-bold text-gray-900">Origin</h2>
-              <span className="text-xs text-amber-600 italic">— where it came from</span>
-            </div>
-            <textarea
-              value={familyNotes}
-              onChange={e => setFamilyNotes(e.target.value)}
-              placeholder={`"Grandma's recipe — she got it from her sister"\n"Sunday dinner growing up"\n"The one we always make for birthdays"`}
-              rows={4}
-              className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none leading-relaxed"
-            />
-            <button onClick={saveNotes} disabled={savingNotes}
-              className={`mt-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${notesSaved ? 'bg-green-100 text-green-700' : 'bg-amber-600 text-white hover:bg-amber-700'}`}>
-              {savingNotes ? 'Saving...' : notesSaved ? '✓ Saved' : 'Save Origin'}
+              <span className="text-xs text-amber-600 italic hidden sm:inline">— where it came from</span>
+              {!openSections.has('origin') && familyNotes?.trim() && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">written</span>
+              )}
             </button>
+            {openSections.has('origin') && (
+              <>
+                <textarea
+                  value={familyNotes}
+                  onChange={e => setFamilyNotes(e.target.value)}
+                  placeholder={`"Grandma's recipe — she got it from her sister"\n"Sunday dinner growing up"\n"The one we always make for birthdays"`}
+                  rows={4}
+                  className="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none leading-relaxed"
+                />
+                <button onClick={saveNotes} disabled={savingNotes}
+                  className={`mt-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${notesSaved ? 'bg-green-100 text-green-700' : 'bg-amber-600 text-white hover:bg-amber-700'}`}>
+                  {savingNotes ? 'Saving...' : notesSaved ? '✓ Saved' : 'Save Origin'}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Family Notes — the heritage feature. Real recipe boxes
@@ -646,21 +680,34 @@ export default function CardsPage() {
               }}
             />
             <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
+              <div className={`flex items-center justify-between ${openSections.has('family') ? 'mb-3' : ''}`}>
+                <button
+                  onClick={() => toggleSection('family')}
+                  className="flex items-center gap-2 flex-1 text-left"
+                  aria-expanded={openSections.has('family')}
+                >
+                  <span className="text-stone-500 w-4 text-center">{openSections.has('family') ? '▾' : '▸'}</span>
                   <span className="text-lg">📝</span>
                   <h2 className="text-sm font-bold text-stone-900">Family Notes</h2>
-                  <span className="text-xs text-stone-500 italic">— each time you make it</span>
-                </div>
-                {!showLogForm && (
+                  <span className="text-xs text-stone-500 italic hidden sm:inline">— each time you make it</span>
+                  {!openSections.has('family') && cookLog.length > 0 && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-orange-700 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5">
+                      {cookLog.length} {cookLog.length === 1 ? 'entry' : 'entries'}
+                    </span>
+                  )}
+                </button>
+                {openSections.has('family') && !showLogForm && (
                   <button
                     onClick={() => setShowLogForm(true)}
-                    className="text-xs font-semibold text-orange-700 border border-orange-300 bg-white rounded-lg px-2.5 py-1 hover:bg-orange-50"
+                    className="text-xs font-semibold text-orange-700 border border-orange-300 bg-white rounded-lg px-2.5 py-1 hover:bg-orange-50 shrink-0"
                   >
                     + Add entry
                   </button>
                 )}
               </div>
+              {openSections.has('family') && (
+              <>
+              {/* Begin collapsible body */}
 
               {/* Add-entry form — date picker + freeform notes. Reveals
                   on tap so the section starts compact. Notes textarea
@@ -738,38 +785,53 @@ export default function CardsPage() {
                   ))}
                 </ul>
               )}
+              {/* End collapsible body */}
+              </>
+              )}
             </div>
           </div>
 
           {/* Chef Jen Suggestions — was "AI Suggestions" / "AI-powered". */}
           <div className="bg-purple-50 border border-purple-100 rounded-2xl p-5 mb-5">
-            <div className="flex items-center gap-2 mb-3">
+            <button
+              onClick={() => toggleSection('tips')}
+              className={`w-full flex items-center gap-2 text-left ${openSections.has('tips') ? 'mb-3' : ''}`}
+              aria-expanded={openSections.has('tips')}
+            >
+              <span className="text-purple-600 w-4 text-center">{openSections.has('tips') ? '▾' : '▸'}</span>
               <span className="text-lg">✨</span>
               <h2 className="text-sm font-bold text-gray-900">Chef Jen&rsquo;s Tips</h2>
-              <span className="text-xs text-purple-600">picked just for this card</span>
-            </div>
-            {!suggestions && !loadingSuggestions && (
-              <button onClick={getSuggestions}
-                className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors">
-                ✨ Ask Chef Jen for tips
-              </button>
-            )}
-            {loadingSuggestions && (
-              <div className="text-center py-4 text-gray-500 text-sm">Hold on, thinking on this one&hellip;</div>
-            )}
-            {suggestions && (
-              <div className="space-y-3">
-                {suggestions.map((s, i) => (
-                  <div key={i} className="bg-white border border-purple-100 rounded-xl p-3">
-                    <p className="text-xs font-bold text-purple-600 mb-1">{s.type}</p>
-                    <p className="text-sm text-gray-700 leading-relaxed">{s.tip}</p>
+              <span className="text-xs text-purple-600 hidden sm:inline">picked just for this card</span>
+              {!openSections.has('tips') && suggestions && (
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 border border-purple-200 rounded-full px-2 py-0.5">ready</span>
+              )}
+            </button>
+            {openSections.has('tips') && (
+              <>
+                {!suggestions && !loadingSuggestions && (
+                  <button onClick={getSuggestions}
+                    className="w-full py-3 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition-colors">
+                    ✨ Ask Chef Jen for tips
+                  </button>
+                )}
+                {loadingSuggestions && (
+                  <div className="text-center py-4 text-gray-500 text-sm">Hold on, thinking on this one&hellip;</div>
+                )}
+                {suggestions && (
+                  <div className="space-y-3">
+                    {suggestions.map((s, i) => (
+                      <div key={i} className="bg-white border border-purple-100 rounded-xl p-3">
+                        <p className="text-xs font-bold text-purple-600 mb-1">{s.type}</p>
+                        <p className="text-sm text-gray-700 leading-relaxed">{s.tip}</p>
+                      </div>
+                    ))}
+                    <button onClick={getSuggestions}
+                      className="w-full py-2 text-xs text-purple-600 font-semibold hover:text-purple-800">
+                      ↺ Want a different take? Try again.
+                    </button>
                   </div>
-                ))}
-                <button onClick={getSuggestions}
-                  className="w-full py-2 text-xs text-purple-600 font-semibold hover:text-purple-800">
-                  ↺ Want a different take? Try again.
-                </button>
-              </div>
+                )}
+              </>
             )}
           </div>
 
