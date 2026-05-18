@@ -4258,13 +4258,20 @@ export default function MyRecipeVaultPage() {
                     textShadow: '0 1px 3px rgba(255, 248, 220, 0.9), 0 0 8px rgba(255, 248, 220, 0.6)',
                   }}
                 >
-                  Your saved notes and videos are kept here until you no longer need them.<br />Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
+                  Your saved notes and videos are kept here until you no longer need them.
                 </p>
               </div>
             </div>
 
-            {/* Just a small back link below the banner — the explainer
-                lives on the banner now, in book-passage form. */}
+            {/* "Tap × to return one to your Playbook" — moved out of the
+                banner (May 2026, Bill's ask) so the journal scene only
+                holds the kept-here line. The action hint lives just
+                below the banner as plain text. */}
+            <p className="text-center text-stone-700 italic leading-snug mb-3 px-2 text-sm sm:text-base">
+              Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
+            </p>
+
+            {/* Back link below the banner (unchanged). */}
             <a
               href="/playbook"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange-700 hover:text-orange-800 mb-4 ml-1"
