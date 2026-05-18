@@ -113,7 +113,7 @@ export default function CardsPage() {
   async function loadCards(userId) {
     const { data } = await supabase
       .from('recipe_cards')
-      .select('recipe_id, personal_recipes(id, title, category, ingredients, instructions, photo_url, servings, tags, description, family_notes)')
+      .select('recipe_id, personal_recipes(id, title, category, ingredients, instructions, photo_url, servings, tags, description, family_notes, is_favorite)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
     setRecipes((data || []).map(d => d.personal_recipes).filter(Boolean))
@@ -422,6 +422,24 @@ export default function CardsPage() {
     await supabase.from('recipe_cards').delete().eq('user_id', user.id).eq('recipe_id', recipeId)
     setRecipes(prev => prev.filter(r => r.id !== recipeId))
     setViewing(null)
+  }
+
+  // Toggle is_favorite on a recipe (May 2026). Two-way sync with the
+  // Vault — both surfaces read/write the same personal_recipes.is_favorite
+  // column, so flipping the heart on Cards updates the Vault and vice
+  // versa. Optimistic update on local state; rolls back on DB error.
+  async function toggleFavorite(recipe) {
+    if (!recipe || !user) return
+    const next = !recipe.is_favorite
+    setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: next } : r))
+    if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: next } : prev)
+    showToast(next ? 'Added to Favorites ❤️' : 'Removed from Favorites')
+    const { error } = await supabase.from('personal_recipes').update({ is_favorite: next }).eq('id', recipe.id)
+    if (error) {
+      setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, is_favorite: !next } : r))
+      if (viewing?.id === recipe.id) setViewing(prev => prev ? { ...prev, is_favorite: !next } : prev)
+      showToast('Could not save favorite — try again')
+    }
   }
 
   function showToast(msg) {
@@ -1012,17 +1030,24 @@ export default function CardsPage() {
                 return (
                   <div key={recipe.id}
                     className="relative bg-[#fce7dd] border-2 border-[#e8b8a8] rounded-2xl overflow-hidden hover:border-[#c47868] hover:shadow-md transition-all shadow-sm flex flex-col">
-                    {/* Decorative botanical glyph in the top-right —
-                        balances the "Recipe" cursive flourish on the
-                        left so the header reads symmetrically (Bill's
-                        ask, May 2026). Slight rotation + soft opacity
-                        so it reads as ornament, not a button. */}
-                    <span
-                      aria-hidden="true"
-                      className="absolute top-2 right-2 text-2xl pointer-events-none select-none opacity-80"
+                    {/* Favorite heart toggle in the top-right (May 2026).
+                        Tap to mark/unmark favorite. Two-way sync with
+                        the Vault via personal_recipes.is_favorite — the
+                        same flag also drives the ❤️ Favorites filter
+                        in the Cards dropdown and the favorites drawer
+                        in the Vault's Cardbox mode. Filled ❤️ when
+                        active, outline 🤍 when not. stopPropagation
+                        so the tile's tap-to-open isn't triggered. */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe) }}
+                      aria-label={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                      title={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                      className="absolute top-1.5 right-1.5 z-10 w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/60 transition-colors"
                     >
-                      🍴
-                    </span>
+                      <span className="text-2xl leading-none">
+                        {recipe.is_favorite ? '❤️' : '🤍'}
+                      </span>
+                    </button>
                     {/* Red dashed top rule — three thin stacked lines
                         give the printed-stationery border feel that a
                         single solid bar can't. Pure decoration. */}
