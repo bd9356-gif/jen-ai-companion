@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 // Tag taxonomy — mirrors `app/secret/page.js`. Duplicated here so the
@@ -38,6 +38,15 @@ export default function CardsPage() {
   const [familyNotes, setFamilyNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
   const [notesSaved, setNotesSaved] = useState(false)
+  // Original Card photo (May 2026 — heritage preservation reframe).
+  // The card_photos table is reused here for a sharper purpose: a photo
+  // of the *physical* recipe card the user has (grandma's handwriting,
+  // the smudges, the yellowed corner). Pairs with Origin + Family Notes
+  // to give the heritage shelf three layers — story / history / artifact.
+  // State holds the photo URL + row id when present, null when empty.
+  const [originalCard, setOriginalCard] = useState(null)
+  const [uploadingOriginal, setUploadingOriginal] = useState(false)
+  const originalCardInputRef = useRef(null)
   const [suggestions, setSuggestions] = useState(null)
   const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [toast, setToast] = useState(null)
@@ -150,7 +159,91 @@ export default function CardsPage() {
     setShowLogForm(false)
     setLogDate(new Date().toISOString().slice(0, 10))
     setLogNotes('')
-    if (user) loadCookLog(user.id, recipe.id)
+    setOriginalCard(null)
+    if (user) {
+      loadCookLog(user.id, recipe.id)
+      loadOriginalCard(user.id, recipe.id)
+    }
+  }
+
+  // Load the original-card photo for one (user, recipe), if any.
+  // card_photos has at most one row per (user, recipe).
+  async function loadOriginalCard(userId, recipeId) {
+    const { data } = await supabase
+      .from('card_photos')
+      .select('id, photo_url')
+      .eq('user_id', userId)
+      .eq('recipe_id', recipeId)
+      .maybeSingle()
+    setOriginalCard(data || null)
+  }
+
+  // Upload a photo of the physical recipe card to storage and write
+  // the URL into card_photos. Upserts on (user_id, recipe_id) so the
+  // user can replace the photo by uploading a different one. Same
+  // storage bucket as the Vault food photos for simplicity.
+  async function uploadOriginalCard(file) {
+    if (!file || !user || !viewing) return
+    setUploadingOriginal(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { showToast('Please sign in again'); setUploadingOriginal(false); return }
+      const ext = (file.name || '').split('.').pop().toLowerCase() || 'jpg'
+      const safeName = ext === 'heic' ? 'jpg' : ext
+      const path = `${user.id}/originals/${viewing.id}-${Date.now()}.${safeName}`
+      const uploadUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/personal_recipes/${path}`
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'x-upsert': 'true' },
+        body: file,
+      })
+      if (!response.ok) {
+        const e = await response.text()
+        showToast('Upload failed: ' + e)
+        setUploadingOriginal(false)
+        return
+      }
+      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/personal_recipes/${path}`
+      // Upsert the card_photos row keyed on (user_id, recipe_id).
+      const { data, error } = await supabase
+        .from('card_photos')
+        .upsert(
+          { user_id: user.id, recipe_id: viewing.id, photo_url: publicUrl },
+          { onConflict: 'user_id,recipe_id' }
+        )
+        .select('id, photo_url')
+        .maybeSingle()
+      if (error) {
+        showToast('Save failed: ' + error.message)
+      } else {
+        setOriginalCard(data || { photo_url: publicUrl })
+        showToast('Original card saved ✓')
+      }
+    } catch (err) {
+      showToast('Upload error: ' + err.message)
+    } finally {
+      setUploadingOriginal(false)
+    }
+  }
+
+  // Remove the original-card photo. Deletes the card_photos row but
+  // intentionally does NOT delete the file from storage (keeps a
+  // breadcrumb in case the user removes by accident; storage cleanup
+  // is a separate maintenance pass).
+  async function removeOriginalCard() {
+    if (!user || !viewing || !originalCard) return
+    if (!window.confirm('Remove the photo of the original card?')) return
+    const { error } = await supabase
+      .from('card_photos')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('recipe_id', viewing.id)
+    if (error) {
+      showToast('Could not remove: ' + error.message)
+      return
+    }
+    setOriginalCard(null)
+    showToast('Removed')
   }
 
   // Pull the dated cook log entries for one (user, recipe). Newest first
@@ -440,6 +533,76 @@ export default function CardsPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* The Original — photo of the physical recipe card the user
+              actually has. Grandma's handwriting, the smudges, the
+              yellowed corners. Heritage preservation: the Vault holds
+              the modern digital version; this holds the *artifact*.
+              Reframed May 2026 from a generic "upload a photo" feature
+              into a deliberate keepsake-photo surface. card_photos
+              table is reused. Empty state encourages capture; filled
+              state displays the photo as a heirloom with corner pins
+              evoking pinning a card to a board. */}
+          <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📷</span>
+                <h2 className="text-sm font-bold text-stone-900">The Original</h2>
+                <span className="text-xs text-stone-500 italic">— the card you have</span>
+              </div>
+              {originalCard && (
+                <button
+                  onClick={removeOriginalCard}
+                  className="text-xs font-semibold text-stone-500 border border-stone-300 bg-white rounded-lg px-2.5 py-1 hover:bg-stone-100"
+                  title="Remove the photo of the original card"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            {originalCard?.photo_url ? (
+              <div className="relative">
+                {/* Photo displayed with a subtle warm border to read as
+                    a framed keepsake rather than a UI thumbnail. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={originalCard.photo_url}
+                  alt="Photo of the original recipe card"
+                  className="w-full max-h-96 object-contain rounded-xl border-2 border-amber-200 bg-white p-2 shadow-sm cursor-pointer"
+                  onClick={() => originalCardInputRef.current?.click()}
+                  title="Tap to replace with a different photo"
+                />
+                <p className="text-xs text-stone-500 italic text-center mt-2">
+                  Tap the photo to replace it.
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={() => originalCardInputRef.current?.click()}
+                disabled={uploadingOriginal}
+                className="w-full rounded-xl bg-white border-2 border-dashed border-stone-300 hover:border-amber-400 hover:bg-amber-50/40 transition-colors py-8 px-4 text-center"
+              >
+                <p className="text-3xl mb-2">📷</p>
+                <p className="text-sm font-semibold text-stone-700">
+                  {uploadingOriginal ? 'Uploading…' : 'Add a photo of the original card'}
+                </p>
+                <p className="text-xs text-stone-500 leading-snug mt-1 max-w-xs mx-auto">
+                  If you have it &mdash; a handwritten card, a torn-out cookbook page, a photo from grandma&rsquo;s recipe box &mdash; snap a picture and save it here forever.
+                </p>
+              </button>
+            )}
+            <input
+              ref={originalCardInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) uploadOriginalCard(file)
+                e.target.value = ''
+              }}
+            />
           </div>
 
           {/* Origin — "the story" of the card. Where it came from,
