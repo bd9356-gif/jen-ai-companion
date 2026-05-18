@@ -4213,23 +4213,6 @@ export default function MyRecipeVaultPage() {
              Tap a row to expand; tap the × to remove from the Portfolio
              (the underlying note stays in Playbook). */
           <div>
-            {/* Back to My Playbook — top of the Portfolio, above the
-                banner (May 2026, Bill's ask). Notebook icon + label,
-                pill-styled so it reads as a deliberate "return path"
-                rather than a generic back arrow. Portfolio is sourced
-                from Playbook, so giving the link prominence at the
-                very top makes the relationship obvious. */}
-            <div className="-mt-4 mb-3">
-              <a
-                href="/playbook"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-full px-3 py-1.5 transition-colors"
-              >
-                <span aria-hidden="true">📘</span>
-                <span>My Playbook</span>
-                <span className="text-orange-400" aria-hidden="true">↩</span>
-              </a>
-            </div>
-
             {/* Portfolio hero banner (May 2026) — open reference book with
                 botanical illustrations and foreground fruit, used as the
                 full-width hero at the top of the Portfolio. "💎 Chef
