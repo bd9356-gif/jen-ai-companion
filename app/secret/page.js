@@ -4240,9 +4240,9 @@ export default function MyRecipeVaultPage() {
                   plain text that doesn't fight the artwork. */}
             </div>
 
-            {/* Instruction line under the banner — Bill's wife's copy.
-                Plain text, serif italic to echo the journal mood
-                without overlaying the image. */}
+            {/* Instruction line under the banner — single-line action
+                hint, no explainer prose. Bill wants the "Tap × to
+                return one to your Playbook" line and nothing else. */}
             <p
               className="text-center text-stone-700 italic leading-snug mb-3 px-2"
               style={{
@@ -4250,7 +4250,6 @@ export default function MyRecipeVaultPage() {
                 fontSize: 'clamp(0.95rem, 1.8vw, 1.125rem)',
               }}
             >
-              Your saved notes and videos are kept here until you no longer need them.<br />
               Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
             </p>
 

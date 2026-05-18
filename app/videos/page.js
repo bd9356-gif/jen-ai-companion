@@ -738,31 +738,33 @@ export default function VideosPage() {
 
 
           {/* Topic chips — techniques for Teach, dish-types for Practice.
-              Horizontally scrollable on narrow viewports. Active chip uses
-              the tab's color (sky for Teach, orange for Practice);
-              inactive chips are white with a gray border.
-              Channel dropdown was removed in favor of this; the search
-              input already matches channel text, so chef-specific queries
-              still work via 🔍. */}
+              Restyled May 2026 as a slim "showtime selector" strip — a
+              subtle stone background under the chip row evokes the lip
+              of a stage rather than a remote-control strip floating in
+              white space. Active chip still pops with the tab's color
+              (sky for Teach, orange for Practice); inactive chips read
+              as quieter sepia tones that defer to the curtain above. */}
           {chipSet && (
-            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-              {chipSet.map(c => {
-                const isActive = topic === c.key
-                const activeCls = filter === 'practice'
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-sky-500 text-white border-sky-500'
-                return (
-                  <button
-                    key={c.key}
-                    onClick={() => { setTopic(c.key); setPage(0) }}
-                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-                      isActive ? activeCls : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                )
-              })}
+            <div className="-mx-4 px-4 py-2 bg-stone-50/80 border-y border-stone-200">
+              <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1">
+                {chipSet.map(c => {
+                  const isActive = topic === c.key
+                  const activeCls = filter === 'practice'
+                    ? 'bg-orange-500 text-white border-orange-500'
+                    : 'bg-sky-500 text-white border-sky-500'
+                  return (
+                    <button
+                      key={c.key}
+                      onClick={() => { setTopic(c.key); setPage(0) }}
+                      className={`shrink-0 text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+                        isActive ? activeCls : 'bg-white text-stone-600 border-stone-200 hover:border-orange-300 hover:text-orange-700'
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -1000,6 +1002,36 @@ export default function VideosPage() {
                 </button>
               </div>
             )}
+
+            {/* Next stops (May 2026) — Playbook and Chef Jennifer's
+                Classroom as "where to go next" cards after the user is
+                done browsing Chef TV. Replaces the cluttered Playbook +
+                Chef buttons that used to sit in the sticky header.
+                Reads as theater architecture: you've seen the show,
+                here's the lobby with paths to the other rooms. */}
+            <div className="mt-10 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 text-center mb-3">
+                After the show
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <a
+                  href="/playbook"
+                  className="block bg-white border-2 border-amber-200 hover:border-amber-400 hover:shadow-md rounded-2xl p-4 transition-all"
+                >
+                  <p className="text-2xl mb-1.5">📘</p>
+                  <p className="text-sm font-bold text-gray-900">My Playbook</p>
+                  <p className="text-xs text-gray-500 leading-snug mt-0.5">Saved lessons, recipes, and notes.</p>
+                </a>
+                <a
+                  href="/chef"
+                  className="block bg-white border-2 border-orange-200 hover:border-orange-400 hover:shadow-md rounded-2xl p-4 transition-all"
+                >
+                  <p className="text-2xl mb-1.5">👨‍🍳</p>
+                  <p className="text-sm font-bold text-gray-900">Chef Jennifer</p>
+                  <p className="text-xs text-gray-500 leading-snug mt-0.5">Ask anything, cook anything.</p>
+                </a>
+              </div>
+            </div>
           </>
         )}
       </main>
