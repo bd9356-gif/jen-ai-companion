@@ -1,11 +1,42 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
+
+// Detect whether the page is loaded inside an in-app browser webview
+// (Pinterest, Instagram, Facebook, Twitter/X, LinkedIn, TikTok, etc.).
+// These embedded webviews break OAuth (Google blocks them outright)
+// and don't persist session cookies, so the user gets a frustrating
+// half-broken sign-in flow. The fix is "Open in Safari" — which most
+// in-app browsers have in their ⋯ / share menu. We detect via UA
+// string heuristics and surface a banner telling the user what to do.
+function detectInAppBrowser() {
+  if (typeof navigator === 'undefined') return null
+  const ua = navigator.userAgent || ''
+  // Specific named in-app browsers — return the social platform name
+  // so the banner can address it directly ("inside Pinterest" reads
+  // friendlier than "inside an in-app browser").
+  if (/Pinterest/i.test(ua)) return 'Pinterest'
+  if (/Instagram/i.test(ua)) return 'Instagram'
+  if (/FBAN|FBAV|FB_IAB/i.test(ua)) return 'Facebook'
+  if (/Twitter/i.test(ua)) return 'Twitter'
+  if (/LinkedInApp/i.test(ua)) return 'LinkedIn'
+  if (/TikTok|musical_ly|BytedanceWebview/i.test(ua)) return 'TikTok'
+  if (/Snapchat/i.test(ua)) return 'Snapchat'
+  if (/Line\//i.test(ua)) return 'LINE'
+  // iOS catch-all: real Safari always has "Safari/" in its UA; an
+  // in-app webview on iOS does not. If we're on iOS but Safari is
+  // missing, we're in an unknown embedded webview.
+  const isIOS = /iPhone|iPad|iPod/i.test(ua)
+  if (isIOS && !/Safari\//i.test(ua)) return 'in-app browser'
+  // Android catch-all: WebView UAs contain "; wv)".
+  if (/Android.*;\s*wv\)/i.test(ua)) return 'in-app browser'
+  return null
+}
 
 // Read `next` from the URL and validate it's a same-origin relative
 // path — anything else is dropped. Lets callers preserve the URL the
@@ -28,6 +59,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  // In-app browser detection (May 2026). Runs on mount; if non-null,
+  // we render a banner at the top of the page telling the user to
+  // open the link in their real browser. Detection only happens
+  // once because navigator.userAgent doesn't change after page load.
+  const [inAppBrowser, setInAppBrowser] = useState(null)
+  useEffect(() => {
+    setInAppBrowser(detectInAppBrowser())
+  }, [])
 
   async function handleGoogle() {
     setError('')
@@ -97,6 +136,23 @@ export default function LoginPage() {
 
       <main className="flex-1 flex items-start justify-center px-4 pt-6 pb-8">
         <div className="w-full max-w-sm">
+          {/* In-app browser warning banner (May 2026). When the user
+              lands on this page inside Pinterest, Instagram, Facebook,
+              etc., Google blocks OAuth and session cookies don't
+              persist, so signing in is fundamentally broken from
+              there. Show a banner before the form so the user knows
+              the fix (open in real browser) before they hit the wall. */}
+          {inAppBrowser && (
+            <div className="mb-5 bg-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-3 text-sm">
+              <p className="font-bold text-amber-900 mb-1">
+                📱 You&rsquo;re inside {inAppBrowser}&rsquo;s browser
+              </p>
+              <p className="text-amber-900 leading-snug">
+                Sign-in doesn&rsquo;t work reliably in here &mdash; Google blocks it for security. Tap the <span className="font-bold">⋯</span> menu at the top of this page and choose <span className="font-bold">&ldquo;Open in Safari&rdquo;</span> (or your browser), then sign in from there.
+              </p>
+            </div>
+          )}
+
           <div className="text-center mb-5">
             <h1 className="text-2xl font-bold text-stone-900">Welcome back</h1>
             <p className="text-stone-500 mt-1">Sign in to your kitchen</p>
