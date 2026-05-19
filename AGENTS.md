@@ -903,6 +903,57 @@ The app is an installable PWA as of April 2026:
 - No service worker yet. Offline support and push notifications are deferred — per the Next PWA guide, installability doesn't require a service worker.
 - iOS install path: Safari → Share → Add to Home Screen.
 
+## iOS Share Extension — current state and recovery plan (May 2026, work in progress)
+
+**Where we are.** The native Safari Share Extension named "MyRecipe" exists, appears in the iOS share sheet, and successfully reads the shared URL — but it cannot programmatically open the main MyRecipe app on iOS 18+. This was diagnosed in a long debugging session with on-device Console.app logging (May 19, 2026).
+
+**What's already deployed and proven working:**
+- `public/.well-known/apple-app-site-association` — AASA file with Team ID `ZYV9D697SQ`, bundle `com.mycompanionapps.recipe`, claiming `/secret?import=*` and `/import*` path patterns. Served `application/json` with `Cache-Control: public, max-age=3600` (header set in `next.config.js`).
+- Apple's CDN has the file cached and parsed correctly. Verify with `curl https://app-site-association.cdn-apple.com/a/v1/recipe.mycompanionapps.com`.
+- Universal Links DO work end-to-end from non-extension contexts. Verified: a `https://recipe.mycompanionapps.com/secret?import=…` link tapped in Messages opens the MyRecipe app directly.
+- Associated Domains capability with entry `applinks:recipe.mycompanionapps.com` is configured on BOTH the App target and the ShareExtension target.
+- `AppDelegate.swift` has a `continue userActivity:` handler that intercepts Universal Links on our domain and navigates the webview to `/secret?import=…` via JS eval. Path `/secret?import=` and `/import?url=` (plus `?u=` alias) all funnel through the same `navigateToImport` helper.
+
+**What's blocked.** Apple has locked down iOS 18+ Share Extensions from opening any URL programmatically. Diagnostic logging in `ShareViewController.swift` proved both paths fail silently:
+- `extensionContext.open(deepLink) { success in … }` returns `success=FALSE`. iOS refuses the open for Share Extensions even when the URL is a valid Universal Link to the parent app.
+- Responder-chain fallback `application.perform(NSSelectorFromString("openURL:"), with: url)` returns `nil`. iOS refuses that path too.
+
+This is not a code bug — Apple deliberately broke the "Share Extension auto-launches parent app" pattern. The current ShareViewController.swift contains diagnostic NSLog statements and both failed paths; leave them in place until the pivot is shipped (they're cheap to remove later and help if the pivot path needs its own debugging).
+
+**The pivot — App Groups + clipboard + manual app tap.** This is what every modern iOS app does for this use case on iOS 18+. User flow: Safari → Share → MyRecipe → share sheet dismisses with a brief "Open MyRecipe to import" confirmation → user taps MyRecipe app icon → app launches, sees pending URL in shared storage, fires the smart-import flow automatically. Two taps total, but it works every time and doesn't fight iOS.
+
+**To execute (next session, ~45 min):**
+
+1. **Apple Developer Portal** (5 min)
+   - Identifiers → App Groups → register a new group ID: `group.com.mycompanionapps.recipe`.
+   - Identifiers → edit the App ID `com.mycompanionapps.recipe` → enable **App Groups** capability → Configure → tick the new group.
+   - Same for any separate ShareExtension App ID.
+
+2. **Xcode capability click on both targets** (3 min)
+   - App target → Signing & Capabilities → + Capability → **App Groups** → tick `group.com.mycompanionapps.recipe`.
+   - ShareExtension target → same.
+
+3. **Code changes** (~15 min)
+   - `ios/App/ShareExtension/ShareViewController.swift`: rip out the `extensionContext.open()` + responder-chain code entirely (both are dead). Replace with: write the shared URL to `UserDefaults(suiteName: "group.com.mycompanionapps.recipe")` under key `pendingImportURL`. Also write to `UIPasteboard.general.string` so the existing smart_import clipboard path works as a redundancy. Dismiss the share sheet cleanly via `completeRequest`. No more open attempts — they will not work and shipping them is misleading.
+   - Optionally swap `UIViewController` base for `SLComposeServiceViewController` so we can show a brief "Saved — open MyRecipe to import →" confirmation before dismissing. Not required for v1.
+   - `ios/App/App/AppDelegate.swift`: in `applicationDidBecomeActive`, check `UserDefaults(suiteName: "group.com.mycompanionapps.recipe")` for `pendingImportURL`. If found, clear it immediately (`removeObject(forKey:)`) and navigate the Capacitor webview via JS eval to `/secret?import=<encoded-url>`. The existing `navigateToImport` helper can be reused.
+   - Keep the existing `continue userActivity:` handler unchanged — Universal Links from Messages / external sources still work and should keep working.
+
+4. **Test on phone**
+   - Build to phone (Cmd+Shift+K clean first), share from Safari → MyRecipe → confirm share sheet dismisses cleanly without errors.
+   - Tap MyRecipe app icon → confirm webview navigates to `/secret?import=…` automatically.
+   - Remove the diagnostic NSLog statements from ShareViewController once the path is verified working.
+
+5. **Polish (optional, 10 min)**
+   - Brief "Open MyRecipe to import →" toast inside the share sheet before dismiss (needs `SLComposeServiceViewController` or a tiny custom UIViewController with a label).
+   - On the main app side, a brief "✨ Import ready — opening it now…" toast when the pending URL is picked up, so the user understands what just happened.
+
+**Roadblocks if hit:**
+- iOS clipboard prompt ("Paste from MyRecipe?") — known, acceptable. Same trade as the existing smart_import iOS Shortcut.
+- App Groups entitlement signing issue after capability add — fix by toggling "Automatically manage signing" off and on under Signing & Capabilities, or by manually regenerating the provisioning profile in Apple Developer Portal.
+
+**Why this is the right pivot, not a workaround.** Apple's restriction is intentional and won't be reversed. Apps that "do this in one tap" on iOS 18+ either (a) are still on iOS 17 and broken on iOS 18+, (b) use the App Groups pattern with a brief manual-tap step that users barely notice, or (c) use the clipboard-only smart_import pattern (which is what the existing iOS Shortcut already does). Our pivot puts us in category (b), which is the cleanest of the three. Once shipped, this stays working forever — no fighting future iOS releases.
+
 ## Don't-touch / confirm first
 
 (Populate this as we make decisions — currently empty. Candidates: auth flow, Supabase schema migrations, anything in `ingest_*` scripts during a live ingestion run.)
