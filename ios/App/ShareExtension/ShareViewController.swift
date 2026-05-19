@@ -47,6 +47,7 @@ class ShareViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        NSLog("[MyRecipeShare] viewDidLoad — extension started")
         // We immediately read the URL and bounce — no UI for the
         // user to interact with. The share sheet dismisses itself
         // as soon as we complete the request.
@@ -56,18 +57,27 @@ class ShareViewController: UIViewController {
     private func extractURLAndOpenMainApp() {
         guard let item = extensionContext?.inputItems.first as? NSExtensionItem,
               let providers = item.attachments else {
+            NSLog("[MyRecipeShare] No input items / attachments found")
             finish()
             return
         }
 
+        NSLog("[MyRecipeShare] Found %d attachment(s)", providers.count)
+
         // Look for a URL attachment among what Safari sent us.
         let urlType = UTType.url.identifier
         for provider in providers where provider.hasItemConformingToTypeIdentifier(urlType) {
-            provider.loadItem(forTypeIdentifier: urlType, options: nil) { [weak self] item, _ in
+            NSLog("[MyRecipeShare] Loading URL item from provider")
+            provider.loadItem(forTypeIdentifier: urlType, options: nil) { [weak self] item, error in
+                if let error = error {
+                    NSLog("[MyRecipeShare] loadItem error: %@", error.localizedDescription)
+                }
                 guard let url = item as? URL else {
+                    NSLog("[MyRecipeShare] Loaded item is not a URL: %@", String(describing: item))
                     self?.finish()
                     return
                 }
+                NSLog("[MyRecipeShare] Got shared URL: %@", url.absoluteString)
                 DispatchQueue.main.async {
                     self?.openMainApp(with: url)
                 }
@@ -76,6 +86,7 @@ class ShareViewController: UIViewController {
         }
 
         // No URL found — just dismiss.
+        NSLog("[MyRecipeShare] No URL-type attachment found")
         finish()
     }
 
@@ -97,6 +108,8 @@ class ShareViewController: UIViewController {
             return
         }
 
+        NSLog("[MyRecipeShare] Built deep link: %@", deepLink.absoluteString)
+
         // Primary path: extensionContext.open() — Apple's actual blessed
         // API for a Share Extension to open a URL. With Universal Links
         // targeting our own app's domain, iOS handles the routing because
@@ -108,7 +121,9 @@ class ShareViewController: UIViewController {
         // to honor the open (it doesn't wait for the target app to
         // finish launching), so this avoids racing the dismissal.
         let context = extensionContext
+        NSLog("[MyRecipeShare] Calling extensionContext.open()")
         context?.open(deepLink) { [weak self] success in
+            NSLog("[MyRecipeShare] extensionContext.open() returned success=%@", success ? "TRUE" : "FALSE")
             if success {
                 self?.finish()
             } else {
@@ -117,6 +132,7 @@ class ShareViewController: UIViewController {
                 // even with Universal Links; the chain trick can still
                 // succeed because https URLs aren't subject to the same
                 // restrictions as custom schemes.
+                NSLog("[MyRecipeShare] Falling back to responder chain")
                 self?.openViaResponderChain(deepLink)
                 self?.finish()
             }
@@ -125,19 +141,28 @@ class ShareViewController: UIViewController {
 
     private func openViaResponderChain(_ url: URL) {
         var responder: UIResponder? = self
+        var foundApplication = false
         while responder != nil {
             if let application = responder as? UIApplication {
+                foundApplication = true
                 let selector = NSSelectorFromString("openURL:")
-                if application.responds(to: selector) {
-                    _ = application.perform(selector, with: url)
+                let responds = application.responds(to: selector)
+                NSLog("[MyRecipeShare] Found UIApplication in responder chain. responds(openURL:)=%@", responds ? "TRUE" : "FALSE")
+                if responds {
+                    let result = application.perform(selector, with: url)
+                    NSLog("[MyRecipeShare] perform(openURL:) returned: %@", String(describing: result))
                 }
                 break
             }
             responder = responder?.next
         }
+        if !foundApplication {
+            NSLog("[MyRecipeShare] No UIApplication in responder chain — chain exhausted")
+        }
     }
 
     private func finish() {
+        NSLog("[MyRecipeShare] Calling completeRequest — dismissing share sheet")
         extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
     }
 }
