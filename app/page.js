@@ -122,16 +122,9 @@ export default function HomePage() {
               height="64"
               className="w-16 h-16 shrink-0"
             />
-            <div className="min-w-0 text-center">
-              <h1 className="text-xl font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
-              {/* Tagline — `text-balance` prevents single-word orphans
-                  on the last line. The whole inner block is `text-center`
-                  so the title and tagline read as a balanced stack
-                  inside the text area beside the icon, instead of
-                  flush-left with an asymmetric indent on the tagline. */}
-              <p className="text-sm text-gray-500 mt-1 leading-snug text-balance">
-                Where your cooking life and your learning journey meet.
-              </p>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
+              <p className="text-sm text-gray-500 mt-0.5 leading-snug">Where your cooking life and your learning journey meet.</p>
             </div>
           </div>
           {user ? (
