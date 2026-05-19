@@ -125,9 +125,11 @@ export default function HomePage() {
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
               {/* Tagline — `text-balance` prevents single-word orphans
-                  on the last line at the narrow widths this container
-                  ends up at after the 64px icon takes its space. */}
-              <p className="text-sm text-gray-500 mt-1 leading-snug text-balance">
+                  on the last line, `text-center` centers within the
+                  available container so the wrapped lines don't sit
+                  flush-left under the title and create an empty
+                  visual gap on the right. */}
+              <p className="text-sm text-gray-500 mt-1 leading-snug text-balance text-center">
                 Where your cooking life and your learning journey meet.
               </p>
             </div>
