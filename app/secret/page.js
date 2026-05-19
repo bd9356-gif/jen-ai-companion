@@ -3608,6 +3608,21 @@ export default function MyRecipeVaultPage() {
               keep the title geometrically centered. */}
           <div className="flex items-center gap-2 mb-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-500 hover:text-gray-600 shrink-0">← Back</button>
+            {/* 📘 Playbook quick-jump — only on Portfolio view (May 2026).
+                Portfolio is conceptually sourced from Playbook, so making
+                the return path obvious at the top of the page (next to
+                ← Back) saves users a step. Uses the same 📘 icon as the
+                Playbook page so the relationship reads at a glance. */}
+            {listStyle === 'portfolio' && (
+              <button
+                onClick={() => window.location.href='/playbook'}
+                title="Open My Playbook"
+                aria-label="Open My Playbook"
+                className="shrink-0 text-base border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none"
+              >
+                📘
+              </button>
+            )}
             <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">
               {listStyle === 'portfolio' ? '💎 Chef Portfolio' : '🔐 Recipe Vault'}
             </h1>

@@ -222,6 +222,20 @@ export default function VideosPage() {
   const [showAbout, setShowAbout] = useState(false)
   const [playingId, setPlayingId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
+
+  // Lock body scroll while a video is playing (May 2026). Without this,
+  // a tap anywhere outside the inline player can scroll the video out
+  // of the viewport, breaking the "screening room" feel Chef TV is
+  // going for. When playback ends (setPlayingId(null)) or the user
+  // closes the player, scroll restores.
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (playingId) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = prev }
+    }
+  }, [playingId])
   const [metadata, setMetadata] = useState({})
   // Pagination — 20 per page with Previous / Next controls. Page is
   // 0-indexed in state; the render shows "Page N of M" 1-indexed.
@@ -600,91 +614,96 @@ export default function VideosPage() {
       )}
 
       <header className="bg-white/95 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 pt-4 pb-3">
-          {/* Header row — back + title on the left, the Teach/Practice
-              "classroom" toggle inline on the right (mirrors Chef
-              Jennifer's mode pill exactly), and the ℹ️/🔍 utility
-              buttons on the far right. The toggle's segmented-control
-              styling reads as switching from one classroom room to the
-              other (Teach ↔ Practice), not as a filter on a list.
-              Back button is just "←" (no "Back" word) and utility
-              buttons are smaller w-8 — the full-word back + larger
-              buttons clipped the title on iPhone (the toggle pushes
-              content left, leaving only ~40px for the title cluster
-              before things slid off the left edge). Same compact
-              pattern Chef Jennifer's header uses. */}
-          {/* Two-row header (May 2026, Bill's ask — single row was
-              too crowded on phone). Row 1: ← back / 📘 Playbook /
-              👨‍🍳 cross-link / title-with-subtitle / ℹ️ About.
-              Row 2: full-width mode pill row centered (Teach /
-              Practice). Same pattern Chef Jennifer's header uses. */}
-          {/* Two-row header (May 2026, Bill's ask).
-              Row 1: centered title with subtitle — alone so it has
-                     full breathing room and never truncates.
-              Row 2: nav buttons left / mode pill row + ℹ️ About right. */}
-          {/* Row 1 — title alone, centered, full width */}
-          <div className="text-center leading-none pb-1">
-            <h1 className="text-base font-bold text-gray-900 leading-tight">🎬 Chef TV&rsquo;s</h1>
-            <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5">Classroom</p>
-          </div>
-          {/* Row 2 — nav left, mode pills + About right */}
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => window.location.href='/kitchen'}
-                aria-label="Back to MyKitchen"
-                className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1"
+        <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
+          {/* One-line top nav (May 2026, Bill's ask). Replaced the prior
+              two-row header (title block + nav row) and the topic chip
+              strip that used to sit below the curtain. Now: a single
+              compact bar containing ← Back, 📘 Playbook, 👨‍🍳 Chef Jen,
+              the topic pull-down (native <select> for a clean iOS
+              picker that opens as a full-screen sheet), the Teach/
+              Practice mode toggle, and ℹ️ About. The curtain marquee
+              below carries the brand identity ("🎬 Chef TV") so the
+              dedicated title block is no longer needed up here. */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => window.location.href='/kitchen'}
+              aria-label="Back to MyKitchen"
+              title="Back to MyKitchen"
+              className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => window.location.href='/playbook'}
+              title="Open My Playbook"
+              aria-label="Open My Playbook"
+              className="shrink-0 text-base font-semibold border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none"
+            >
+              📘
+            </button>
+            <button
+              onClick={() => window.location.href='/chef'}
+              title="Open Chef Jennifer's Classroom"
+              aria-label="Open Chef Jennifer's Classroom"
+              className="shrink-0 text-base font-semibold border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none"
+            >
+              👨‍🍳
+            </button>
+            {/* Topic pull-down — native <select> so it opens as iOS's
+                full-screen picker, which is the cleanest mobile UX for
+                a list this size. Options change with filter mode
+                (Teach uses TEACH_CHIPS, Practice uses PRACTICE_CHIPS). */}
+            {chipSet && (
+              <select
+                value={topic}
+                onChange={(e) => { setTopic(e.target.value); setPage(0) }}
+                style={{ fontSize: '16px' }}
+                className={`flex-1 min-w-0 text-xs font-semibold border-2 rounded-lg px-2 py-1 truncate focus:outline-none focus:ring-2 ${
+                  filter === 'practice'
+                    ? 'border-orange-300 bg-orange-50 text-orange-700 focus:ring-orange-200'
+                    : 'border-sky-300 bg-sky-50 text-sky-700 focus:ring-sky-200'
+                }`}
+                title="Pick a topic"
               >
-                ← Back
-              </button>
+                {chipSet.map(c => (
+                  <option key={c.key} value={c.key}>{c.label}</option>
+                ))}
+              </select>
+            )}
+            {/* Teach / Practice mode toggle */}
+            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 shrink-0">
               <button
-                onClick={() => window.location.href='/playbook'}
-                title="Open My Playbook"
-                aria-label="Open My Playbook"
-                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
-              >
-                📘
-              </button>
-              <button
-                onClick={() => window.location.href='/chef'}
-                title="Open Chef Jennifer's Classroom"
-                aria-label="Open Chef Jennifer's Classroom"
-                className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
-              >
-                👨‍🍳
-              </button>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
-                <button
-                  onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  🎓 Teach
-                </button>
-                <button
-                  onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  🍳 Practice
-                </button>
-              </div>
-              <button
-                onClick={() => setShowAbout(s => !s)}
-                aria-label={showAbout ? 'Close about' : 'About Chef TV'}
-                className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                  showAbout
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
+                onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
+                aria-label="Teach mode"
+                title="Teach mode"
+                className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
+                  filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                {showAbout ? '✕' : 'ℹ️'}
+                🎓
+              </button>
+              <button
+                onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
+                aria-label="Practice mode"
+                title="Practice mode"
+                className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
+                  filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                🍳
               </button>
             </div>
+            <button
+              onClick={() => setShowAbout(s => !s)}
+              aria-label={showAbout ? 'Close about' : 'About Chef TV'}
+              className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
+                showAbout
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-700'
+              }`}
+            >
+              {showAbout ? '✕' : 'ℹ️'}
+            </button>
           </div>
 
           {/* Mode-aware lede — reinforces the "two rooms" framing of the
@@ -733,34 +752,10 @@ export default function VideosPage() {
           </div>
 
 
-          {/* Topic chips — techniques for Teach, dish-types for Practice.
-              Horizontally scrollable on narrow viewports. Active chip uses
-              the tab's color (sky for Teach, orange for Practice);
-              inactive chips are white with a gray border.
-              Channel dropdown was removed in favor of this; the search
-              input already matches channel text, so chef-specific queries
-              still work via 🔍. */}
-          {chipSet && (
-            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-              {chipSet.map(c => {
-                const isActive = topic === c.key
-                const activeCls = filter === 'practice'
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'bg-sky-500 text-white border-sky-500'
-                return (
-                  <button
-                    key={c.key}
-                    onClick={() => { setTopic(c.key); setPage(0) }}
-                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
-                      isActive ? activeCls : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          {/* Topic chip strip retired (May 2026, Bill's ask) — topic
+              selection moved into the pull-down in the one-line top
+              nav bar above. The curtain now stands alone below the
+              top bar, with no chip strip competing for attention. */}
         </div>
       </header>
 

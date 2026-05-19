@@ -865,7 +865,10 @@ export default function CardsPage() {
   // ── CARDS LIST VIEW ──
   return (
     <div className="min-h-screen bg-white">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      {/* z-20 (not z-10) so the absolute-positioned ❤️ heart on each
+          tile (also at z-10) doesn't bleed through the header as the
+          page scrolls. Same fix the Vault uses on its list-view header. */}
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
           {/* Row 1: ← Back left, title centered, invisible spacer right —
               keeps "🃏 Recipe Cards" prominent at the visual top, mirrors
