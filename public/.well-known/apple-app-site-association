@@ -1,0 +1,20 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["ZYV9D697SQ.com.mycompanionapps.recipe"],
+        "components": [
+          {
+            "/": "/secret",
+            "?": { "import": "*" },
+            "comment": "Share Extension drop-off — /secret?import=<encoded-url>"
+          },
+          {
+            "/": "/import*",
+            "comment": "Short import entry — /import?url=<encoded-url> and /import?u=<encoded-url>"
+          }
+        ]
+      }
+    ]
+  }
+}
