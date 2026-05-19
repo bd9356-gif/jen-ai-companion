@@ -142,16 +142,16 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white border-b border-stone-200">
         <div className="max-w-2xl mx-auto px-4 py-4">
-          <a href="/" className="flex items-center justify-center gap-3">
+          <a href="/" className="flex flex-col items-center justify-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/icon-192-transparent.png"
               alt=""
-              width="80"
-              height="80"
-              className="w-20 h-20 shrink-0"
+              width="96"
+              height="96"
+              className="w-24 h-24 shrink-0"
             />
-            <span className="text-stone-900 text-xl font-bold tracking-tight">MyRecipe Companion</span>
+            <span className="text-stone-900 text-2xl font-bold tracking-tight whitespace-nowrap">MyRecipe Companion</span>
           </a>
         </div>
       </header>
