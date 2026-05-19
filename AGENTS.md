@@ -954,6 +954,16 @@ This is not a code bug — Apple deliberately broke the "Share Extension auto-la
 
 **Why this is the right pivot, not a workaround.** Apple's restriction is intentional and won't be reversed. Apps that "do this in one tap" on iOS 18+ either (a) are still on iOS 17 and broken on iOS 18+, (b) use the App Groups pattern with a brief manual-tap step that users barely notice, or (c) use the clipboard-only smart_import pattern (which is what the existing iOS Shortcut already does). Our pivot puts us in category (b), which is the cleanest of the three. Once shipped, this stays working forever — no fighting future iOS releases.
 
+**Bundled problem to solve at the same time — session persistence in the Capacitor webview.** Right now the MyRecipe app always opens to the login page even after the user has signed in via Safari/Edge. Reason: the Capacitor WKWebView has its OWN cookie jar separate from the default browser's. OAuth (Google / Microsoft) opens in the default browser, sets cookies there, and the Capacitor webview never sees them. This breaks the Share Extension import flow too — even with App Groups landing the URL correctly, the app navigates to `/secret?import=…`, gets bounced to `/login` because there's no session in the webview, and the user has to sign in again.
+
+**Fix (~30 min, ship with the Share Extension pivot):** swap the OAuth flow to use `ASWebAuthenticationSession` — Apple's API for "OAuth in an in-app browser that shares cookies with my WKWebView." Two implementation options:
+- `@capacitor/browser` plugin with `presentationStyle: 'popover'` — adds a dependency but is one-line on the call site.
+- Tiny native Swift bridge wrapping `ASWebAuthenticationSession` directly — no extra dependency, more code.
+
+Either way, the user flow becomes: tap Google → in-app browser sheet pops up → OAuth completes → sheet dismisses → webview sees the session → user is signed in for real and stays signed in across app launches. After this, the Share Extension's import handoff actually completes because the destination `/secret?import=…` page sees a logged-in user.
+
+Magic-link sign-in already works inside the webview (the whole flow stays in one cookie jar), so it's the existing fallback while OAuth is being fixed.
+
 ## Don't-touch / confirm first
 
 (Populate this as we make decisions — currently empty. Candidates: auth flow, Supabase schema migrations, anything in `ingest_*` scripts during a live ingestion run.)
