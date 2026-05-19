@@ -147,11 +147,11 @@ export default function LoginPage() {
             <img
               src="/brand/icon-192-transparent.png"
               alt=""
-              width="48"
-              height="48"
-              className="w-12 h-12 shrink-0"
+              width="64"
+              height="64"
+              className="w-16 h-16 shrink-0"
             />
-            <span className="text-stone-900 text-lg font-bold tracking-tight">MyRecipe Companion</span>
+            <span className="text-stone-900 text-xl font-bold tracking-tight">MyRecipe Companion</span>
           </a>
         </div>
       </header>

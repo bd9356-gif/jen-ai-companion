@@ -24,3 +24,20 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* iOS safe-area handling (May 2026).
+ * viewport-fit: cover (set in app/layout.js) makes the webview extend
+ * edge-to-edge on iPhones with a notch / Dynamic Island. Without this
+ * top padding, sticky headers (`position: sticky; top: 0`) would sit
+ * UNDER the notch, and scrollable content would slide behind it. The
+ * env() value is 0 on browsers without a notch, so this is a no-op
+ * everywhere else.
+ *
+ * Bottom padding handles the home-indicator area on Face ID iPhones —
+ * keeps footers / floating action buttons clear of the system gesture
+ * bar.
+ */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
