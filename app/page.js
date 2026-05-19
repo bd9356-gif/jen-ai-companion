@@ -123,8 +123,13 @@ export default function HomePage() {
               className="w-16 h-16 shrink-0"
             />
             <div className="min-w-0">
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Where your cooking life and your learning journey meet.</p>
+              <h1 className="text-xl font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
+              {/* Tagline — `text-balance` prevents single-word orphans
+                  on the last line at the narrow widths this container
+                  ends up at after the 64px icon takes its space. */}
+              <p className="text-sm text-gray-500 mt-1 leading-snug text-balance">
+                Where your cooking life and your learning journey meet.
+              </p>
             </div>
           </div>
           {user ? (
