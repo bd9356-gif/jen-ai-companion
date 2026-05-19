@@ -12,9 +12,18 @@
           {
             "/": "/import*",
             "comment": "Short import entry — /import?url=<encoded-url> and /import?u=<encoded-url>"
+          },
+          {
+            "/": "/auth/callback*",
+            "comment": "Magic-link sign-in — routes Mail-app tap back to the Capacitor webview so cookies land in the right jar"
+          },
+          {
+            "/": "/auth/confirm*",
+            "comment": "Auth confirm step — same reason as /auth/callback"
           }
         ]
       }
     ]
   }
 }
+

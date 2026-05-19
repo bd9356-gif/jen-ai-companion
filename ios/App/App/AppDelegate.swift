@@ -11,6 +11,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // continueUserActivity handler shouldn't be coerced into imports.
     private let universalLinkHost = "recipe.mycompanionapps.com"
 
+    // App Group shared with the ShareExtension target. The extension
+    // writes the shared URL here; we read it on applicationDidBecomeActive.
+    // Must match the group ID configured in:
+    //   - developer.apple.com → Identifiers → App Groups
+    //   - App target → Signing & Capabilities → App Groups
+    //   - ShareExtension target → Signing & Capabilities → App Groups
+    private let appGroupID = "group.com.mycompanionapps.recipe"
+    private let pendingURLKey = "pendingImportURL"
+    private let pendingTimestampKey = "pendingImportTimestamp"
+
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         return true
@@ -31,7 +41,47 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        // Share Extension handoff (May 2026 — App Groups path).
+        //
+        // The Share Extension wrote the most recently shared URL to the
+        // App Group's shared UserDefaults. Check for it here, navigate
+        // the webview to the smart-import flow, and clear the entry so
+        // each share is consumed exactly once.
+        //
+        // Why applicationDidBecomeActive (instead of didFinishLaunching):
+        // fires reliably on BOTH cold launch and warm foreground, so it
+        // catches "user shared while app was in background" without
+        // needing a second handler. The 500ms delay below covers the
+        // brief window after cold launch where the Capacitor webview
+        // exists but hasn't loaded the initial page yet — too early and
+        // the JS eval would land on a half-loaded webview.
+        checkPendingImportURL()
+    }
+
+    private func checkPendingImportURL() {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else {
+            NSLog("[MyRecipe] Could not open App Group UserDefaults (suite: %@). Is the App Groups capability set on the App target?", appGroupID)
+            return
+        }
+        guard let pendingURL = defaults.string(forKey: pendingURLKey), !pendingURL.isEmpty else {
+            // No pending share — normal case on most app launches.
+            return
+        }
+
+        NSLog("[MyRecipe] Found pending import URL: %@", pendingURL)
+
+        // Clear immediately so we don't loop forever if the navigation
+        // fails for any reason (better to miss one share than to keep
+        // firing the same import every time the user returns to the app).
+        defaults.removeObject(forKey: pendingURLKey)
+        defaults.removeObject(forKey: pendingTimestampKey)
+
+        // Small delay so the Capacitor webview has time to be ready on
+        // cold launch. On warm foreground the webview is already loaded
+        // so this is just a brief no-op pause.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.navigateToImport(sharedURL: pendingURL)
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -62,53 +112,56 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Universal Links handoff (May 2026).
         //
         // When the Share Extension (or any other source — text message,
-        // QR code, third-party app) opens an https URL on our domain
-        // that matches the AASA file's components, iOS routes it here.
-        // We intercept the import patterns and forward to the existing
-        // smart-import flow in the webview.
+        // QR code, third-party app, Mail tap on a magic-link email)
+        // opens an https URL on our domain that matches the AASA file's
+        // components, iOS routes it here.
         //
-        // Patterns we own:
-        //   https://recipe.mycompanionapps.com/secret?import=<encoded>
-        //   https://recipe.mycompanionapps.com/import?url=<encoded>
-        //   https://recipe.mycompanionapps.com/import?u=<encoded>
+        // Generic policy: any URL on our domain → navigate the Capacitor
+        // webview to that exact path+query. Specific cases:
+        //   /secret?import=…       → Share Extension / iOS Shortcut handoff
+        //   /import?url=… or ?u=…  → short import entry (server-redirects to /secret?import=)
+        //   /auth/callback?code=…  → magic-link sign-in callback (Mail tap)
+        //   /auth/confirm?…        → auth confirmation step
+        //   anything else on our   → just preserve path+query and let the webview load it
+        //   domain
         //
-        // Anything else falls through to Capacitor's default proxy so
-        // existing Universal Link handling on plugins still works.
+        // Anything off our domain falls through to Capacitor's default
+        // proxy so existing Universal Link handling on plugins still works.
         if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
            let webpageURL = userActivity.webpageURL,
            webpageURL.host == universalLinkHost {
 
-            let path = webpageURL.path
-            let components = URLComponents(url: webpageURL, resolvingAgainstBaseURL: false)
-            let queryItems = components?.queryItems ?? []
-
-            // /secret?import=<URL> — the Share Extension's drop-off.
-            if path == "/secret",
-               let importValue = queryItems.first(where: { $0.name == "import" })?.value,
-               !importValue.isEmpty {
-                navigateToImport(sharedURL: importValue)
-                return true
-            }
-
-            // /import?url=<URL> or /import?u=<URL> — the short alias
-            // used by the iOS Shortcut "Send to MyRecipe" path. The
-            // /import route on the web already redirects to
-            // /secret?import=…, so funnel them through the same JS
-            // navigation we use for /secret.
-            if path == "/import" || path.hasPrefix("/import") {
-                let raw = queryItems.first(where: { $0.name == "url" })?.value
-                    ?? queryItems.first(where: { $0.name == "u" })?.value
-                if let urlValue = raw, !urlValue.isEmpty {
-                    navigateToImport(sharedURL: urlValue)
-                    return true
-                }
-            }
+            NSLog("[MyRecipe] Universal Link received: %@", webpageURL.absoluteString)
+            navigateWebView(to: webpageURL)
+            return true
         }
 
         // Called when the app was launched with an activity, including Universal Links.
         // Feel free to add additional processing here, but if you want the App API to support
         // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
+    }
+
+    // Navigate the Capacitor webview to the path+query of a Universal Link
+    // we own. Keeps the cookie jar consistent (the cookies set during the
+    // /auth/callback exchange land in the same jar that's serving /secret)
+    // because everything happens inside the one Capacitor WKWebView.
+    private func navigateWebView(to webpageURL: URL) {
+        var target = webpageURL.path
+        if let query = webpageURL.query, !query.isEmpty {
+            target += "?" + query
+        }
+        if target.isEmpty { target = "/" }
+        let safe = target.replacingOccurrences(of: "'", with: "%27")
+        let js = "window.location.href = '\(safe)'"
+        DispatchQueue.main.async { [weak self] in
+            guard let rootVC = self?.window?.rootViewController as? CAPBridgeViewController,
+                  let webView = rootVC.webView else {
+                NSLog("[MyRecipe] webView not ready when navigating Universal Link")
+                return
+            }
+            webView.evaluateJavaScript(js, completionHandler: nil)
+        }
     }
 
     // Navigate the Capacitor webview to /secret?import=<URL>. Uses a

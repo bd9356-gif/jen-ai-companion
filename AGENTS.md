@@ -903,9 +903,13 @@ The app is an installable PWA as of April 2026:
 - No service worker yet. Offline support and push notifications are deferred — per the Next PWA guide, installability doesn't require a service worker.
 - iOS install path: Safari → Share → Add to Home Screen.
 
-## iOS Share Extension — current state and recovery plan (May 2026, work in progress)
+## iOS Share Extension — current state (May 19, 2026 — App Groups handoff shipped)
 
-**Where we are.** The native Safari Share Extension named "MyRecipe" exists, appears in the iOS share sheet, and successfully reads the shared URL — but it cannot programmatically open the main MyRecipe app on iOS 18+. This was diagnosed in a long debugging session with on-device Console.app logging (May 19, 2026).
+**Where we are.** The native Safari Share Extension is **functionally complete** end-to-end up to the auth gate. Verified on device tonight: Safari → Share → MyRecipe dismisses cleanly → user taps MyRecipe app icon → app reads the stashed URL from the App Group → webview navigates to `/secret?import=<recipe-url>` → import preview renders. The only thing on top of the working import preview is the login page, because the Capacitor webview doesn't have a session (separate OAuth issue, bundled below).
+
+User confirmed observation tonight: "I can see the recipe page behind the login page." That's the import preview successfully rendering — proof the entire Share Extension pipeline works.
+
+**iOS 18+ open() restriction (historical context).** The Share Extension originally tried to open the main app programmatically using both `extensionContext.open()` and the responder-chain `openURL:` trick. Both were diagnosed to fail on iOS 18+ via Console.app logging — Apple has locked down Share Extensions from launching any URL (custom scheme OR Universal Link). Diagnostic logs showed `extensionContext.open() returned success=FALSE` and `perform(openURL:) returned: nil`. This is not a code bug — Apple deliberately broke this pattern. The pivot to App Groups + manual app tap is the path that actually works on iOS 18+.
 
 **What's already deployed and proven working:**
 - `public/.well-known/apple-app-site-association` — AASA file with Team ID `ZYV9D697SQ`, bundle `com.mycompanionapps.recipe`, claiming `/secret?import=*` and `/import*` path patterns. Served `application/json` with `Cache-Control: public, max-age=3600` (header set in `next.config.js`).
@@ -922,43 +926,52 @@ This is not a code bug — Apple deliberately broke the "Share Extension auto-la
 
 **The pivot — App Groups + clipboard + manual app tap.** This is what every modern iOS app does for this use case on iOS 18+. User flow: Safari → Share → MyRecipe → share sheet dismisses with a brief "Open MyRecipe to import" confirmation → user taps MyRecipe app icon → app launches, sees pending URL in shared storage, fires the smart-import flow automatically. Two taps total, but it works every time and doesn't fight iOS.
 
-**To execute (next session, ~45 min):**
+**Executed — May 19, 2026 (✅ DONE):**
 
-1. **Apple Developer Portal** (5 min)
-   - Identifiers → App Groups → register a new group ID: `group.com.mycompanionapps.recipe`.
-   - Identifiers → edit the App ID `com.mycompanionapps.recipe` → enable **App Groups** capability → Configure → tick the new group.
-   - Same for any separate ShareExtension App ID.
+1. **Apple Developer Portal — DONE.**
+   - App Group `group.com.mycompanionapps.recipe` registered.
+   - App Groups capability enabled on both the App ID (`com.mycompanionapps.recipe`) and the ShareExtension's App ID.
 
-2. **Xcode capability click on both targets** (3 min)
-   - App target → Signing & Capabilities → + Capability → **App Groups** → tick `group.com.mycompanionapps.recipe`.
-   - ShareExtension target → same.
+2. **Xcode capability — DONE.** App Groups capability with `group.com.mycompanionapps.recipe` ticked on both the App target and the ShareExtension target. Associated Domains capability (`applinks:recipe.mycompanionapps.com`) also remains on both targets — used by the AppDelegate's Universal Link handler for non-extension routes (Mail magic-link taps, Messages link taps).
 
-3. **Code changes** (~15 min)
-   - `ios/App/ShareExtension/ShareViewController.swift`: rip out the `extensionContext.open()` + responder-chain code entirely (both are dead). Replace with: write the shared URL to `UserDefaults(suiteName: "group.com.mycompanionapps.recipe")` under key `pendingImportURL`. Also write to `UIPasteboard.general.string` so the existing smart_import clipboard path works as a redundancy. Dismiss the share sheet cleanly via `completeRequest`. No more open attempts — they will not work and shipping them is misleading.
-   - Optionally swap `UIViewController` base for `SLComposeServiceViewController` so we can show a brief "Saved — open MyRecipe to import →" confirmation before dismissing. Not required for v1.
-   - `ios/App/App/AppDelegate.swift`: in `applicationDidBecomeActive`, check `UserDefaults(suiteName: "group.com.mycompanionapps.recipe")` for `pendingImportURL`. If found, clear it immediately (`removeObject(forKey:)`) and navigate the Capacitor webview via JS eval to `/secret?import=<encoded-url>`. The existing `navigateToImport` helper can be reused.
-   - Keep the existing `continue userActivity:` handler unchanged — Universal Links from Messages / external sources still work and should keep working.
+3. **Code shipped — DONE.**
+   - `ios/App/ShareExtension/ShareViewController.swift` — rewritten as a minimal stash-and-dismiss. Reads the shared URL, writes it to `UserDefaults(suiteName: "group.com.mycompanionapps.recipe")` under key `pendingImportURL` (plus a `pendingImportTimestamp`), calls `extensionContext.completeRequest`. No more `open()` attempts. One NSLog left in place to confirm the App Group write (cheap to remove later but harmless).
+   - `ios/App/App/AppDelegate.swift` — `applicationDidBecomeActive` reads the App Group's `pendingImportURL`, clears it, then dispatches `navigateToImport` after a 500ms delay (gives the Capacitor webview time to be ready on cold launch). The existing `continue userActivity:` handler now generically navigates the webview to ANY URL on `recipe.mycompanionapps.com` (replaces the per-path switch) — covers Share Extension drop-off, magic-link callbacks, and any future Universal Link entry points uniformly.
+   - `public/.well-known/apple-app-site-association` — components list extended to also claim `/auth/callback*` and `/auth/confirm*`, so magic-link tap from iOS Mail routes back into the Capacitor webview (cookies land in the right jar — see "Bundled problem" below).
 
-4. **Test on phone**
-   - Build to phone (Cmd+Shift+K clean first), share from Safari → MyRecipe → confirm share sheet dismisses cleanly without errors.
-   - Tap MyRecipe app icon → confirm webview navigates to `/secret?import=…` automatically.
-   - Remove the diagnostic NSLog statements from ShareViewController once the path is verified working.
+4. **Verified on device (May 19 evening).** Bill confirmed: Safari → Share → MyRecipe → share sheet dismisses cleanly (brief white frame is the extension running, no UI by design) → user taps MyRecipe app icon → app reads stashed URL → webview navigates to `/secret?import=<url>` → import preview renders. The login page overlays the import preview because the Capacitor webview has no session — see the OAuth issue below.
 
-5. **Polish (optional, 10 min)**
-   - Brief "Open MyRecipe to import →" toast inside the share sheet before dismiss (needs `SLComposeServiceViewController` or a tiny custom UIViewController with a label).
-   - On the main app side, a brief "✨ Import ready — opening it now…" toast when the pending URL is picked up, so the user understands what just happened.
+**Pending — diagnostic logging cleanup.** Two cheap removals when the OAuth fix lands and we do a final pre-TestFlight cleanup pass:
+- The single NSLog in `ShareViewController.swift` (App Group write confirmation).
+- The NSLog statements in `AppDelegate.swift`'s `continue userActivity:` and `checkPendingImportURL`. They proved invaluable during the iOS 18+ debugging — leave them through TestFlight in case anything goes sideways under real-user testing, then strip before App Store submission.
 
-**Roadblocks if hit:**
-- iOS clipboard prompt ("Paste from MyRecipe?") — known, acceptable. Same trade as the existing smart_import iOS Shortcut.
-- App Groups entitlement signing issue after capability add — fix by toggling "Automatically manage signing" off and on under Signing & Capabilities, or by manually regenerating the provisioning profile in Apple Developer Portal.
+**Roadblocks we hit and how they were resolved (May 19):**
+- iOS 18+ restriction on Share Extension `open()` calls — diagnosed via Console.app, pivoted to App Groups handoff. Resolved.
+- AASA cache staleness — Apple's CDN cached an early 404 from before the file was deployed. Bypassed with `?v=1` cache-bust during testing; Apple's CDN refreshed within the hour. Not a real problem for production, just a deploy-day artifact.
 
 **Why this is the right pivot, not a workaround.** Apple's restriction is intentional and won't be reversed. Apps that "do this in one tap" on iOS 18+ either (a) are still on iOS 17 and broken on iOS 18+, (b) use the App Groups pattern with a brief manual-tap step that users barely notice, or (c) use the clipboard-only smart_import pattern (which is what the existing iOS Shortcut already does). Our pivot puts us in category (b), which is the cleanest of the three. Once shipped, this stays working forever — no fighting future iOS releases.
 
-**Bundled problem to solve at the same time — session persistence in the Capacitor webview.** Right now the MyRecipe app always opens to the login page even after the user has signed in via Safari/Edge. Reason: the Capacitor WKWebView has its OWN cookie jar separate from the default browser's. OAuth (Google / Microsoft) opens in the default browser, sets cookies there, and the Capacitor webview never sees them. This breaks the Share Extension import flow too — even with App Groups landing the URL correctly, the app navigates to `/secret?import=…`, gets bounced to `/login` because there's no session in the webview, and the user has to sign in again.
+## OAuth-in-Capacitor — the remaining blocker before TestFlight (May 19, 2026 — pending)
 
-**Fix (~30 min, ship with the Share Extension pivot):** swap the OAuth flow to use `ASWebAuthenticationSession` — Apple's API for "OAuth in an in-app browser that shares cookies with my WKWebView." Two implementation options:
-- `@capacitor/browser` plugin with `presentationStyle: 'popover'` — adds a dependency but is one-line on the call site.
-- Tiny native Swift bridge wrapping `ASWebAuthenticationSession` directly — no extra dependency, more code.
+**The problem.** MyRecipe app always opens to the login page even when the user is signed in via Safari/Edge on the same phone. Reason: the Capacitor WKWebView has its OWN cookie + localStorage jar separate from the default browser's. When the user taps "Sign in with Google" or "Sign in with Microsoft" inside the Capacitor app, the flow opens in the default browser (Safari or Edge depending on user setting), OAuth completes there, session lands in *that browser's* jar, and the Capacitor webview never sees any of it. App relaunches → checks its own (empty) jar → bounces to login forever.
+
+**Why this isn't the Share Extension's fault.** The App Groups handoff is fully working (verified May 19 — "I can see the recipe page behind the login page"). The OAuth issue blocks the *visible result* of the share flow because the import preview renders, then immediately bounces to login. Once OAuth is fixed, the same Share Extension code produces the desired end-to-end UX: tap Share → tap app icon → import preview, signed in, recipe ready to save.
+
+**Magic-link half-fix is shipped (May 19) — usable in the app NOW.** The AASA file now claims `/auth/callback*` and `/auth/confirm*` (see Share Extension section above). When a user enters their email on the in-app login page and taps the magic-link in iOS Mail, iOS routes the tap into the MyRecipe app via Universal Link → AppDelegate navigates webview to `/auth/callback?code=…` → Supabase JS in the webview exchanges the code → session lands in the Capacitor webview's localStorage → user stays signed in across app launches. This works **today** for testers willing to use magic-link sign-in. Bill rejected this as a workable shipping default ("dump magic links") — it's a fallback, not the answer.
+
+**The real fix — `ASWebAuthenticationSession` native bridge.** Google specifically blocks OAuth in embedded WebViews (anti-phishing measure since 2021). The only way to get Google + Microsoft OAuth working inside a Capacitor app where cookies persist is to use Apple's `ASWebAuthenticationSession` API. It's a system-level in-app browser surface that Google recognizes as a "real" browser, returns the callback URL directly to the app (no cookie-jar transfer needed), and lets the JS in the Capacitor webview call `supabase.auth.exchangeCodeForSession(code)` to store the session in the right jar.
+
+**Estimated work — ~90 minutes.** Three pieces:
+
+1. **Native Capacitor plugin (~50 lines Swift, ~20 lines JS bridge).** Custom plugin wrapping `ASWebAuthenticationSession`. Inline within the iOS project — does NOT need to be a separate npm package. Two reasons to write our own rather than use `@capacitor-community/oauth2`: (a) we already hit a Capacitor 8 SPM compatibility wall with the apple-sign-in community plugin earlier, and don't want to take on another dependency at risk of the same family of issue; (b) the surface is tiny and we control all of it.
+
+2. **JS detection in the login page.** `if (window.Capacitor && Capacitor.isNativePlatform())` → use the native plugin path instead of `supabase.auth.signInWithOAuth`'s default `window.location.href` flow. Standard Capacitor pattern.
+
+3. **Supabase config.** Add `myrecipe://auth-callback` (or whatever scheme we settle on) as an allowed redirect URL alongside the existing `recipe.mycompanionapps.com/auth/callback`.
+
+**Why this is THE next thing to ship.** Without OAuth working in the Capacitor webview, the app cannot honestly go to TestFlight — any beta tester (including Apple's reviewer during App Store submission) would try to sign in with Google, get bounced out to their default browser, come back, see the login page again, and report it as broken. We can build to Bill's phone in Xcode and demo the Share Extension and the import flow, but the app is not ready for any human besides Bill until OAuth is wired up properly.
+
+**Once OAuth lands.** The remaining ladder to App Store launch (from AGENTS.md "iOS milestone ladder"): internal TestFlight upload → ~2 weeks of real-kitchen use with 3-5 testers → Privacy Policy + Terms hosted publicly → App Store screenshots → metadata + submission → Apple review (1-3 days) → live. None of those steps are hard; they're sequential paperwork after the OAuth fix is the last code blocker.
 
 Either way, the user flow becomes: tap Google → in-app browser sheet pops up → OAuth completes → sheet dismisses → webview sees the session → user is signed in for real and stays signed in across app launches. After this, the Share Extension's import handoff actually completes because the destination `/secret?import=…` page sees a logged-in user.
 
