@@ -97,28 +97,43 @@ class ShareViewController: UIViewController {
             return
         }
 
-        // Order matters: completeRequest FIRST so iOS starts dismissing
-        // the share sheet cleanly, then attempt the open in the callback.
-        // Doing it open-then-finish would race iOS's dismissal animation
-        // and on iOS 18+ tends to abort the URL open mid-flight.
-        extensionContext?.completeRequest(returningItems: nil) { [weak self] _ in
-            guard let self = self else { return }
-            // Walk the responder chain to find the application instance
-            // even from inside the sandboxed share-extension context, then
-            // call openURL: on it. With Universal Links (https://), this
-            // is the Apple-blessed handoff — iOS doesn't silently block
-            // it the way it does for custom URL schemes on iOS 18+.
-            var responder: UIResponder? = self
-            while responder != nil {
-                if let application = responder as? UIApplication {
-                    let selector = NSSelectorFromString("openURL:")
-                    if application.responds(to: selector) {
-                        _ = application.perform(selector, with: deepLink)
-                    }
-                    break
-                }
-                responder = responder?.next
+        // Primary path: extensionContext.open() — Apple's actual blessed
+        // API for a Share Extension to open a URL. With Universal Links
+        // targeting our own app's domain, iOS handles the routing because
+        // we own the AASA entry. The previous responder-chain trick is
+        // what was silently blocked on iOS 18+.
+        //
+        // We call open() FIRST and dismiss the share sheet in its
+        // completion handler. open's callback fires once iOS has decided
+        // to honor the open (it doesn't wait for the target app to
+        // finish launching), so this avoids racing the dismissal.
+        let context = extensionContext
+        context?.open(deepLink) { [weak self] success in
+            if success {
+                self?.finish()
+            } else {
+                // Fallback: walk the responder chain. Some iOS builds
+                // refuse extensionContext.open() for Share Extensions
+                // even with Universal Links; the chain trick can still
+                // succeed because https URLs aren't subject to the same
+                // restrictions as custom schemes.
+                self?.openViaResponderChain(deepLink)
+                self?.finish()
             }
+        }
+    }
+
+    private func openViaResponderChain(_ url: URL) {
+        var responder: UIResponder? = self
+        while responder != nil {
+            if let application = responder as? UIApplication {
+                let selector = NSSelectorFromString("openURL:")
+                if application.responds(to: selector) {
+                    _ = application.perform(selector, with: url)
+                }
+                break
+            }
+            responder = responder?.next
         }
     }
 
