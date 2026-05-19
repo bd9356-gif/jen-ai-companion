@@ -28,6 +28,18 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'always',
   },
+  // Native plugin configuration. May 2026 — added StatusBar config so
+  // the iOS status bar / Dynamic Island sits ABOVE the webview instead
+  // of being overlaid on top of it. Fixes the "screen scrolls under
+  // the notch" issue without needing safe-area-inset CSS gymnastics.
+  // `overlaysWebView: false` is the key flag; `style: 'DEFAULT'` lets
+  // iOS pick light/dark text based on the system appearance.
+  plugins: {
+    StatusBar: {
+      overlaysWebView: false,
+      style: 'DEFAULT',
+    },
+  },
 };
 
 export default config;
