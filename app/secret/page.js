@@ -2037,24 +2037,6 @@ export default function MyRecipeVaultPage() {
   // (Cloudflare, paywall, login wall). The caller sets it; the server
   // decides which to use. Today only the smart_import handler in
   // loadRecipes passes this; all other call sites omit it.
-  async function handleClientSideGrab() {
-    if (!importUrl.trim()) return
-    setImporting(true)
-    setImportError('')
-    try {
-      // Fetch the page HTML directly from the browser — bypasses server-side
-      // blocking because the browser sends proper headers/cookies/referrer.
-      const res = await fetch(importUrl.trim(), { credentials: 'omit' })
-      if (!res.ok) throw new Error('Page returned ' + res.status)
-      const html = await res.text()
-      // Reuse the existing import handler with both URL and HTML
-      await handleImport(importUrl.trim(), html)
-    } catch (err) {
-      setImportError('Could not grab the page — try the Paste option instead.')
-      setImporting(false)
-    }
-  }
-
   async function handleImport(urlOverride, htmlOverride) {
     // Strip iMessage Tapback prefixes ("Loved", "❤️", quotes) from any
     // user-supplied URL/text before parsing — old hearted iMessage
@@ -3349,14 +3331,8 @@ export default function MyRecipeVaultPage() {
               <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
               <p className="text-sm text-red-700">{importError}</p>
               <p className="text-sm text-red-700">
-                👇 Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">📋 Paste</button> and copy the recipe text from the page — it works on every site.
+                👇 This site blocks automatic importing. Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">📋 Paste</button> — open the recipe page, select all text, copy, and paste it here. Works every time.
               </p>
-              {importUrl.trim() && (
-                <button type="button" onClick={handleClientSideGrab} disabled={importing}
-                  className="mt-1 w-full py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 disabled:opacity-50">
-                  {importing ? '🤖 Grabbing...' : '🔄 Try Again — Grab Page Directly'}
-                </button>
-              )}
             </div>
           )}
 
