@@ -2106,16 +2106,30 @@ export default function MyRecipeVaultPage() {
                     const n = (i?.name || '').trim()
                     return m ? m + ' ' + n : n
                   }).join('\n')
-                  setForm(f => ({ ...f,
+                  const ingredientsText2 = (data2.ingredients || []).map(i => {
+                    const m = (i?.measure || '').trim()
+                    const n = (i?.name || '').trim()
+                    if (!m) return n
+                    if (!n) return m
+                    return m + ' - ' + n
+                  }).join('\n')
+                  setForm({
                     title: data2.title || '',
                     description: data2.description || '',
-                    ingredients: (data2.ingredients || []).map(i => ({ name: (i?.name||'').trim(), measure: (i?.measure||'').trim() })),
-                    instructions: Array.isArray(data2.instructions) ? data2.instructions.join('\n') : (data2.instructions || ''),
-                    family_notes: data2.family_notes || '',
+                    ingredients: ingredientsText2,
+                    instructions: data2.instructions || '',
                     category: data2.category || '',
                     tags: data2.tags || [],
-                    photo_url: data2.image_url || '',
-                  }))
+                    family_notes: data2.family_notes || '',
+                    photo_url: data2.image || '',
+                    prep_time_minutes: data2.prep_time_minutes ?? null,
+                    cook_time_minutes: data2.cook_time_minutes ?? null,
+                    total_time_minutes: data2.total_time_minutes ?? null,
+                    calories: data2.calories ?? null,
+                    protein_g: data2.protein_g ?? null,
+                    carbs_g: data2.carbs_g ?? null,
+                    fat_g: data2.fat_g ?? null,
+                  })
                   return
                 }
               }
