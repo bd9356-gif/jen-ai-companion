@@ -2103,7 +2103,7 @@ export default function MyRecipeVaultPage() {
         // conditionally rendered (only mounts when the tab is 'paste').
         const wasUrlAttempt = urlToUse && !textToUse
         if (wasUrlAttempt) {
-          setImportUrl('')
+          // Keep the URL so the Try Again button can use it
           setImportTab('paste')
           setTimeout(() => importTextRef.current?.focus(), 100)
         }
