@@ -47,5 +47,21 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Custom URL scheme so the Share Extension can deep-link
+	     back to the main app with the shared URL as a query param.
+	     The Share Extension opens "myrecipe://import?url=..." and
+	     iOS routes that to the main MyRecipe app, which forwards
+	     to /secret?import=<URL> in the webview. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.mycompanionapps.recipe.share</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>myrecipe</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
