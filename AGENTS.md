@@ -949,6 +949,14 @@ This is not a code bug — Apple deliberately broke the "Share Extension auto-la
 - iOS 18+ restriction on Share Extension `open()` calls — diagnosed via Console.app, pivoted to App Groups handoff. Resolved.
 - AASA cache staleness — Apple's CDN cached an early 404 from before the file was deployed. Bypassed with `?v=1` cache-bust during testing; Apple's CDN refreshed within the hour. Not a real problem for production, just a deploy-day artifact.
 
+**Known issue — iPad Share Extension hard-locks Safari (May 19, unresolved).** After installing the same Xcode build on iPad, tapping the MyRecipe Share Extension from Safari's share sheet locks up Safari entirely — requires a full iPad power-cycle to recover. iPhone works fine, so this is iPad-specific. Most likely a signing / entitlement mismatch (the iPad's provisioning profile may not include the App Groups entitlement) or a Supported Destinations setting on the ShareExtension target that doesn't include iPad. Diagnostic plan for next session:
+1. Xcode → ShareExtension target → General → Supported Destinations. Confirm iPad is listed alongside iPhone. If not, that's likely the whole issue.
+2. With iPad plugged into Mac, open Console.app, filter `[MyRecipeShare]`. Trigger the share. The logs should show whether the extension started at all and whether `UserDefaults(suiteName:)` returned nil (the "CRITICAL" line in the code).
+3. If entitlements: in Xcode, ShareExtension target → Signing & Capabilities → toggle "Automatically manage signing" off then on to force a fresh provisioning profile fetch that includes iPad.
+4. Worst case, regenerate the provisioning profile manually at developer.apple.com if Automatic mode can't resolve it.
+
+App is removed from iPad pending fix — don't reinstall on iPad until this is investigated.
+
 **Why this is the right pivot, not a workaround.** Apple's restriction is intentional and won't be reversed. Apps that "do this in one tap" on iOS 18+ either (a) are still on iOS 17 and broken on iOS 18+, (b) use the App Groups pattern with a brief manual-tap step that users barely notice, or (c) use the clipboard-only smart_import pattern (which is what the existing iOS Shortcut already does). Our pivot puts us in category (b), which is the cleanest of the three. Once shipped, this stays working forever — no fighting future iOS releases.
 
 ## OAuth-in-Capacitor — the remaining blocker before TestFlight (May 19, 2026 — pending)
