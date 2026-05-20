@@ -171,7 +171,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     // Supabase session cookies, doesn't reload the whole webview).
     private func navigateToImport(sharedURL: String) {
         guard let encoded = sharedURL.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return }
-        let target = "/secret?import=\(encoded)"
+        // Write URL to clipboard so smart_import can read it
+        UIPasteboard.general.string = sharedURL
+        let target = "/secret?smart_import=1"
         // Escape any single quotes in the URL just in case (shouldn't
         // happen with percent-encoding, but defense in depth).
         let safe = target.replacingOccurrences(of: "'", with: "%27")
