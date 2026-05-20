@@ -123,17 +123,24 @@ export default function LoginPage() {
     // session into Supabase's storage (localStorage by default), which
     // lives in the Capacitor WKWebView and persists across launches.
     const cb = new URL(result.url)
-    // Most providers return ?code=... in the query string. Hash fallback
-    // covers the few that put it in the fragment (#code=...).
-    let code = cb.searchParams.get('code')
-    if (!code && cb.hash) {
-      const hash = cb.hash.startsWith('#') ? cb.hash.slice(1) : cb.hash
-      code = new URLSearchParams(hash).get('code')
-    }
-    if (!code) throw new Error('No auth code in callback URL')
+    const hash = cb.hash.startsWith('#') ? cb.hash.slice(1) : cb.hash
+    const hashParams = new URLSearchParams(hash)
+    const accessToken = hashParams.get('access_token')
+    const refreshToken = hashParams.get('refresh_token')
+    const code = cb.searchParams.get('code')
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-    if (exchangeError) throw new Error(exchangeError.message)
+    if (accessToken && refreshToken) {
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+      if (sessionError) throw new Error(sessionError.message)
+    } else if (code) {
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+      if (exchangeError) throw new Error(exchangeError.message)
+    } else {
+      throw new Error('No auth token or code in callback URL')
+    }
 
     // Step 4: navigate to the post-login target (preserving any ?next=
     // the user came in with — e.g. /secret?import=… from the Share
