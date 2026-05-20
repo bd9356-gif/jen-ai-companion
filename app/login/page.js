@@ -79,9 +79,84 @@ export default function LoginPage() {
     }
   }, [])
 
+  // Native OAuth flow for the Capacitor iOS wrap (May 2026).
+  //
+  // The web OAuth flow (signInWithOAuth → window.location → external
+  // browser) puts the session cookies/localStorage in Safari's jar,
+  // NOT the Capacitor WKWebView's jar — so the app always opens to
+  // login even after a "successful" sign-in. The fix is to run OAuth
+  // inside ASWebAuthenticationSession (via the WebAuth plugin we
+  // ship in ios/App/App/WebAuthPlugin.swift), capture the callback
+  // URL when ASWebAuthenticationSession dismisses, and exchange the
+  // code for a session right here in the webview's JS context — that
+  // lands the session in the WKWebView's localStorage, which DOES
+  // persist across app launches.
+  async function signInWithProviderNative(provider) {
+    // Step 1: ask Supabase for the OAuth URL but tell it NOT to
+    // navigate the browser itself. We open the URL via the plugin.
+    const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: 'myrecipe://auth-callback',
+        skipBrowserRedirect: true,
+        ...(provider === 'azure' ? { scopes: 'email openid profile' } : {}),
+      },
+    })
+    if (oauthError) throw new Error(oauthError.message)
+    if (!data?.url) throw new Error('No OAuth URL returned from Supabase')
+
+    // Step 2: open the OAuth URL in ASWebAuthenticationSession via
+    // our custom Capacitor plugin. Resolves to { url } when the OAuth
+    // flow redirects to myrecipe://auth-callback?code=...
+    const WebAuth = window.Capacitor?.Plugins?.WebAuth
+    if (!WebAuth) {
+      throw new Error('WebAuth plugin not available — Xcode rebuild needed?')
+    }
+    const result = await WebAuth.startSession({
+      url: data.url,
+      callbackScheme: 'myrecipe',
+    })
+    if (!result?.url) throw new Error('No callback URL from auth session')
+
+    // Step 3: extract the auth code from the callback URL and exchange
+    // it for a session. exchangeCodeForSession writes the resulting
+    // session into Supabase's storage (localStorage by default), which
+    // lives in the Capacitor WKWebView and persists across launches.
+    const cb = new URL(result.url)
+    // Most providers return ?code=... in the query string. Hash fallback
+    // covers the few that put it in the fragment (#code=...).
+    let code = cb.searchParams.get('code')
+    if (!code && cb.hash) {
+      const hash = cb.hash.startsWith('#') ? cb.hash.slice(1) : cb.hash
+      code = new URLSearchParams(hash).get('code')
+    }
+    if (!code) throw new Error('No auth code in callback URL')
+
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    if (exchangeError) throw new Error(exchangeError.message)
+
+    // Step 4: navigate to the post-login target (preserving any ?next=
+    // the user came in with — e.g. /secret?import=… from the Share
+    // Extension flow). Same same-origin guard as nextSuffix().
+    const rawNext = new URLSearchParams(window.location.search).get('next')
+    const target = (rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//'))
+      ? rawNext
+      : '/kitchen'
+    window.location.href = target
+  }
+
   async function handleGoogle() {
     setError('')
     setLoading(true)
+    if (isIOSNative) {
+      try {
+        await signInWithProviderNative('google')
+      } catch (err) {
+        if (err.message !== 'USER_CANCELLED') setError(err.message)
+        setLoading(false)
+      }
+      return
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback${nextSuffix()}` }
@@ -106,6 +181,15 @@ export default function LoginPage() {
   async function handleMicrosoft() {
     setError('')
     setLoading(true)
+    if (isIOSNative) {
+      try {
+        await signInWithProviderNative('azure')
+      } catch (err) {
+        if (err.message !== 'USER_CANCELLED') setError(err.message)
+        setLoading(false)
+      }
+      return
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'azure',
       options: {
