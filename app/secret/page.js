@@ -3331,7 +3331,7 @@ export default function MyRecipeVaultPage() {
               <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
               <p className="text-sm text-red-700">{importError}</p>
               <p className="text-sm text-red-700">
-                👇 This site blocks automatic importing. Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">📋 Paste</button> — open the recipe page, select all text, copy, and paste it here. Works every time.
+                👇 This site blocks automatic importing. Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">📋 Paste</button> — in Safari tap Share → Print → pinch to zoom the preview → long press → Select All → Copy → paste here. Works on every site.
               </p>
             </div>
           )}
