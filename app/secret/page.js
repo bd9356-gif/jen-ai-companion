@@ -3194,7 +3194,7 @@ export default function MyRecipeVaultPage() {
             {[
               { key: 'url', label: '🔗 URL' },
               { key: 'paste', label: '📋 Paste' },
-              { key: 'add', label: '✏️ Add' },
+              { key: 'add', label: form.title ? '✅ Review & Save' : '✏️ Add' },
               { key: 'json', label: '📄 JSON' },
             ].map(t => {
               const active = importTab === t.key
@@ -3205,7 +3205,7 @@ export default function MyRecipeVaultPage() {
                   onClick={() => setImportTab(t.key)}
                   className={
                     active
-                      ? 'py-2 rounded-xl text-sm font-semibold bg-gray-800 text-white'
+                      ? 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm'
                       : 'py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800'
                   }
                 >
