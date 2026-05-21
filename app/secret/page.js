@@ -4239,13 +4239,12 @@ export default function MyRecipeVaultPage() {
                 Vault. The earlier intro stack (Back link + explainer
                 paragraph + count) was retired in the same pass — the
                 hero says everything that intro tried to say. */}
-            <div className="relative mb-2 rounded-2xl overflow-hidden shadow-md">
+            <div className="relative mb-2 rounded-2xl overflow-hidden shadow-md" style={{height:"160px"}}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/portfolio-hero-512.png"
                 alt=""
-                className="w-full object-cover block"
-                style={{maxHeight:"160px"}}
+                className="w-full h-full object-cover block"
                 width={512}
                 height={256}
               />
