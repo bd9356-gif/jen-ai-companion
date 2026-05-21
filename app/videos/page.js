@@ -624,17 +624,9 @@ export default function VideosPage() {
         />
       </div>
 
-      <header className="bg-white/95 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
+      {/* Top nav — scrolls away with page */}
+      <div className="bg-white border-b border-gray-100">
         <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
-          {/* One-line top nav (May 2026, Bill's ask). Replaced the prior
-              two-row header (title block + nav row) and the topic chip
-              strip that used to sit below the curtain. Now: a single
-              compact bar containing ← Back, 📘 Playbook, 👨‍🍳 Chef Jen,
-              the topic pull-down (native <select> for a clean iOS
-              picker that opens as a full-screen sheet), the Teach/
-              Practice mode toggle, and ℹ️ About. The curtain marquee
-              below carries the brand identity ("🎬 Chef TV") so the
-              dedicated title block is no longer needed up here. */}
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => window.location.href='/kitchen'}
@@ -660,50 +652,7 @@ export default function VideosPage() {
             >
               👨‍🍳
             </button>
-            {/* Topic pull-down — native <select> so it opens as iOS's
-                full-screen picker, which is the cleanest mobile UX for
-                a list this size. Options change with filter mode
-                (Teach uses TEACH_CHIPS, Practice uses PRACTICE_CHIPS). */}
-            {chipSet && (
-              <select
-                value={topic}
-                onChange={(e) => { setTopic(e.target.value); setPage(0) }}
-                style={{ fontSize: '16px' }}
-                className={`flex-1 min-w-0 text-xs font-semibold border-2 rounded-lg px-2 py-1 truncate focus:outline-none focus:ring-2 ${
-                  filter === 'practice'
-                    ? 'border-orange-300 bg-orange-50 text-orange-700 focus:ring-orange-200'
-                    : 'border-sky-300 bg-sky-50 text-sky-700 focus:ring-sky-200'
-                }`}
-                title="Pick a topic"
-              >
-                {chipSet.map(c => (
-                  <option key={c.key} value={c.key}>{c.label}</option>
-                ))}
-              </select>
-            )}
-            {/* Teach / Practice mode toggle */}
-            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 shrink-0">
-              <button
-                onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
-                aria-label="Teach mode"
-                title="Teach mode"
-                className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
-                  filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                🎓
-              </button>
-              <button
-                onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
-                aria-label="Practice mode"
-                title="Practice mode"
-                className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
-                  filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                🍳
-              </button>
-            </div>
+
             <button
               onClick={() => setShowAbout(s => !s)}
               aria-label={showAbout ? 'Close about' : 'About Chef TV'}
@@ -716,6 +665,49 @@ export default function VideosPage() {
               {showAbout ? '✕' : 'ℹ️'}
             </button>
           </div>
+        </div>
+      </div>
+      {/* Sticky controls bar — stays locked when scrolling */}
+      <header className="bg-white/95 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 py-2 flex items-center gap-1.5">
+          {chipSet && (
+            <select
+              value={topic}
+              onChange={(e) => { setTopic(e.target.value); setPage(0) }}
+              style={{ fontSize: '16px' }}
+              className={`flex-1 min-w-0 text-xs font-semibold border-2 rounded-lg px-2 py-1 truncate focus:outline-none focus:ring-2 ${
+                filter === 'practice'
+                  ? 'border-orange-300 bg-orange-50 text-orange-700 focus:ring-orange-200'
+                  : 'border-sky-300 bg-sky-50 text-sky-700 focus:ring-sky-200'
+              }`}
+              title="Pick a topic"
+            >
+              {chipSet.map(c => (
+                <option key={c.key} value={c.key}>{c.label}</option>
+              ))}
+            </select>
+          )}
+          <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 shrink-0">
+            <button
+              onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }}
+              aria-label="Teach mode"
+              className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
+                filter === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              🎓
+            </button>
+            <button
+              onClick={() => { setFilter('practice'); setPage(0); setTopic('featured') }}
+              aria-label="Practice mode"
+              className={`px-2 py-0.5 rounded-full text-xs font-semibold transition-colors ${
+                filter === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              🍳
+            </button>
+          </div>
+
 
           {/* Mode-aware lede — reinforces the "two rooms" framing of the
               header toggle. The question changes based on which room
@@ -980,4 +972,4 @@ export default function VideosPage() {
       </main>
     </div>
   )
-} 
+}
