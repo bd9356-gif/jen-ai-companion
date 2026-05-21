@@ -725,11 +725,11 @@ export default function VideosPage() {
           <div className="relative mb-5 rounded-2xl overflow-hidden shadow-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={filter === "teach" ? "/lessons-hero-512.png" : "/cooking-hero-512.png"}
+              src={filter === "teach" ? "/lessons-hero.png" : "/cooking-hero.png"}
               alt="Chef TV"
               className="w-full h-auto block"
-              width={961}
-              height={320}
+              width={1676}
+              height={543}
             />
 
           </div>
