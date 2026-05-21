@@ -179,12 +179,12 @@ export default function HomePage() {
           <a href={tileHref}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/landing-hero.png"
+              src="/landing-hero-512.png"
               alt="Cooking, figured out."
               className="w-full object-cover block"
               style={{ height: '160px' }}
-              width={1024}
-              height={512}
+              width={512}
+              height={256}
             />
           </a>
           {userName && (
