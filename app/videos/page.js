@@ -645,7 +645,7 @@ export default function VideosPage() {
               value={topic}
               onChange={(e) => { setTopic(e.target.value); setPage(0) }}
               style={{ fontSize: '16px' }}
-              className={`flex-1 min-w-0 text-xs font-semibold border-2 rounded-lg px-2 py-1.5 focus:outline-none ${
+              className={`min-w-0 w-40 text-xs font-semibold border-2 rounded-lg px-2 py-1.5 focus:outline-none ${
                 filter === 'practice' ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-sky-300 bg-sky-50 text-sky-700'
               }`}
             >
