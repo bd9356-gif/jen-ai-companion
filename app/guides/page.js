@@ -203,7 +203,7 @@ export default function GuidesPage() {
         <div className="relative mb-3 rounded-2xl overflow-hidden shadow-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/library-512.png"
+            src="/library-hero-512.png"
             alt=""
             className="w-full h-auto block"
             width={512}
