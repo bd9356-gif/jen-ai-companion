@@ -176,7 +176,8 @@ export default function HomePage() {
             like crossing the same threshold as a tile tap on the hub. */}
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3">
           <div className="w-full relative" style={{ height: '130px' }}>
-            <img loading="lazy" decoding="async" src={image.url} alt={image.name} className="w-full h-full object-cover" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/landing-hero-update.png" alt="Cooking, figured out." className="w-full h-auto block" width={1024} height={512} />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/50 to-stone-900/20" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
               {userName ? (
