@@ -731,24 +731,7 @@ export default function VideosPage() {
               width={512}
               height={256}
             />
-            {/* Text overlay sits in the spotlight V — slightly above
-                vertical center because the V crests near the upper
-                third of the curtain. text-shadow gives the words depth
-                against the velvet without needing a backing plate. */}
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
-              style={{ textShadow: '0 2px 8px rgba(0,0,0,0.65)' }}
-            >
-              <p className="text-[10px] sm:text-xs font-bold text-amber-300 uppercase tracking-[0.25em] mb-1 sm:mb-2">
-                🎬 Now Showing
-              </p>
-              <p className="text-lg sm:text-2xl md:text-3xl font-bold text-white leading-tight">
-                {filter === 'teach' ? "Today's lessons are in." : "Today's cooking lessons."}
-              </p>
-              <p className="text-xs sm:text-sm text-amber-100 mt-1 sm:mt-1.5 leading-snug">
-                {filter === 'teach' ? 'Pick a technique to learn.' : 'Pick a dish to cook along with.'}
-              </p>
-            </div>
+
           </div>
 
 

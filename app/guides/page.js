@@ -209,18 +209,7 @@ export default function GuidesPage() {
             width={512}
             height={256}
           />
-          {/* "The Library" overlaid in white, centered over the row of
-              books. text-shadow gives the letters depth against the
-              varied book spines so they read cleanly without needing a
-              backing plate. */}
-          <div className="absolute inset-0 flex items-center justify-center text-center px-4">
-            <h2
-              className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-none"
-              style={{ textShadow: '0 2px 12px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.45)' }}
-            >
-              The Library
-            </h2>
-          </div>
+
         </div>
 
         {/* Tagline — just below the banner, plain black text. The banner

@@ -4248,34 +4248,7 @@ export default function MyRecipeVaultPage() {
                 width={1940}
                 height={540}
               />
-              {/* Explainer prose overlaid on the banner — serif italic in
-                  cream so it reads as a passage from the open journal
-                  itself rather than a UI label. Block sits right-of-
-                  center (away from the journal artwork on the left) but
-                  not pinned to the edge. Text reads left-to-right inside
-                  the block, natural prose flow. */}
-              <div
-                className="absolute inset-0 flex items-center"
-                style={{
-                  paddingLeft: '38%',   // right-of-center, not pure right
-                  paddingRight: '8%',
-                }}
-              >
-                <p
-                  className="text-stone-900 italic font-medium leading-snug"
-                  style={{
-                    fontFamily: 'Georgia, "Times New Roman", serif',
-                    fontSize: 'clamp(1rem, 2.8vw, 1.75rem)',
-                    // Soft cream glow rather than a dark shadow — dark
-                    // text on a light/cream banner area reads cleanest
-                    // with a faint light halo behind it, like printed
-                    // type on aged paper.
-                    textShadow: '0 1px 3px rgba(255, 248, 220, 0.9), 0 0 8px rgba(255, 248, 220, 0.6)',
-                  }}
-                >
-                  Your saved notes and videos are kept here until you no longer need them.
-                </p>
-              </div>
+
             </div>
 
             {/* "Tap × to return one to your Playbook" — moved out of the
