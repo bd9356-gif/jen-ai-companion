@@ -203,11 +203,11 @@ export default function GuidesPage() {
         <div className="relative mb-3 rounded-2xl overflow-hidden shadow-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/library-banner.png"
+            src="/library-512.png"
             alt=""
             className="w-full h-auto block"
-            width={1753}
-            height={471}
+            width={512}
+            height={256}
           />
           {/* "The Library" overlaid in white, centered over the row of
               books. text-shadow gives the letters depth against the

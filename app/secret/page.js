@@ -4242,7 +4242,7 @@ export default function MyRecipeVaultPage() {
             <div className="relative mb-4 rounded-2xl overflow-hidden shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/test-banner.png"
+                src="/portfolio-hero-512.png"
                 alt=""
                 className="w-full h-auto block"
                 width={1940}
