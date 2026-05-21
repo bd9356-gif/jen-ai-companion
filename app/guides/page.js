@@ -213,11 +213,7 @@ export default function GuidesPage() {
             keeps the type readable against the colorful book spines
             without dimming the books themselves. */}
 
-        {/* Tagline — just below the banner, plain black text. The banner
-            does the room; this line just says what's on the shelf. */}
-        <p className="text-center text-sm sm:text-base text-stone-900 font-medium mb-5">
-          Reference reading for everything in the kitchen.
-        </p>
+
 
         {/* 📝 Study Hall highlight — first-time users need to discover
             that Chef Jen quizzes after articles. Card is collapsible so

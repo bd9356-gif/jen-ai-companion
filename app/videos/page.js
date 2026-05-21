@@ -733,17 +733,7 @@ export default function VideosPage() {
               two visuals stop competing for attention. Same image,
               two modes (Teach/Practice) — text changes, curtain
               doesn't. */}
-          <div className="relative mb-5 rounded-2xl overflow-hidden shadow-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={filter === "teach" ? "/lessons-hero.png" : "/cooking-hero.png"}
-              alt="Chef TV"
-              className="w-full h-auto block"
-              width={1676}
-              height={543}
-            />
 
-          </div>
 
 
           {/* Topic chip strip retired (May 2026, Bill's ask) — topic
