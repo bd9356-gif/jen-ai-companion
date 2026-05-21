@@ -184,12 +184,7 @@ export default function HomePage() {
               <p className="text-sm font-semibold text-orange-700">Welcome back, {userName} — your kitchen is ready →</p>
             </div>
           )}
-          <a
-            href={tileHref}
-            className="block w-full py-2 bg-orange-600 text-white text-center text-sm font-semibold hover:bg-orange-700 transition-colors"
-          >
-            {user ? 'Enter your kitchen →' : 'Get started →'}
-          </a>
+
         </div>
 
         {/* What's inside — a preview of MyKitchen, rendered with the
