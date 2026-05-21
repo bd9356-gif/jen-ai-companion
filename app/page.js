@@ -111,33 +111,7 @@ export default function HomePage() {
           right. Profile pill on /kitchen is bg-orange-50 text-orange-600;
           here the entry pill picks up the same orange so the two pages
           read as siblings. */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/icon-192-transparent.png"
-              alt=""
-              width="64"
-              height="64"
-              className="w-16 h-16 shrink-0"
-            />
-            <div className="min-w-0">
-              <h1 className="text-lg font-bold text-gray-900 leading-tight">MyRecipe Companion</h1>
-              <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">Where your cooking life and your learning journey meet.</p>
-            </div>
-          </div>
-          {user ? (
-            <a href="/kitchen" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
-              Enter →
-            </a>
-          ) : (
-            <a href="/login" className="flex items-center gap-1.5 bg-orange-50 text-orange-600 rounded-full px-3 py-1.5 text-xs font-semibold hover:bg-orange-100 transition-colors whitespace-nowrap">
-              Sign in
-            </a>
-          )}
-        </div>
-      </header>
+
 
       {/* Main */}
       <main className="flex-1 max-w-lg mx-auto w-full px-4 pt-3 pb-8 flex flex-col">
@@ -180,11 +154,22 @@ export default function HomePage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/landing-hero-01.png" alt="Cooking, figured out." className="w-full h-auto block" width={1774} height={887} />
           </div>
-          {userName && (
-            <a href="/kitchen" className="block px-4 py-2 bg-orange-50 border-t border-orange-100 text-center hover:bg-orange-100 transition-colors">
-              <p className="text-sm font-semibold text-orange-700">Welcome back, {userName} — your kitchen is ready →</p>
-            </a>
-          )}
+          <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/icon-192-transparent.png" alt="" width="32" height="32" className="w-8 h-8" />
+              <span className="font-bold text-gray-900 text-sm">MyRecipe Companion</span>
+            </div>
+            {userName ? (
+              <a href="/kitchen" className="text-xs font-semibold text-orange-600 hover:text-orange-700">
+                Welcome back, {userName} →
+              </a>
+            ) : (
+              <a href="/login" className="bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-orange-700 transition-colors">
+                Sign in
+              </a>
+            )}
+          </div>
 
         </div>
 
