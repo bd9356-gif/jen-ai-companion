@@ -176,12 +176,14 @@ export default function HomePage() {
             like crossing the same threshold as a tile tap on the hub. */}
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing-hero-01.png" alt="Cooking, figured out." className="w-full h-auto block" width={1774} height={887} />
+          <div style={{height:"200px", overflow:"hidden"}}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/landing-hero-01.png" alt="Cooking, figured out." className="w-full h-auto block" width={1774} height={887} />
+          </div>
           {userName && (
-            <div className="px-4 py-2 bg-orange-50 border-t border-orange-100 text-center">
+            <a href="/kitchen" className="block px-4 py-2 bg-orange-50 border-t border-orange-100 text-center hover:bg-orange-100 transition-colors">
               <p className="text-sm font-semibold text-orange-700">Welcome back, {userName} — your kitchen is ready →</p>
-            </div>
+            </a>
           )}
 
         </div>
