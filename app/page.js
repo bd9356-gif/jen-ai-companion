@@ -177,7 +177,7 @@ export default function HomePage() {
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/landing-hero-01.png" alt="Cooking, figured out." className="w-full h-auto block" width={1024} height={512} />
+          <img src="/landing-hero-01.png" alt="Cooking, figured out." className="w-full h-auto block" width={1774} height={887} />
           {userName && (
             <div className="px-4 py-2 bg-orange-50 border-t border-orange-100 text-center">
               <p className="text-sm font-semibold text-orange-700">Welcome back, {userName} — your kitchen is ready →</p>
