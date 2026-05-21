@@ -181,7 +181,8 @@ export default function HomePage() {
             <img
               src="/landing-hero.png"
               alt="Cooking, figured out."
-              className="w-full h-auto block"
+              className="w-full object-cover block"
+              style={{ height: '160px' }}
               width={1024}
               height={512}
             />
