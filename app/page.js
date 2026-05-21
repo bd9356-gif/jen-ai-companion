@@ -175,32 +175,13 @@ export default function HomePage() {
             bg-orange-600 (MyKitchen's brand color) so signing in feels
             like crossing the same threshold as a tile tap on the hub. */}
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3">
-          <div className="w-full relative" style={{ height: '130px' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/landing-hero-update.png" alt="Cooking, figured out." className="w-full h-auto block" width={1024} height={512} />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/50 to-stone-900/20" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
-              {userName ? (
-                <>
-                  <h2 className="text-lg sm:text-xl font-bold text-white drop-shadow leading-tight tracking-tight">
-                    Welcome back, {userName}.
-                  </h2>
-                  <p className="text-stone-100 text-xs drop-shadow mt-0.5">
-                    Your kitchen is right where you left it.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg leading-tight tracking-tight">
-                    Cooking, figured out.
-                  </h2>
-                  <p className="text-stone-100 text-xs sm:text-sm drop-shadow mt-1 max-w-sm">
-                    Recipes, meal plans, and Chef Jen at your side &mdash; one cozy kitchen.
-                  </p>
-                </>
-              )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/landing-hero-update.png" alt="Cooking, figured out." className="w-full h-auto block" width={1024} height={512} />
+          {userName && (
+            <div className="px-4 py-2 bg-orange-50 border-t border-orange-100 text-center">
+              <p className="text-sm font-semibold text-orange-700">Welcome back, {userName} — your kitchen is ready →</p>
             </div>
-          </div>
+          )}
           <a
             href={tileHref}
             className="block w-full py-2 bg-orange-600 text-white text-center text-sm font-semibold hover:bg-orange-700 transition-colors"
