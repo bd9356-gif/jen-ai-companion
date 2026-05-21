@@ -175,6 +175,18 @@ export default function GuidesPage() {
 
   return (
     <div className="min-h-screen bg-white">
+        <div className="relative mb-3 rounded-2xl overflow-hidden shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/library-hero-512.png"
+            alt=""
+            className="w-full h-auto block"
+            width={512}
+            height={256}
+          />
+
+        </div>
+
       <header className="bg-white border-b-2 border-gray-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -200,17 +212,6 @@ export default function GuidesPage() {
             in the same pass. A soft white pill backing on each line
             keeps the type readable against the colorful book spines
             without dimming the books themselves. */}
-        <div className="relative mb-3 rounded-2xl overflow-hidden shadow-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/library-hero-512.png"
-            alt=""
-            className="w-full h-auto block"
-            width={512}
-            height={256}
-          />
-
-        </div>
 
         {/* Tagline — just below the banner, plain black text. The banner
             does the room; this line just says what's on the shelf. */}
