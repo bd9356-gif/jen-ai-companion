@@ -175,20 +175,18 @@ export default function GuidesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-        <div className="relative mb-3 rounded-2xl overflow-hidden shadow-sm">
+        <header className="bg-white border-b-2 border-gray-200 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-4 pt-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/library-hero-512.png"
+            src="/library-hero.png"
             alt=""
-            className="w-full h-auto block"
-            width={512}
-            height={256}
+            className="w-full h-auto block rounded-2xl"
+            width={1753}
+            height={471}
           />
-
         </div>
-
-      <header className="bg-white border-b-2 border-gray-200 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">📚 Guides</h1>
