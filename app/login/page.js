@@ -32,7 +32,8 @@ function detectInAppBrowser() {
   // in-app webview on iOS does not. If we're on iOS but Safari is
   // missing, we're in an unknown embedded webview.
   const isIOS = /iPhone|iPad|iPod/i.test(ua)
-  if (isIOS && !/Safari\//i.test(ua)) return 'in-app browser'
+  // Exclude Capacitor WKWebView — it's our own app, not a social in-app browser
+  if (isIOS && !/Safari\//i.test(ua) && !/Capacitor/i.test(ua)) return 'in-app browser'
   // Android catch-all: WebView UAs contain "; wv)".
   if (/Android.*;\s*wv\)/i.test(ua)) return 'in-app browser'
   return null
