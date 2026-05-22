@@ -179,7 +179,7 @@ export default function GuidesPage() {
         <div className="max-w-2xl mx-auto px-4 pt-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/library-hero.png"
+            src="/library-hero-512.png"
             alt=""
             className="w-full h-auto block rounded-2xl"
             width={1753}
