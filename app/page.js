@@ -105,7 +105,7 @@ export default function HomePage() {
   const tileHref = user ? '/kitchen' : '/login'
 
   return (
-    <div className="min-h-screen bg-amber-50 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f5f0e8' }}>
 
       {/* Header — mirrors MyKitchen's pattern: brand left, action pill
           right. Profile pill on /kitchen is bg-orange-50 text-orange-600;
