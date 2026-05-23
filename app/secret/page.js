@@ -899,6 +899,7 @@ export default function MyRecipeVaultPage() {
   // post-import preview surface (where parsed data lands for review).
   // JSON is power-user import/export. Values: 'url' | 'paste' | 'add' | 'json'.
   const [importTab, setImportTab] = useState('url')
+  const [importPrefilled, setImportPrefilled] = useState(false)
   // Paste tab — used to track which of 3 collapsible "how to get
   // content" option groups (Text / Print Capture / Share Shortcut)
   // was expanded. Retired May 2026: the Paste tab is now a single
@@ -2101,7 +2102,7 @@ export default function MyRecipeVaultPage() {
                 const data2 = await res2.json()
                 if (!data2.error) {
                   setImporting(false)
-                  setImportText(''); setImportUrl(''); setImportTab('add')
+                  setImportText(''); setImportUrl(''); setImportTab('add'); setImportPrefilled(true)
                   showToast('Got it — review and save when you're ready ✓')
                   const ingredientsText = (data2.ingredients || []).map(i => {
                     const m = (i?.measure || '').trim()
@@ -2155,7 +2156,7 @@ export default function MyRecipeVaultPage() {
         carbs_g: data.carbs_g ?? null,
         fat_g: data.fat_g ?? null,
       })
-      setImportText(''); setImportUrl(''); setImportTab('add')
+      setImportText(''); setImportUrl(''); setImportTab('add'); setImportPrefilled(true)
       // Toast speaks AS Chef Jen, not about her — she's handing the
       // imported recipe back to the user. Fires AFTER the form is
       // pre-filled so the user sees the recipe arrive + her note in
@@ -3235,7 +3236,7 @@ export default function MyRecipeVaultPage() {
             {[
               { key: 'url', label: '🔗 URL' },
               { key: 'paste', label: '📋 Paste' },
-              { key: 'add', label: form.title.trim() ? '✅ Review & Save' : '✏️ Add' },
+              { key: 'add', label: importPrefilled ? '✅ Review & Save' : '✏️ Add' },
               { key: 'json', label: '📄 JSON' },
             ].map(t => {
               const active = importTab === t.key
@@ -3246,7 +3247,7 @@ export default function MyRecipeVaultPage() {
                   onClick={() => setImportTab(t.key)}
                   className={
                     active
-                      ? (t.key === 'add' && form.title.trim()
+                      ? (t.key === 'add' && importPrefilled
                           ? 'py-2 rounded-xl text-sm font-semibold bg-gray-900 text-white shadow-sm'
                           : 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm')
                       : 'py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800'
