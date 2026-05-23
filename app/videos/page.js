@@ -616,14 +616,21 @@ export default function VideosPage() {
       {/* Sticky frame — image + one nav line locked together */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 pt-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={filter === "teach" ? "/lessons-hero.png" : "/cooking-hero.png"}
-            alt="Chef TV"
-            className="w-full h-auto block rounded-2xl"
-            width={1676}
-            height={543}
-          />
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={filter === "teach" ? "/lessons-hero.png" : "/cooking-hero.png"}
+              alt="Chef TV"
+              className="w-full h-auto block rounded-2xl"
+              width={1676}
+              height={543}
+            />
+            <div className="absolute bottom-0 left-0 right-0 px-3 py-1.5 bg-black/40 rounded-b-2xl">
+              <p className="text-white text-xs font-semibold">
+                {filtered.length} video{filtered.length === 1 ? '' : 's'} · {totalNonShort} from top YouTube channels
+              </p>
+            </div>
+          </div>
         </div>
         <div className="max-w-2xl mx-auto px-4 py-2 flex items-center gap-1.5">
           <button onClick={() => window.location.href='/kitchen'} className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1">←</button>
@@ -679,9 +686,7 @@ export default function VideosPage() {
               </div>
             )}
 
-            <p className="text-xs text-gray-500 mb-4">
-              {filtered.length} video{filtered.length === 1 ? '' : 's'} · {totalNonShort} from top YouTube channels
-            </p>
+
 
             {filtered.length === 0 ? (
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
