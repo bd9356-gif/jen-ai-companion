@@ -3235,7 +3235,7 @@ export default function MyRecipeVaultPage() {
             {[
               { key: 'url', label: '🔗 URL' },
               { key: 'paste', label: '📋 Paste' },
-              { key: 'add', label: '✏️ Add' },
+              { key: 'add', label: form.title.trim() ? '✅ Review & Save' : '✏️ Add' },
               { key: 'json', label: '📄 JSON' },
             ].map(t => {
               const active = importTab === t.key
