@@ -157,7 +157,7 @@ export default function HomePage() {
           <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
             <div className="flex items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-lockup.png" alt="MyRecipe Companion" width="511" height="156" className="h-10 w-auto" />
+              <img src="/logo-lockup.png" alt="MyRecipe Companion" width="511" height="156" className="h-14 w-auto" />
             </div>
             {userName ? (
               <a href="/kitchen" className="text-xs font-semibold text-orange-600 hover:text-orange-700">
