@@ -2086,6 +2086,47 @@ export default function MyRecipeVaultPage() {
         const wasUrlAttempt = urlToUse && !textToUse
         if (wasUrlAttempt) {
           setImportUrl('')
+          // WKWebView fallback — try fetching HTML via native plugin before
+          // giving up and sending the user to the Paste tab.
+          const WebFetch = window.Capacitor?.Plugins?.WebFetch
+          if (WebFetch) {
+            try {
+              setImportError('')
+              const { html } = await WebFetch.fetchPage({ url: urlToUse, timeoutSeconds: 15 })
+              if (html) {
+                const res2 = await fetch('/api/import-recipe', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ url: urlToUse, html })
+                })
+                const data2 = await res2.json()
+                if (!data2.error) {
+                  setImporting(false)
+                  setImportText(''); setImportUrl(''); setImportTab('add')
+                  showToast('Got it — review and save when you're ready ✓')
+                  const ingredientsText = (data2.ingredients || []).map(i => {
+                    const m = (i?.measure || '').trim()
+                    const n = (i?.name || '').trim()
+                    return m ? m + ' ' + n : n
+                  }).join('
+')
+                  setForm(f => ({ ...f,
+                    title: data2.title || '',
+                    description: data2.description || '',
+                    ingredients: (data2.ingredients || []).map(i => ({ name: (i?.name||'').trim(), measure: (i?.measure||'').trim() })),
+                    instructions: Array.isArray(data2.instructions) ? data2.instructions.join('
+') : (data2.instructions || ''),
+                    family_notes: data2.family_notes || '',
+                    category: data2.category || '',
+                    tags: data2.tags || [],
+                    photo_url: data2.image_url || '',
+                  }))
+                  return
+                }
+              }
+            } catch (fetchErr) {
+              console.log('[WebFetch] failed:', fetchErr)
+            }
+          }
           setImportTab('paste')
           setTimeout(() => importTextRef.current?.focus(), 100)
         }
