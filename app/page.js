@@ -1,3 +1,4 @@
+
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
@@ -105,7 +106,7 @@ export default function HomePage() {
   const tileHref = user ? '/kitchen' : '/login'
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col">
+    <div className="min-h-screen bg-amber-50 flex flex-col">
 
       {/* Header — mirrors MyKitchen's pattern: brand left, action pill
           right. Profile pill on /kitchen is bg-orange-50 text-orange-600;
