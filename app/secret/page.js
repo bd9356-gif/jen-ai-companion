@@ -2113,7 +2113,7 @@ export default function MyRecipeVaultPage() {
                   setForm(f => ({ ...f,
                     title: data2.title || '',
                     description: data2.description || '',
-                    ingredients: (data2.ingredients || []).map(i => ({ name: (i?.name||'').trim(), measure: (i?.measure||'').trim() })),
+                    ingredients: (data2.ingredients || []).map(i => { const m = (i?.measure||'').trim(); const n = (i?.name||'').trim(); return m ? m + ' ' + n : n }).join('\n'),
                     instructions: Array.isArray(data2.instructions) ? data2.instructions.join('\n') : (data2.instructions || ''),
                     family_notes: data2.family_notes || '',
                     category: data2.category || '',
