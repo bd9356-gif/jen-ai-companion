@@ -2118,7 +2118,7 @@ export default function MyRecipeVaultPage() {
                     family_notes: data2.family_notes || '',
                     category: data2.category || '',
                     tags: data2.tags || [],
-                    photo_url: data2.image_url || '',
+                    photo_url: typeof data2.image_url === 'string' ? data2.image_url : (data2.image_url?.url || data2.image_url?.src || data2.image || ''),
                   }))
                   return
                 }
@@ -2144,7 +2144,7 @@ export default function MyRecipeVaultPage() {
       }).join('\n')
       setForm({ title: data.title || '', description: data.description || '', ingredients: ingredientsText,
         instructions: data.instructions || '', category: data.category || '', tags: data.tags || [],
-        family_notes: data.family_notes || '', photo_url: data.image || '',
+        family_notes: data.family_notes || '', photo_url: typeof data.image === 'string' ? data.image : (data.image?.url || data.image?.src || ''),
         // Carry through any structured fields the API extracted from
         // JSON-LD. Missing fields stay null so the save path skips them.
         prep_time_minutes: data.prep_time_minutes ?? null,
