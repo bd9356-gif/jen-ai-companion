@@ -1,4 +1,3 @@
-
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
@@ -149,7 +148,7 @@ export default function HomePage() {
             still reads at a glance against the dark gradient. CTA uses
             bg-orange-600 (MyKitchen's brand color) so signing in feels
             like crossing the same threshold as a tile tap on the hub. */}
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3 mt-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <div style={{height:"200px", overflow:"hidden"}}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
