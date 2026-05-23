@@ -2102,7 +2102,8 @@ export default function MyRecipeVaultPage() {
                 const data2 = await res2.json()
                 if (!data2.error) {
                   setImporting(false)
-                  setImportText(''); setImportUrl(''); setImportPrefilled(true)
+                  setImportText(''); setImportUrl(''); setImportTab('add'); setImportPrefilled(true)
+                  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
                   showToast('Got it — review and save when you're ready ✓')
                   const ingredientsText = (data2.ingredients || []).map(i => {
                     const m = (i?.measure || '').trim()
@@ -2156,7 +2157,8 @@ export default function MyRecipeVaultPage() {
         carbs_g: data.carbs_g ?? null,
         fat_g: data.fat_g ?? null,
       })
-      setImportText(''); setImportUrl(''); setImportPrefilled(true)
+      setImportText(''); setImportUrl(''); setImportTab('add'); setImportPrefilled(true)
+      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
       // Toast speaks AS Chef Jen, not about her — she's handing the
       // imported recipe back to the user. Fires AFTER the form is
       // pre-filled so the user sees the recipe arrive + her note in
