@@ -3246,7 +3246,9 @@ export default function MyRecipeVaultPage() {
                   onClick={() => setImportTab(t.key)}
                   className={
                     active
-                      ? 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm'
+                      ? (t.key === 'add' && form.title.trim()
+                          ? 'py-2 rounded-xl text-sm font-semibold bg-gray-900 text-white shadow-sm'
+                          : 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm')
                       : 'py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800'
                   }
                 >
