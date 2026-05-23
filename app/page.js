@@ -155,13 +155,9 @@ export default function HomePage() {
             <img src="/landing-hero-01.png" alt="Cooking, figured out." className="w-full h-auto block" width={1774} height={887} />
           </div>
           <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/icon-192-transparent.png" alt="" width="48" height="48" className="w-12 h-12" />
-              <div>
-                <div className="font-bold text-gray-900 text-sm leading-tight">MyRecipe Companion</div>
-                <div className="text-xs text-orange-600 font-semibold leading-tight">More Than Recipes</div>
-              </div>
+              <img src="/logo-lockup.png" alt="MyRecipe Companion" width="511" height="156" className="h-10 w-auto" />
             </div>
             {userName ? (
               <a href="/kitchen" className="text-xs font-semibold text-orange-600 hover:text-orange-700">
