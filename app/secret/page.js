@@ -2104,7 +2104,7 @@ export default function MyRecipeVaultPage() {
                   setImporting(false)
                   setImportText(''); setImportUrl(''); setImportTab('add'); setImportPrefilled(true)
                   setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
-                  showToast('Got it — review and save when you're ready ✓')
+                  showToast("Got it — review and save when you're ready ✓")
                   const ingredientsText = (data2.ingredients || []).map(i => {
                     const m = (i?.measure || '').trim()
                     const n = (i?.name || '').trim()
