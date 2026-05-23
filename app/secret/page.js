@@ -2109,14 +2109,12 @@ export default function MyRecipeVaultPage() {
                     const m = (i?.measure || '').trim()
                     const n = (i?.name || '').trim()
                     return m ? m + ' ' + n : n
-                  }).join('
-')
+                  }).join('\n')
                   setForm(f => ({ ...f,
                     title: data2.title || '',
                     description: data2.description || '',
                     ingredients: (data2.ingredients || []).map(i => ({ name: (i?.name||'').trim(), measure: (i?.measure||'').trim() })),
-                    instructions: Array.isArray(data2.instructions) ? data2.instructions.join('
-') : (data2.instructions || ''),
+                    instructions: Array.isArray(data2.instructions) ? data2.instructions.join('\n') : (data2.instructions || ''),
                     family_notes: data2.family_notes || '',
                     category: data2.category || '',
                     tags: data2.tags || [],
