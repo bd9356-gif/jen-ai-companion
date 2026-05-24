@@ -900,6 +900,7 @@ export default function MyRecipeVaultPage() {
   // JSON is power-user import/export. Values: 'url' | 'paste' | 'add' | 'json'.
   const [importTab, setImportTab] = useState('url')
   const [importPrefilled, setImportPrefilled] = useState(false)
+  const [showImportInfo, setShowImportInfo] = useState(false)
   // Paste tab — used to track which of 3 collapsible "how to get
   // content" option groups (Text / Print Capture / Share Shortcut)
   // was expanded. Retired May 2026: the Paste tab is now a single
@@ -3222,9 +3223,38 @@ export default function MyRecipeVaultPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-          <div>
-            <p className="text-sm text-gray-500">Any format, any source — Chef Jen cleans it up.</p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600 font-medium">Drop in a URL — Chef Jen does the rest.</p>
+            <button
+              type="button"
+              onClick={() => setShowImportInfo(s => !s)}
+              className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ml-2 ${showImportInfo ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              {showImportInfo ? '✕' : 'ℹ️'}
+            </button>
           </div>
+
+          {/* Info panel */}
+          {showImportInfo && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3 text-sm text-amber-900">
+              <div>
+                <p className="font-semibold mb-1">Share Recipes Instantly</p>
+                <p className="leading-snug text-amber-800">Use the Share button on any recipe website and choose MyRecipe Companion. The app reads the page and turns it into a clean, organized recipe automatically.</p>
+              </div>
+              <div>
+                <p className="font-semibold mb-1">Works on Most Recipe Sites</p>
+                <p className="leading-snug text-amber-800">Our reader understands food blogs and most major cooking websites. If a site blocks our reader, switch to Paste mode.</p>
+              </div>
+              <div>
+                <p className="font-semibold mb-1">When Sharing Doesn&apos;t Work</p>
+                <p className="leading-snug text-amber-800">Some apps like Facebook, Instagram, and TikTok don&apos;t provide real recipe data. For those, copy the text and use Paste or type it in with Add.</p>
+              </div>
+              <div className="border-t border-amber-200 pt-3">
+                <p className="font-semibold text-amber-900">One Simple Rule</p>
+                <p className="leading-snug text-amber-800">If you can share it or paste it, MyRecipe Companion can clean it.</p>
+              </div>
+            </div>
+          )}
 
           {/* Mode tabs */}
           <div className="grid grid-cols-4 gap-1.5 bg-gray-100 rounded-2xl p-1">
