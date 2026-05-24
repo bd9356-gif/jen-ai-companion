@@ -3216,28 +3216,23 @@ export default function MyRecipeVaultPage() {
         {toastEl}
         {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">📥 Import Tools</h1>
+            <h1 className="text-lg font-bold text-gray-900">Bring in a Recipe</h1>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          <p className="text-sm text-gray-600">Pick a way to bring a recipe in. Chef Jen will extract and clean it up.</p>
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+          <div>
+            <p className="text-sm text-gray-500">Any format, any source — Chef Jen cleans it up.</p>
+          </div>
 
-          {/* Tab strip — four alternatives, one at a time. URL is the
-              default and most common; Paste is the "site blocked the
-              fetcher" fallback (with three sub-instructions for HOW to
-              get content into the textarea); ✏️ Add is manual entry +
-              the post-import preview surface; JSON is power-user
-              imports/exports. Active tab fills with orange; inactive
-              tabs are gray. Equal-width grid keeps the strip tight
-              even at 4 columns on phone. */}
+          {/* Mode tabs */}
           <div className="grid grid-cols-4 gap-1.5 bg-gray-100 rounded-2xl p-1">
             {[
-              { key: 'url', label: '🔗 URL' },
-              { key: 'paste', label: '📋 Paste' },
-              { key: 'add', label: importPrefilled ? '✅ Review & Save' : '✏️ Add' },
-              { key: 'json', label: '📄 JSON' },
+              { key: 'url',   label: '🔗', sublabel: 'URL' },
+              { key: 'paste', label: '📋', sublabel: 'Paste' },
+              { key: 'add',   label: importPrefilled ? '✅' : '✏️', sublabel: importPrefilled ? 'Review' : 'Add' },
+              { key: 'json',  label: '📄', sublabel: 'JSON' },
             ].map(t => {
               const active = importTab === t.key
               return (
@@ -3248,12 +3243,13 @@ export default function MyRecipeVaultPage() {
                   className={
                     active
                       ? (t.key === 'add' && importPrefilled
-                          ? 'py-2 rounded-xl text-sm font-semibold bg-gray-900 text-white shadow-sm'
-                          : 'py-2 rounded-xl text-sm font-semibold bg-orange-600 text-white shadow-sm')
-                      : 'py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800'
+                          ? 'py-2 rounded-xl text-xs font-semibold bg-gray-900 text-white shadow-sm flex flex-col items-center gap-0.5'
+                          : 'py-2 rounded-xl text-xs font-semibold bg-orange-600 text-white shadow-sm flex flex-col items-center gap-0.5')
+                      : 'py-2 rounded-xl text-xs font-semibold text-gray-500 hover:text-gray-800 flex flex-col items-center gap-0.5'
                   }
                 >
-                  {t.label}
+                  <span className="text-base leading-none">{t.label}</span>
+                  <span>{t.sublabel}</span>
                 </button>
               )
             })}
@@ -3261,9 +3257,8 @@ export default function MyRecipeVaultPage() {
 
           {/* URL tab */}
           {importTab === 'url' && (
-            <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-2">
-              <label className="text-base font-bold text-gray-800 block">🔗 Import by URL</label>
-              <p className="text-sm text-gray-500">Paste a recipe link below and tap Import. If the site blocks our reader, switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold text-gray-700 hover:text-gray-900">📋 Paste</button> and send the page text instead.</p>
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
+              <label className="text-base font-semibold text-gray-800 block">Paste a recipe link</label>
 
               <div className="flex gap-2">
                 <input placeholder="https://www.example.com/recipe..." value={importUrl}
@@ -3344,8 +3339,8 @@ export default function MyRecipeVaultPage() {
               instructions. Multiple closed by default so the page is
               short on first open. */}
           {importTab === 'paste' && (
-            <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-3">
-              <label className="text-base font-bold text-gray-800 block">📋 Paste Recipe Text</label>
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-3">
+              <label className="text-base font-semibold text-gray-800 block">Paste recipe text</label>
               <p className="text-sm text-gray-600 leading-snug">
                 Copy a recipe from anywhere &mdash; a website (Select All works great), a note, an email &mdash; and paste it below. Chef Jen will read it, clean it up, and pull out the ingredients and instructions.
               </p>
@@ -3371,12 +3366,10 @@ export default function MyRecipeVaultPage() {
               URL/Paste tabs (where handleImport is the action). Add and
               JSON each have their own flow with their own error paths. */}
           {importError && (importTab === 'url' || importTab === 'paste') && (
-            <div className="border-2 border-red-200 bg-red-50 rounded-2xl p-4 space-y-2">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-1.5">
               <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
               <p className="text-sm text-red-700">{importError}</p>
-              <p className="text-sm text-red-700">
-                👇 Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">📋 Paste</button> and copy the recipe text from the page — it works on every site.
-              </p>
+              <p className="text-sm text-red-600">💡 Tip: Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">Paste mode</button> — copy the recipe text from the page and paste it here instead.</p>
             </div>
           )}
 
@@ -3385,8 +3378,8 @@ export default function MyRecipeVaultPage() {
           {(importTab === 'url' || importTab === 'paste') && (
             <button onClick={handleImport} disabled={importing || (!importText.trim() && !importUrl.trim())}
               style={{ fontSize: '16px' }}
-              className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 disabled:opacity-50 transition-colors shadow-sm">
-              {importing ? '🤖 Extracting recipe...' : '📥 Import & Clean with AI'}
+              className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bold text-base hover:bg-orange-700 disabled:opacity-40 transition-colors shadow-md tracking-wide">
+              {importing ? '✨ Extracting recipe...' : '📥 Import Recipe'}
             </button>
           )}
 
