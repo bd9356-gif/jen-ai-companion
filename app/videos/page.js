@@ -748,8 +748,8 @@ export default function VideosPage() {
                             <div className="mb-3">
                               <button
                                 onClick={() => setBucket(video, b.key)}
-                                title={isActive ? `Remove from Playbook (${b.label})` : `Save to Playbook (${b.label})`}
-                                aria-label={isActive ? `Remove from Playbook` : `Save to Playbook`}
+                                title={isActive ? `Remove from My Studio (${b.label})` : `Save to My Studio (${b.label})`}
+                                aria-label={isActive ? `Remove from My Studio` : `Save to My Studio`}
                                 className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
                                   isActive
                                     ? b.activeCls
@@ -757,7 +757,7 @@ export default function VideosPage() {
                                 }`}
                               >
                                 <span className="text-sm leading-none">{b.emoji}</span>
-                                <span>{isActive ? 'Saved to Playbook' : 'Save to Playbook'}</span>
+                                <span>{isActive ? 'Saved to My Studio' : 'Save to My Studio'}</span>
                               </button>
                             </div>
                           )
