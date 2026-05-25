@@ -507,6 +507,17 @@ export default function PlaybookPage() {
   }
 
   // Promote a Chef Jennifer recipe into the user's permanent vault.
+  async function moveRecipeToSocialShare(item) {
+    if (!user) return
+    const { error } = await supabase
+      .from('favorites')
+      .update({ is_in_vault: true })
+      .eq('id', item.id)
+    if (error) { showToast('Could not move to Social Share'); return }
+    setRecipes(prev => prev.filter(r => r.id !== item.id))
+    showToast('🎤 Moved to Social Share')
+  }
+
   // Mirrors the saveToVault logic that used to live on /chef-recipes —
   // ingredients normalized to {name, measure}, instructions normalized
   // through instructionsToString(), description moved into family_notes
@@ -878,6 +889,7 @@ export default function PlaybookPage() {
                         item={item}
                         onRemove={() => removeRecipe(item)}
                         onSaveToVault={() => saveRecipeToVault(item)}
+                        onMoveToSocialShare={() => moveRecipeToSocialShare(item)}
                       />
                     ))
                   )}

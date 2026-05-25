@@ -9,7 +9,7 @@ import { normalizeInstructionsArray } from '@/lib/normalize_instructions'
 // Used by /chef-recipes. The onSaveToVault callback is responsible for
 // the DB insert and calls back on success; local state tracks whether
 // the button has been pressed this session.
-export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
+export default function ChefJenItem({ item, onRemove, onSaveToVault, onMoveToSocialShare }) {
   const [expanded, setExpanded] = useState(false)
   const [savedToVault, setSavedToVault] = useState(false)
   // Same pattern as Chef TV Teach's "✓ In Portfolio" badge — read the
@@ -54,20 +54,31 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault }) {
               reviewing the full recipe. Both share `inVault`
               state so once tapped the row reflects the saved state
               everywhere. */}
-          {onSaveToVault && (
-            <button
-              onClick={handleSaveToVault}
-              disabled={inVault}
-              title="Save this recipe to your Recipe Vault"
-              className={`mt-1.5 text-xs font-semibold rounded-lg px-2.5 py-1 border-2 transition-colors ${
-                inVault
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default'
-                  : 'border-orange-300 bg-orange-50 text-orange-700 hover:opacity-80'
-              }`}
-            >
-              {inVault ? '✓ In Recipe Vault' : '🔐 Move to Recipe Vault'}
-            </button>
-          )}
+          <div className="flex gap-1.5 mt-1.5 flex-wrap">
+            {onSaveToVault && (
+              <button
+                onClick={handleSaveToVault}
+                disabled={inVault}
+                title="Save this recipe to your Recipe Vault"
+                className={`text-xs font-semibold rounded-lg px-2.5 py-1 border-2 transition-colors ${
+                  inVault
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default'
+                    : 'border-orange-300 bg-orange-50 text-orange-700 hover:opacity-80'
+                }`}
+              >
+                {inVault ? '✓ In Recipe Vault' : '🔐 Recipe Vault'}
+              </button>
+            )}
+            {onMoveToSocialShare && (
+              <button
+                onClick={onMoveToSocialShare}
+                title="Move to Social Share"
+                className="text-xs font-semibold rounded-lg px-2.5 py-1 border-2 border-purple-300 bg-purple-50 text-purple-700 hover:opacity-80"
+              >
+                🎤 Social Share
+              </button>
+            )}
+          </div>
 
           {expanded && (
             <div className="mt-2 space-y-3 text-sm text-gray-700">
