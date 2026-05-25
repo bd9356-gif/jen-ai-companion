@@ -343,4 +343,4 @@ export default function KitchenPage() {
       </main>
     </div>
   )
-}
+} 
