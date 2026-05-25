@@ -297,7 +297,7 @@ export default function PlaybookPage() {
     // is_in_vault flag stays true forever once moved.
     setRecipes((recipeFavs || []).filter(r => !r.is_in_vault))
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
-    // "💎 File to Portfolio" on /playbook (or "Add to Portfolio" from
+    // "💎 Move to Learning Vault" on /playbook (or "Move to Learning Vault" from
     // the row), the note is moved to /secret?view=portfolio and
     // disappears from this list. Filing = move (not copy), matching
     // Bill's "zip through, file the keepers, delete the rest" workflow.
@@ -326,11 +326,11 @@ export default function PlaybookPage() {
   // Move a Chef TV Teach video to the Recipe Vault Portfolio. Updated
   // April 2026 to mirror the Practice → Recipe Vault behavior — the
   // video STAYS in Teach after the move, with the per-row button
-  // flipping to "✓ In Portfolio". Filing is non-destructive: the
+  // flipping to "✓ In Learning Vault". Filing is non-destructive: the
   // bucket placement and underlying save record are kept. Un-filing
   // (× on the Portfolio row in /secret) flips is_in_vault back to
   // false, and the next visibility refresh on Playbook drops the
-  // "✓ In Portfolio" badge.
+  // "✓ In Learning Vault" badge.
   async function moveVideoToPortfolio(item) {
     if (!user) return
     if (item._favoriteId) {
@@ -345,14 +345,14 @@ export default function PlaybookPage() {
         .from('favorites')
         .update({ is_in_vault: true })
         .eq('id', item._favoriteId)
-      if (error) { showToast('Could not move to Portfolio'); return }
+      if (error) { showToast('Could not move to Learning Vault'); return }
       await supabase.from('cooking_skill_items')
         .delete()
         .eq('user_id', user.id)
         .eq('item_type', item._item_type)
         .eq('item_id', item._item_id)
       setItems(prev => prev.filter(i => !(i._item_type === item._item_type && i._item_id === item._item_id)))
-      showToast('💎 Moved to Portfolio')
+      showToast('🎓 Moved to Learning Vault')
       return
     }
     if (item._legacy_src) {
@@ -372,7 +372,7 @@ export default function PlaybookPage() {
         metadata: { youtube_id: item.youtube_id || '', channel: item.channel || '', legacy_video_id: item._item_id },
         is_in_vault: true,
       }).select('id').single()
-      if (insErr || !inserted) { showToast('Could not move to Portfolio'); return }
+      if (insErr || !inserted) { showToast('Could not move to Learning Vault'); return }
       // Drop the bucket placement — the video is leaving Teach.
       await supabase.from('cooking_skill_items')
         .delete()
@@ -384,7 +384,7 @@ export default function PlaybookPage() {
       await supabase.from(legacyTable).delete().eq('user_id', user.id).eq('video_id', item._item_id)
       // Filter from local state — the row leaves Teach immediately.
       setItems(prev => prev.filter(i => !(i._item_type === item._item_type && i._item_id === item._item_id)))
-      showToast('💎 Moved to Portfolio')
+      showToast('🎓 Moved to Learning Vault')
     }
   }
 
@@ -435,7 +435,7 @@ export default function PlaybookPage() {
       return
     }
     setNotes(prev => prev.filter(n => n.id !== note.id))
-    showToast('💎 Moved to Portfolio')
+    showToast('🎓 Moved to Learning Vault')
   }
 
   async function removeRecipe(item) {
@@ -1016,7 +1016,7 @@ function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, 
             </button>
           )
         ) : isTeach ? (
-          // Teach: "💎 Move to Portfolio" → "✓ In Portfolio" (disabled
+          // Teach: "🎓 Move to Learning Vault" → "✓ In Learning Vault" (disabled
           // emerald confirmation after save). Same persistence pattern
           // as Practice — _inPortfolio flips back when the user un-files
           // the video from Portfolio in /secret. Video stays visible
@@ -1028,7 +1028,7 @@ function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, 
               title="This video is in your Recipe Vault Portfolio"
               className="text-xs font-semibold border-2 border-emerald-300 bg-emerald-50 text-emerald-700 rounded-lg px-2.5 py-1 cursor-default"
             >
-              ✓ In Portfolio
+              ✓ In Learning Vault
             </button>
           ) : (
             <button
@@ -1036,7 +1036,7 @@ function PlaybookRow({ item, onMove, onSaveToVault, onMoveToPortfolio, inVault, 
               title="Move this technique video to your Recipe Vault Portfolio"
               className="text-xs font-semibold border-2 border-orange-300 bg-orange-50 text-orange-700 rounded-lg px-2.5 py-1 hover:opacity-80"
             >
-              💎 Move to Portfolio
+              🎓 Move to Learning Vault
             </button>
           )
         ) : null}
