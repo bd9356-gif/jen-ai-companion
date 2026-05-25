@@ -3891,11 +3891,11 @@ export default function MyRecipeVaultPage() {
             <div className="relative mb-4 rounded-2xl overflow-hidden border-2 border-amber-200 shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/recipe-card-new-banner.png"
+                src="/social-banner.png"
                 alt=""
                 className="w-full h-auto block"
-                width={1747}
-                height={900}
+                width={1736}
+                height={906}
               />
 
             </div>
@@ -3903,9 +3903,7 @@ export default function MyRecipeVaultPage() {
             {/* "Tap × to return one to your Playbook" — moved out of the
                 banner so the journal scene only holds the kept-here line.
                 The action hint lives just below the banner as plain text. */}
-            <p className="text-center text-stone-700 italic leading-snug mb-4 px-2 text-sm sm:text-base">
-              Tap <span className="not-italic font-semibold">×</span> to return one to your Playbook.
-            </p>
+
 
             {/* 📺 Learning Videos section — collapsible accordion. The
                 sky-blue palette was retired (May 2026) in favor of amber
