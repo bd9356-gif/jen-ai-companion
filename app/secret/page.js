@@ -3891,11 +3891,11 @@ export default function MyRecipeVaultPage() {
             <div className="relative mb-4 rounded-2xl overflow-hidden border-2 border-amber-200 shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/portfolio-hero.png"
+                src="/recipe-card-new-banner.png"
                 alt=""
                 className="w-full h-auto block"
-                width={1123}
-                height={221}
+                width={1747}
+                height={900}
               />
 
             </div>
