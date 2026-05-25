@@ -1824,6 +1824,15 @@ export default function MyRecipeVaultPage() {
       .from('personal_recipes')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
+    // Reset is_in_vault on matching favorites row so My Studio button resets
+    if (user && recipe?.title) {
+      await supabase
+        .from('favorites')
+        .update({ is_in_vault: false })
+        .eq('user_id', user.id)
+        .eq('type', 'ai_recipe')
+        .eq('title', recipe.title)
+    }
     setRecipes(prev => prev.filter(r => r.id !== id))
     setView('list'); setViewing(null)
     showToast('Moved to Recently Deleted — recoverable for 30 days')
