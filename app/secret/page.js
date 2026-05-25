@@ -3893,7 +3893,8 @@ export default function MyRecipeVaultPage() {
               <img
                 src="/social-banner.png"
                 alt=""
-                className="w-full h-auto block"
+                className="w-full object-cover block rounded-2xl"
+                style={{maxHeight:"200px"}}
                 width={1736}
                 height={906}
               />
