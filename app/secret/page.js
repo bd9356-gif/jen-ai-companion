@@ -856,6 +856,7 @@ export default function MyRecipeVaultPage() {
   // on rows where `type = 'ai_answer'`. Loaded once at auth and refreshed
   // whenever the user toggles between listStyle modes.
   const [portfolioNotes, setPortfolioNotes] = useState([])
+  const [portfolioRecipes, setPortfolioRecipes] = useState([])
   // Settings → 🗑 Recently Deleted (May 2026, migration 020). Recipes
   // soft-deleted from the Vault (deleted_at IS NOT NULL) stay
   // recoverable for 30 days. Loaded lazily when the user opens
@@ -1291,7 +1292,7 @@ export default function MyRecipeVaultPage() {
   // above it). Both still live on /playbook regardless; the flag
   // just marks the keepers for the Vault's Portfolio view.
   async function loadPortfolioNotes(userId) {
-    const [{ data: noteRows }, { data: videoRows }] = await Promise.all([
+    const [{ data: noteRows }, { data: videoRows }, { data: recipeRows }] = await Promise.all([
       supabase
         .from('favorites').select('*')
         .eq('user_id', userId).eq('type', 'ai_answer')
@@ -1302,9 +1303,15 @@ export default function MyRecipeVaultPage() {
         .eq('user_id', userId).in('type', ['video_education', 'video_recipe'])
         .eq('is_in_vault', true)
         .order('created_at', { ascending: false }),
+      supabase
+        .from('favorites').select('*')
+        .eq('user_id', userId).eq('type', 'ai_recipe')
+        .eq('is_in_vault', true)
+        .order('created_at', { ascending: false }),
     ])
     setPortfolioNotes(noteRows || [])
     setPortfolioVideos(videoRows || [])
+    setPortfolioRecipes(recipeRows || [])
   }
 
   // Load soft-deleted recipes for the Settings → 🗑 Recently Deleted
@@ -3767,7 +3774,7 @@ export default function MyRecipeVaultPage() {
                  buttons on the right. */
               <div className="flex-1 flex items-center min-w-0">
                 <span className="text-xs italic text-stone-600">
-                  {portfolioNotes.length + portfolioVideos.length} filed from Playbook
+                  {portfolioNotes.length + portfolioVideos.length + portfolioRecipes.length} filed from My Studio
                 </span>
               </div>
             )}
@@ -3943,12 +3950,38 @@ export default function MyRecipeVaultPage() {
 
 
 
-            {portfolioNotes.length === 0 && portfolioVideos.length === 0 ? (
+            {/* Chef Jen Recipes section */}
+            {portfolioRecipes.length > 0 && (
+              <div className="mb-4 bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 overflow-hidden">
+                <div className="px-4 py-3 bg-rose-50 flex items-center gap-3">
+                  <span className="text-2xl">👨‍🍳</span>
+                  <span className="font-bold text-rose-900">Chef Jen Recipes</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-900">{portfolioRecipes.length}</span>
+                </div>
+                <div className="divide-y divide-rose-100">
+                  {portfolioRecipes.map(r => (
+                    <div key={r.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold text-gray-900">{r.title}</span>
+                      <button
+                        onClick={async () => {
+                          await supabase.from('favorites').update({ is_in_vault: false }).eq('id', r.id)
+                          setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
+                        }}
+                        className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                        title="Remove from Social Share"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {portfolioNotes.length === 0 && portfolioVideos.length === 0 && portfolioRecipes.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
-                <p className="text-4xl mb-3">💎</p>
-                <p className="text-gray-700 font-semibold mb-1">Nothing filed yet</p>
-                <p className="text-gray-500 text-sm mb-5 px-6">Open My Playbook and tap <strong>💎 Move to Portfolio</strong> on the Chef Notes (Chef Jennifer · Teach) or technique videos (Chef TV · Teach) you want to keep here.</p>
-                <button onClick={() => window.location.href='/playbook?tab=chef_notes'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open Playbook →</button>
+                <p className="text-4xl mb-3">🎤</p>
+                <p className="text-gray-700 font-semibold mb-1">Nothing here yet</p>
+                <p className="text-gray-500 text-sm mb-5 px-6">Move Chef Jen recipes and notes to Social Share from My Studio.</p>
+                <button onClick={() => window.location.href='/playbook'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open My Studio →</button>
               </div>
             ) : portfolioNotes.length === 0 ? null : (
               /* Group portfolio notes into the 5 fixed "How to..." buckets and
