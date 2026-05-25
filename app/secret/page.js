@@ -3691,7 +3691,7 @@ export default function MyRecipeVaultPage() {
               </button>
             )}
             <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">
-              {listStyle === 'portfolio' ? '💎 Social Share' : '🔐 Recipe Vault'}
+              {listStyle === 'portfolio' ? '💎 Social Share' : listStyle === 'cardbox' ? '🎓 Learning Vault' : '🔐 Recipe Vault'}
             </h1>
             {/* ⚙️ Settings — opens the Vault settings view (Recently
                 Deleted recovery, future preferences). Matches the back
