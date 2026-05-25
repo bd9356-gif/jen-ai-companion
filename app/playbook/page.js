@@ -561,15 +561,6 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
-    // MOVE semantics (May 2026): flip favorites.is_in_vault=true so the
-    // recipe disappears from this Practice tab (loadAll filters by the
-    // flag, mirroring the Chef Notes → Portfolio pattern). Vault delete
-    // is permanent — no round-trip back to Practice. If the user wants
-    // a recipe back, ask Chef Jennifer for it again; the corpus mining
-    // cache will likely surface it on the next adapt pass.
-    const { error: lockErr } = await supabase
-      .from('favorites').update({ is_in_vault: true }).eq('id', item.id)
-    if (lockErr) { showToast('Could not move recipe'); return }
     setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, _inVault: true } : r))
     showToast('Saved to Recipe Vault ✓')
   }
