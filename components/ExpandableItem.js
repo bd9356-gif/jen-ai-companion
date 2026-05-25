@@ -42,14 +42,14 @@ export default function ExpandableItem({ item, emoji = '💡', onRemove, removeT
             <button
               onClick={inPortfolio ? undefined : onPortfolio}
               disabled={inPortfolio}
-              title={inPortfolio ? 'This note is in your Recipe Vault Portfolio' : 'Move this note to Recipe Vault Portfolio (moves out of Chef Notes)'}
+              title={inPortfolio ? 'This note is in your Learning Vault' : 'Move this note to Learning Vault'}
               className={`mt-2 text-xs font-semibold rounded-lg px-2.5 py-1 border-2 transition-colors ${
                 inPortfolio
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-300 cursor-default'
                   : 'text-orange-700 border-orange-300 bg-white hover:bg-orange-50'
               }`}
             >
-              {inPortfolio ? '✓ In Portfolio' : '💎 Move to Portfolio'}
+              {inPortfolio ? '✓ In Learning Vault' : '🎓 Move to Learning Vault'}
             </button>
           )}
         </div>
