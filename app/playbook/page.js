@@ -295,12 +295,10 @@ export default function PlaybookPage() {
     // moved to the Vault. Mirrors Chef Notes' inbox semantics. Vault
     // delete is permanent (no round-trip), so the favorites row's
     // is_in_vault flag stays true forever once moved.
-    // Check personal_recipes for vault matches by title
-    const vaultTitles = new Set((vaultRecipes || []).map(r => r.title?.toLowerCase().trim()))
     setRecipes((recipeFavs || []).map(r => ({
       ...r,
-      _inSocialShare: !!r.is_in_vault,
-      _inVault: vaultTitles.has(r.title?.toLowerCase().trim())
+      _inSocialShare: !!r.is_in_social_share,
+      _inVault: !!r.is_in_vault
     })))
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 Move to Learning Vault" on /playbook (or "Move to Learning Vault" from
@@ -517,7 +515,7 @@ export default function PlaybookPage() {
     if (!user) return
     const { error } = await supabase
       .from('favorites')
-      .update({ is_in_vault: true })
+      .update({ is_in_social_share: true })
       .eq('id', item.id)
     if (error) { showToast('Could not move to Social Share'); return }
     setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, _inSocialShare: true } : r))
@@ -561,6 +559,9 @@ export default function PlaybookPage() {
       showToast('Could not save to Vault')
       return
     }
+    const { error: lockErr } = await supabase
+      .from('favorites').update({ is_in_vault: true }).eq('id', item.id)
+    if (lockErr) { showToast('Could not move recipe'); return }
     setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, _inVault: true } : r))
     showToast('Saved to Recipe Vault ✓')
   }
