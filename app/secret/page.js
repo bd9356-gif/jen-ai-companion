@@ -818,7 +818,7 @@ function NoteCard({ note }) {
 }
 
 function LearningVaultNote({ note, onRemove }) {
-  const [expanded, setExpanded] = React.useState(false)
+  const [expanded, setExpanded] = useState(false)
   const answer = note.metadata?.answer || ''
   return (
     <div className="border-b border-gray-100 last:border-0">
