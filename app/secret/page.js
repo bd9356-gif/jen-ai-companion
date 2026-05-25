@@ -1292,7 +1292,7 @@ export default function MyRecipeVaultPage() {
   // above it). Both still live on /playbook regardless; the flag
   // just marks the keepers for the Vault's Portfolio view.
   async function loadPortfolioNotes(userId) {
-    const [{ data: noteRows }, { data: videoRows }, { data: recipeRows }] = await Promise.all([
+    const [{ data: noteRows }, { data: eduVideoRows }, { data: recipeVideoRows }, { data: aiRecipeRows }] = await Promise.all([
       supabase
         .from('favorites').select('*')
         .eq('user_id', userId).eq('type', 'ai_answer')
@@ -1300,7 +1300,12 @@ export default function MyRecipeVaultPage() {
         .order('created_at', { ascending: false }),
       supabase
         .from('favorites').select('*')
-        .eq('user_id', userId).in('type', ['video_education', 'video_recipe'])
+        .eq('user_id', userId).eq('type', 'video_education')
+        .eq('is_in_vault', true)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('favorites').select('*')
+        .eq('user_id', userId).eq('type', 'video_recipe')
         .eq('is_in_vault', true)
         .order('created_at', { ascending: false }),
       supabase
@@ -1310,8 +1315,8 @@ export default function MyRecipeVaultPage() {
         .order('created_at', { ascending: false }),
     ])
     setPortfolioNotes(noteRows || [])
-    setPortfolioVideos(videoRows || [])
-    setPortfolioRecipes(recipeRows || [])
+    setPortfolioVideos(eduVideoRows || [])          // Learning Vault only
+    setPortfolioRecipes([...(recipeVideoRows || []), ...(aiRecipeRows || [])])  // Social Share
   }
 
   // Load soft-deleted recipes for the Settings → 🗑 Recently Deleted
@@ -1356,18 +1361,9 @@ export default function MyRecipeVaultPage() {
       .from('favorites')
       .update({ is_in_vault: false })
       .eq('id', video.id)
-    if (updErr) { showToast('Could not un-file video'); return }
-    // Restore the Teach bucket placement on Playbook so the video
-    // reappears in the Chef TV Teach inbox (same as Chef Notes' return).
-    await supabase.from('cooking_skill_items').upsert({
-      user_id: user.id,
-      item_type: 'favorite',
-      item_id: video.id,
-      bucket: 'teach',
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,item_type,item_id' })
+    if (updErr) { showToast('Could not remove'); return }
     setPortfolioVideos(prev => prev.filter(v => v.id !== video.id))
-    showToast('↩ Returned to Chef TV · Teach')
+    showToast('Removed from Learning Vault')
   }
 
   async function loadRecipes(userId) {
@@ -3950,8 +3946,38 @@ export default function MyRecipeVaultPage() {
 
 
 
+            {/* Chef TV Practice Videos in Social Share */}
+            {portfolioRecipes.filter(r => r.type === 'video_recipe').length > 0 && (
+              <div className="mb-4 bg-white rounded-2xl border-2 border-orange-200 border-l-8 border-l-orange-500 overflow-hidden">
+                <div className="px-4 py-3 bg-orange-50 flex items-center gap-3">
+                  <span className="text-2xl">🍳</span>
+                  <span className="font-bold text-orange-900">Chef TV · Practice Videos</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-200 text-orange-900">{portfolioRecipes.filter(r => r.type === 'video_recipe').length}</span>
+                </div>
+                <div className="divide-y divide-orange-100">
+                  {portfolioRecipes.filter(r => r.type === 'video_recipe').map(v => {
+                    const videoForItem = {
+                      youtube_id: v.metadata?.youtube_id || '',
+                      title: v.title,
+                      channel: v.metadata?.channel || '',
+                    }
+                    return (
+                      <VideoItem
+                        key={v.id}
+                        video={videoForItem}
+                        onRemove={async () => {
+                          await supabase.from('favorites').update({ is_in_vault: false }).eq('id', v.id)
+                          setPortfolioRecipes(prev => prev.filter(x => x.id !== v.id))
+                        }}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Chef Jen Recipes section */}
-            {portfolioRecipes.length > 0 && (
+            {portfolioRecipes.filter(r => r.type === 'ai_recipe').length > 0 && (
               <div className="mb-4 bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 overflow-hidden">
                 <div className="px-4 py-3 bg-rose-50 flex items-center gap-3">
                   <span className="text-2xl">👨‍🍳</span>
@@ -3959,7 +3985,7 @@ export default function MyRecipeVaultPage() {
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-900">{portfolioRecipes.length}</span>
                 </div>
                 <div className="divide-y divide-rose-100">
-                  {portfolioRecipes.map(r => (
+                  {portfolioRecipes.filter(r => r.type === 'ai_recipe').map(r => (
                     <div key={r.id} className="px-4 py-3 flex items-center justify-between gap-3">
                       <span className="text-sm font-semibold text-gray-900">{r.title}</span>
                       <button
