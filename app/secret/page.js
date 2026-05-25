@@ -3913,10 +3913,10 @@ export default function MyRecipeVaultPage() {
                     WHAT to make. */}
                 <div className="text-center mb-4 px-2">
                   <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight tracking-tight">
-                    What&rsquo;s Cooking?
+                    🎓 Learning Vault
                   </p>
                   <p className="text-base text-gray-600 mt-2 leading-snug">
-                    Favorites you love, a surprise pick when you want one, and your full vault &mdash; cards or stories &mdash; just a tap away.
+                    Your saved lessons, techniques, and cooking knowledge &mdash; all in one place.
                   </p>
                 </div>
                 {/* Surprise me — header chip + result card */}
