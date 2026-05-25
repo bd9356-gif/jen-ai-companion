@@ -3864,11 +3864,47 @@ export default function MyRecipeVaultPage() {
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : listStyle === 'cardbox' ? (
-          <div className="text-center py-16 px-6">
-            <p className="text-5xl mb-4">🎓</p>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Learning Vault</h2>
-            <p className="text-gray-500 text-sm leading-relaxed mb-6">Your saved lessons, techniques, and cooking knowledge — all in one place.</p>
-            <p className="text-xs text-gray-400">Save Chef TV Teach videos and Chef Jen Teach Notes to fill your Learning Vault.</p>
+          <div>
+            {portfolioVideos.length > 0 ? (
+              <div className="mb-4 bg-white rounded-2xl border-2 border-sky-200 border-l-8 border-l-sky-500 overflow-hidden">
+                <button
+                  onClick={() => setPortfolioVideosOpen(o => !o)}
+                  className={`w-full flex items-center justify-between px-4 py-3 ${portfolioVideosOpen ? 'bg-sky-50' : 'bg-white'} hover:bg-sky-50 transition-colors`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📺</span>
+                    <span className="font-bold text-sky-900">Learning Videos</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">{portfolioVideos.length}</span>
+                  </div>
+                  <span className="text-xl text-sky-900">{portfolioVideosOpen ? '▾' : '▸'}</span>
+                </button>
+                {portfolioVideosOpen && (
+                  <div className="divide-y divide-sky-100">
+                    {portfolioVideos.map(v => {
+                      const videoForItem = {
+                        youtube_id: v.metadata?.youtube_id || '',
+                        title: v.title,
+                        channel: v.metadata?.channel || '',
+                      }
+                      return (
+                        <VideoItem
+                          key={v.id}
+                          video={videoForItem}
+                          onRemove={() => removeVideoFromPortfolio(v)}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-16 px-6">
+                <p className="text-5xl mb-4">🎓</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Learning Vault</h2>
+                <p className="text-gray-500 text-sm leading-relaxed mb-6">Your saved lessons, techniques, and cooking knowledge — all in one place.</p>
+                <p className="text-xs text-gray-400">Move Chef TV Teach videos from My Studio to fill your Learning Vault.</p>
+              </div>
+            )}
           </div>
         ) : listStyle === 'portfolio' ? (
           /* 💎 Social Share — curated Chef Notes the user has promoted
@@ -3905,47 +3941,7 @@ export default function MyRecipeVaultPage() {
                 The action hint lives just below the banner as plain text. */}
 
 
-            {/* 📺 Learning Videos section — collapsible accordion. The
-                sky-blue palette was retired (May 2026) in favor of amber
-                to match the Portfolio's premium warm-sepia aesthetic.
-                One curated room, one color family. */}
-            {portfolioVideos.length > 0 && (
-              <div className="mb-4 bg-white rounded-2xl border-2 border-amber-200 border-l-8 border-l-amber-500 overflow-hidden">
-                <button
-                  onClick={() => setPortfolioVideosOpen(o => !o)}
-                  className={`w-full flex items-center justify-between px-4 py-3 ${portfolioVideosOpen ? 'bg-amber-50' : 'bg-white'} hover:bg-amber-50 transition-colors`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">📺</span>
-                    <span className="font-bold text-amber-900">Learning Videos</span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">{portfolioVideos.length}</span>
-                  </div>
-                  <span className="text-xl text-amber-900">{portfolioVideosOpen ? '▾' : '▸'}</span>
-                </button>
-                {portfolioVideosOpen && (
-                  <div className="divide-y divide-amber-100">
-                    {portfolioVideos.map(v => {
-                      // Map favorites-row shape → VideoItem's expected
-                      // { youtube_id, title, channel } props. Both legacy-
-                      // sourced and favorites-sourced videos store the
-                      // youtube_id in metadata.youtube_id when filed.
-                      const videoForItem = {
-                        youtube_id: v.metadata?.youtube_id || '',
-                        title: v.title,
-                        channel: v.metadata?.channel || '',
-                      }
-                      return (
-                        <VideoItem
-                          key={v.id}
-                          video={videoForItem}
-                          onRemove={() => removeVideoFromPortfolio(v)}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {portfolioNotes.length === 0 && portfolioVideos.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
