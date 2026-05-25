@@ -817,6 +817,39 @@ function NoteCard({ note }) {
   )
 }
 
+function LearningVaultNote({ note, onRemove }) {
+  const [expanded, setExpanded] = React.useState(false)
+  const answer = note.metadata?.answer || ''
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <div className="px-4 py-3 flex items-start justify-between gap-3">
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="flex-1 min-w-0 text-left"
+        >
+          <p className="text-sm font-semibold text-gray-900 leading-snug">{note.title}</p>
+          {answer && !expanded && (
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{answer}</p>
+          )}
+          {answer && (
+            <p className="text-xs text-amber-600 mt-1 font-medium">{expanded ? '▲ Hide' : '▼ Read more'}</p>
+          )}
+        </button>
+        <button
+          onClick={onRemove}
+          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+          title="Remove from Learning Vault"
+        >×</button>
+      </div>
+      {expanded && answer && (
+        <div className="px-4 pb-4">
+          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{answer}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function MyRecipeVaultPage() {
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
@@ -3937,22 +3970,14 @@ export default function MyRecipeVaultPage() {
                     {isOpen && (
                       <div className="divide-y divide-gray-100">
                         {items.map(note => (
-                          <div key={note.id} className="px-4 py-3 flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-gray-900 leading-snug">{note.title}</p>
-                              {note.metadata?.answer && (
-                                <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{note.metadata.answer}</p>
-                              )}
-                            </div>
-                            <button
-                              onClick={async () => {
-                                await supabase.from('favorites').update({ is_in_vault: false }).eq('id', note.id)
-                                setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
-                              }}
-                              className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
-                              title="Remove from Learning Vault"
-                            >×</button>
-                          </div>
+                          <LearningVaultNote
+                            key={note.id}
+                            note={note}
+                            onRemove={async () => {
+                              await supabase.from('favorites').update({ is_in_vault: false }).eq('id', note.id)
+                              setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
+                            }}
+                          />
                         ))}
                       </div>
                     )}
