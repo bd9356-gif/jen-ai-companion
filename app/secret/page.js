@@ -3910,14 +3910,297 @@ export default function MyRecipeVaultPage() {
             )}
           </div>
         ) : listStyle === 'portfolio' ? (
-          <div className="text-center py-16 px-6">
-            <p className="text-5xl mb-4">🎤</p>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Social Share</h2>
-            <p className="text-gray-500 text-sm leading-relaxed mb-6">Your stage. Your story.<br/>Share your creations, inspire others, and bring your cooking to the world.</p>
-            <p className="text-xs text-gray-400">Move Chef Jen recipes and Chef TV practice videos here from My Studio.</p>
+          /* 💎 Social Share — curated Chef Notes the user has promoted
+             from /playbook. Notes (saved AI answers), not recipes — so
+             this branch replaces the regular recipe list/grid entirely.
+             Tap a row to expand; tap the × to remove from the Portfolio
+             (the underlying note stays in Playbook). */
+          <div>
+            {/* Portfolio hero banner (May 2026) — open reference book with
+                botanical illustrations and foreground fruit, used as the
+                full-width hero at the top of the Portfolio. "💎 Chef
+                Portfolio" overlays in elegant serif in the dark area at
+                the bottom of the banner; small italic tagline below. The
+                page already has the brand in the sticky header, but the
+                hero is where the room is *set* — the user knows
+                immediately they're somewhere different from the working
+                Vault. The earlier intro stack (Back link + explainer
+                paragraph + count) was retired in the same pass — the
+                hero says everything that intro tried to say. */}
+            <div className="relative mb-4 rounded-2xl overflow-hidden border-2 border-amber-200 shadow-md" style={{height:"200px"}}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/social-banner.png"
+                alt=""
+                className="w-full h-full object-cover object-top block"
+                width={1736}
+                height={906}
+              />
+
+            </div>
+
+            {/* "Tap × to return one to your Playbook" — moved out of the
+                banner so the journal scene only holds the kept-here line.
+                The action hint lives just below the banner as plain text. */}
+
+
+
+
+            {/* Chef TV Practice Videos in Social Share */}
+            {portfolioRecipes.filter(r => r.type === 'video_recipe').length > 0 && (
+              <div className="mb-4 bg-white rounded-2xl border-2 border-orange-200 border-l-8 border-l-orange-500 overflow-hidden">
+                <div className="px-4 py-3 bg-orange-50 flex items-center gap-3">
+                  <span className="text-2xl">🍳</span>
+                  <span className="font-bold text-orange-900">Chef TV · Practice Videos</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-200 text-orange-900">{portfolioRecipes.filter(r => r.type === 'video_recipe').length}</span>
+                </div>
+                <div className="divide-y divide-orange-100">
+                  {portfolioRecipes.filter(r => r.type === 'video_recipe').map(v => {
+                    const videoForItem = {
+                      youtube_id: v.metadata?.youtube_id || '',
+                      title: v.title,
+                      channel: v.metadata?.channel || '',
+                    }
+                    return (
+                      <VideoItem
+                        key={v.id}
+                        video={videoForItem}
+                        onRemove={async () => {
+                          await supabase.from('favorites').update({ is_in_vault: false }).eq('id', v.id)
+                          setPortfolioRecipes(prev => prev.filter(x => x.id !== v.id))
+                        }}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Chef Jen Recipes section */}
+            {portfolioRecipes.filter(r => r.type === 'ai_recipe').length > 0 && (
+              <div className="mb-4 bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 overflow-hidden">
+                <div className="px-4 py-3 bg-rose-50 flex items-center gap-3">
+                  <span className="text-2xl">👨‍🍳</span>
+                  <span className="font-bold text-rose-900">Chef Jen Recipes</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-900">{portfolioRecipes.length}</span>
+                </div>
+                <div className="divide-y divide-rose-100">
+                  {portfolioRecipes.filter(r => r.type === 'ai_recipe').map(r => (
+                    <div key={r.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold text-gray-900">{r.title}</span>
+                      <button
+                        onClick={async () => {
+                          await supabase.from('favorites').update({ is_in_vault: false }).eq('id', r.id)
+                          setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
+                        }}
+                        className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                        title="Remove from Social Share"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {portfolioNotes.length === 0 && portfolioVideos.length === 0 && portfolioRecipes.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
+                <p className="text-4xl mb-3">🎤</p>
+                <p className="text-gray-700 font-semibold mb-1">Nothing here yet</p>
+                <p className="text-gray-500 text-sm mb-5 px-6">Move Chef Jen recipes and notes to Social Share from My Studio.</p>
+                <button onClick={() => window.location.href='/playbook'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open My Studio →</button>
+              </div>
+            ) : portfolioNotes.length === 0 ? null : (
+              /* Group portfolio notes into the 5 fixed "How to..." buckets and
+                 render each as a collapsed accordion section. Empty groups are
+                 hidden so the page only shows what the user has actually saved
+                 against. Tap a header to expand; tap × on a row to remove from
+                 the Portfolio (note still lives in Playbook). */
+              (() => {
+                const grouped = {}
+                for (const g of PORTFOLIO_GROUPS) grouped[g.key] = []
+                for (const note of portfolioNotes) {
+                  const key = categorizeChefNote(note)
+                  if (grouped[key]) grouped[key].push(note)
+                }
+                return (
+                  <div className="space-y-3">
+                    {PORTFOLIO_GROUPS.map(g => {
+                      const items = grouped[g.key]
+                      if (!items.length) return null
+                      const isOpen = portfolioOpenGroups.has(g.key)
+                      return (
+                        <div key={g.key} className={`bg-white rounded-2xl border-2 ${g.border} border-l-8 ${g.stripe} overflow-hidden`}>
+                          <button
+                            onClick={() => {
+                              setPortfolioOpenGroups(prev => {
+                                const next = new Set(prev)
+                                if (next.has(g.key)) next.delete(g.key)
+                                else next.add(g.key)
+                                return next
+                              })
+                            }}
+                            className={`w-full flex items-center justify-between px-4 py-3 ${isOpen ? g.headerBg : 'bg-white'} hover:${g.headerBg} transition-colors`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-2xl">{g.emoji}</span>
+                              <span className={`font-bold ${g.headerText}`}>{g.label}</span>
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${g.countBg} ${g.countText}`}>{items.length}</span>
+                            </div>
+                            <span className={`text-xl ${g.headerText}`}>{isOpen ? '▾' : '▸'}</span>
+                          </button>
+                          {isOpen && (
+                            <div className={`${g.bodyBg} divide-y divide-gray-100`}>
+                              {items.map(note => (
+                                <ExpandableItem
+                                  key={note.id}
+                                  item={note}
+                                  emoji="💎"
+                                  removeTitle="Return to Chef Notes inbox (un-file)"
+                                  onRemove={() => removeFromPortfolio(note)}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()
+            )}
           </div>
-        ) : null}
-            </main>
+        ) : recipes.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-5xl mb-4">🔐</p>
+            <p className="text-gray-700 font-semibold mb-2">Your vault is empty</p>
+            <p className="text-gray-500 text-sm mb-6">Add your personal and family recipes — private and only visible to you</p>
+            <div className="flex flex-col gap-3 items-center">
+              <button onClick={() => { setView('import'); setImportTab('add') }} className="px-6 py-3 bg-orange-600 text-white rounded-xl font-semibold w-48">+ Add a Recipe</button>
+              <button onClick={openImportFromClipboard} className="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-semibold w-48">📥 Import Tools</button>
+            </div>
+          </div>
+        ) : (() => {
+          const videoRefs = filtered.filter(r => r.category === 'Video Reference' || r.category === 'Recipe Videos')
+          const regularRecipes = filtered.filter(r => r.category !== 'Video Reference' && r.category !== 'Recipe Videos')
+          return (
+            <div className="space-y-6">
+              {/* Regular Recipes */}
+              <div>
+                <p className="text-sm text-gray-500 mb-3">{regularRecipes.length} of {recipes.filter(r => r.category !== 'Video Reference').length} recipes</p>
+                {regularRecipes.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">No recipes match your search</p>
+                )}
+                {(
+                  /* Grid view — cream "index card" paper, thin red top rule,
+                     title + photo tile. Shows every vault recipe as a
+                     photo-first tile. Tapping opens the standard Vault
+                     detail view (not the Card detail). 🃏 Pin button sits
+                     under the photo so users can pin to /cards without
+                     opening the recipe — matches the Card box pattern. */
+                  <div className="grid grid-cols-2 gap-3">
+                    {regularRecipes.map(recipe => {
+                      const pinned = pinnedCards.includes(recipe.id)
+                      return (
+                      <div key={recipe.id} className="relative">
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleFavorite(recipe) } }}
+                          title={recipe.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                          className={`absolute top-2 right-2 z-10 text-lg leading-none w-8 h-8 flex items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors ${
+                            recipe.is_favorite ? 'text-rose-500' : 'text-gray-300 hover:text-rose-400'
+                          }`}
+                        >
+                          {recipe.is_favorite ? '❤️' : '🤍'}
+                        </span>
+                        <button onClick={() => { setViewing(recipe); setView('detail') }}
+                          className="w-full text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
+                          <div className="bg-red-600 h-1.5" />
+                          <div className="px-3 pt-3 pb-1">
+                            <p className="font-bold text-xs text-gray-900 leading-snug line-clamp-2 min-h-[2rem]">{recipe.title}</p>
+                          </div>
+                          <div className="px-3 pb-3">
+                            {recipe.photo_url ? (
+                              <div style={{height:'88px'}} className="rounded-xl overflow-hidden">
+                                <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div style={{height:'88px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
+                                <span style={{fontSize:'28px'}}>{categoryEmoji(recipe)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); toggleCardPin(recipe.id) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleCardPin(recipe.id) } }}
+                          title={pinned ? 'Pinned to Recipe Cards' : 'Pin to Recipe Cards'}
+                          className={`absolute bottom-2 right-2 z-10 text-[11px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
+                            pinned
+                              ? 'bg-orange-600 text-white border-orange-600'
+                              : 'bg-white/95 text-orange-700 border-orange-300 hover:bg-orange-50'
+                          }`}
+                        >
+                          {pinned ? 'Pinned' : 'Pin to Cards'}
+                        </div>
+                        {/* 📅 Meal Plan pill — mirror position bottom-left
+                            so it doesn't collide with 🃏 Pin in the
+                            bottom-right. Same pattern: absolute over the
+                            photo, white-with-amber-border when off,
+                            filled amber when in the plan. */}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => { e.stopPropagation(); toggleMealPlanPick(recipe) }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleMealPlanPick(recipe) } }}
+                          title={picksIds.includes(recipe.id) ? 'Remove from Meal Plan' : 'Add to Meal Plan'}
+                          className={`absolute bottom-2 left-2 z-10 text-[11px] font-semibold rounded-md px-2 py-1 border transition-colors cursor-pointer ${
+                            picksIds.includes(recipe.id)
+                              ? 'bg-amber-500 text-white border-amber-500'
+                              : 'bg-white/95 text-amber-700 border-amber-300 hover:bg-amber-50'
+                          }`}
+                        >
+                          {picksIds.includes(recipe.id) ? 'Planned' : 'Meal Plan'}
+                        </div>
+                      </div>
+                    )})}
+                  </div>
+                )}
+              </div>
+
+              {/* My References Section */}
+              {videoRefs.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-base">📺</span>
+                    <h2 className="text-sm font-bold text-gray-700">Recipe Videos</h2>
+                    <span className="text-xs text-gray-500">({videoRefs.length})</span>
+                  </div>
+                  <div className="space-y-3">
+                    {videoRefs.map(recipe => (
+                      <VaultRecipeVideoCard key={recipe.id} recipe={recipe} supabase={supabase} user={user} onDelete={async (id) => {
+                        await supabase.from('personal_recipes').delete().eq('id', id)
+                        loadRecipes(user.id)
+                      }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* "Videos Only" section retired May 2026 — video-only
+                  saves now live in 💎 Social Share's Learning Videos
+                  section (filed from My Playbook with 💎 Move to
+                  Portfolio). The educationVideos state + loader still
+                  populate so Portfolio reads them, but they're not
+                  rendered here on the Vault list view anymore. */}
+
+            </div>
+          )
+        })()}
+      </main>
     </div>
   )
 }
