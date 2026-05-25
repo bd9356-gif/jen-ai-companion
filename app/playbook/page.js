@@ -295,7 +295,7 @@ export default function PlaybookPage() {
     // moved to the Vault. Mirrors Chef Notes' inbox semantics. Vault
     // delete is permanent (no round-trip), so the favorites row's
     // is_in_vault flag stays true forever once moved.
-    setRecipes((recipeFavs || []).filter(r => !r.is_in_vault))
+    setRecipes((recipeFavs || []).map(r => ({ ...r, _inSocialShare: !!r.is_in_vault })))
     // Chef Notes is the inbox of UNFILED notes. Once the user taps
     // "💎 Move to Learning Vault" on /playbook (or "Move to Learning Vault" from
     // the row), the note is moved to /secret?view=portfolio and
@@ -514,8 +514,8 @@ export default function PlaybookPage() {
       .update({ is_in_vault: true })
       .eq('id', item.id)
     if (error) { showToast('Could not move to Social Share'); return }
-    setRecipes(prev => prev.filter(r => r.id !== item.id))
-    showToast('🎤 Moved to Social Share')
+    setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, _inSocialShare: true } : r))
+    showToast('🎤 In Social Share')
   }
 
   // Mirrors the saveToVault logic that used to live on /chef-recipes —
@@ -890,6 +890,7 @@ export default function PlaybookPage() {
                         onRemove={() => removeRecipe(item)}
                         onSaveToVault={() => saveRecipeToVault(item)}
                         onMoveToSocialShare={() => moveRecipeToSocialShare(item)}
+                        inSocialShare={!!item._inSocialShare}
                       />
                     ))
                   )}
