@@ -4002,19 +4002,33 @@ export default function MyRecipeVaultPage() {
             ) : (
               <div className="space-y-3">
                 {portfolioRecipes.map(r => (
-                  <div key={r.id} className="bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 px-4 py-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{r.title}</p>
-                      <p className="text-xs text-rose-600 mt-0.5">👨‍🍳 Chef Jen Recipe</p>
+                  <div key={r.id} className="bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{r.title}</p>
+                        <p className="text-xs text-rose-600 mt-0.5">👨‍🍳 Chef Jen approves ♥</p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await supabase.from('favorites').update({ is_in_social_share: false }).eq('id', r.id)
+                          setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
+                        }}
+                        className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                        title="Remove from Social Share"
+                      >×</button>
                     </div>
                     <button
-                      onClick={async () => {
-                        await supabase.from('favorites').update({ is_in_social_share: false }).eq('id', r.id)
-                        setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
+                      onClick={() => {
+                        const shareId = r.metadata?.personal_recipe_id || r.id
+                        const url = `${window.location.origin}/share/${shareId}`
+                        const text = `${r.title} — Chef Jen approves ♥`
+                        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`
+                        window.open(fbUrl, '_blank')
                       }}
-                      className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
-                      title="Remove from Social Share"
-                    >×</button>
+                      className="w-full text-xs font-semibold bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-700 transition-colors"
+                    >
+                      📘 Share to Facebook
+                    </button>
                   </div>
                 ))}
               </div>

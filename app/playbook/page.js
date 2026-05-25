@@ -513,9 +513,33 @@ export default function PlaybookPage() {
   // Promote a Chef Jennifer recipe into the user's permanent vault.
   async function moveRecipeToSocialShare(item) {
     if (!user) return
+    const meta = item.metadata || {}
+    const ingredients = Array.isArray(meta.ingredients) ? meta.ingredients.map(ing => {
+      if (typeof ing === 'string') return { name: ing, measure: '' }
+      return { name: ing?.name || '', measure: ing?.measure || '' }
+    }) : []
+    const description = (meta.description || '').trim()
+    const familyNotes = description
+      ? `${description}\n\nShared from Chef Jennifer ♥`
+      : 'Shared from Chef Jennifer ♥'
+    // Save to personal_recipes so the public /share/[id] page can display it
+    const { data: inserted, error: insErr } = await supabase.from('personal_recipes').insert({
+      user_id: user.id,
+      title: item.title,
+      description: '',
+      ingredients,
+      instructions: instructionsToString(meta.instructions),
+      category: '',
+      tags: ['chef-jen', 'social-share'],
+      family_notes: familyNotes,
+      photo_url: item.metadata?.photo_url || '/chef-jen-recipe.jpg',
+      difficulty: meta.difficulty || '',
+    }).select('id').single()
+    if (insErr) { showToast('Could not move to Social Share'); return }
+    // Mark favorites row as in social share, store the personal_recipe id for sharing
     const { error } = await supabase
       .from('favorites')
-      .update({ is_in_social_share: true })
+      .update({ is_in_social_share: true, metadata: { ...meta, personal_recipe_id: inserted.id } })
       .eq('id', item.id)
     if (error) { showToast('Could not move to Social Share'); return }
     setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, _inSocialShare: true } : r))
