@@ -2325,6 +2325,19 @@ export default function MyRecipeVaultPage() {
                       >
                         🗑 Delete
                       </button>
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setActionsMenuOpen(false)
+                          const url = `${window.location.origin}/share/${viewing.id}`
+                          const text = `${viewing.title} — Chef Jen approves ♥`
+                          const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`
+                          window.open(fbUrl, '_blank')
+                        }}
+                        className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100"
+                      >
+                        📘 Share to Facebook
+                      </button>
                     </div>
                   </>
                 )}
