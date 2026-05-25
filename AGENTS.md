@@ -994,3 +994,32 @@ Magic-link sign-in already works inside the webview (the whole flow stays in one
 - Every Cowork / Claude session starts fresh with **no memory** of previous conversations. This file is the handoff.
 - When adding a new page, section, or convention: update the relevant section here in the same commit.
 - When a decision matters ("we tried X and rejected it because Y"), capture it under a new `## Decision log` section rather than burying it in commit messages.
+
+## My Studio / Vault Architecture (May 2026)
+
+### Renames
+- My Playbook → **My Studio** (staging ground)
+- Chef Portfolio → **Social Share**
+- What's Cooking → **Learning Vault**
+
+### My Studio Tabs (app/playbook/page.js)
+4 tabs: Chef Jen Practice (ai_recipe) | Chef Jen Teach Notes (ai_answer) | Chef TV Teach (video_education) | Chef TV Practice (video_recipe)
+
+### Chef Jen Recipe Row Buttons (components/ChefJenItem.js)
+Each recipe has TWO independent buttons:
+1. **🔐 Recipe Vault** — inserts into `personal_recipes`, tracks `_inVault` in session state. CRITICAL: does NOT set `is_in_vault=true` on favorites row.
+2. **🎤 Social Share** — sets `is_in_vault=true` on favorites row, tracks `_inSocialShare` in session state.
+
+Both buttons stay visible after tapping (recipe stays in My Studio list). ✕ removes from My Studio entirely.
+
+### Data Flow
+- `is_in_vault=true` on favorites = exclusively means "in Social Share"
+- `_inVault` is determined on load by matching title against `personal_recipes`
+- Social Share page (listStyle=portfolio in app/secret/page.js) queries: `favorites WHERE type='ai_recipe' AND is_in_vault=true`
+- Learning Vault shows: `favorites WHERE type='video_education' AND is_in_vault=true` (portfolioVideos state)
+
+### Auth / Custom Domain (May 2026)
+- Supabase custom domain active: `auth.mycompanionapps.com`
+- NEXT_PUBLIC_SUPABASE_URL in Vercel = `https://auth.mycompanionapps.com`
+- Google OAuth client for MyRecipe in Google Cloud Console — redirect URIs include both old and new domain
+- iOS dialog now shows "auth.mycompanionapps.com" instead of random Supabase string
