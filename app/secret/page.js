@@ -3833,7 +3833,7 @@ export default function MyRecipeVaultPage() {
                       if (opt.key === 'grid') url.searchParams.delete('view')
                       else url.searchParams.set('view', opt.key)
                       window.history.replaceState({}, '', url.toString())
-                      if (opt.key === 'portfolio' && user) loadPortfolioNotes(user.id)
+                      if ((opt.key === 'portfolio' || opt.key === 'cardbox') && user) loadPortfolioNotes(user.id)
                       // Clear the surprise me pick when leaving cardbox so
                       // it doesn't reappear stale on next return. Also kill
                       // story mode if it was open — it only belongs to the
@@ -3877,6 +3877,39 @@ export default function MyRecipeVaultPage() {
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : listStyle === 'cardbox' ? (
           <div>
+            {/* Chef Jen Teach Notes in Learning Vault */}
+            {portfolioNotes.length > 0 && (
+              <div className="mb-4 bg-white rounded-2xl border-2 border-amber-200 border-l-8 border-l-amber-500 overflow-hidden">
+                <div className="px-4 py-3 bg-amber-50 flex items-center gap-3">
+                  <span className="text-2xl">💡</span>
+                  <span className="font-bold text-amber-900">Chef Jen Teach Notes</span>
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">{portfolioNotes.length}</span>
+                </div>
+                <div className="divide-y divide-amber-100">
+                  {portfolioNotes.map(note => (
+                    <div key={note.id} className="px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 leading-snug">{note.title}</p>
+                          {note.metadata?.answer && (
+                            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{note.metadata.answer}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={async () => {
+                            await supabase.from('favorites').update({ is_in_vault: false }).eq('id', note.id)
+                            setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
+                          }}
+                          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                          title="Remove from Learning Vault"
+                        >×</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {portfolioVideos.length > 0 ? (
               <div className="mb-4 bg-white rounded-2xl border-2 border-sky-200 border-l-8 border-l-sky-500 overflow-hidden">
                 <button
@@ -3909,14 +3942,14 @@ export default function MyRecipeVaultPage() {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : portfolioNotes.length === 0 ? (
               <div className="text-center py-16 px-6">
                 <p className="text-5xl mb-4">🎓</p>
                 <h2 className="text-xl font-bold text-gray-900 mb-2">Learning Vault</h2>
                 <p className="text-gray-500 text-sm leading-relaxed mb-6">Your saved lessons, techniques, and cooking knowledge — all in one place.</p>
-                <p className="text-xs text-gray-400">Move Chef TV Teach videos from My Studio to fill your Learning Vault.</p>
+                <p className="text-xs text-gray-400">Move Chef TV Teach videos and Chef Jen Teach Notes from My Studio.</p>
               </div>
-            )}
+            ) : null}
           </div>
         ) : listStyle === 'portfolio' ? (
           <div>
