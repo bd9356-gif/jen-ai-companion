@@ -551,7 +551,7 @@ export default function ChefPage() {
                       </button>
                       {/* Post-save exit cue — same fix as the Practice
                           recipe bubble. After `saved === true`, surface
-                          a "📘 View in Playbook →" link next to the
+                          a "🎬 View in My Studio →" link next to the
                           greyed save button so the user sees where the
                           note went and has an obvious next step. Deep-
                           links to Playbook's 📝 Notes tab. */}
@@ -560,7 +560,7 @@ export default function ChefPage() {
                           href="/playbook?tab=chef_notes"
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500 bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                         >
-                          📘 View in Playbook →
+                          🎬 View in My Studio →
                         </a>
                       )}
                       {practice && !loading && (
@@ -680,7 +680,7 @@ function RecipeMessage({ msg, saved, onSave }) {
         </div>
 
         {/* Save row + post-save exit cue. Once `saved === true`, the
-            save button greys out and a prominent "📘 View in Playbook →"
+            save button greys out and a prominent "🎬 View in My Studio →"
             link appears next to it — without this the page sat idle
             after a save with no obvious next step (Bill: "the page stays
             after save need to go back to get out"). The link deep-links
@@ -701,7 +701,7 @@ function RecipeMessage({ msg, saved, onSave }) {
               href="/playbook?tab=chef_recipes"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-500 bg-orange-600 text-white hover:bg-orange-700 transition-colors"
             >
-              📘 View in Playbook →
+              🎬 View in My Studio →
             </a>
           )}
         </div>
