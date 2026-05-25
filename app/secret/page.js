@@ -3877,38 +3877,63 @@ export default function MyRecipeVaultPage() {
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : listStyle === 'cardbox' ? (
           <div>
-            {/* Chef Jen Teach Notes in Learning Vault */}
-            {portfolioNotes.length > 0 && (
-              <div className="mb-4 bg-white rounded-2xl border-2 border-amber-200 border-l-8 border-l-amber-500 overflow-hidden">
-                <div className="px-4 py-3 bg-amber-50 flex items-center gap-3">
-                  <span className="text-2xl">💡</span>
-                  <span className="font-bold text-amber-900">Chef Jen Teach Notes</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">{portfolioNotes.length}</span>
-                </div>
-                <div className="divide-y divide-amber-100">
-                  {portfolioNotes.map(note => (
-                    <div key={note.id} className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 leading-snug">{note.title}</p>
-                          {note.metadata?.answer && (
-                            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{note.metadata.answer}</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={async () => {
-                            await supabase.from('favorites').update({ is_in_vault: false }).eq('id', note.id)
-                            setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
-                          }}
-                          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
-                          title="Remove from Learning Vault"
-                        >×</button>
+            {/* Chef Jen Teach Notes in Learning Vault — grouped accordion */}
+            {portfolioNotes.length > 0 && (() => {
+              const grouped = {}
+              for (const g of PORTFOLIO_GROUPS) grouped[g.key] = []
+              for (const note of portfolioNotes) {
+                const cat = categorizeChefNote(note)
+                if (grouped[cat]) grouped[cat].push(note)
+                else grouped['improve'].push(note)
+              }
+              return PORTFOLIO_GROUPS.map(g => {
+                const items = grouped[g.key] || []
+                if (items.length === 0) return null
+                const isOpen = portfolioOpenGroups.has(g.key)
+                return (
+                  <div key={g.key} className={`mb-3 bg-white rounded-2xl border-2 ${g.border} border-l-8 ${g.stripe} overflow-hidden`}>
+                    <button
+                      onClick={() => setPortfolioOpenGroups(prev => {
+                        const next = new Set(prev)
+                        if (next.has(g.key)) next.delete(g.key)
+                        else next.add(g.key)
+                        return next
+                      })}
+                      className={`w-full flex items-center justify-between px-4 py-3 ${isOpen ? g.headerBg : 'bg-white'} hover:${g.headerBg} transition-colors`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{g.emoji}</span>
+                        <span className={`font-bold ${g.headerText}`}>{g.label}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${g.countBg} ${g.countText}`}>{items.length}</span>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                      <span className={`text-xl ${g.headerText}`}>{isOpen ? '▾' : '▸'}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="divide-y divide-gray-100">
+                        {items.map(note => (
+                          <div key={note.id} className="px-4 py-3 flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 leading-snug">{note.title}</p>
+                              {note.metadata?.answer && (
+                                <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{note.metadata.answer}</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={async () => {
+                                await supabase.from('favorites').update({ is_in_vault: false }).eq('id', note.id)
+                                setPortfolioNotes(prev => prev.filter(n => n.id !== note.id))
+                              }}
+                              className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                              title="Remove from Learning Vault"
+                            >×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            })()}
 
             {portfolioVideos.length > 0 ? (
               <div className="mb-4 bg-white rounded-2xl border-2 border-sky-200 border-l-8 border-l-sky-500 overflow-hidden">
