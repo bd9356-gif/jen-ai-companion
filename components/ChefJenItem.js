@@ -9,7 +9,7 @@ import { normalizeInstructionsArray } from '@/lib/normalize_instructions'
 // Used by /chef-recipes. The onSaveToVault callback is responsible for
 // the DB insert and calls back on success; local state tracks whether
 // the button has been pressed this session.
-export default function ChefJenItem({ item, onRemove, onSaveToVault, onMoveToSocialShare, inSocialShare }) {
+export default function ChefJenItem({ item, onRemove, onSaveToVault, onMoveToSocialShare, inSocialShare, vaultedFromStudio }) {
   const [expanded, setExpanded] = useState(false)
   const [savedToVault, setSavedToVault] = useState(false)
   // Same pattern as Chef TV Teach's "✓ In Portfolio" badge — read the
@@ -58,15 +58,15 @@ export default function ChefJenItem({ item, onRemove, onSaveToVault, onMoveToSoc
             {onSaveToVault && (
               <button
                 onClick={handleSaveToVault}
-                disabled={inVault}
+                disabled={inVault || savedToVault || vaultedFromStudio}
                 title="Save this recipe to your Recipe Vault"
                 className={`text-xs font-semibold rounded-lg px-2.5 py-1 border-2 transition-colors ${
-                  inVault
+                  (inVault || savedToVault || vaultedFromStudio)
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700 cursor-default'
                     : 'border-orange-300 bg-orange-50 text-orange-700 hover:opacity-80'
                 }`}
               >
-                {inVault ? '✓ In Recipe Vault' : '🔐 Recipe Vault'}
+                {(inVault || savedToVault || vaultedFromStudio) ? '✓ In Recipe Vault' : '🔐 Recipe Vault'}
               </button>
             )}
             {onMoveToSocialShare && (

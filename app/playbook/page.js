@@ -564,7 +564,7 @@ export default function PlaybookPage() {
     const { error: lockErr } = await supabase
       .from('favorites').update({ is_in_vault: true }).eq('id', item.id)
     if (lockErr) { showToast('Could not move recipe'); return }
-    setRecipes(prev => prev.filter(r => r.id !== item.id))
+    setRecipes(prev => prev.map(r => r.id === item.id ? { ...r, _inVault: true } : r))
     showToast('Saved to Recipe Vault ✓')
   }
 
@@ -849,7 +849,7 @@ export default function PlaybookPage() {
                               onMove={(bucket) => moveToBucket(item, bucket)}
                               onSaveToVault={() => saveVideoToVault(item)}
                               onMoveToPortfolio={() => moveVideoToPortfolio(item)}
-                              inVault={!!item._inVault}
+                              vaultedFromStudio={!!item._inVault}
                               inPortfolio={!!item._inPortfolio}
                               onRemove={() => removeItem(item)}
                               currentBucket={tab}
@@ -891,6 +891,7 @@ export default function PlaybookPage() {
                         onSaveToVault={() => saveRecipeToVault(item)}
                         onMoveToSocialShare={() => moveRecipeToSocialShare(item)}
                         inSocialShare={!!item._inSocialShare}
+                        vaultedFromStudio={!!item._inVault}
                       />
                     ))
                   )}
