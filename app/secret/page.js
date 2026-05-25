@@ -3910,12 +3910,35 @@ export default function MyRecipeVaultPage() {
             )}
           </div>
         ) : listStyle === 'portfolio' ? (
-          <div className="text-center py-16 px-6">
-            <p className="text-5xl mb-4">🎤</p>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Social Share</h2>
-            <p className="text-gray-500 text-sm leading-relaxed mb-4">Your stage. Your story.<br/>Share your creations with the world.</p>
-            <p className="text-xs text-gray-400 mb-6">Move Chef Jen recipes and Chef TV practice videos here from My Studio.</p>
-            <button onClick={() => window.location.href='/playbook'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open My Studio →</button>
+          <div>
+            {portfolioRecipes.length === 0 ? (
+              <div className="text-center py-16 px-6">
+                <p className="text-5xl mb-4">🎤</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Social Share</h2>
+                <p className="text-gray-500 text-sm leading-relaxed mb-4">Your stage. Your story.<br/>Share your creations with the world.</p>
+                <p className="text-xs text-gray-400 mb-6">Move Chef Jen recipes here from My Studio.</p>
+                <button onClick={() => window.location.href='/playbook'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open My Studio →</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {portfolioRecipes.map(r => (
+                  <div key={r.id} className="bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 px-4 py-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{r.title}</p>
+                      <p className="text-xs text-rose-600 mt-0.5">👨‍🍳 Chef Jen Recipe</p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await supabase.from('favorites').update({ is_in_vault: false }).eq('id', r.id)
+                        setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
+                      }}
+                      className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                      title="Remove from Social Share"
+                    >×</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : recipes.length === 0 ? (
           <div className="text-center py-16">
