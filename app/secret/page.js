@@ -3817,9 +3817,9 @@ export default function MyRecipeVaultPage() {
                   NOT the same as /cards (a separate "chef card" concept). */}
               <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                 {[
-                  { key: 'cardbox', icon: '🍽', title: "Learning Vault — your saved lessons & techniques" },
-                  { key: 'grid', icon: '🖼', title: 'Grid view (recipes)' },
-                  { key: 'portfolio', icon: '💎', title: 'Social Share (saved notes)' },
+                  { key: 'grid', icon: '🔐', title: 'Recipe Vault' },
+                  { key: 'cardbox', icon: '🎓', title: 'Learning Vault' },
+                  { key: 'portfolio', icon: '🎤', title: 'Social Share' },
                 ].map(opt => (
                   <button
                     key={opt.key}
