@@ -2338,6 +2338,19 @@ export default function MyRecipeVaultPage() {
                       >
                         📘 Share to Facebook
                       </button>
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setActionsMenuOpen(false)
+                          const url = `${window.location.origin}/share/${viewing.id}`
+                          const text = `${viewing.title} — Chef Jen approves ♥`
+                          const pinUrl = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`
+                          window.open(pinUrl, '_blank')
+                        }}
+                        className="w-full text-left text-sm font-semibold text-red-600 px-4 py-2.5 hover:bg-red-50 border-t border-gray-100"
+                      >
+                        📌 Pin to Pinterest
+                      </button>
                     </div>
                   </>
                 )}
@@ -4028,6 +4041,18 @@ export default function MyRecipeVaultPage() {
                       className="w-full text-xs font-semibold bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-700 transition-colors"
                     >
                       📘 Share to Facebook
+                    </button>
+                    <button
+                      onClick={() => {
+                        const shareId = r.metadata?.personal_recipe_id || r.id
+                        const url = `${window.location.origin}/share/${shareId}`
+                        const text = `${r.title} — Chef Jen approves ♥`
+                        const pinUrl = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`
+                        window.open(pinUrl, '_blank')
+                      }}
+                      className="w-full text-xs font-semibold bg-red-600 text-white rounded-lg py-1.5 hover:bg-red-700 transition-colors mt-1.5"
+                    >
+                      📌 Pin to Pinterest
                     </button>
                   </div>
                 ))}
