@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// My Playbook buckets — 2 intent-based placements for a Chef TV save.
+// My Studio buckets — 2 intent-based placements for a Chef TV save.
 // Framing: Teach = technique you want to learn; Practice = recipe you
 // want to cook. Every Chef TV video is one or the other — video-only
 // items are Teach-eligible, recipe videos are Practice-eligible.
@@ -435,7 +435,7 @@ export default function VideosPage() {
 
   // "Save to My Kitchen" — copy this Chef TV recipe into the user's
   // personal Recipe Vault. Under MOVE semantics (May 2026), the Vault is
-  // the home — if the video was sitting in My Playbook (Teach or Practice)
+  // the home — if the video was sitting in My Studio (Teach or Practice)
   // before this save, it leaves the notebook on save. The user's notebook
   // stays an inbox of "still to deal with" items, not a parallel archive.
   // Vault delete is permanent — see AGENTS.md "Notebook delete semantics".
@@ -686,7 +686,7 @@ export default function VideosPage() {
                   🍳 <span className="font-semibold">Practice</span> highlights recipes to cook.
                 </p>
                 <p className="text-sm text-amber-900 leading-relaxed">
-                  Save videos to <span className="font-semibold">My Playbook</span>, or 👉See Detail to save a recipe.
+                  Save videos to <span className="font-semibold">My Studio</span>, or 👉See Detail to save a recipe.
                 </p>
               </div>
             )}

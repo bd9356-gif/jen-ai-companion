@@ -11,7 +11,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-// My Playbook — your notebook from two classrooms with two teachers.
+// My Studio — your notebook from two classrooms with two teachers.
 // Each teacher has the same two modes (🎓 Teach + 🍳 Practice), and
 // the page nav reflects that: two stacked pill rows, one per teacher,
 // with the same two pills inside each. Repeating "Teach"/"Practice"
@@ -655,7 +655,7 @@ export default function PlaybookPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bold text-gray-900">📘 My Playbook</h1>
+            <h1 className="text-lg font-bold text-gray-900">📘 My Studio</h1>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => window.location.href='/chef'} className="text-xs text-gray-500 border border-gray-200 rounded-lg px-3 py-1.5">Chef Jen</button>

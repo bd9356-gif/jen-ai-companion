@@ -206,7 +206,7 @@ async function seedChefNotesOnce(user) {
    instructor — the most personal teaching surface in the app —
    so she's the first thing a user sees in the learning column.
    Chef TV (video classroom) follows her, then the library
-   (Guides), then the practice book (My Playbook).
+   (Guides), then the practice book (My Studio).
 
    Routing note:
    All tiles route to dedicated pages. The /picks combined view

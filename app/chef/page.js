@@ -342,8 +342,8 @@ export default function ChefPage() {
             </button>
             <button
               onClick={() => window.location.href='/playbook'}
-              title="Open My Playbook"
-              aria-label="Open My Playbook"
+              title="Open My Studio"
+              aria-label="Open My Studio"
               className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
             >
               📘
@@ -455,7 +455,7 @@ export default function ChefPage() {
             </button>
           </div>
           <p className="text-xs text-gray-400 mt-2 text-center">
-            {isPractice ? '🍳 Recipes save to Chef Jennifer Recipes.' : '📝 Answers save to Chef Notes (on My Playbook).'}
+            {isPractice ? '🍳 Recipes save to Chef Jennifer Recipes.' : '📝 Answers save to Chef Notes (on My Studio).'}
           </p>
         </div>
 

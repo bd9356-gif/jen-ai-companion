@@ -47,7 +47,7 @@ const TAG_GROUPS = [
 ]
 const CURATED_TAGS = TAG_GROUPS.flatMap(g => g.tags)
 
-// Chef Portfolio — keep-forever Chef Notes get auto-grouped into 5 fixed
+// Social Share — keep-forever Chef Notes get auto-grouped into 5 fixed
 // "How to..." buckets so the Portfolio reads as a kitchen reference shelf
 // instead of a chronological pile. Order is locked. Each group carries its
 // own color stripe (mirrors Guides/Library color rhythm) and is rendered
@@ -828,7 +828,7 @@ export default function MyRecipeVaultPage() {
   // shows. 'list' and 'grid' are display modes for *recipes* (single
   // column with thumb+description vs. two-column photo-first cream-paper
   // tiles); both tap-through to the same Vault detail view with full
-  // instructions. 'portfolio' (💎 Chef Portfolio) is a different surface —
+  // instructions. 'portfolio' (💎 Social Share) is a different surface —
   // it shows the curated Chef Notes the user promoted from Playbook via
   // "💎 Add to Portfolio". Notes only, no recipes; the Add/Import buttons
   // don't apply there. Synced to ?view=grid|portfolio via
@@ -836,7 +836,7 @@ export default function MyRecipeVaultPage() {
   // Distinct from Recipe Cards (/cards), a separate "chef card" concept.
   // Default is 'grid' (May 2026, Bill's call) — the index-card-style
   // photo-first tile view reads as the front door of the vault. The
-  // What's Cooking? cardbox + Portfolio still live one tap away in the
+  // Learning Vault cardbox + Portfolio still live one tap away in the
   // toggle; they're just not what you land on by default.
   const [listStyle, setListStyle] = useState('grid')
   // Surprise me — random recipe pulled from non-favorites when the user
@@ -873,7 +873,7 @@ export default function MyRecipeVaultPage() {
   // is per-mount (no persistence) since the user usually opens
   // Portfolio for one specific thing and closes again.
   const [portfolioVideosOpen, setPortfolioVideosOpen] = useState(false)
-  // Which of the 5 Chef Portfolio "How to..." groups are expanded.
+  // Which of the 5 Social Share "How to..." groups are expanded.
   // Defaults to all collapsed (matches Guides/Library accordion pattern) so
   // the Portfolio opens as a 5-row scannable index — tap a row to drill in.
   const [portfolioOpenGroups, setPortfolioOpenGroups] = useState(() => new Set())
@@ -1283,7 +1283,7 @@ export default function MyRecipeVaultPage() {
     setEducationVideos(prev => prev.filter(v => v.id !== id))
   }
 
-  // Chef Portfolio — saved Chef Notes (AI answers) AND Chef TV Teach
+  // Social Share — saved Chef Notes (AI answers) AND Chef TV Teach
   // videos the user has promoted from /playbook. Both live on the
   // `favorites` table with `is_in_vault=true`; we run two parallel
   // queries because the rendering surface differs (notes get the
@@ -1401,7 +1401,7 @@ export default function MyRecipeVaultPage() {
     // promoted from Playbook, not recipes.
     const viewParam = searchParams.get('view')
     // 'list' retired May 2026 — old ?view=list bookmarks fall through
-    // to the default (cardbox / What's Cooking?). Grid covers visual
+    // to the default (cardbox / Learning Vault). Grid covers visual
     // browse; the cardbox All Recipes drawer covers dense scanning.
     if (viewParam === 'grid') setListStyle('grid')
     else if (viewParam === 'portfolio') setListStyle('portfolio')
@@ -3691,7 +3691,7 @@ export default function MyRecipeVaultPage() {
               </button>
             )}
             <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">
-              {listStyle === 'portfolio' ? '💎 Chef Portfolio' : '🔐 Recipe Vault'}
+              {listStyle === 'portfolio' ? '💎 Social Share' : '🔐 Recipe Vault'}
             </h1>
             {/* ⚙️ Settings — opens the Vault settings view (Recently
                 Deleted recovery, future preferences). Matches the back
@@ -3805,9 +3805,9 @@ export default function MyRecipeVaultPage() {
                   NOT the same as /cards (a separate "chef card" concept). */}
               <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                 {[
-                  { key: 'cardbox', icon: '🍽', title: "What's Cooking? — favorites + a wildcard" },
+                  { key: 'cardbox', icon: '🍽', title: "Learning Vault — your saved lessons & techniques" },
                   { key: 'grid', icon: '🖼', title: 'Grid view (recipes)' },
-                  { key: 'portfolio', icon: '💎', title: 'Chef Portfolio (saved notes)' },
+                  { key: 'portfolio', icon: '💎', title: 'Social Share (saved notes)' },
                 ].map(opt => (
                   <button
                     key={opt.key}
@@ -3904,7 +3904,7 @@ export default function MyRecipeVaultPage() {
             }
             return (
               <div>
-                {/* "What's Cooking?" header — names the decision-surface
+                {/* "Learning Vault" header — names the decision-surface
                     framing (Bill's tagline, May 2026). This mode is the
                     answer to "what should I cook?" — favorites first,
                     a 🎲 surprise when you're stuck, the whole vault one
@@ -4289,7 +4289,7 @@ export default function MyRecipeVaultPage() {
             )
           })()
         ) : listStyle === 'portfolio' ? (
-          /* 💎 Chef Portfolio — curated Chef Notes the user has promoted
+          /* 💎 Social Share — curated Chef Notes the user has promoted
              from /playbook. Notes (saved AI answers), not recipes — so
              this branch replaces the regular recipe list/grid entirely.
              Tap a row to expand; tap the × to remove from the Portfolio
@@ -4556,7 +4556,7 @@ export default function MyRecipeVaultPage() {
               )}
 
               {/* "Videos Only" section retired May 2026 — video-only
-                  saves now live in 💎 Chef Portfolio's Learning Videos
+                  saves now live in 💎 Social Share's Learning Videos
                   section (filed from My Playbook with 💎 Move to
                   Portfolio). The educationVideos state + loader still
                   populate so Portfolio reads them, but they're not
