@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  'https://epgtahifcphwjifxmxst.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export async function POST(req) {
   try {
-    const { title, description } = await req.json()
+    const { title, description, userId } = await req.json()
     if (!title) return NextResponse.json({ error: 'No title' }, { status: 400 })
 
     const { default: OpenAI } = await import('openai')
@@ -16,11 +22,32 @@ export async function POST(req) {
       n: 1,
       size: '1024x1024',
       quality: 'medium',
-      output_format: 'url',
+      output_format: 'jpeg',
     })
 
-    const imageUrl = response.data[0].url
-    return NextResponse.json({ url: imageUrl })
+    // Get base64 image data
+    const b64 = response.data[0].b64_json
+    if (!b64) return NextResponse.json({ error: 'No image data' }, { status: 500 })
+
+    // Convert base64 to buffer
+    const buffer = Buffer.from(b64, 'base64')
+
+    // Upload to Supabase storage
+    const filename = `recipe-photos/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+    const { error: uploadError } = await supabase.storage
+      .from('personal_recipes')
+      .upload(filename, buffer, { contentType: 'image/jpeg', upsert: false })
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('personal_recipes')
+      .getPublicUrl(filename)
+
+    return NextResponse.json({ url: publicUrl })
   } catch (err) {
     console.error('Image generation error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
