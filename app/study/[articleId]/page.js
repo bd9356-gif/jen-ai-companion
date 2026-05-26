@@ -115,6 +115,8 @@ export default function StudyHallPage({ params }) {
             user_id: user.id,
             type: 'ai_answer',
             title: `Quiz: ${article?.title || 'Library article'}`,
+            thumbnail_url: '',
+            source: 'ai',
             is_in_vault: true,
             metadata: {
               question: `Quiz results for: ${article?.title || 'Library article'}`,
