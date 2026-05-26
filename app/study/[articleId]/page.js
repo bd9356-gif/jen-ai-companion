@@ -124,7 +124,7 @@ export default function StudyHallPage({ params }) {
             }
           })
           setSavedResult(true)
-        } catch {}
+        } catch(err) { console.error("Quiz save error:", err) }
         void finalScore
       }
       return
