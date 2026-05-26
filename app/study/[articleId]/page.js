@@ -110,6 +110,17 @@ export default function StudyHallPage({ params }) {
             score,
             total: questions.length,
           })
+          // Save quiz result to Learning Vault
+          await supabase.from('favorites').insert({
+            user_id: user.id,
+            type: 'ai_answer',
+            title: `Quiz: ${article?.title || 'Library article'}`,
+            is_in_vault: true,
+            metadata: {
+              question: `Quiz results for: ${article?.title || 'Library article'}`,
+              answer: `Score: ${score}/${questions.length} — ${Math.round((score/questions.length)*100)}% correct`,
+            }
+          })
           setSavedResult(true)
         } catch {}
         void finalScore

@@ -232,7 +232,7 @@ export default function GuidesPage() {
           {studyHallOpen && (
             <div className="px-4 pb-3.5 pl-[60px]">
               <p className="text-xs text-emerald-800/80 leading-relaxed">
-                After you read an article, tap <span className="font-semibold">📝 Ask Chef Jen to quiz me</span> at the bottom. Three quick questions to see what stuck. Your results land in <span className="font-semibold">My Studio</span>.
+                After you read an article, tap <span className="font-semibold">📝 Ask Chef Jen to quiz me</span> at the bottom. Three quick questions to see what stuck. Your results land in <span className="font-semibold">Learning Vault</span>.
               </p>
             </div>
           )}
@@ -302,7 +302,7 @@ export default function GuidesPage() {
                                 {/* 📝 Study Hall — Chef Jennifer quizzes
                                     you on what you just read. 3-question
                                     multiple choice, immediate feedback,
-                                    result saves to My Studio. Lives at
+                                    result saves to Learning Vault. Lives at
                                     the bottom of every expanded article
                                     so it shows up right when the reading
                                     momentum is fresh. */}
