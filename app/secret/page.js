@@ -1397,6 +1397,8 @@ export default function MyRecipeVaultPage() {
       .eq('id', video.id)
     if (updErr) { showToast('Could not remove'); return }
     setPortfolioVideos(prev => prev.filter(v => v.id !== video.id))
+    // Signal Chef TV to refresh its saved state
+    sessionStorage.setItem('cheftv_refresh', Date.now().toString())
     showToast('Removed from Learning Vault')
   }
 

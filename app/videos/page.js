@@ -267,6 +267,8 @@ export default function VideosPage() {
   const pathname = usePathname()
   useEffect(() => {
     if (!user) return
+    const flag = sessionStorage.getItem('cheftv_refresh')
+    if (flag) sessionStorage.removeItem('cheftv_refresh')
     loadSaved(user.id)
   }, [user, pathname])
 
