@@ -1890,6 +1890,27 @@ export default function MyRecipeVaultPage() {
   }
 
   // Hard delete + restore for the Settings → Recently Deleted surface.
+  async function generatePhoto(recipe) {
+    if (!recipe) return
+    showToast('Generating photo...')
+    try {
+      const res = await fetch('/api/generate-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: recipe.title, description: recipe.description })
+      })
+      const data = await res.json()
+      if (data.error) { showToast('Could not generate photo'); return }
+      // Save photo URL to personal_recipes
+      await supabase.from('personal_recipes').update({ photo_url: data.url }).eq('id', recipe.id)
+      setViewing(prev => ({ ...prev, photo_url: data.url }))
+      setRecipes(prev => prev.map(r => r.id === recipe.id ? { ...r, photo_url: data.url } : r))
+      showToast('Photo generated! ')
+    } catch (err) {
+      showToast('Could not generate photo')
+    }
+  }
+
   // restoreRecipe clears `deleted_at` so the recipe reappears in the
   // main Vault list. purgeRecipe does the real DELETE — gone forever.
   async function restoreRecipe(id) {
@@ -2390,6 +2411,16 @@ export default function MyRecipeVaultPage() {
                         className="w-full text-left text-sm font-semibold text-amber-700 px-4 py-2.5 hover:bg-amber-50 border-t border-gray-100"
                       >
                         Create Recipe Card
+                      </button>
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setActionsMenuOpen(false)
+                          generatePhoto(viewing)
+                        }}
+                        className="w-full text-left text-sm font-semibold text-emerald-600 px-4 py-2.5 hover:bg-emerald-50 border-t border-gray-100"
+                      >
+                        ✨ Generate AI Photo
                       </button>
 <button
                         role="menuitem"
