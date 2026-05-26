@@ -378,7 +378,7 @@ function TagSelector({ tags, onChange, libraryCustomTags = [] }) {
 
   return (
     <div>
-      <label className="block text-sm font-bnew text-gray-700 mb-2">🏷️ Tags</label>
+      <label className="block text-sm font-bold text-gray-700 mb-2">🏷️ Tags</label>
       <div className="space-y-3">
         {TAG_GROUPS.map(group => (
           <div key={group.label}>
@@ -509,7 +509,7 @@ function EditForm({ initial, initialIngredients, onSave, onCancel, photoUrl, onU
   const fieldBase =
     "w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base leading-snug focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-200 transition-colors"
   const fieldStyle = { fontSize: '16px' }
-  const labelClass = "block text-base font-bnew text-gray-800 mb-2"
+  const labelClass = "block text-base font-bold text-gray-800 mb-2"
   const helperClass = "text-sm text-gray-500 mb-2"
 
   return (
@@ -748,7 +748,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
               {ingredients.length > 0 && (
                 <div className="mb-4 pt-3">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-bnew text-gray-500 uppercase tracking-wide">Ingredients</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Ingredients</p>
                     <button onClick={addAllToShoppingList} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-2 py-1 hover:bg-orange-50">🛒 Add All</button>
                   </div>
                   <ul className="space-y-1">
@@ -773,7 +773,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
               )}
               {instructions.length > 0 && (
                 <div>
-                  <p className="text-xs font-bnew text-gray-500 uppercase tracking-wide mb-2">Instructions</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Instructions</p>
                   <div className="space-y-2">
                     {instructions.map((step, i) => (
                       <div key={i} className="flex gap-2">
@@ -890,6 +890,7 @@ export default function MyRecipeVaultPage() {
   // whenever the user toggles between listStyle modes.
   const [portfolioNotes, setPortfolioNotes] = useState([])
   const [portfolioRecipes, setPortfolioRecipes] = useState([])
+  const [studyResults, setStudyResults] = useState([])
   // Settings → 🗑 Recently Deleted (May 2026, migration 020). Recipes
   // soft-deleted from the Vault (deleted_at IS NOT NULL) stay
   // recoverable for 30 days. Loaded lazily when the user opens
@@ -1118,7 +1119,7 @@ export default function MyRecipeVaultPage() {
       >
         <div className="flex items-start justify-between gap-3 mb-3">
           <div>
-            <h3 className="text-lg font-bnew text-gray-900">📋 Paste your image</h3>
+            <h3 className="text-lg font-bold text-gray-900">📋 Paste your image</h3>
             <p className="text-sm text-gray-600 mt-1">The browser couldn&apos;t read the clipboard directly. Paste your image here instead:</p>
           </div>
           <button
@@ -1351,6 +1352,14 @@ export default function MyRecipeVaultPage() {
     setPortfolioNotes(noteRows || [])
     setPortfolioVideos(eduVideoRows || [])          // Learning Vault only
     setPortfolioRecipes([...(recipeVideoRows || []), ...(aiRecipeRows || [])])  // Social Share
+    // Load quiz results for Learning Vault
+    const { data: quizRows } = await supabase
+      .from('study_hall_results')
+      .select('*')
+      .eq('user_id', userId)
+      .order('taken_at', { ascending: false })
+      .limit(50)
+    setStudyResults(quizRows || [])
   }
 
   // Load soft-deleted recipes for the Settings → 🗑 Recently Deleted
@@ -2446,7 +2455,7 @@ export default function MyRecipeVaultPage() {
           {/* Title overlay */}
           <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
             <div className="max-w-2xl mx-auto px-4 pb-3 sm:pb-4">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bnew text-white leading-tight drop-shadow-lg line-clamp-2">{viewing.title}</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white leading-tight drop-shadow-lg line-clamp-2">{viewing.title}</h1>
               {viewing.description && (
                 <p className="text-xs sm:text-sm text-white/90 mt-1 line-clamp-3 drop-shadow">{viewing.description}</p>
               )}
@@ -2545,7 +2554,7 @@ export default function MyRecipeVaultPage() {
                 title={detailCollapsed.info ? 'Expand Recipe Info' : 'Collapse Recipe Info'}
                 className="w-full flex items-center justify-between text-left mb-3"
               >
-                <p className="text-xs font-bnew text-orange-700 uppercase tracking-wide">📊 Recipe Info</p>
+                <p className="text-xs font-bold text-orange-700 uppercase tracking-wide">📊 Recipe Info</p>
                 <span className="text-orange-600 text-sm">{detailCollapsed.info ? '▶' : '▼'}</span>
               </button>
               {!detailCollapsed.info && (<>
@@ -2553,35 +2562,35 @@ export default function MyRecipeVaultPage() {
                 {(viewing.prep_time_minutes != null || viewing.prep_time) && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">🔪</p>
-                    <p className="text-xs font-bnew text-gray-900 mt-1">{viewing.prep_time_minutes != null ? `${viewing.prep_time_minutes} min` : viewing.prep_time}</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.prep_time_minutes != null ? `${viewing.prep_time_minutes} min` : viewing.prep_time}</p>
                     <p className="text-xs text-gray-500">Prep Time</p>
                   </div>
                 )}
                 {(viewing.cook_time_minutes != null || viewing.cooking_time) && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">⏱</p>
-                    <p className="text-xs font-bnew text-gray-900 mt-1">{viewing.cook_time_minutes != null ? `${viewing.cook_time_minutes} min` : viewing.cooking_time}</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.cook_time_minutes != null ? `${viewing.cook_time_minutes} min` : viewing.cooking_time}</p>
                     <p className="text-xs text-gray-500">Cook Time</p>
                   </div>
                 )}
                 {viewing.total_time_minutes != null && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">⏲</p>
-                    <p className="text-xs font-bnew text-gray-900 mt-1">{viewing.total_time_minutes} min</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.total_time_minutes} min</p>
                     <p className="text-xs text-gray-500">Total Time</p>
                   </div>
                 )}
                 {viewing.difficulty && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">📊</p>
-                    <p className="text-xs font-bnew text-gray-900 mt-1 capitalize">{viewing.difficulty}</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1 capitalize">{viewing.difficulty}</p>
                     <p className="text-xs text-gray-500">Difficulty</p>
                   </div>
                 )}
                 {viewing.servings && (
                   <div className="bg-white rounded-xl p-3 text-center">
                     <p className="text-base">👥</p>
-                    <p className="text-xs font-bnew text-gray-900 mt-1">{viewing.servings} servings</p>
+                    <p className="text-xs font-bold text-gray-900 mt-1">{viewing.servings} servings</p>
                     <p className="text-xs text-gray-500">Serves</p>
                   </div>
                 )}
@@ -2615,7 +2624,7 @@ export default function MyRecipeVaultPage() {
                         { key: 'fat', label: 'fat', value: nutr.fat, suffix: 'g' },
                       ].map(({ key, label, value, suffix }) => value != null && value !== '' && (
                         <div key={key} className="text-center">
-                          <p className="text-xs font-bnew text-orange-600">{value}{typeof value === 'number' && suffix ? suffix : ''}</p>
+                          <p className="text-xs font-bold text-orange-600">{value}{typeof value === 'number' && suffix ? suffix : ''}</p>
                           <p className="text-xs text-gray-500">{label}</p>
                         </div>
                       ))}
@@ -2677,7 +2686,7 @@ export default function MyRecipeVaultPage() {
                   title={detailCollapsed.ingredients ? 'Expand Ingredients' : 'Collapse Ingredients'}
                   className="flex items-center gap-2 text-left"
                 >
-                  <h2 className="text-lg font-bnew text-gray-900">Ingredients</h2>
+                  <h2 className="text-lg font-bold text-gray-900">Ingredients</h2>
                   <span className="text-gray-500 text-sm">{detailCollapsed.ingredients ? '▶' : '▼'}</span>
                 </button>
                 <button onClick={addAllToShoppingList} className="text-xs font-semibold text-orange-600 border border-orange-200 rounded-lg px-3 py-1.5 hover:bg-orange-50">🛒 Add All</button>
@@ -2715,7 +2724,7 @@ export default function MyRecipeVaultPage() {
                 title={detailCollapsed.instructions ? 'Expand Instructions' : 'Collapse Instructions'}
                 className="w-full flex items-center justify-between text-left mb-3"
               >
-                <h2 className="text-lg font-bnew text-gray-900">Instructions</h2>
+                <h2 className="text-lg font-bold text-gray-900">Instructions</h2>
                 <span className="text-gray-500 text-sm">{detailCollapsed.instructions ? '▶' : '▼'}</span>
               </button>
               {!detailCollapsed.instructions && (
@@ -2752,7 +2761,7 @@ export default function MyRecipeVaultPage() {
               <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">🥣 Mise En Place</p>
-                  <p className="text-base font-bnew text-gray-900 truncate">{viewing.title}</p>
+                  <p className="text-base font-bold text-gray-900 truncate">{viewing.title}</p>
                 </div>
                 <button
                   onClick={closeMise}
@@ -2857,7 +2866,7 @@ export default function MyRecipeVaultPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('detail')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bnew text-gray-900">✏️ Edit Recipe</h1>
+            <h1 className="text-lg font-bold text-gray-900">✏️ Edit Recipe</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
@@ -2884,14 +2893,14 @@ export default function MyRecipeVaultPage() {
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null); setTransformResult(null); setTransformPrefs([]) }}
               className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bnew text-gray-900">✨ Chef Jen Kitchen Helpers</h1>
+            <h1 className="text-lg font-bold text-gray-900">✨ Chef Jen Kitchen Helpers</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 pb-16 space-y-5">
           {/* Intro card */}
           <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-5">
-            <p className="text-xs font-bnew text-orange-700 uppercase tracking-wide mb-1">Helping with</p>
-            <p className="text-lg font-bnew text-gray-900 leading-snug">{viewing.title}</p>
+            <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-1">Helping with</p>
+            <p className="text-lg font-bold text-gray-900 leading-snug">{viewing.title}</p>
             <p className="text-sm text-gray-600 mt-2 leading-relaxed">
               Four cozy ways to tune up this recipe. Pick one below — nothing saves until you tap the green button in each card, so feel free to experiment.
             </p>
@@ -2937,7 +2946,7 @@ export default function MyRecipeVaultPage() {
             <div className="flex items-start gap-3 mb-2">
               <span className="text-2xl">🧹</span>
               <div>
-                <p className="font-bnew text-gray-900">Polish this recipe</p>
+                <p className="font-bold text-gray-900">Polish this recipe</p>
                 <p className="text-xs text-gray-600 mt-0.5">Chef Jen tidies up your steps, fixes the wording, and makes instructions easier to follow.</p>
               </div>
             </div>
@@ -2963,7 +2972,7 @@ export default function MyRecipeVaultPage() {
             <div className="flex items-start gap-3 mb-2">
               <span className="text-2xl">⚖️</span>
               <div>
-                <p className="font-bnew text-gray-900">Resize for a different crowd</p>
+                <p className="font-bold text-gray-900">Resize for a different crowd</p>
                 <p className="text-xs text-gray-600 mt-0.5">Scale ingredients up or down to match how many you are cooking for.</p>
               </div>
             </div>
@@ -2972,20 +2981,20 @@ export default function MyRecipeVaultPage() {
                 <label className="text-sm text-gray-600">Currently makes</label>
                 <div className="flex items-center gap-3">
                   <button onClick={() => updateRecipe(viewing.id, { servings: Math.max(1, (viewing.servings || 4) - 1) })}
-                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bnew text-lg flex items-center justify-center hover:bg-gray-200">−</button>
+                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center hover:bg-gray-200">−</button>
                   <span className="text-base font-semibold w-6 text-center">{viewing.servings || 4}</span>
                   <button onClick={() => updateRecipe(viewing.id, { servings: (viewing.servings || 4) + 1 })}
-                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bnew text-lg flex items-center justify-center hover:bg-gray-200">+</button>
+                    className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center hover:bg-gray-200">+</button>
                 </div>
               </div>
               <div className="flex items-center justify-between bg-white rounded-xl border border-sky-200 px-4 py-3">
                 <label className="text-sm text-sky-700 font-semibold">Resize to</label>
                 <div className="flex items-center gap-3">
                   <button onClick={() => setServings(s => Math.max(1, s - 1))}
-                    className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-bnew text-lg flex items-center justify-center hover:bg-sky-200">−</button>
+                    className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-bold text-lg flex items-center justify-center hover:bg-sky-200">−</button>
                   <span className="text-base font-semibold text-sky-700 w-6 text-center">{servings}</span>
                   <button onClick={() => setServings(s => s + 1)}
-                    className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-bnew text-lg flex items-center justify-center hover:bg-sky-200">+</button>
+                    className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 font-bold text-lg flex items-center justify-center hover:bg-sky-200">+</button>
                 </div>
               </div>
             </div>
@@ -3018,7 +3027,7 @@ export default function MyRecipeVaultPage() {
             <div className="flex items-start gap-3 mb-2">
               <span className="text-2xl">📊</span>
               <div>
-                <p className="font-bnew text-gray-900">Add cooking details</p>
+                <p className="font-bold text-gray-900">Add cooking details</p>
                 <p className="text-xs text-gray-600 mt-0.5">Chef Jen estimates prep & cook time, difficulty, equipment, and nutrition.</p>
               </div>
             </div>
@@ -3033,25 +3042,25 @@ export default function MyRecipeVaultPage() {
                   {generatedInfo.prep_time && (
                     <div className="bg-emerald-50 rounded-xl p-3">
                       <p className="text-xs text-gray-500">🔪 Prep time</p>
-                      <p className="text-sm font-bnew text-gray-900">{generatedInfo.prep_time}</p>
+                      <p className="text-sm font-bold text-gray-900">{generatedInfo.prep_time}</p>
                     </div>
                   )}
                   {generatedInfo.cooking_time && (
                     <div className="bg-emerald-50 rounded-xl p-3">
                       <p className="text-xs text-gray-500">⏱ Cook time</p>
-                      <p className="text-sm font-bnew text-gray-900">{generatedInfo.cooking_time}</p>
+                      <p className="text-sm font-bold text-gray-900">{generatedInfo.cooking_time}</p>
                     </div>
                   )}
                   {generatedInfo.difficulty && (
                     <div className="bg-emerald-50 rounded-xl p-3">
                       <p className="text-xs text-gray-500">📊 Difficulty</p>
-                      <p className="text-sm font-bnew text-gray-900 capitalize">{generatedInfo.difficulty}</p>
+                      <p className="text-sm font-bold text-gray-900 capitalize">{generatedInfo.difficulty}</p>
                     </div>
                   )}
                   {generatedInfo.servings && (
                     <div className="bg-emerald-50 rounded-xl p-3">
                       <p className="text-xs text-gray-500">👥 Makes</p>
-                      <p className="text-sm font-bnew text-gray-900">{generatedInfo.servings} serving{generatedInfo.servings === 1 ? '' : 's'}</p>
+                      <p className="text-sm font-bold text-gray-900">{generatedInfo.servings} serving{generatedInfo.servings === 1 ? '' : 's'}</p>
                     </div>
                   )}
                 </div>
@@ -3067,7 +3076,7 @@ export default function MyRecipeVaultPage() {
                     <div className="grid grid-cols-4 gap-2">
                       {['calories','protein','carbs','fat'].map(k => generatedInfo.nutrition_estimate[k] && (
                         <div key={k} className="text-center bg-white rounded-lg p-2">
-                          <p className="text-xs font-bnew text-emerald-700">{generatedInfo.nutrition_estimate[k]}</p>
+                          <p className="text-xs font-bold text-emerald-700">{generatedInfo.nutrition_estimate[k]}</p>
                           <p className="text-xs text-gray-500 capitalize">{k}</p>
                         </div>
                       ))}
@@ -3088,7 +3097,7 @@ export default function MyRecipeVaultPage() {
             <div className="flex items-start gap-3 mb-3">
               <span className="text-2xl">🌿</span>
               <div>
-                <p className="font-bnew text-gray-900">Make this recipe more…</p>
+                <p className="font-bold text-gray-900">Make this recipe more…</p>
                 <p className="text-xs text-gray-600 mt-0.5">Pick one or more cooking-style preferences — Chef Jen will adjust the recipe to match.</p>
               </div>
             </div>
@@ -3151,7 +3160,7 @@ export default function MyRecipeVaultPage() {
                 <p className="text-xs font-semibold text-purple-700">Preview — pick an action below</p>
 
                 {transformResult.title && (
-                  <p className="text-base font-bnew text-gray-900">{transformResult.title}</p>
+                  <p className="text-base font-bold text-gray-900">{transformResult.title}</p>
                 )}
 
                 {transformResult.description && (
@@ -3241,7 +3250,7 @@ export default function MyRecipeVaultPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bnew text-gray-900">⚙️ Vault Settings</h1>
+            <h1 className="text-lg font-bold text-gray-900">⚙️ Vault Settings</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
@@ -3250,7 +3259,7 @@ export default function MyRecipeVaultPage() {
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🗑</span>
-                <h2 className="text-base font-bnew text-gray-900">Recently Deleted</h2>
+                <h2 className="text-base font-bold text-gray-900">Recently Deleted</h2>
                 {trashRecipes.length > 0 && (
                   <span className="text-xs font-semibold bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{trashRecipes.length}</span>
                 )}
@@ -3315,7 +3324,7 @@ export default function MyRecipeVaultPage() {
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
-            <h1 className="text-lg font-bnew text-gray-900">Bring in a Recipe</h1>
+            <h1 className="text-lg font-bold text-gray-900">Bring in a Recipe</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
@@ -3493,7 +3502,7 @@ export default function MyRecipeVaultPage() {
               JSON each have their own flow with their own error paths. */}
           {importError && (importTab === 'url' || importTab === 'paste') && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-1.5">
-              <p className="text-sm font-bnew text-red-800">Couldn&apos;t import from URL</p>
+              <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
               <p className="text-sm text-red-700">{importError}</p>
               <p className="text-sm text-red-600">💡 Tip: Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">Paste mode</button> — copy the recipe text from the page and paste it here instead.</p>
             </div>
@@ -3504,7 +3513,7 @@ export default function MyRecipeVaultPage() {
           {(importTab === 'url' || importTab === 'paste') && (
             <button onClick={handleImport} disabled={importing || (!importText.trim() && !importUrl.trim())}
               style={{ fontSize: '16px' }}
-              className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bnew text-base hover:bg-orange-700 disabled:opacity-40 transition-colors shadow-md tracking-wide">
+              className="w-full py-4 bg-orange-600 text-white rounded-2xl font-bold text-base hover:bg-orange-700 disabled:opacity-40 transition-colors shadow-md tracking-wide">
               {importing ? '✨ Extracting recipe...' : '📥 Import Recipe'}
             </button>
           )}
@@ -3519,7 +3528,7 @@ export default function MyRecipeVaultPage() {
           {importTab === 'add' && (
             <div className="border-2 border-gray-200 rounded-2xl p-4 space-y-7 pb-4">
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">📷 Photo</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">📷 Photo</label>
                 <div className="w-full rounded-2xl bg-orange-50 border-2 border-dashed border-orange-200 flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-orange-100 transition-colors"
                   onClick={() => fileInputRef.current?.click()}>
                   {form.photo_url ? (
@@ -3539,7 +3548,7 @@ export default function MyRecipeVaultPage() {
               </div>
 
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">Recipe Title *</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">Recipe Title *</label>
                 <input placeholder="e.g. Grandma's Chicken Soup" value={form.title}
                   onChange={e => setForm(f => ({...f, title: e.target.value}))}
                   style={{ fontSize: '16px' }}
@@ -3547,7 +3556,7 @@ export default function MyRecipeVaultPage() {
               </div>
 
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">Description</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">Description</label>
                 <p className="text-sm text-gray-500 mb-2">One or two sentences about the dish.</p>
                 <textarea placeholder="A short description of this recipe" value={form.description}
                   onChange={e => setForm(f => ({...f, description: e.target.value}))}
@@ -3557,7 +3566,7 @@ export default function MyRecipeVaultPage() {
               </div>
 
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">Category</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">Category</label>
                 <input placeholder="e.g. Main Dish, Dessert, Side" value={form.category}
                   onChange={e => setForm(f => ({...f, category: e.target.value}))}
                   style={{ fontSize: '16px' }}
@@ -3567,7 +3576,7 @@ export default function MyRecipeVaultPage() {
               <TagSelector tags={form.tags} onChange={tags => setForm(f => ({...f, tags}))} libraryCustomTags={libraryCustomTags} />
 
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">Ingredients</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">Ingredients</label>
                 <p className="text-sm text-gray-500 mb-2">
                   One per line. Format: <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">2 cups - flour</span> — quantity first, then a dash, then the name.
                 </p>
@@ -3579,7 +3588,7 @@ export default function MyRecipeVaultPage() {
               </div>
 
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">Instructions</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">Instructions</label>
                 <p className="text-sm text-gray-500 mb-2">One step per line — a new line per numbered instruction.</p>
                 <textarea placeholder="Preheat oven to 350°F&#10;Mix dry ingredients&#10;Combine wet and dry"
                   value={form.instructions} onChange={e => setForm(f => ({...f, instructions: e.target.value}))}
@@ -3589,7 +3598,7 @@ export default function MyRecipeVaultPage() {
               </div>
 
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">Notes</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">Notes</label>
                 <p className="text-sm text-gray-500 mb-2">Tips, tweaks, source attribution — anything you want to remember.</p>
                 <textarea placeholder="Less salt next time. Doubled the garlic. Saved from..."
                   value={form.family_notes} onChange={e => setForm(f => ({...f, family_notes: e.target.value}))}
@@ -3604,7 +3613,7 @@ export default function MyRecipeVaultPage() {
                   render their pill on the detail view. Number inputs use
                   inputMode="decimal" so iOS shows the numeric keypad. */}
               <div>
-                <label className="block text-base font-bnew text-gray-800 mb-2">⏱ Time &amp; Nutrition</label>
+                <label className="block text-base font-bold text-gray-800 mb-2">⏱ Time &amp; Nutrition</label>
                 <p className="text-sm text-gray-500 mb-3">Optional. We pre-fill these when the source recipe has them.</p>
                 <div className="grid grid-cols-3 gap-2 mb-2">
                   {[
@@ -3678,7 +3687,7 @@ export default function MyRecipeVaultPage() {
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">📄</span>
-                <h2 className="text-sm font-bnew text-gray-900">Import from JSON file</h2>
+                <h2 className="text-sm font-bold text-gray-900">Import from JSON file</h2>
               </div>
               <p className="text-xs text-gray-500 mb-4">
                 Bring recipes into your Vault from a JSON file — useful if you&apos;re moving data over from another app, restoring a backup, or importing a collection a friend shared. Single recipe or an array; recognized fields: <span className="font-medium text-gray-700">title, description, ingredients, instructions, category, tags, photo_url, servings, family_notes</span>.
@@ -3786,7 +3795,7 @@ export default function MyRecipeVaultPage() {
                 📘
               </button>
             )}
-            <h1 className="text-xl font-bnew text-gray-900 flex-1 text-center">
+            <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">
               {listStyle === 'portfolio' ? '💎 Social Share' : listStyle === 'cardbox' ? '🎓 Learning Vault' : '🔐 Recipe Vault'}
             </h1>
             {/* ⚙️ Settings — opens the Vault settings view (Recently
@@ -4019,7 +4028,7 @@ export default function MyRecipeVaultPage() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">📺</span>
-                    <span className="font-bnew text-sky-900">Learning Videos</span>
+                    <span className="font-bold text-sky-900">Learning Videos</span>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-200 text-sky-900">{portfolioVideos.length}</span>
                   </div>
                   <span className="text-xl text-sky-900">{portfolioVideosOpen ? '▾' : '▸'}</span>
@@ -4046,18 +4055,55 @@ export default function MyRecipeVaultPage() {
             ) : portfolioNotes.length === 0 ? (
               <div className="text-center py-16 px-6">
                 <p className="text-5xl mb-4">🎓</p>
-                <h2 className="text-xl font-bnew text-gray-900 mb-2">Learning Vault</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Learning Vault</h2>
                 <p className="text-gray-500 text-sm leading-relaxed mb-6">Your saved lessons, techniques, and cooking knowledge — all in one place.</p>
                 <p className="text-xs text-gray-400">Move Chef TV Teach videos and Chef Jen Teach Notes from My Studio.</p>
               </div>
             ) : null}
+
+            {studyResults.length > 0 && (
+              <div className="mt-4">
+                <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 overflow-hidden shadow-sm">
+                  <div className="bg-emerald-50 px-3 py-2.5 border-b border-emerald-200">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🎓</span>
+                      <span className="text-sm font-bold text-emerald-900">Lessons Learned</span>
+                      <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">{studyResults.length}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1 ml-7">Your quiz history — every quiz Chef Jen gave you.</p>
+                  </div>
+                  <div className="divide-y divide-emerald-100">
+                    {studyResults.map(r => {
+                      const pct = r.total ? Math.round((r.score / r.total) * 100) : 0
+                      const date = new Date(r.taken_at)
+                      const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                      return (
+                        <a key={r.id} href={`/guides?article=${r.article_id}`} className="block px-3 py-2.5 hover:bg-emerald-50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="shrink-0 w-12 h-12 rounded-full bg-white border-2 border-emerald-200 flex flex-col items-center justify-center">
+                              <span className="text-sm font-bold text-emerald-700 leading-none">{r.score}/{r.total}</span>
+                              <span className="text-[10px] text-emerald-600 leading-none mt-0.5">{pct}%</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{r.article_title}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{dateStr}</p>
+                            </div>
+                            <span className="text-gray-300 text-sm shrink-0">&#x203A;</span>
+                          </div>
+                        </a>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : listStyle === 'portfolio' ? (
           <div>
             {portfolioRecipes.length === 0 ? (
               <div className="text-center py-16 px-6">
                 <p className="text-5xl mb-4">🎤</p>
-                <h2 className="text-xl font-bnew text-gray-900 mb-2">Social Share</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Social Share</h2>
                 <p className="text-gray-500 text-sm leading-relaxed mb-4">Your stage. Your story.<br/>Share your creations with the world.</p>
                 <p className="text-xs text-gray-400 mb-6">Move Chef Jen recipes here from My Studio.</p>
                 <button onClick={() => window.location.href='/playbook'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open My Studio →</button>
@@ -4158,7 +4204,7 @@ export default function MyRecipeVaultPage() {
                           className="w-full text-left bg-amber-50 border-2 border-amber-200 rounded-2xl overflow-hidden hover:border-orange-400 hover:shadow-md transition-all active:scale-95 shadow-sm">
                           <div className="bg-red-600 h-1.5" />
                           <div className="px-3 pt-3 pb-1">
-                            <p className="font-bnew text-xs text-gray-900 leading-snug line-clamp-2 min-h-[2rem]">{recipe.title}</p>
+                            <p className="font-bold text-xs text-gray-900 leading-snug line-clamp-2 min-h-[2rem]">{recipe.title}</p>
                           </div>
                           <div className="px-3 pb-3">
                             {recipe.photo_url ? (
@@ -4216,7 +4262,7 @@ export default function MyRecipeVaultPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-base">📺</span>
-                    <h2 className="text-sm font-bnew text-gray-700">Recipe Videos</h2>
+                    <h2 className="text-sm font-bold text-gray-700">Recipe Videos</h2>
                     <span className="text-xs text-gray-500">({videoRefs.length})</span>
                   </div>
                   <div className="space-y-3">
