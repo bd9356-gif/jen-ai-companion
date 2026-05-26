@@ -24,6 +24,7 @@ const caveat = Caveat({
 });
 
 export const metadata = {
+  verification: { other: { "p:domain_verify": "1849040e58f1fd56cee76fc2e7b37f08" } },
   metadataBase: new URL("https://recipe.mycompanionapps.com"),
   title: "MyRecipe Companion",
   description:
