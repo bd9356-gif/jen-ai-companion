@@ -259,6 +259,13 @@ export default function VideosPage() {
       setUser(session.user)
       loadVideos()
       loadSaved(session.user.id)
+      // Refresh saved state when user returns to this tab
+      const handleFocus = () => loadSaved(session.user.id)
+      window.addEventListener('focus', handleFocus)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') loadSaved(session.user.id)
+      })
+      return () => window.removeEventListener('focus', handleFocus)
     })
   }, [])
 
