@@ -8,7 +8,7 @@ export async function POST(req) {
     const { default: OpenAI } = await import('openai')
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
-    const prompt = `Professional food photography of ${title}. ${description ? description + '.' : ''} Overhead shot, natural light, styled on a rustic wooden table, appetizing and vibrant, magazine quality, shallow depth of field, warm tones.`
+    const prompt = `A stunning professional food photograph of ${title}. Beautifully plated on elegant dishware, natural window lighting, shallow depth of field with soft bokeh, vibrant rich colors, appetizing and mouth-watering, styled like a high-end restaurant, photorealistic, 4K detail.`
 
     const response = await openai.images.generate({
       model: 'gpt-image-1',
