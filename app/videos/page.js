@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 
@@ -263,15 +264,11 @@ export default function VideosPage() {
   }, [])
 
   // Refresh saved state when user returns to this page
+  const pathname = usePathname()
   useEffect(() => {
     if (!user) return
-    const handleVisible = () => {
-      if (document.visibilityState === 'visible') loadSaved(user.id)
-    }
-    document.addEventListener('visibilitychange', handleVisible)
-    window.addEventListener('focus', () => loadSaved(user.id))
-    return () => document.removeEventListener('visibilitychange', handleVisible)
-  }, [user])
+    loadSaved(user.id)
+  }, [user, pathname])
 
   async function loadVideos() {
     // is_hidden=false on both tables — admin curator at /admin/library
