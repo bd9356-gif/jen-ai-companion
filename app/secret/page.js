@@ -2364,6 +2364,16 @@ export default function MyRecipeVaultPage() {
                       >
                         🎤 Promote to Social Share
                       </button>
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setActionsMenuOpen(false)
+                          window.open(`/card/${viewing.id}`, "_blank")
+                        }}
+                        className="w-full text-left text-sm font-semibold text-amber-700 px-4 py-2.5 hover:bg-amber-50 border-t border-gray-100"
+                      >
+                        Create Recipe Card
+                      </button>
 <button
                         role="menuitem"
                         onClick={() => { setActionsMenuOpen(false); deleteRecipe(viewing) }}
