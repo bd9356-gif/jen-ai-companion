@@ -7,7 +7,7 @@ const supabase = createClient(
 
 export async function generateMetadata({ params }) {
   const { id } = await params
-  const { data: recipe } = await supabase
+  const { data: recipe, error: recipeError } = await supabase
     .from('personal_recipes')
     .select('title, description, photo_url')
     .eq('id', id)
@@ -30,13 +30,14 @@ export async function generateMetadata({ params }) {
 
 export default async function SharePage({ params }) {
   const { id } = await params
-  const { data: recipe } = await supabase
+  const { data: recipe, error: recipeError } = await supabase
     .from('personal_recipes')
     .select('*')
     .eq('id', id)
     .is('deleted_at', null)
     .single()
 
+  console.log('share page - id:', id, 'recipe:', recipe, 'error:', recipeError)
   if (!recipe) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
