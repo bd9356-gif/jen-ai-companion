@@ -232,14 +232,14 @@ export default function ChefPage() {
       title: (msg.question || msg.content).substring(0, 120),
       thumbnail_url: '',
       source: 'ai',
-      is_in_vault: false,
+      is_in_vault: true,
       metadata: {
         question: msg.question,
         answer: msg.content,
       }
     })
     setSavedKeys(prev => new Set([...prev, k]))
-    showToast('Saved to Chef Notes ✓')
+    showToast('Saved to Learning Vault ✓')
   }
 
   async function saveRecipe(msg) {
@@ -540,7 +540,7 @@ export default function ChefPage() {
                             ? 'bg-gray-100 text-gray-400 border-gray-200'
                             : 'bg-white text-sky-700 border-sky-200 hover:bg-sky-50'
                         }`}>
-                        {saved ? '✓ Saved to Chef Notes' : '📝 Save to Chef Notes'}
+                        {saved ? '✓ Saved to Learning Vault' : '📝 Save to Learning Vault'}
                       </button>
                       {/* Post-save exit cue — same fix as the Practice
                           recipe bubble. After `saved === true`, surface

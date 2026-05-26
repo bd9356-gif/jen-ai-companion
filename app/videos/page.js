@@ -395,6 +395,7 @@ export default function VideosPage() {
     const { data: inserted, error: favErr } = await supabase.from('favorites').insert({
       user_id: user.id,
       type: hasRecipe ? 'video_recipe' : 'video_education',
+      is_in_vault: hasRecipe ? false : true,
       ref_id: videoId,
       title: video.title,
       thumbnail_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
@@ -748,8 +749,8 @@ export default function VideosPage() {
                             <div className="mb-3">
                               <button
                                 onClick={() => setBucket(video, b.key)}
-                                title={isActive ? `Remove from My Studio (${b.label})` : `Save to My Studio (${b.label})`}
-                                aria-label={isActive ? `Remove from My Studio` : `Save to My Studio`}
+                                title={isActive ? `Remove from My Studio (${b.label})` : `Save to Learning Vault (${b.label})`}
+                                aria-label={isActive ? `Remove from My Studio` : `Save to Learning Vault`}
                                 className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
                                   isActive
                                     ? b.activeCls
@@ -757,7 +758,7 @@ export default function VideosPage() {
                                 }`}
                               >
                                 <span className="text-sm leading-none">{b.emoji}</span>
-                                <span>{isActive ? 'Saved to My Studio' : 'Save to My Studio'}</span>
+                                <span>{isActive ? 'Saved to Learning Vault' : 'Save to Learning Vault'}</span>
                               </button>
                             </div>
                           )
