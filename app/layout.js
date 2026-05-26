@@ -86,6 +86,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} antialiased`}>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="p:domain_verify" content="1849040e58f1fd56cee76fc2e7b37f08" />
         <script dangerouslySetInnerHTML={{ __html: `
           window.addEventListener('resize', function() {
             document.body.style.minHeight = window.innerHeight + 'px';
