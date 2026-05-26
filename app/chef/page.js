@@ -335,8 +335,8 @@ export default function ChefPage() {
             </button>
             <button
               onClick={() => window.location.href='/secret'}
-              title="Open My Studio"
-              aria-label="Open My Studio"
+              title="Open Learning Vault"
+              aria-label="Open Learning Vault"
               className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
             >
               📘
@@ -448,7 +448,7 @@ export default function ChefPage() {
             </button>
           </div>
           <p className="text-xs text-gray-400 mt-2 text-center">
-            {isPractice ? '🍳 Recipes save to Chef Jennifer Recipes.' : '📝 Answers save to Chef Notes (on My Studio).'}
+            {isPractice ? '🍳 Recipes save to Chef Jennifer Recipes.' : '📝 Answers save to Learning Vault.'}
           </p>
         </div>
 
@@ -550,7 +550,7 @@ export default function ChefPage() {
                           links to Playbook's 📝 Notes tab. */}
                       {saved && (
                         <a
-                          href="/playbook?tab=chef_notes"
+                          href="/secret?view=cardbox"
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500 bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                         >
                           🔒 View in Recipe Vault →
