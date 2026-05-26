@@ -1342,9 +1342,10 @@ export default function MyRecipeVaultPage() {
         .eq('is_in_vault', true)
         .order('created_at', { ascending: false }),
       supabase
-        .from('favorites').select('*')
-        .eq('user_id', userId).eq('type', 'ai_recipe')
+        .from('personal_recipes').select('*')
+        .eq('user_id', userId)
         .eq('is_in_social_share', true)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false }),
     ])
     setPortfolioNotes(noteRows || [])
@@ -4060,7 +4061,7 @@ export default function MyRecipeVaultPage() {
                       </div>
                       <button
                         onClick={async () => {
-                          await supabase.from('favorites').update({ is_in_social_share: false }).eq('id', r.id)
+                          await supabase.from('personal_recipes').update({ is_in_social_share: false }).eq('id', r.id)
                           setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
                         }}
                         className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
