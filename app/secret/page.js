@@ -1400,13 +1400,19 @@ export default function MyRecipeVaultPage() {
   // the underlying favorites row — same safe-escape pattern as notes.
   async function removeVideoFromPortfolio(video) {
     if (!user) return
-    const { error: updErr } = await supabase
+    // Delete the favorites row entirely so Chef TV button resets to white
+    const { error: delErr } = await supabase
       .from('favorites')
-      .update({ is_in_vault: false })
+      .delete()
       .eq('id', video.id)
-    if (updErr) { showToast('Could not remove'); return }
+    if (delErr) { showToast('Could not remove'); return }
+    // Also clean up cooking_skill_items
+    await supabase.from('cooking_skill_items')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('item_type', 'favorite')
+      .eq('item_id', video.id)
     setPortfolioVideos(prev => prev.filter(v => v.id !== video.id))
-    // Signal Chef TV to refresh its saved state
     sessionStorage.setItem('cheftv_refresh', Date.now().toString())
     showToast('Removed from Learning Vault')
   }
