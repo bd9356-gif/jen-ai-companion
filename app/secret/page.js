@@ -4064,15 +4064,18 @@ export default function MyRecipeVaultPage() {
             {studyResults.length > 0 && (
               <div className="mt-4">
                 <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 overflow-hidden shadow-sm">
-                  <div className="bg-emerald-50 px-3 py-2.5 border-b border-emerald-200">
+                  <button
+                    onClick={() => setPortfolioOpenGroups(prev => { const next = new Set(prev); next.has('lessons') ? next.delete('lessons') : next.add('lessons'); return next })}
+                    className="w-full bg-emerald-50 px-3 py-2.5 border-b border-emerald-200 flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-2">
                       <span className="text-lg">🎓</span>
                       <span className="text-sm font-bold text-emerald-900">Lessons Learned</span>
                       <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">{studyResults.length}</span>
                     </div>
-                    <p className="text-xs text-gray-600 mt-1 ml-7">Your quiz history — every quiz Chef Jen gave you.</p>
-                  </div>
-                  <div className="divide-y divide-emerald-100">
+                    <span className="text-emerald-700">{portfolioOpenGroups.has('lessons') ? '▾' : '▸'}</span>
+                  </button>
+                  {portfolioOpenGroups.has('lessons') && <div className="divide-y divide-emerald-100">
                     {studyResults.map(r => {
                       const pct = r.total ? Math.round((r.score / r.total) * 100) : 0
                       const date = new Date(r.taken_at)
@@ -4093,7 +4096,7 @@ export default function MyRecipeVaultPage() {
                         </a>
                       )
                     })}
-                  </div>
+                  </div>}
                 </div>
               </div>
             )}
