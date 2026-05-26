@@ -261,6 +261,7 @@ export default function VideosPage() {
       loadVideos()
       loadSaved(session.user.id)
     })
+    return () => setSavedMap(new Map())
   }, [])
 
   // Refresh saved state when user returns to this page
