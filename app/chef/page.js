@@ -691,7 +691,7 @@ function RecipeMessage({ msg, saved, onSave }) {
           </button>
           {saved && (
             <a
-              href="/playbook?tab=chef_recipes"
+              href="/secret"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-500 bg-orange-600 text-white hover:bg-orange-700 transition-colors"
             >
               🔒 View in Recipe Vault →
