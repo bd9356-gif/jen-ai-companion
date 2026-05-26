@@ -11,7 +11,7 @@ export async function POST(req) {
     const prompt = `Professional food photography of ${title}. ${description ? description + '.' : ''} Overhead shot, natural light, styled on a rustic wooden table, appetizing and vibrant, magazine quality, shallow depth of field, warm tones.`
 
     const response = await openai.images.generate({
-      model: 'dall-e-3',
+      model: 'gpt-image-1',
       prompt,
       n: 1,
       size: '1024x1024',
