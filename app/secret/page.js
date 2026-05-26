@@ -1892,7 +1892,7 @@ export default function MyRecipeVaultPage() {
   // Hard delete + restore for the Settings → Recently Deleted surface.
   async function generatePhoto(recipe) {
     if (!recipe) return
-    showToast('Generating photo...')
+    showToast('Generating AI photo — this may take up to 60 seconds...')
     try {
       const res = await fetch('/api/generate-photo', {
         method: 'POST',
