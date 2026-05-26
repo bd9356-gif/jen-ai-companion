@@ -248,23 +248,16 @@ export default function ChefPage() {
     if (savedKeys.has(k)) return
     const r = msg.recipe
     if (!r) return
-    await supabase.from('favorites').insert({
-      user_id: user.id,
-      type: 'ai_recipe',
-      title: r.title,
-      thumbnail_url: '',
-      source: 'ai',
-      metadata: {
-        description: r.description,
-        ingredients: r.ingredients,
-        instructions: instructionsToString(r.instructions),
-        difficulty: r.difficulty,
-        cuisine: r.cuisine,
-        prompt: msg.question,
-      }
+    const ings = Array.isArray(r.ingredients) ? r.ingredients.map(i => typeof i === 'string' ? {name:i,measure:''} : {name:i?.name||'',measure:i?.measure||''}) : []
+    const { error } = await supabase.from('personal_recipes').insert({
+      user_id: user.id, title: r.title, description: r.description||'',
+      ingredients: ings, instructions: instructionsToString(r.instructions),
+      category: r.cuisine||'', tags: ['chef-jen'], family_notes: '',
+      photo_url: '/chef-jen-recipe.jpg', difficulty: r.difficulty||''
     })
+    if (error) { showToast('Could not save'); return }
     setSavedKeys(prev => new Set([...prev, k]))
-    showToast('Saved to Chef Jennifer Recipes ✓')
+    showToast('Saved to Recipe Vault ✓')
   }
 
   // Mode-aware styling helpers — fully literal class strings so v4 JIT picks them up.
@@ -551,7 +544,7 @@ export default function ChefPage() {
                       </button>
                       {/* Post-save exit cue — same fix as the Practice
                           recipe bubble. After `saved === true`, surface
-                          a "🎬 View in My Studio →" link next to the
+                          a "🔒 View in Recipe Vault →" link next to the
                           greyed save button so the user sees where the
                           note went and has an obvious next step. Deep-
                           links to Playbook's 📝 Notes tab. */}
@@ -560,7 +553,7 @@ export default function ChefPage() {
                           href="/playbook?tab=chef_notes"
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500 bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                         >
-                          🎬 View in My Studio →
+                          🔒 View in Recipe Vault →
                         </a>
                       )}
                       {practice && !loading && (
@@ -606,7 +599,7 @@ export default function ChefPage() {
 
    Lays the recipe out as a card-shaped bubble inside the chat:
    title + difficulty pill, description, ingredients chips,
-   numbered instructions, and a 💾 Save to Chef Jennifer Recipes
+   numbered instructions, and a 🔒 Save to Recipe Vault
    button. Mirrors the visual vocabulary of /chef-recipes.
    ─────────────────────────────────────────────────────────── */
 function RecipeMessage({ msg, saved, onSave }) {
@@ -680,7 +673,7 @@ function RecipeMessage({ msg, saved, onSave }) {
         </div>
 
         {/* Save row + post-save exit cue. Once `saved === true`, the
-            save button greys out and a prominent "🎬 View in My Studio →"
+            save button greys out and a prominent "🔒 View in Recipe Vault →"
             link appears next to it — without this the page sat idle
             after a save with no obvious next step (Bill: "the page stays
             after save need to go back to get out"). The link deep-links
@@ -694,14 +687,14 @@ function RecipeMessage({ msg, saved, onSave }) {
                 ? 'bg-gray-100 text-gray-400 border-gray-200'
                 : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50'
             }`}>
-            {saved ? '✓ Saved to Chef Jennifer Recipes' : '💾 Save to Chef Jennifer Recipes'}
+            {saved ? '✓ Saved to Recipe Vault' : '🔒 Save to Recipe Vault'}
           </button>
           {saved && (
             <a
               href="/playbook?tab=chef_recipes"
               className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-500 bg-orange-600 text-white hover:bg-orange-700 transition-colors"
             >
-              🎬 View in My Studio →
+              🔒 View in Recipe Vault →
             </a>
           )}
         </div>
