@@ -22,7 +22,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: recipe.title,
       description: recipe.description || 'A recipe made with Chef Jen ♥',
-      images: recipe.photo_url ? [recipe.photo_url] : [],
+      images: recipe.photo_url && recipe.photo_url !== '/chef-jen-recipe.jpg' ? [recipe.photo_url] : ['https://recipe.mycompanionapps.com/landing-hero-01.png'],
       type: 'article',
     },
   }
