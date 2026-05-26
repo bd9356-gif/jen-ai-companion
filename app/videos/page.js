@@ -259,15 +259,19 @@ export default function VideosPage() {
       setUser(session.user)
       loadVideos()
       loadSaved(session.user.id)
-      // Refresh saved state when user returns to this tab
-      const handleFocus = () => loadSaved(session.user.id)
-      window.addEventListener('focus', handleFocus)
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') loadSaved(session.user.id)
-      })
-      return () => window.removeEventListener('focus', handleFocus)
     })
   }, [])
+
+  // Refresh saved state when user returns to this page
+  useEffect(() => {
+    if (!user) return
+    const handleVisible = () => {
+      if (document.visibilityState === 'visible') loadSaved(user.id)
+    }
+    document.addEventListener('visibilitychange', handleVisible)
+    window.addEventListener('focus', () => loadSaved(user.id))
+    return () => document.removeEventListener('visibilitychange', handleVisible)
+  }, [user])
 
   async function loadVideos() {
     // is_hidden=false on both tables — admin curator at /admin/library
