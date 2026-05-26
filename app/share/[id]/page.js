@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
   'https://epgtahifcphwjifxmxst.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  'sb_publishable_yMgB7J2Z2N6YhD_8llRXKQ_GjiY4qJf'
 )
 
 export async function generateMetadata({ params }) {
