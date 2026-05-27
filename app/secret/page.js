@@ -3932,7 +3932,7 @@ export default function MyRecipeVaultPage() {
               Portfolio view (notes have no searchable title). The tag
               filter has moved up to row 2 as a compact dropdown, so this
               is the only thing that can ever appear below the action row. */}
-          {listStyle !== 'portfolio' && (showSearch || searchText) && (
+          {listStyle !== 'portfolio' && listStyle !== 'cardbox' && (showSearch || searchText) && (
             <input type="text" placeholder="Search recipes..." value={searchText}
               autoFocus
               onChange={e => setSearchText(e.target.value)}
