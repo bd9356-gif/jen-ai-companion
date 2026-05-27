@@ -3795,7 +3795,7 @@ export default function MyRecipeVaultPage() {
               compact control. Native <select> on mobile gives us a clean
               full-screen picker for free. Hidden on Portfolio (no tags). */}
           <div className="flex items-center justify-between gap-2 mb-3">
-            {listStyle !== 'portfolio' ? (
+            {listStyle !== 'portfolio' && listStyle !== 'cardbox' ? (
               <select
                 value={searchTag}
                 onChange={e => setSearchTag(e.target.value)}
