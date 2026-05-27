@@ -4153,7 +4153,7 @@ export default function MyRecipeVaultPage() {
               {/* Regular Recipes */}
               <div>
                 <p className="text-sm text-gray-500 mb-3">
-                  <a href="/chef" className="text-orange-600 font-semibold hover:underline">👩‍🍳 Create Recipe</a>
+                  <a href="/chef?mode=practice" className="text-orange-600 font-semibold hover:underline">👩‍🍳 Create Recipe</a>
                   <span className="mx-1 text-gray-300">•</span>
                   {regularRecipes.length} of {recipes.filter(r => r.category !== 'Video Reference').length} recipes
                 </p>
