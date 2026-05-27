@@ -3856,7 +3856,7 @@ export default function MyRecipeVaultPage() {
             <div className="flex gap-2 shrink-0">
               {/* Search 🔍 — hidden on Portfolio view (notes have no
                   searchable title; tags don't apply). */}
-              {listStyle !== 'portfolio' && (
+              {listStyle !== 'portfolio' && listStyle !== 'cardbox' && (
                 <button
                   onClick={() => {
                     if (showSearch || searchText) {
