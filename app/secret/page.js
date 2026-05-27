@@ -4155,7 +4155,7 @@ export default function MyRecipeVaultPage() {
                 <p className="text-sm text-gray-500 mb-3">
                   <a href="/chef?mode=practice" className="text-orange-600 font-semibold hover:underline">👩‍🍳 Create Recipe</a>
                   <span className="mx-1 text-gray-300">•</span>
-                  {regularRecipes.length} of {recipes.filter(r => r.category !== 'Video Reference').length} recipes
+                  {regularRecipes.length} recipes
                 </p>
                 {regularRecipes.length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-4">No recipes match your search</p>
