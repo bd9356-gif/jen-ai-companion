@@ -437,6 +437,21 @@ export default function VideosPage() {
         title: video.title,
         channel: video.channel,
       })
+      // Also save to Recipe Vault (personal_recipes)
+      await supabase.from('personal_recipes').insert({
+        user_id: user.id,
+        title: video.title,
+        description: meta?.ai_summary || '',
+        ingredients: meta?.ingredients || [],
+        instructions: typeof meta?.instructions === 'string' ? meta.instructions : '',
+        category: 'Recipe Videos',
+        tags: ['chef-tv', 'video-recipe'],
+        family_notes: `Chef TV video by ${video.channel}`,
+        photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
+        difficulty: '',
+      })
+      // Mark favorites row as in vault
+      await supabase.from('favorites').update({ is_in_vault: true }).eq('id', inserted.id)
     }
     setSavedMap(prev => {
       const n = new Map(prev)
