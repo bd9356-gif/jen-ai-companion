@@ -3849,7 +3849,7 @@ export default function MyRecipeVaultPage() {
                  buttons on the right. */
               <div className="flex-1 flex items-center min-w-0">
                 <span className="text-xs italic text-stone-600">
-                  Social Share
+                  {listStyle === "cardbox" ? "Learning Vault" : "Social Share"}
                 </span>
               </div>
             )}
