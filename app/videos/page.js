@@ -204,7 +204,7 @@ export default function VideosPage() {
   // Absence from this map = video is not saved at all.
   const [savedMap, setSavedMap] = useState(new Map())
   // Set of video.id strings that have been copied into Recipe Vault this
-  // session (via "Save to My Kitchen"). Resets on refresh — re-saving is
+  // session (via "Save to Recipe Vault"). Resets on refresh — re-saving is
   // harmless, just creates another Vault row.
   const [vaultIds, setVaultIds] = useState(new Set())
   // Active topic chip. Meaning depends on the current tab:
@@ -441,7 +441,7 @@ export default function VideosPage() {
     })
   }
 
-  // "Save to My Kitchen" — copy this Chef TV recipe into the user's
+  // "Save to Recipe Vault" — copy this Chef TV recipe into the user's
   // personal Recipe Vault. Under MOVE semantics (May 2026), the Vault is
   // the home — if the video was sitting in My Studio (Teach or Practice)
   // before this save, it leaves the notebook on save. The user's notebook
@@ -468,7 +468,7 @@ export default function VideosPage() {
       difficulty: '',
       servings: null,
     })
-    if (error) { showToast('Could not save to Kitchen'); return }
+    if (error) { showToast('Could not save to Recipe Vault'); return }
     setVaultIds(prev => new Set(prev).add(String(video.id)))
     // MOVE: clean up Playbook placement so this video leaves the
     // notebook entirely. Best-effort — a Playbook cleanup failure
@@ -491,7 +491,7 @@ export default function VideosPage() {
   //
   // Earlier version of this helper only cleaned LEGACY rows, so MODERN
   // saves leaked orphan favorites + cooking_skill_items rows when the
-  // user tapped Save to My Kitchen — the Practice button on subsequent
+  // user tapped Save to Recipe Vault — the Practice button on subsequent
   // visits then saw the orphans and got stuck in a stale toggled state.
   // This handles both paths (May 2026 fix).
   async function removeFromPlaybook(video) {
@@ -860,7 +860,7 @@ export default function VideosPage() {
                                         </div>
                                       </div>
                                     )}
-                                    {/* Save to My Kitchen — only inside the Recipe view,
+                                    {/* Save to Recipe Vault — only inside the Recipe view,
                                         only on recipe-bearing videos. Education-first:
                                         user has to look at the recipe before being
                                         offered to pull it into their Vault. */}
@@ -874,7 +874,7 @@ export default function VideosPage() {
                                             : 'bg-orange-600 text-white hover:bg-orange-700'
                                         }`}
                                       >
-                                        {isInVault ? '✓ Saved to My Kitchen' : '💾 Save to My Kitchen'}
+                                        {isInVault ? '✓ Saved to Recipe Vault' : '💾 Save to Recipe Vault'}
                                       </button>
                                       <p className="text-xs text-gray-500 text-center mt-2">
                                         Adds to your Recipe Vault.
