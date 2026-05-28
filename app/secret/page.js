@@ -4206,7 +4206,7 @@ export default function MyRecipeVaultPage() {
                           <div className="px-3 pb-3">
                             {recipe.photo_url ? (
                               <div style={{height:'88px'}} className="rounded-xl overflow-hidden">
-                                <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className="w-full h-full object-cover" />
+                                <img loading="lazy" decoding="async" src={recipe.photo_url} alt={recipe.title} className={`w-full h-full object-cover ${recipe.photo_url === '/chef-jen-recipe.jpg' ? 'object-top' : 'object-center'}`} />
                               </div>
                             ) : (
                               <div style={{height:'88px'}} className="rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center">
