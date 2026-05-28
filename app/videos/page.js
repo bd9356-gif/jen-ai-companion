@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
-import { usePathname } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 
@@ -260,18 +259,15 @@ export default function VideosPage() {
       setUser(session.user)
       loadVideos()
       loadSaved(session.user.id)
+      // Refresh saved state when user returns to this tab
+      const handleFocus = () => loadSaved(session.user.id)
+      window.addEventListener('focus', handleFocus)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') loadSaved(session.user.id)
+      })
+      return () => window.removeEventListener('focus', handleFocus)
     })
-    return () => setSavedMap(new Map())
   }, [])
-
-  // Refresh saved state when user returns to this page
-  const pathname = usePathname()
-  useEffect(() => {
-    if (!user) return
-    const flag = sessionStorage.getItem('cheftv_refresh')
-    if (flag) sessionStorage.removeItem('cheftv_refresh')
-    loadSaved(user.id)
-  }, [user, pathname])
 
   async function loadVideos() {
     // is_hidden=false on both tables — admin curator at /admin/library
@@ -437,21 +433,6 @@ export default function VideosPage() {
         title: video.title,
         channel: video.channel,
       })
-      // Also save to Recipe Vault (personal_recipes)
-      await supabase.from('personal_recipes').insert({
-        user_id: user.id,
-        title: video.title,
-        description: meta?.ai_summary || '',
-        ingredients: meta?.ingredients || [],
-        instructions: typeof meta?.instructions === 'string' ? meta.instructions : '',
-        category: 'Recipe Videos',
-        tags: ['chef-tv', 'video-recipe'],
-        family_notes: `Chef TV video by ${video.channel}`,
-        photo_url: `https://img.youtube.com/vi/${video.youtube_id}/hqdefault.jpg`,
-        difficulty: '',
-      })
-      // Mark favorites row as in vault
-      await supabase.from('favorites').update({ is_in_vault: true }).eq('id', inserted.id)
     }
     setSavedMap(prev => {
       const n = new Map(prev)
@@ -775,8 +756,8 @@ export default function VideosPage() {
                             <div className="mb-3">
                               <button
                                 onClick={() => setBucket(video, b.key)}
-                                title={isActive ? `Remove from Recipe Vault (${b.label})` : (hasRecipe ? `Save to Recipe Vault (${b.label})` : `Save to Learning Vault (${b.label})`)}
-                                aria-label={isActive ? (hasRecipe ? `Remove from Recipe Vault` : `Remove from Learning Vault`) : (hasRecipe ? `Save to Recipe Vault` : `Save to Learning Vault`)}
+                                title={isActive ? `Remove from My Studio (${b.label})` : `Save to Learning Vault (${b.label})`}
+                                aria-label={isActive ? `Remove from My Studio` : `Save to Learning Vault`}
                                 className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
                                   isActive
                                     ? b.activeCls
@@ -784,7 +765,7 @@ export default function VideosPage() {
                                 }`}
                               >
                                 <span className="text-sm leading-none">{b.emoji}</span>
-                                <span>{isActive ? (hasRecipe ? 'Saved to Recipe Vault' : 'Saved to Learning Vault') : (hasRecipe ? 'Save to Recipe Vault' : 'Save to Learning Vault')}</span>
+                                <span>{isActive ? 'Saved to Learning Vault' : 'Save to Learning Vault'}</span>
                               </button>
                             </div>
                           )
