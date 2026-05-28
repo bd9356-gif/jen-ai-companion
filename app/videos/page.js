@@ -860,26 +860,6 @@ export default function VideosPage() {
                                         </div>
                                       </div>
                                     )}
-                                    {/* Save to Recipe Vault — only inside the Recipe view,
-                                        only on recipe-bearing videos. Education-first:
-                                        user has to look at the recipe before being
-                                        offered to pull it into their Vault. */}
-                                    <div className="mt-5 pt-4 border-t border-gray-100">
-                                      <button
-                                        onClick={() => saveToKitchen(video)}
-                                        disabled={isInVault}
-                                        className={`w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
-                                          isInVault
-                                            ? 'bg-emerald-100 text-emerald-700 cursor-default'
-                                            : 'bg-orange-600 text-white hover:bg-orange-700'
-                                        }`}
-                                      >
-                                        {isInVault ? '✓ Saved to Recipe Vault' : '💾 Save to Recipe Vault'}
-                                      </button>
-                                      <p className="text-xs text-gray-500 text-center mt-2">
-                                        Adds to your Recipe Vault.
-                                      </p>
-                                    </div>
                                   </>
                                 )}
                                 {!hasRecipe && !meta.ai_summary && (
