@@ -487,7 +487,7 @@ export default function VideosPage() {
       servings: null,
     })
     if (error) { showToast('Could not save to Recipe Vault'); return }
-    setVaultIds(prev => new Set(prev).add(String(video.id)))
+    setVaultIds(prev => new Set(prev).add(String(video.youtube_id)))
     // MOVE: clean up Playbook placement so this video leaves the
     // notebook entirely. Best-effort — a Playbook cleanup failure
     // shouldn't undo the Vault save the user just made. The cleanup
@@ -733,7 +733,7 @@ export default function VideosPage() {
                   const hasRecipe = meta?.ingredients?.length > 0
                   const videoId = String(video.id)
                   const savedEntry = savedMap.get(videoId)  // { favId, bucket } | undefined
-                  const isInVault = vaultIds.has(videoId)
+                  const isInVault = vaultIds.has(String(video.youtube_id))
                   const steps = parseInstructions(meta?.instructions)
                   return (
                     <div key={video.id} className="border border-gray-200 rounded-xl overflow-hidden hover:border-orange-200 hover:shadow-sm transition-all">
@@ -769,7 +769,7 @@ export default function VideosPage() {
                             choice is binary because the content is binary. */}
                         {(() => {
                           if (hasRecipe) {
-                            const inVault = vaultIds.has(String(video.id))
+                            const inVault = vaultIds.has(String(video.youtube_id))
                             return (
                               <div className="mb-3">
                                 <button
