@@ -4081,15 +4081,23 @@ export default function MyRecipeVaultPage() {
         ) : listStyle === 'portfolio' ? (
           <div>
             {portfolioRecipes.length === 0 ? (
-              <div className="text-center py-16 px-6">
-                <p className="text-5xl mb-4">🎤</p>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Social Share</h2>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">Your stage. Your story.<br/>Share your creations with the world.</p>
-                <p className="text-xs text-gray-400 mb-6">Move Chef Jen recipes here from My Studio.</p>
-                <button onClick={() => window.location.href='/playbook'} className="px-5 py-2.5 bg-orange-600 text-white rounded-xl text-sm font-semibold">Open My Studio →</button>
+              <div>
+                <div className="rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-6 py-8 text-center text-white">
+                  <p className="text-4xl mb-2">🎤</p>
+                  <h2 className="text-xl font-bold mb-1">Social Share</h2>
+                  <p className="text-sm text-white/85 leading-relaxed">Share your favorite recipes with the world.<br/>Tap ⋯ on any recipe and choose <strong>📣 Share Recipe</strong>.</p>
+                </div>
+                <div className="text-center py-8 px-6">
+                  <p className="text-gray-400 text-sm">No recipes shared yet.</p>
+                  <p className="text-xs text-gray-400 mt-1">Open a recipe, tap ⋯ → Share Recipe to add it here.</p>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
+                <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-5 py-4 text-white mb-2">
+                  <p className="text-lg font-bold">🎤 Social Share</p>
+                  <p className="text-xs text-white/80 mt-0.5">Your recipes, shared with the world. Tap a button to share on Facebook or Pinterest.</p>
+                </div>
                 {portfolioRecipes.map(r => (
                   <div key={r.id} className="bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 px-4 py-3">
                     <div className="flex items-center justify-between gap-3 mb-2">
@@ -4106,30 +4114,30 @@ export default function MyRecipeVaultPage() {
                         title="Remove from Social Share"
                       >×</button>
                     </div>
-                    <button
-                      onClick={() => {
-                        const shareId = r.metadata?.personal_recipe_id || r.id
-                        const url = `${window.location.origin}/share/${shareId}`
-                        const text = `${r.title} — Chef Jen approves ♥`
-                        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`
-                        window.open(fbUrl, '_blank')
-                      }}
-                      className="w-full text-xs font-semibold bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-700 transition-colors"
-                    >
-                      📘 Share to Facebook
-                    </button>
-                    <button
-                      onClick={() => {
-                        const shareId = r.metadata?.personal_recipe_id || r.id
-                        const url = `${window.location.origin}/share/${shareId}`
-                        const text = `${r.title} — Chef Jen approves ♥`
-                        const pinUrl = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`
-                        window.open(pinUrl, '_blank')
-                      }}
-                      className="w-full text-xs font-semibold bg-red-600 text-white rounded-lg py-1.5 hover:bg-red-700 transition-colors mt-1.5"
-                    >
-                      📌 Pin to Pinterest
-                    </button>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => {
+                          const shareId = r.metadata?.personal_recipe_id || r.id
+                          const url = `${window.location.origin}/share/${shareId}`
+                          const text = `${r.title} — Chef Jen approves ♥`
+                          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank')
+                        }}
+                        className="flex-1 text-xs font-semibold bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-700 transition-colors"
+                      >
+                        📘 Facebook
+                      </button>
+                      <button
+                        onClick={() => {
+                          const shareId = r.metadata?.personal_recipe_id || r.id
+                          const url = `${window.location.origin}/share/${shareId}`
+                          const text = `${r.title} — Chef Jen approves ♥`
+                          window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`, '_blank')
+                        }}
+                        className="flex-1 text-xs font-semibold bg-red-600 text-white rounded-lg py-1.5 hover:bg-red-700 transition-colors"
+                      >
+                        📌 Pinterest
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
