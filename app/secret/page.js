@@ -1351,7 +1351,7 @@ export default function MyRecipeVaultPage() {
     ])
     setPortfolioNotes(noteRows || [])
     setPortfolioVideos(eduVideoRows || [])          // Learning Vault only
-    setPortfolioRecipes([...(recipeVideoRows || []), ...(aiRecipeRows || [])])  // Social Share
+    setPortfolioRecipes([...(aiRecipeRows || [])])  // Social Share — personal_recipes only
     // Load quiz results for Learning Vault
     const { data: quizRows } = await supabase
       .from('study_hall_results')
