@@ -323,6 +323,24 @@ export default function VideosPage() {
       next.set(f.ref_id, { favId: f.id, bucket: bucketByFavId.get(f.id) || 'teach' })
     }
     setSavedMap(next)
+
+    // Pre-populate vaultIds from personal_recipes saved from Chef TV
+    const { data: vaultRecipes } = await supabase
+      .from('personal_recipes')
+      .select('photo_url')
+      .eq('user_id', userId)
+      .contains('tags', ['chef-tv'])
+      .is('deleted_at', null)
+    if (vaultRecipes?.length) {
+      const ids = new Set()
+      vaultRecipes.forEach(r => {
+        if (r.photo_url) {
+          const match = r.photo_url.match(/youtube\.com\/vi\/([^/]+)\//)
+          if (match) ids.add(match[1])
+        }
+      })
+      setVaultIds(ids)
+    }
   }
 
   // Tap a bucket on a video. Three cases:
