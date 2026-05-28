@@ -2390,7 +2390,7 @@ export default function MyRecipeVaultPage() {
                       <button role="menuitem" onClick={async () => { setActionsMenuOpen(false); const { error } = await supabase.from("personal_recipes").update({ is_in_social_share: true }).eq("id", viewing.id); if (error) { showToast("Could not promote"); return }; showToast("🎤 Added to Social Share ✓") }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
                         📣 Social Share
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank') }} className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; const fbDeep = `fb://share?u=${encodeURIComponent(url)}`; const fbWeb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`; window.location.href = fbDeep; setTimeout(() => window.open(fbWeb, '_blank'), 500) }} className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100">
                         📘 Facebook
                       </button>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`, '_blank') }} className="w-full text-left text-sm font-semibold text-red-600 px-4 py-2.5 hover:bg-red-50 border-t border-gray-100">
@@ -4125,7 +4125,7 @@ export default function MyRecipeVaultPage() {
                           const shareId = r.metadata?.personal_recipe_id || r.id
                           const url = `${window.location.origin}/share/${shareId}`
                           const text = `${r.title} — Chef Jen approves ♥`
-                          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank')
+                          const fbDeep = `fb://share?u=${encodeURIComponent(url)}`; const fbWeb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`; window.location.href = fbDeep; setTimeout(() => window.open(fbWeb, '_blank'), 500)
                         }}
                         className="flex-1 text-xs font-semibold bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-700 transition-colors"
                       >
