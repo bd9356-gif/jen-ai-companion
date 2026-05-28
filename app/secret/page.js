@@ -4096,7 +4096,7 @@ export default function MyRecipeVaultPage() {
               <div className="space-y-3">
                 <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-5 py-4 text-white mb-2">
                   <p className="text-lg font-bold">🎤 Social Share</p>
-                  <p className="text-xs text-white/80 mt-0.5">Your recipes, shared with the world. Tap a button to share on Facebook or Pinterest.</p>
+                  <p className="text-sm text-white/90 mt-1">Your recipes, shared with the world. Tap a button to share on Facebook or Pinterest.</p>
                 </div>
                 {portfolioRecipes.map(r => (
                   <div key={r.id} className="bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 px-4 py-3">
