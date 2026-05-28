@@ -3942,7 +3942,7 @@ export default function MyRecipeVaultPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-3">
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : listStyle === 'cardbox' ? (
