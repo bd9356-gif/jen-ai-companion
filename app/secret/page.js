@@ -3849,7 +3849,7 @@ export default function MyRecipeVaultPage() {
                  buttons on the right. */
               <div className="flex-1 flex items-center min-w-0">
                 <span className="text-xs italic text-stone-600">
-                  {portfolioNotes.length + portfolioVideos.length + portfolioRecipes.length} in Learning Vault
+                  Learning Vault
                 </span>
               </div>
             )}

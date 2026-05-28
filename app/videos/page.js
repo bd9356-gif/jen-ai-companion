@@ -760,8 +760,8 @@ export default function VideosPage() {
                             <div className="mb-3">
                               <button
                                 onClick={() => setBucket(video, b.key)}
-                                title={isActive ? `Remove from My Studio (${b.label})` : `Save to Learning Vault (${b.label})`}
-                                aria-label={isActive ? `Remove from My Studio` : `Save to Learning Vault`}
+                                title={isActive ? `Remove from Recipe Vault (${b.label})` : (hasRecipe ? `Save to Recipe Vault (${b.label})` : `Save to Learning Vault (${b.label})`)}
+                                aria-label={isActive ? (hasRecipe ? `Remove from Recipe Vault` : `Remove from Learning Vault`) : (hasRecipe ? `Save to Recipe Vault` : `Save to Learning Vault`)}
                                 className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
                                   isActive
                                     ? b.activeCls
@@ -769,7 +769,7 @@ export default function VideosPage() {
                                 }`}
                               >
                                 <span className="text-sm leading-none">{b.emoji}</span>
-                                <span>{isActive ? 'Saved to Learning Vault' : 'Save to Learning Vault'}</span>
+                                <span>{isActive ? (hasRecipe ? 'Saved to Recipe Vault' : 'Saved to Learning Vault') : (hasRecipe ? 'Save to Recipe Vault' : 'Save to Learning Vault')}</span>
                               </button>
                             </div>
                           )
