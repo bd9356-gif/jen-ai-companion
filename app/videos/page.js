@@ -750,14 +750,35 @@ export default function VideosPage() {
                             "Save for later" bucket (dropped April 2026) — the
                             choice is binary because the content is binary. */}
                         {(() => {
-                          const b = hasRecipe ? PLAYBOOK_BUCKETS.practice : PLAYBOOK_BUCKETS.teach
+                          if (hasRecipe) {
+                            // Practice video → Recipe Vault via saveToKitchen
+                            const inVault = vaultIds.has(String(video.id))
+                            return (
+                              <div className="mb-3">
+                                <button
+                                  onClick={() => { if (!inVault) saveToKitchen(video) }}
+                                  disabled={inVault}
+                                  title={inVault ? 'Saved to Recipe Vault' : 'Save to Recipe Vault'}
+                                  className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
+                                    inVault
+                                      ? 'bg-emerald-500 text-white border-emerald-500 cursor-default'
+                                      : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300 hover:text-orange-700'
+                                  }`}
+                                >
+                                  <span className="text-sm leading-none">🔐</span>
+                                  <span>{inVault ? '✓ Saved to Recipe Vault' : 'Save to Recipe Vault'}</span>
+                                </button>
+                              </div>
+                            )
+                          }
+                          const b = PLAYBOOK_BUCKETS.teach
                           const isActive = savedEntry?.bucket === b.key
                           return (
                             <div className="mb-3">
                               <button
                                 onClick={() => setBucket(video, b.key)}
-                                title={isActive ? `Remove from My Studio (${b.label})` : `Save to Learning Vault (${b.label})`}
-                                aria-label={isActive ? `Remove from My Studio` : `Save to Learning Vault`}
+                                title={isActive ? 'Remove from Learning Vault' : 'Save to Learning Vault'}
+                                aria-label={isActive ? 'Remove from Learning Vault' : 'Save to Learning Vault'}
                                 className={`w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-1.5 rounded-lg border transition-colors ${
                                   isActive
                                     ? b.activeCls
