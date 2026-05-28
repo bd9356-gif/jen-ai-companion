@@ -532,7 +532,7 @@ export default function PlaybookPage() {
       category: '',
       tags: ['chef-jen', 'social-share'],
       family_notes: familyNotes,
-      photo_url: item.metadata?.photo_url || '/chef-jen-recipe.jpg',
+      photo_url: item.metadata?.photo_url || '/chef-jen-update.png',
       difficulty: meta.difficulty || '',
     }).select('id').single()
     if (insErr) { showToast('Could not move to Social Share'); return }
@@ -576,7 +576,7 @@ export default function PlaybookPage() {
       // Branded default photo for Chef Jennifer recipes promoted to
       // the Vault. Lives in /public so it ships with the build; user
       // can swap it for a real photo from the recipe detail view.
-      photo_url: '/chef-jen-recipe.jpg',
+      photo_url: '/chef-jen-update.png',
       difficulty: meta.difficulty || '',
     })
     if (error) {

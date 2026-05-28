@@ -253,7 +253,7 @@ export default function ChefPage() {
       user_id: user.id, title: r.title, description: r.description||'',
       ingredients: ings, instructions: instructionsToString(r.instructions),
       category: r.cuisine||'', tags: ['chef-jen'], family_notes: '',
-      photo_url: '/chef-jen-recipe.jpg', difficulty: r.difficulty||''
+      photo_url: '/chef-jen-update.png', difficulty: r.difficulty||''
     })
     if (error) { showToast('Could not save'); return }
     setSavedKeys(prev => new Set([...prev, k]))

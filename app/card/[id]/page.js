@@ -64,7 +64,7 @@ export default function RecipeCardPage() {
           )}
         </div>
 
-        {recipe.photo_url && recipe.photo_url !== '/chef-jen-recipe.jpg' && (
+        {recipe.photo_url && recipe.photo_url !== '/chef-jen-update.png' && (
           <div style={{ width: '100%', height: '220px', overflow: 'hidden' }}>
             <img src={recipe.photo_url} alt={recipe.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
