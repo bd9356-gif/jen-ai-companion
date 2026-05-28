@@ -853,7 +853,7 @@ export default function VideosPage() {
                                         <div className="space-y-2">
                                           {steps.map((step, i) => (
                                             <div key={i} className="flex gap-3">
-                                              <div className="shrink-0 w-6 h-6 bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</div>
+                                              
                                               <p className="text-sm text-gray-700 leading-relaxed pt-0.5">{step}</p>
                                             </div>
                                           ))}
