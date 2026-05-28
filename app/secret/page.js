@@ -3949,8 +3949,7 @@ export default function MyRecipeVaultPage() {
           <div>
             {/* Learning Vault hero */}
             <div className="rounded-2xl bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-500 px-5 py-5 text-white mb-4">
-              <p className="text-2xl mb-1">🎓</p>
-              <h2 className="text-lg font-bold mb-1">Learning Vault</h2>
+              <h2 className="text-lg font-bold mb-1">🎓 Learning Vault</h2>
               <p className="text-sm text-white/85 leading-relaxed">Your personal cooking classroom — saved lessons, Chef Jen notes, videos, and quiz results all in one place.</p>
             </div>
             {/* Chef Jen Teach Notes in Learning Vault — grouped accordion */}
