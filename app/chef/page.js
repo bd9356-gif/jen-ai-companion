@@ -320,7 +320,7 @@ export default function ChefPage() {
             Clear button (when any messages) tucks in between. */}
         {/* Row 1 — logo centered, full width */}
         <div className="max-w-2xl mx-auto px-3 pt-2 pb-1 flex justify-center">
-          <img src="/jen-classroom.png" alt="Chef Jennifer's Classroom" style={{height:'60px',width:'200px',objectFit:'contain'}} />
+          <img src="/jen-classroom.png" alt="Chef Jennifer's Classroom" style={{height:'70px',width:'260px',objectFit:'contain'}} />
         </div>
         {/* Row 2 — nav left, mode pills + optional Clear right */}
         <div className="max-w-2xl mx-auto px-3 pb-2 flex items-center justify-between gap-2">
