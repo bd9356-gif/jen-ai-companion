@@ -308,72 +308,31 @@ export default function ChefPage() {
           scrolling. Toggle order is locked Teach → Practice (the loop
           reads left-to-right) and pill colors match (sky / orange). */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        {/* Two-row header (May 2026, Bill's ask — single row was
-            too crowded on phone). Row 1: ← back / 📘 Playbook /
-            🎬 cross-link / title-with-subtitle / optional Clear.
-            Row 2: full-width mode pill row centered. Splits the
-            visual weight so neither row truncates. */}
-        {/* Two-row header (May 2026, Bill's ask).
-            Row 1: centered title with subtitle — alone so it has
-                   full breathing room and never truncates.
-            Row 2: nav buttons left / mode pill row right.
-            Clear button (when any messages) tucks in between. */}
-        {/* Row 1 — logo centered, full width */}
+        {/* Logo */}
         <div className="max-w-2xl mx-auto px-3 pt-2 pb-1 flex justify-center">
           <img src="/jen-classroom.png" alt="Chef Jennifer's Classroom" style={{height:'70px',width:'260px',objectFit:'contain'}} />
         </div>
-        {/* Row 2 — nav left, mode pills + optional Clear right */}
-        <div className="max-w-2xl mx-auto px-3 pb-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => window.location.href='/kitchen'}
-              aria-label="Back to MyKitchen"
-              className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1"
-            >
-              ← Back
-            </button>
-            <button
-              onClick={() => window.location.href=isPractice ? '/secret' : '/secret?view=cardbox'}
-              title={isPractice ? 'Open Recipe Vault' : 'Open Learning Vault'}
-              aria-label="Open Learning Vault"
-              className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
-            >
-              📘
-            </button>
-            <button
-              onClick={() => window.location.href=isPractice ? '/videos?filter=practice' : '/videos'}
-              title={isPractice ? "Open Chef TV Practice" : "Open Chef TV Classroom"}
-              aria-label="Open Chef TV's Classroom"
-              className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
-            >
-              🎬
-            </button>
+        {/* Nav row — back/links left, mode pills right */}
+        <div className="max-w-2xl mx-auto px-3 pb-2 flex items-center gap-1.5">
+          <button onClick={() => window.location.href='/kitchen'} className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1">← Back</button>
+          <button
+            onClick={() => window.location.href=isPractice ? '/secret' : '/secret?view=cardbox'}
+            title={isPractice ? 'Recipe Vault' : 'Learning Vault'}
+            className="shrink-0 text-base font-semibold border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none"
+          >📘</button>
+          <button
+            onClick={() => window.location.href=isPractice ? '/videos?filter=practice' : '/videos'}
+            title={isPractice ? 'Chef TV Practice' : 'Chef TV Classroom'}
+            className="shrink-0 text-base font-semibold border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none"
+          >🎬</button>
+          <div className="flex-1" />
+          <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 shrink-0">
+            <button onClick={() => setMode('teach')} className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${mode === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>🎓 Teach</button>
+            <button onClick={() => setMode('practice')} className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${mode === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>🍳 Practice</button>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5">
-              <button
-                onClick={() => setMode('teach')}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                  mode === 'teach' ? 'bg-sky-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                🎓 Teach
-              </button>
-              <button
-                onClick={() => setMode('practice')}
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                  mode === 'practice' ? 'bg-orange-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                🍳 Practice
-              </button>
-            </div>
-            {messages.length > 0 && (
-              <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">
-                Clear
-              </button>
-            )}
-          </div>
+          {messages.length > 0 && (
+            <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">Clear</button>
+          )}
         </div>
       </header>
 
