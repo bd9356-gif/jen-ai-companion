@@ -2367,7 +2367,7 @@ export default function MyRecipeVaultPage() {
                     {/* Popover — anchored right, opens below the ⋯ button. */}
                     <div
                       role="menu"
-                      style={{position:"fixed",right:"8px",top:"60px",zIndex:9999,background:"white",border:"2px solid #e5e7eb",borderRadius:"12px",boxShadow:"0 10px 25px rgba(0,0,0,0.15)",overflowY:"auto",minWidth:"170px",maxWidth:"calc(100vw - 24px)",maxHeight:"75vh"}}
+                      style={{position:"fixed",right:"8px",top:"60px",zIndex:9999,background:"white",border:"2px solid #e5e7eb",borderRadius:"12px",boxShadow:"0 10px 25px rgba(0,0,0,0.15)",overflowY:"auto",width:"220px",maxHeight:"75vh"}}
                     >
                       {/* ── Create ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50">Create</p>
