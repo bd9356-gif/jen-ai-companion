@@ -134,6 +134,7 @@ FIRST, decide if this is actually a request for a cooking recipe or food. If the
 Otherwise respond with ONLY JSON in this exact shape — no prose, no markdown fences:
 {"title":"","description":"","cuisine":"${cuisine}","difficulty":"${difficulty}","ingredients":[{"name":"","measure":""}],"instructions":["step 1 as a full sentence","step 2 as a full sentence","..."]}
 
+Rules for description: ONE short sentence only — a single-line tagline for the dish, no more.
 Rules for instructions: return an ARRAY of strings (not one paragraph, not numbered "1." prefixes). Each array item is ONE step — short, clear, complete sentence. Aim for 6–12 steps.`
 
     const message = await anthropic.messages.create({

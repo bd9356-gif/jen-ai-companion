@@ -2399,7 +2399,7 @@ export default function MyRecipeVaultPage() {
                       {/* ── Manage ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Manage</p>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('enhance') }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
-                        ✨ Chef Jen AI
+                        ✨ AI Helpers
                       </button>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('edit') }} className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50 border-t border-gray-100">
                         ✏️ Edit Recipe
@@ -2890,9 +2890,6 @@ export default function MyRecipeVaultPage() {
           <div className="rounded-2xl border-2 border-orange-200 bg-orange-50 p-5">
             <p className="text-xs font-bold text-orange-700 uppercase tracking-wide mb-1">Helping with</p>
             <p className="text-lg font-bold text-gray-900 leading-snug">{viewing.title}</p>
-            <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-              Four cozy ways to tune up this recipe. Pick one below — nothing saves until you tap the green button in each card, so feel free to experiment.
-            </p>
           </div>
 
           {/* Tab strip — four helpers, one at a time. Matches the Import
