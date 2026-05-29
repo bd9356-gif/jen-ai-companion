@@ -408,7 +408,7 @@ export default function ChefPage() {
                   : 'Welcome to my classroom — class starts when you’re ready.'}
               </p>
             </div>
-            <p className="text-xs text-gray-500 mt-2 leading-snug text-center px-2">
+            <p className="text-sm text-gray-500 mt-2 leading-snug text-center px-2">
               {isPractice
                 ? 'Try the skill, make the dish, save the keepers, clear the rest.'
                 : 'Ask questions, learn the technique, then cook in 🍳 Practice.'}
