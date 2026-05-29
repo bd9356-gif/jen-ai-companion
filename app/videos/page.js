@@ -259,6 +259,9 @@ export default function VideosPage() {
       setUser(session.user)
       loadVideos()
       loadSaved(session.user.id)
+      // Honor ?filter=practice from Chef Jen cross-link
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('filter') === 'practice') { setFilter('practice'); setTopic('featured') }
       // Refresh saved state when user returns to this tab
       const handleFocus = () => loadSaved(session.user.id)
       window.addEventListener('focus', handleFocus)
