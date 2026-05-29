@@ -2936,7 +2936,7 @@ export default function MyRecipeVaultPage() {
                 <p className="text-xs text-gray-600 mt-0.5">Chef Jen tidies up your steps, fixes the wording, and makes instructions easier to follow.</p>
               </div>
             </div>
-            <button onClick={() => handleEnhance('enhance')} disabled={enhancing}
+            <button onClick={() => handleEnhance('enhance')} disabled={enhancing || !!enhanceResult?.instructions}
               className="mt-3 w-full py-3 bg-orange-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity">
               {enhancing ? 'Polishing…' : '🧹 Polish my recipe'}
             </button>
@@ -2984,7 +2984,7 @@ export default function MyRecipeVaultPage() {
                 </div>
               </div>
             </div>
-            <button onClick={() => handleEnhance('resize')} disabled={enhancing}
+            <button onClick={() => handleEnhance('resize')} disabled={enhancing || !!(enhanceResult?.ingredients && !enhanceResult?.instructions)}
               className="mt-3 w-full py-3 bg-sky-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity">
               {enhancing ? 'Calculating…' : `⚖️ Resize to ${servings} serving${servings === 1 ? '' : 's'}`}
             </button>
@@ -3017,7 +3017,7 @@ export default function MyRecipeVaultPage() {
                 <p className="text-xs text-gray-600 mt-0.5">Chef Jen estimates prep & cook time, difficulty, equipment, and nutrition.</p>
               </div>
             </div>
-            <button onClick={() => handleEnhance('generate_info')} disabled={enhancing}
+            <button onClick={() => handleEnhance('generate_info')} disabled={enhancing || !!generatedInfo}
               className="mt-3 w-full py-3 bg-emerald-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50 transition-opacity">
               {enhancing ? 'Analyzing…' : '📊 Generate details'}
             </button>
