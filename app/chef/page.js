@@ -407,12 +407,12 @@ export default function ChefPage() {
                   ? 'Welcome to the kitchen — your practice starts when you’re ready.'
                   : 'Welcome to my classroom — class starts when you’re ready.'}
               </p>
-              <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-snug max-w-md mx-auto text-center">
-                {isPractice
-                  ? 'Try the skill, make the dish, save the keepers, clear the rest.'
-                  : 'Ask questions, learn the technique, then cook in 🍳 Practice.'}
-              </p>
             </div>
+            <p className="text-xs text-gray-500 mt-2 leading-snug text-center px-2">
+              {isPractice
+                ? 'Try the skill, make the dish, save the keepers, clear the rest.'
+                : 'Ask questions, learn the technique, then cook in 🍳 Practice.'}
+            </p>
           </div>
         )}
 
