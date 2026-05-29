@@ -477,7 +477,7 @@ export default function ChefPage() {
                   <button
                     key={q}
                     onClick={() => sendMessage(q)}
-                    className={`w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm transition-colors ${accentChip}`}
+                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors border-2 ${isPractice ? "bg-orange-50 border-orange-200 text-orange-900 hover:bg-orange-100" : "bg-sky-50 border-sky-200 text-sky-900 hover:bg-sky-100"}`}
                   >
                     {q}
                   </button>
@@ -521,7 +521,7 @@ export default function ChefPage() {
               <div key={i} className="flex justify-start">
                 <div className="w-full max-w-[95%]">
                   <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-gray-100 text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                    <p className="text-xs text-gray-500 font-semibold mb-1">{proseEmoji} Chef Jennifer</p>
+                    <p className="text-sm text-gray-500 font-semibold mb-1">{proseEmoji} Chef Jennifer</p>
                     {renderProseWithCitations(prose, msg.library)}
                     {practice && (
                       <div className="mt-3 pt-3 border-t border-gray-300/70">
@@ -535,7 +535,7 @@ export default function ChefPage() {
                       <button
                         onClick={() => saveAnswer(msg)}
                         disabled={saved}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                        className={`text-sm font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
                           saved
                             ? 'bg-gray-100 text-gray-400 border-gray-200'
                             : 'bg-white text-sky-700 border-sky-200 hover:bg-sky-50'
