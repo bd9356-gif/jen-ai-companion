@@ -468,7 +468,7 @@ export default function ChefPage() {
               <div className={`rounded-2xl border p-2 space-y-2 ${
                 isPractice ? 'border-orange-100 bg-orange-50/50' : 'border-sky-100 bg-sky-50/50'
               }`}>
-                <p className={`text-[11px] font-bold uppercase tracking-wider text-center ${
+                <p className={`text-xs font-bold uppercase tracking-wider text-center ${
                   isPractice ? 'text-orange-700' : 'text-sky-700'
                 }`}>
                   Try one of these
