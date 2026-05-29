@@ -342,8 +342,8 @@ export default function ChefPage() {
               📘
             </button>
             <button
-              onClick={() => window.location.href='/videos'}
-              title="Open Chef TV's Classroom"
+              onClick={() => window.location.href=isPractice ? '/videos?filter=practice' : '/videos'}
+              title={isPractice ? "Open Chef TV Practice" : "Open Chef TV Classroom"}
               aria-label="Open Chef TV's Classroom"
               className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
             >
