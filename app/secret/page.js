@@ -2853,7 +2853,7 @@ export default function MyRecipeVaultPage() {
         {toastEl}
         {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('detail')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">✏️ Edit Recipe</h1>
           </div>
@@ -2879,7 +2879,7 @@ export default function MyRecipeVaultPage() {
         {toastEl}
         {pasteTargetEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => { setView('detail'); setEnhanceResult(null); setGeneratedInfo(null); setTransformResult(null); setTransformPrefs([]) }}
               className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">✨ Chef Jen Kitchen Helpers</h1>
@@ -3234,7 +3234,7 @@ export default function MyRecipeVaultPage() {
       <div className="min-h-screen bg-white">
         {toastEl}
         <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
             <button onClick={() => setView('list')} className="text-sm text-gray-500 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">⚙️ Vault Settings</h1>
           </div>
@@ -3758,7 +3758,7 @@ export default function MyRecipeVaultPage() {
           scrolls. The other view headers (detail, import) don't have
           tile-level z-10 elements underneath them, so their z-10 is fine. */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto px-4 pt-3 pb-3">
+        <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
           {/* Row 1: ← Back tucked into the title row's left side, title
               centered (flex-1). Keeps "Recipe Vault" at the visual top of
               the page and uses the empty space next to it for the back
@@ -3942,7 +3942,7 @@ export default function MyRecipeVaultPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-3">
+      <main className="max-w-2xl mx-auto px-4 py-3">
         {loading ? (
           <div className="text-center py-20 text-gray-500">Loading your vault...</div>
         ) : listStyle === 'cardbox' ? (

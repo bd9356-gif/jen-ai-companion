@@ -71,7 +71,7 @@ export default function BrowsePage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 pt-4 pb-3">
+        <div className="max-w-2xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center gap-2 mb-3">
             <button onClick={() => window.location.href='/kitchen'} className="text-sm text-gray-400 hover:text-gray-600">← Back</button>
             <h1 className="text-lg font-bold text-gray-900">🔍 Browse Recipes</h1>
@@ -99,7 +99,7 @@ export default function BrowsePage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-2xl mx-auto px-4 py-6">
         {loading ? (
           <div className="text-center py-20 text-gray-400">Loading recipes...</div>
         ) : (
