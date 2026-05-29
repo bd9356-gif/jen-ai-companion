@@ -4180,7 +4180,7 @@ export default function MyRecipeVaultPage() {
                      detail view (not the Card detail). 🃏 Pin button sits
                      under the photo so users can pin to /cards without
                      opening the recipe — matches the Card box pattern. */
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {regularRecipes.map(recipe => {
                       const pinned = pinnedCards.includes(recipe.id)
                       return (
