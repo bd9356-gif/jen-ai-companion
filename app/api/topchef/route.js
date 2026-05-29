@@ -109,6 +109,11 @@ Rules: instructions are an ARRAY of strings (not a paragraph, not numbered prefi
         }
 
         recipe.instructions = normalizeInstructions(recipe.instructions)
+    // Truncate description to one sentence
+    if (recipe.description) {
+      const firstSentence = recipe.description.split(/[.!?]/)[0].trim()
+      recipe.description = firstSentence ? firstSentence + '.' : recipe.description
+    }
 
         // Bookkeeping — bump the base's serve counter. We deliberately
         // do NOT insert the adapted variant: it shares structure with
@@ -152,6 +157,11 @@ Rules for instructions: return an ARRAY of strings (not one paragraph, not numbe
     }
 
     recipe.instructions = normalizeInstructions(recipe.instructions)
+    // Truncate description to one sentence
+    if (recipe.description) {
+      const firstSentence = recipe.description.split(/[.!?]/)[0].trim()
+      recipe.description = firstSentence ? firstSentence + '.' : recipe.description
+    }
 
     const { data, error } = await supabase.from('chef_recipes').insert({ title: recipe.title, description: recipe.description, ingredients: recipe.ingredients, instructions: recipe.instructions, difficulty: recipe.difficulty, cuisine: recipe.cuisine, ai_prompt: body.prompt || `${cuisine} ${difficulty}` }).select().single()
     if (error) return Response.json({ recipe, source: 'fresh' }, { status: 200 })
