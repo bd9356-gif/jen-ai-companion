@@ -2371,40 +2371,40 @@ export default function MyRecipeVaultPage() {
                     >
                       {/* ── Create ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50">Create</p>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); window.open(`/card/${viewing.id}`, "_blank") }} className="w-full text-left text-sm font-semibold text-amber-700 px-4 py-2.5 hover:bg-amber-50">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); window.open(`/card/${viewing.id}`, "_blank") }} className="w-full text-left text-xs font-semibold text-amber-700 px-3 py-2 hover:bg-amber-50">
                         ✨ Create Recipe Card
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); generatePhoto(viewing) }} className="w-full text-left text-sm font-semibold text-emerald-600 px-4 py-2.5 hover:bg-emerald-50 border-t border-gray-100">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); generatePhoto(viewing) }} className="w-full text-left text-xs font-semibold text-emerald-600 px-3 py-2 hover:bg-emerald-50 border-t border-gray-100">
                         🖼️ Generate AI Photo
                       </button>
                       {/* ── Save ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Save</p>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); toggleCardPin(viewing.id) }} className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); toggleCardPin(viewing.id) }} className="w-full text-left text-xs font-semibold text-gray-700 px-3 py-2 hover:bg-gray-50">
                         {pinnedCards.includes(viewing.id) ? '📌 ✓ Pinned to Cards' : '📌 Pin to Cards'}
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); toggleFavorite(viewing) }} className="w-full text-left text-sm font-semibold text-rose-600 px-4 py-2.5 hover:bg-rose-50 border-t border-gray-100">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); toggleFavorite(viewing) }} className="w-full text-left text-xs font-semibold text-rose-600 px-3 py-2 hover:bg-rose-50 border-t border-gray-100">
                         {viewing.is_favorite ? '❤️ Unfavorite' : '❤️ Favorite'}
                       </button>
                       {/* ── Share ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Share</p>
-                      <button role="menuitem" onClick={async () => { setActionsMenuOpen(false); const { error } = await supabase.from("personal_recipes").update({ is_in_social_share: true }).eq("id", viewing.id); if (error) { showToast("Could not promote"); return }; showToast("🎤 Added to Social Share ✓") }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
+                      <button role="menuitem" onClick={async () => { setActionsMenuOpen(false); const { error } = await supabase.from("personal_recipes").update({ is_in_social_share: true }).eq("id", viewing.id); if (error) { showToast("Could not promote"); return }; showToast("🎤 Added to Social Share ✓") }} className="w-full text-left text-xs font-semibold text-purple-600 px-3 py-2 hover:bg-purple-50">
                         📣 Social Share
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank') }} className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank') }} className="w-full text-left text-xs font-semibold text-blue-600 px-3 py-2 hover:bg-blue-50 border-t border-gray-100">
                         📘 Facebook
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`, '_blank') }} className="w-full text-left text-sm font-semibold text-red-600 px-4 py-2.5 hover:bg-red-50 border-t border-gray-100">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`, '_blank') }} className="w-full text-left text-xs font-semibold text-red-600 px-3 py-2 hover:bg-red-50 border-t border-gray-100">
                         📌 Pinterest
                       </button>
                       {/* ── Manage ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Manage</p>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('enhance') }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('enhance') }} className="w-full text-left text-xs font-semibold text-purple-600 px-3 py-2 hover:bg-purple-50">
                         ✨ Chef Jen AI
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('edit') }} className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50 border-t border-gray-100">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('edit') }} className="w-full text-left text-xs font-semibold text-gray-700 px-3 py-2 hover:bg-gray-50 border-t border-gray-100">
                         ✏️ Edit Recipe
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); deleteRecipe(viewing) }} className="w-full text-left text-sm font-semibold text-red-600 px-4 py-2.5 hover:bg-red-50 border-t border-gray-100">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); deleteRecipe(viewing) }} className="w-full text-left text-xs font-semibold text-red-600 px-3 py-2 hover:bg-red-50 border-t border-gray-100">
                         🗑 Delete Recipe
                       </button>
                     </div>
