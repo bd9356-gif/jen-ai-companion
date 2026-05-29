@@ -334,7 +334,7 @@ export default function ChefPage() {
               ← Back
             </button>
             <button
-              onClick={() => window.location.href='/secret'}
+              onClick={() => window.location.href='/secret?view=cardbox'}
               title="Open Learning Vault"
               aria-label="Open Learning Vault"
               className="shrink-0 text-base font-semibold text-gray-600 border border-gray-200 rounded-lg px-2 py-0.5 hover:border-orange-300 hover:text-orange-700"
