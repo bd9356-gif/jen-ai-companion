@@ -313,7 +313,7 @@ export default function ChefPage() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 max-w-2xl mx-auto w-full px-4 py-2 flex flex-col">
+      <main className="flex-1 min-h-0 max-w-2xl mx-auto w-full px-4 pt-1 pb-2 flex flex-col">
         {/* Mode-aware heading at the TOP of <main> when the chat
             is empty (Bill's ask, May 2026). Disappears once the
             user sends their first message so the conversation
