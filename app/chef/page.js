@@ -396,19 +396,21 @@ export default function ChefPage() {
              loaded app-wide for Cards/heritage surfaces; reusing it
              here lands the chalk-on-slate feel without any new asset. */
           <div className="pb-4">
-            <div className={`rounded-2xl px-6 py-6 shadow-xl bg-slate-800 border-l-4 ${
+            <div className={`rounded-2xl px-5 py-4 shadow-lg bg-slate-800 border-l-4 ${
               isPractice ? 'border-l-orange-500' : 'border-l-sky-500'
             }`}>
-              <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${isPractice ? "text-orange-400" : "text-sky-400"}`}>
-                {isPractice ? "🍳 Practice Kitchen" : "🎓 Classroom"}
-              </p>
-              <p className="text-white leading-snug"
-                style={{ fontFamily: "var(--font-caveat)", fontSize: "32px", fontWeight: 600 }}
+              <p
+                className="text-white leading-snug text-center"
+                style={{ fontFamily: 'var(--font-caveat)', fontSize: '26px', fontWeight: 600 }}
               >
-                {isPractice ? "Welcome to the kitchen — your practice starts when you’re ready." : "Welcome to my classroom — class starts when you’re ready."}
+                {isPractice
+                  ? 'Welcome to the kitchen — your practice starts when you’re ready.'
+                  : 'Welcome to my classroom — class starts when you’re ready.'}
               </p>
-              <p className="text-xs text-slate-400 mt-3 leading-snug">
-                {isPractice ? "Try the skill, make the dish, save the keepers, clear the rest." : "Ask questions, learn the technique, then cook in 🍳 Practice."}
+              <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-snug max-w-md mx-auto text-center">
+                {isPractice
+                  ? 'Try the skill, make the dish, save the keepers, clear the rest.'
+                  : 'Ask questions, learn the technique, then cook in 🍳 Practice.'}
               </p>
             </div>
           </div>
