@@ -2367,7 +2367,7 @@ export default function MyRecipeVaultPage() {
                     {/* Popover — anchored right, opens below the ⋯ button. */}
                     <div
                       role="menu"
-                      style={{position:"fixed",right:"8px",top:"60px",zIndex:9999,background:"white",border:"2px solid #e5e7eb",borderRadius:"12px",boxShadow:"0 10px 25px rgba(0,0,0,0.15)",overflowY:"auto",minWidth:"200px",maxHeight:"80vh"}}
+                      style={{position:"fixed",right:"8px",top:"60px",zIndex:9999,background:"white",border:"2px solid #e5e7eb",borderRadius:"12px",boxShadow:"0 10px 25px rgba(0,0,0,0.15)",overflowY:"auto",minWidth:"170px",maxHeight:"75vh"}}
                     >
                       {/* ── Create ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50">Create</p>
@@ -2398,7 +2398,10 @@ export default function MyRecipeVaultPage() {
                       </button>
                       {/* ── Manage ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Manage</p>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('edit') }} className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50">
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('enhance') }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
+                        ✨ Chef Jen AI
+                      </button>
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('edit') }} className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50 border-t border-gray-100">
                         ✏️ Edit Recipe
                       </button>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); deleteRecipe(viewing) }} className="w-full text-left text-sm font-semibold text-red-600 px-4 py-2.5 hover:bg-red-50 border-t border-gray-100">
