@@ -665,7 +665,7 @@ export default function VideosPage() {
         <div className="max-w-2xl mx-auto px-4 py-2 flex items-center gap-1.5">
           <button onClick={() => window.location.href='/kitchen'} className="text-sm font-semibold text-gray-500 hover:text-gray-700 shrink-0 px-1">←</button>
           <button onClick={() => window.location.href=filter === 'practice' ? '/secret' : '/secret?view=cardbox'} title={filter === 'practice' ? 'Recipe Vault' : 'Learning Vault'} className="shrink-0 text-base font-semibold border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none">📘</button>
-          <button onClick={() => window.location.href='/chef'} className="shrink-0 text-base font-semibold border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none">👨‍🍳</button>
+          <button onClick={() => window.location.href=filter === 'practice' ? '/chef?mode=practice' : '/chef'} className="shrink-0 text-base font-semibold border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 rounded-lg px-2 py-0.5 leading-none">👨‍🍳</button>
           <div className="flex-1" />
           <div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 shrink-0">
             <button onClick={() => { setFilter('teach'); setPage(0); setTopic('featured') }} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${filter === 'teach' ? 'bg-sky-600 text-white' : 'text-gray-600'}`}>🎓 Teach</button>
