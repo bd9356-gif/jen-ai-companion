@@ -318,10 +318,9 @@ export default function ChefPage() {
                    full breathing room and never truncates.
             Row 2: nav buttons left / mode pill row right.
             Clear button (when any messages) tucks in between. */}
-        {/* Row 1 — title alone, centered, full width */}
-        <div className="max-w-2xl mx-auto px-3 pt-2 pb-1 text-center leading-none">
-          <h1 className="text-base font-bold text-gray-900 leading-tight">👨‍🍳 Chef Jennifer&rsquo;s</h1>
-          <p className="text-xs font-semibold italic text-orange-600 leading-tight mt-0.5">Classroom</p>
+        {/* Row 1 — logo centered, full width */}
+        <div className="max-w-2xl mx-auto px-3 pt-2 pb-1 flex justify-center">
+          <img src="/jen-classroom.png" alt="Chef Jennifer's Classroom" style={{height:'50px',width:'150px',objectFit:'contain'}} />
         </div>
         {/* Row 2 — nav left, mode pills + optional Clear right */}
         <div className="max-w-2xl mx-auto px-3 pb-2 flex items-center justify-between gap-2">
