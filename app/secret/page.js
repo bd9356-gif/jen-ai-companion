@@ -4125,7 +4125,7 @@ export default function MyRecipeVaultPage() {
                           const shareId = r.metadata?.personal_recipe_id || r.id
                           const url = `${window.location.origin}/share/${shareId}`
                           const text = `${r.title} — Chef Jen approves ♥`
-                          const fbDeep = `fb://share?u=${encodeURIComponent(url)}`; const fbWeb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`; window.location.href = fbDeep; setTimeout(() => window.open(fbWeb, '_blank'), 500)
+                          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_system')
                         }}
                         className="flex-1 text-xs font-semibold bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-700 transition-colors"
                       >
