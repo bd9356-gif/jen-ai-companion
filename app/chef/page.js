@@ -343,11 +343,6 @@ export default function ChefPage() {
                   : 'Welcome to my classroom — class starts when you’re ready.'}
               </p>
             </div>
-            <p className="text-sm text-gray-500 mt-2 leading-snug text-center px-2">
-              {isPractice
-                ? 'Try the skill, make the dish, save the keepers, clear the rest.'
-                : 'Ask questions, learn the technique, then cook in 🍳 Practice.'}
-            </p>
           </div>
         )}
 
@@ -365,6 +360,9 @@ export default function ChefPage() {
             <button onClick={() => setMessages([])} className="shrink-0 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-2 py-1">Clear</button>
           )}
         </div>
+        <p className="text-sm text-gray-500 mb-3 leading-snug text-center px-2">
+          {isPractice ? 'Try the skill, make the dish, save the keepers, clear the rest.' : 'Ask questions, learn the technique, then cook in 🍳 Practice.'}
+        </p>
 
         {/* Input bar at TOP (April 2026 move) — Bill's ask: easier
             thumb reach, the textarea sits right under the header so
