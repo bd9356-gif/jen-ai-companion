@@ -396,21 +396,23 @@ export default function ChefPage() {
              loaded app-wide for Cards/heritage surfaces; reusing it
              here lands the chalk-on-slate feel without any new asset. */
           <div className="pb-4">
-            <div className={`rounded-2xl px-5 py-4 shadow-lg bg-slate-800 border-l-4 ${
-              isPractice ? 'border-l-orange-500' : 'border-l-sky-500'
-            }`}>
-              <p
-                className="text-white leading-snug text-center"
-                style={{ fontFamily: 'var(--font-caveat)', fontSize: '26px', fontWeight: 600 }}
-              >
-                {isPractice
-                  ? 'Welcome to the kitchen — your practice starts when you’re ready.'
-                  : 'Welcome to my classroom — class starts when you’re ready.'}
+            <div className={`rounded-2xl px-6 py-8 shadow-xl border-4 ${
+              isPractice
+                ? 'border-orange-500 bg-gradient-to-br from-slate-900 via-slate-800 to-orange-950'
+                : 'border-sky-500 bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950'
+            }`}
+              style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(255,255,255,0.03) 27px, rgba(255,255,255,0.03) 28px)' }}
+            >
+              <p className={`text-center mb-2 text-xs font-bold uppercase tracking-widest ${isPractice ? "text-orange-400" : "text-sky-400"}`}>
+                {isPractice ? "🍳 Practice Kitchen" : "🎓 Classroom"}
               </p>
-              <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-snug max-w-md mx-auto text-center">
-                {isPractice
-                  ? 'Try the skill, make the dish, save the keepers, clear the rest.'
-                  : 'Ask questions, learn the technique, then cook in 🍳 Practice.'}
+              <p className="text-white leading-snug text-center"
+                style={{ fontFamily: "var(--font-caveat)", fontSize: "34px", fontWeight: 600 }}
+              >
+                {isPractice ? "Welcome to the kitchen — your practice starts when you're ready." : "Welcome to my classroom — class starts when you're ready."}
+              </p>
+              <p className={`text-sm mt-3 leading-snug max-w-md mx-auto text-center ${isPractice ? "text-orange-200" : "text-sky-200"}`}>
+                {isPractice ? "Try the skill, make the dish, save the keepers, clear the rest." : "Ask questions, learn the technique, then cook in 🍳 Practice."}
               </p>
             </div>
           </div>
