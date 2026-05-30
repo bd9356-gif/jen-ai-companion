@@ -14,7 +14,7 @@ const supabase = createClient(
    Set BANNER.enabled to false to hide entirely.
    ─────────────────────────────────────────────────────────── */
 const BANNER = {
-  enabled: true,
+  enabled: false,
   version: 'v1',
   message: "Welcome, testers — here's what's new and what to try.",
   linkHref: '/notes',
