@@ -160,6 +160,22 @@ export default function HomePage() {
             <a href="/login" className="text-xs font-semibold text-orange-600 hover:text-orange-700">Sign in →</a>
           )}
         </div>
+        {/* Feature cards grid */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {[
+            { img: "/card1.png", href: "/secret" },
+            { img: "/card2.png", href: "/cards" },
+            { img: "/card3.png", href: "/meal-plan" },
+            { img: "/card4.png", href: "/chef" },
+            { img: "/card5.png", href: "/videos" },
+            { img: "/card6.png", href: "/guides" },
+          ].map((card, i) => (
+            <a key={i} href={userName ? card.href : "/login"} className="block rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow active:scale-95">
+              <img src={card.img} alt="" className="w-full h-auto block" />
+            </a>
+          ))}
+        </div>
+
         <div className="space-y-3">
           {KITCHEN_SECTIONS.map(section => {
             // Per-section color (May 2026): same color story as the
