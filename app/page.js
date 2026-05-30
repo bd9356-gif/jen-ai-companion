@@ -23,7 +23,7 @@ export default function LandingPage() {
       {/* Full screen hero image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/landing.png"
+          src="/landing.PNG"
           alt="MyRecipe Companion"
           className="w-full h-full object-cover"
         />
