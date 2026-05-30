@@ -24,7 +24,7 @@ export default function LandingPage() {
       <div
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: 'url(/landing.png)',
+          backgroundImage: 'url(/landing-hero-01.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'top center',
           backgroundAttachment: 'fixed',
