@@ -160,17 +160,6 @@ export default function HomePage() {
             <a href="/login" className="text-xs font-semibold text-orange-600 hover:text-orange-700">Sign in →</a>
           )}
         </div>
-
-        {/* What's inside — a preview of MyKitchen, rendered with the
-            same section headers + orange-stripe tile pattern. The tile
-            hrefs are overridden with `tileHref` so signed-out visitors
-            land on /login on any tap; signed-in visitors land on
-            /kitchen and pick from there.
-
-            Density note (April 2026): the landing intentionally renders
-            tiles WITHOUT descriptions or section subtitles. The hub
-            ships the long-form copy; here the goal is "see the shape
-            of the app on one phone screen". The section name plus the
             emoji + title is enough to telegraph what's inside. */}
         <div className="space-y-3">
           {KITCHEN_SECTIONS.map(section => {
