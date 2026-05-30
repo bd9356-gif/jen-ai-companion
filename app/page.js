@@ -114,7 +114,7 @@ export default function HomePage() {
 
 
       {/* Main */}
-      <main className="flex-1 max-w-lg mx-auto w-full px-4 pt-3 pb-8 flex flex-col">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 pt-3 pb-8 flex flex-col">
 
         {/* Tester banner (dismissible) — kept as the dark stone-900 strip
             so it reads as a temporary callout against the warm orange
