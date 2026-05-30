@@ -17,48 +17,44 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      {/* Centered container — caps at 480px (phone width) on all screens */}
-      <div className="relative w-full max-w-[480px] mx-auto overflow-hidden" style={{minHeight:'100vh'}}>
-        
-        {/* Full height hero image */}
-        <img
-          src="/landing.png"
-          alt="MyRecipe Companion"
-          className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
-        />
+    <div className="min-h-screen flex flex-col items-center justify-end relative overflow-hidden">
+      {/* Full screen hero image — not clickable */}
+      <img
+        src="/landing.png"
+        alt="MyRecipe Companion"
+        className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+      />
 
-        {/* Button overlay at bottom */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 px-6 pb-16 flex flex-col gap-3">
-          {user ? (
+      {/* Button overlay at bottom */}
+      <div className="relative z-10 w-full max-w-sm px-6 pb-12 flex flex-col gap-3">
+        {user ? (
+          <a
+            href="/kitchen"
+            className="block w-full py-4 bg-orange-600 hover:bg-orange-700 text-white text-center text-lg font-bold rounded-2xl shadow-xl transition-colors"
+          >
+            Enter My Kitchen →
+          </a>
+        ) : (
+          <>
             <a
-              href="/kitchen"
+              href="/login"
               className="block w-full py-4 bg-orange-600 hover:bg-orange-700 text-white text-center text-lg font-bold rounded-2xl shadow-xl transition-colors"
             >
-              Enter My Kitchen →
+              Get Started — It&apos;s Free
             </a>
-          ) : (
-            <>
-              <a
-                href="/login"
-                className="block w-full py-4 bg-orange-600 hover:bg-orange-700 text-white text-center text-lg font-bold rounded-2xl shadow-xl transition-colors"
-              >
-                Get Started — It&apos;s Free
-              </a>
-              <a
-                href="/login"
-                className="block w-full py-4 bg-white/20 hover:bg-white/30 text-white text-center text-base font-semibold rounded-2xl border border-white/40 backdrop-blur-sm transition-colors"
-              >
-                Sign In
-              </a>
-            </>
-          )}
-          <p className="text-center text-white/50 text-xs pt-1">
-            <a href="/privacy" className="hover:text-white/80">Privacy</a>
-            <span className="mx-2">·</span>
-            <a href="/terms" className="hover:text-white/80">Terms</a>
-          </p>
-        </div>
+            <a
+              href="/login"
+              className="block w-full py-4 bg-white/20 hover:bg-white/30 text-white text-center text-base font-semibold rounded-2xl border border-white/40 backdrop-blur-sm transition-colors"
+            >
+              Sign In
+            </a>
+          </>
+        )}
+        <p className="text-center text-white/50 text-xs pt-1">
+          <a href="/privacy" className="hover:text-white/80">Privacy</a>
+          <span className="mx-2">·</span>
+          <a href="/terms" className="hover:text-white/80">Terms</a>
+        </p>
       </div>
     </div>
   )
