@@ -17,16 +17,16 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-end relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-end relative overflow-hidden bg-black">
       {/* Full screen hero image — not clickable */}
       <img
         src="/landing.png"
         alt="MyRecipe Companion"
-        className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none"
+        className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none max-w-2xl mx-auto left-0 right-0"
       />
 
       {/* Button overlay at bottom */}
-      <div className="relative z-10 w-full max-w-sm px-6 pb-12 flex flex-col gap-3">
+      <div className="relative z-10 w-full max-w-sm px-6 pb-16 sm:pb-12 flex flex-col gap-3">
         {user ? (
           <a
             href="/kitchen"
