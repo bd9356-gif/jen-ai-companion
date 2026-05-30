@@ -25,7 +25,7 @@ export default function LandingPage() {
         <img
           src="/landing.png"
           alt="MyRecipe Companion"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-top"
         />
         {/* Dark overlay so text reads clearly */}
         <div className="absolute inset-0 bg-black/45" />
