@@ -27,7 +27,6 @@ export default function LandingPage() {
           backgroundImage: 'url(/landing-hero-01.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'top center',
-          backgroundAttachment: 'fixed',
         }}
       >
         <div className="absolute inset-0 bg-black/45" />
