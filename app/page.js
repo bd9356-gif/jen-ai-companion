@@ -148,28 +148,17 @@ export default function HomePage() {
             still reads at a glance against the dark gradient. CTA uses
             bg-orange-600 (MyKitchen's brand color) so signing in feels
             like crossing the same threshold as a tile tap on the hub. */}
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-3 mt-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <div style={{height:"200px", overflow:"hidden"}}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/landing-hero-10.png" alt="Cooking, figured out." className="w-full h-auto block" width={1774} height={887} />
-          </div>
-          <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-            <div className="flex items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-lockup.png" alt="MyRecipe Companion" width="511" height="156" className="h-14 w-auto" />
-            </div>
-            {userName ? (
-              <a href="/kitchen" className="text-xs font-semibold text-orange-600 hover:text-orange-700">
-                Welcome back, {userName} →
-              </a>
-            ) : (
-              <a href="/login" className="bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-orange-700 transition-colors">
-                Sign in
-              </a>
-            )}
-          </div>
-
+        {/* Hero image — full width, no white box */}
+        <div className="rounded-2xl overflow-hidden shadow-sm mb-3 mt-1">
+          <img src="/landing-hero-10.png" alt="MyRecipe Companion" className="w-full h-auto block" width={1774} height={887} />
+        </div>
+        {/* Sign in CTA */}
+        <div className="flex justify-end mb-3">
+          {userName ? (
+            <a href="/kitchen" className="text-xs font-semibold text-orange-600 hover:text-orange-700">Welcome back, {userName} →</a>
+          ) : (
+            <a href="/login" className="text-xs font-semibold text-orange-600 hover:text-orange-700">Sign in →</a>
+          )}
         </div>
 
         {/* What's inside — a preview of MyKitchen, rendered with the
