@@ -511,6 +511,16 @@ If no recipe is found, return exactly: {"error": "No recipe found"}`
         }
       }
     }
+    // Add source URL attribution to family_notes for web imports
+    if (url && result && !String(result.family_notes || '').includes('Source:')) {
+      try {
+        const domain = new URL(url).hostname.replace('www.', '')
+        const existing = (result.family_notes || '').trim()
+        result.family_notes = existing ? `${existing}\n\nSource: ${url}` : `Source: ${url}`
+        result.source_url = url
+        result.source_domain = domain
+      } catch {}
+    }
     return Response.json(result)
   } catch (err) {
     return Response.json({ error: 'Could not parse recipe: ' + err.message }, { status: 500 })
