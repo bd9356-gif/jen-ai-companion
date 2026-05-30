@@ -100,6 +100,23 @@ export default async function SharePage({ params }) {
           </div>
         </div>
 
+        {/* Source credit */}
+        {recipe.family_notes && recipe.family_notes.includes('Source:') && (() => {
+          const match = recipe.family_notes.match(/Source: (https?:\/\/[^\s\n]+)/)
+          if (!match) return null
+          try {
+            const domain = new URL(match[1]).hostname.replace('www.', '')
+            return (
+              <div className="mb-4">
+                <a href={match[1]} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded-full px-3 py-1 hover:bg-gray-200 transition-colors">
+                  🔗 Originally from {domain}
+                </a>
+              </div>
+            )
+          } catch { return null }
+        })()}
+
         {/* Description */}
         {recipe.description && (
           <p className="text-gray-600 text-sm leading-relaxed mb-5">{recipe.description}</p>
