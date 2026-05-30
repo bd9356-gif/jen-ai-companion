@@ -21,14 +21,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen relative flex flex-col">
       {/* Full screen hero image */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: 'url(/landing-hero-01.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'top center',
-        }}
-      >
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <img
+          src="/landing-hero-01.png"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
         <div className="absolute inset-0 bg-black/45" />
       </div>
 
