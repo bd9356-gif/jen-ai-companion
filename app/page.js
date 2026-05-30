@@ -17,7 +17,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-end relative overflow-hidden">
+    <div className="flex flex-col items-center justify-end relative overflow-hidden" style={{height:"100dvh"}}>
       {/* Full screen hero image — not clickable */}
       <img
         src="/landing.png"
