@@ -25,7 +25,7 @@ export default function LandingPage() {
         <img
           src="/landing-hero-01.png"
           alt=""
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-contain"
         />
         <div className="absolute inset-0 bg-black/45" />
       </div>
