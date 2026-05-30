@@ -160,7 +160,6 @@ export default function HomePage() {
             <a href="/login" className="text-xs font-semibold text-orange-600 hover:text-orange-700">Sign in →</a>
           )}
         </div>
-            emoji + title is enough to telegraph whats inside. */}
         <div className="space-y-3">
           {KITCHEN_SECTIONS.map(section => {
             // Per-section color (May 2026): same color story as the
