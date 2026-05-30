@@ -21,13 +21,15 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen relative flex flex-col">
       {/* Full screen hero image */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src="/landing.png"
-          alt="MyRecipe Companion"
-          className="w-full h-full object-cover object-top"
-        />
-        {/* Dark overlay so text reads clearly */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: 'url(/landing.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'top center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
         <div className="absolute inset-0 bg-black/45" />
       </div>
 
