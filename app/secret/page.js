@@ -2402,7 +2402,7 @@ export default function MyRecipeVaultPage() {
                       {/* ── Share ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Share</p>
                       <button role="menuitem" onClick={async () => { setActionsMenuOpen(false); const { error } = await supabase.from("personal_recipes").update({ is_in_social_share: true }).eq("id", viewing.id); if (error) { showToast("Could not promote"); return }; showToast("🎤 Added to Social Share ✓") }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
-                        📣 Social Share
+                        📌 Share Later
                       </button>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; if (navigator.share) { navigator.share({ title: viewing.title, text: `${viewing.title} — Chef Jen approves ♥`, url }).catch(() => {}) } else { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank') } }} className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100">
                         🔗 Share Anywhere
@@ -3784,7 +3784,7 @@ export default function MyRecipeVaultPage() {
                 Playbook page so the relationship reads at a glance. */}
 
             <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">
-              {listStyle === 'portfolio' ? '💎 Social Share' : listStyle === 'cardbox' ? '🎓 Learning Vault' : '🔐 Recipe Vault'}
+              {listStyle === 'portfolio' ? '📌 Share Later' : listStyle === 'cardbox' ? '🎓 Learning Vault' : '🔐 Recipe Vault'}
             </h1>
             {/* ⚙️ Settings — opens the Vault settings view (Recently
                 Deleted recovery, future preferences). Matches the back
@@ -3860,7 +3860,7 @@ export default function MyRecipeVaultPage() {
                  buttons on the right. */
               <div className="flex-1 flex items-center min-w-0">
                 <span className="text-xs italic text-stone-600">
-                  {listStyle === "cardbox" ? "Learning Vault" : "Social Share"}
+                  {listStyle === "cardbox" ? "Learning Vault" : "Share Later"}
                 </span>
               </div>
             )}
@@ -3900,7 +3900,7 @@ export default function MyRecipeVaultPage() {
                 {[
                   { key: 'grid', icon: '🔐', title: 'Recipe Vault' },
                   { key: 'cardbox', icon: '🎓', title: 'Learning Vault' },
-                  { key: 'portfolio', icon: '🎤', title: 'Social Share' },
+                  { key: 'portfolio', icon: '📌', title: 'Share Later' },
                 ].map(opt => (
                   <button
                     key={opt.key}
@@ -4101,7 +4101,7 @@ export default function MyRecipeVaultPage() {
                 <div className="rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-6 py-8 text-center text-white">
                   <p className="text-4xl mb-2">🎤</p>
                   <h2 className="text-xl font-bold mb-1">Social Share</h2>
-                  <p className="text-sm text-white/85 leading-relaxed">Share your favorite recipes with the world.<br/>Tap ⋯ on any recipe and choose <strong>📣 Social Share</strong>.</p>
+                  <p className="text-sm text-white/85 leading-relaxed">Share your favorite recipes with the world.<br/>Tap ⋯ on any recipe and choose <strong>📌 Share Later</strong>.</p>
                 </div>
                 <div className="text-center py-8 px-6">
                   <p className="text-gray-400 text-sm">No recipes shared yet.</p>
@@ -4111,7 +4111,7 @@ export default function MyRecipeVaultPage() {
             ) : (
               <div className="space-y-3">
                 <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-5 py-4 text-white mb-2">
-                  <p className="text-lg font-bold">🎤 Social Share</p>
+                  <p className="text-lg font-bold">📌 Share Later</p>
                   <p className="text-sm text-white/90 mt-1">Your recipes, shared with the world. Tap a button to share on Facebook or Pinterest.</p>
                 </div>
                 {portfolioRecipes.map(r => (
