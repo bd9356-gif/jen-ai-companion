@@ -146,7 +146,7 @@ export default function RecipeCardPage() {
           rel="noopener noreferrer"
           style={{ flex: 1, background: '#1877f2', color: '#fff', padding: '12px', borderRadius: '10px', textAlign: 'center', fontFamily: 'sans-serif', fontSize: '13px', fontWeight: 'bold', textDecoration: 'none' }}
         >
-          📘 Share to Facebook
+          🔗 Share Anywhere
         </a>
         <a
           href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${encodeURIComponent(shareText)}`}
