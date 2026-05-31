@@ -4148,6 +4148,7 @@ export default function MyRecipeVaultPage() {
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
             )}
           </div>
