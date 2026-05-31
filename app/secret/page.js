@@ -782,7 +782,6 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
                       </div>
                     ))}
                 </div>
-                  </div>
                 </div>
               )}
             </div>
