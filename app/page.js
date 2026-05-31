@@ -153,11 +153,20 @@ export default function HomePage() {
           <img src="/landing-hero-10.png" alt="MyRecipe Companion" className="w-full h-auto block" width={1774} height={887} />
         </div>
         {/* Sign in CTA */}
-        <div className="flex justify-end mb-3">
+        <div className="flex flex-col items-center gap-2 my-4">
           {userName ? (
-            <a href="/kitchen" className="text-xs font-semibold text-orange-600 hover:text-orange-700">Welcome back, {userName} →</a>
+            <a href="/kitchen" className="w-full max-w-xs py-3 bg-orange-600 hover:bg-orange-700 text-white text-center text-base font-bold rounded-2xl shadow-md transition-colors">
+              Enter My Kitchen →
+            </a>
           ) : (
-            <a href="/login" className="text-xs font-semibold text-orange-600 hover:text-orange-700">Sign in →</a>
+            <>
+              <a href="/login" className="w-full max-w-xs py-3 bg-orange-600 hover:bg-orange-700 text-white text-center text-base font-bold rounded-2xl shadow-md transition-colors">
+                Get Started — It&apos;s Free
+              </a>
+              <a href="/login" className="w-full max-w-xs py-2.5 text-center text-sm font-semibold text-orange-600 border-2 border-orange-200 rounded-2xl hover:bg-orange-50 transition-colors">
+                Sign In
+              </a>
+            </>
           )}
         </div>
         {/* Feature cards grid */}
