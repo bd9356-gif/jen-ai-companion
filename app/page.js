@@ -153,7 +153,7 @@ export default function HomePage() {
           <img src="/landing-hero-10.png" alt="MyRecipe Companion" className="w-full h-auto block" width={1774} height={887} />
         </div>
         {/* Sign in CTA */}
-        <div className="flex justify-center my-2">
+        <div className="flex justify-center mt-1 mb-2">
           {userName ? (
             <a href="/kitchen" className="px-5 py-2 bg-orange-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-orange-700 transition-colors">Enter My Kitchen →</a>
           ) : (
