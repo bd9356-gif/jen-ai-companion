@@ -148,14 +148,6 @@ export default function RecipeCardPage() {
         >
           🔗 Share Anywhere
         </a>
-        <a
-          href={`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${encodeURIComponent(shareText)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ flex: 1, background: '#e60023', color: '#fff', padding: '12px', borderRadius: '10px', textAlign: 'center', fontFamily: 'sans-serif', fontSize: '13px', fontWeight: 'bold', textDecoration: 'none' }}
-        >
-          📌 Pin to Pinterest
-        </a>
       </div>
     </div>
   )
