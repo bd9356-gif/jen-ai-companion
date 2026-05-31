@@ -2404,11 +2404,8 @@ export default function MyRecipeVaultPage() {
                       <button role="menuitem" onClick={async () => { setActionsMenuOpen(false); const { error } = await supabase.from("personal_recipes").update({ is_in_social_share: true }).eq("id", viewing.id); if (error) { showToast("Could not promote"); return }; showToast("🎤 Added to Social Share ✓") }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
                         📣 Social Share
                       </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, window.Capacitor ? '_system' : '_blank') }} className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100">
-                        📘 Facebook
-                      </button>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; const text = `${viewing.title} — Chef Jen approves ♥`; window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`, '_blank') }} className="w-full text-left text-sm font-semibold text-red-600 px-4 py-2.5 hover:bg-red-50 border-t border-gray-100">
-                        📌 Pinterest
+                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; if (navigator.share) { navigator.share({ title: viewing.title, text: `${viewing.title} — Chef Jen approves ♥`, url }).catch(() => {}) } else { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank') } }} className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100">
+                        🔗 Share Anywhere
                       </button>
                       {/* ── Manage ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Manage</p>
