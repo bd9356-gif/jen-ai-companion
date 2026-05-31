@@ -2348,6 +2348,20 @@ export default function MyRecipeVaultPage() {
               >
                 🥣 Mise En Place
               </button>
+              {/* 📤 Native share — iOS share sheet */}
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/share/${viewing.id}`
+                    navigator.share({ title: viewing.title, text: `${viewing.title} — Chef Jen approves ♥`, url })
+                      .catch(() => {})
+                  }}
+                  title="Share"
+                  className="text-sm font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1 hover:bg-gray-50"
+                >
+                  📤
+                </button>
+              )}
               {/* ⋯ overflow — opens a small popover with Edit, Chef Jen,
                   Cards, Delete. Backdrop click closes it. */}
               <div className="relative">
