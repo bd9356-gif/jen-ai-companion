@@ -781,6 +781,7 @@ function VaultRecipeVideoCard({ recipe, onDelete }) {
                         <p className="text-sm text-gray-700 leading-relaxed">{step}</p>
                       </div>
                     ))}
+                </div>
                   </div>
                 </div>
               )}
@@ -4109,11 +4110,12 @@ export default function MyRecipeVaultPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-5 py-4 text-white mb-2">
+              <div>
+                <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-5 py-4 text-white mb-3">
                   <p className="text-lg font-bold">📌 Share Later</p>
                   <p className="text-sm text-white/90 mt-1">Save recipes here, then share them anywhere when you're ready.</p>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
                 {portfolioRecipes.map(r => (
                   <div key={r.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                     {r.photo_url && (
