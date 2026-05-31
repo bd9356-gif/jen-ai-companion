@@ -4112,47 +4112,38 @@ export default function MyRecipeVaultPage() {
               <div className="space-y-3">
                 <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-5 py-4 text-white mb-2">
                   <p className="text-lg font-bold">📌 Share Later</p>
-                  <p className="text-sm text-white/90 mt-1">Your recipes, shared with the world. Tap a button to share on Facebook or Pinterest.</p>
+                  <p className="text-sm text-white/90 mt-1">Save recipes here, then share them anywhere when you're ready.</p>
                 </div>
                 {portfolioRecipes.map(r => (
-                  <div key={r.id} className="bg-white rounded-2xl border-2 border-rose-200 border-l-8 border-l-rose-500 px-4 py-3">
-                    <div className="flex items-center justify-between gap-3 mb-2">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{r.title}</p>
-                        <p className="text-xs text-rose-600 mt-0.5">👨‍🍳 Chef Jen approves ♥</p>
+                  <div key={r.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    {r.photo_url && (
+                      <img src={r.photo_url} alt={r.title} className="w-full h-32 object-cover" loading="lazy" />
+                    )}
+                    <div className="px-4 py-3 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-gray-900 flex-1 min-w-0 truncate">{r.title}</p>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => {
+                            const shareId = r.metadata?.personal_recipe_id || r.id
+                            const url = `${window.location.origin}/share/${shareId}`
+                            if (navigator.share) {
+                              navigator.share({ title: r.title, text: `${r.title} — Chef Jen approves ♥`, url }).catch(() => {})
+                            } else {
+                              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank')
+                            }
+                          }}
+                          className="text-sm font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5 hover:bg-orange-700 transition-colors"
+                          title="Share"
+                        >🔗 Share</button>
+                        <button
+                          onClick={async () => {
+                            await supabase.from('personal_recipes').update({ is_in_social_share: false }).eq('id', r.id)
+                            setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
+                          }}
+                          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                          title="Remove from Share Later"
+                        >×</button>
                       </div>
-                      <button
-                        onClick={async () => {
-                          await supabase.from('personal_recipes').update({ is_in_social_share: false }).eq('id', r.id)
-                          setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
-                        }}
-                        className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
-                        title="Remove from Social Share"
-                      >×</button>
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => {
-                          const shareId = r.metadata?.personal_recipe_id || r.id
-                          const url = `${window.location.origin}/share/${shareId}`
-                          const text = `${r.title} — Chef Jen approves ♥`
-                          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, window.Capacitor ? '_system' : '_blank')
-                        }}
-                        className="flex-1 text-xs font-semibold bg-blue-600 text-white rounded-lg py-1.5 hover:bg-blue-700 transition-colors"
-                      >
-                        📘 Facebook
-                      </button>
-                      <button
-                        onClick={() => {
-                          const shareId = r.metadata?.personal_recipe_id || r.id
-                          const url = `${window.location.origin}/share/${shareId}`
-                          const text = `${r.title} — Chef Jen approves ♥`
-                          window.open(`https://pinterest.com/pin/create/button/?url=${encodeURIComponent(url)}&description=${encodeURIComponent(text)}`, '_blank')
-                        }}
-                        className="flex-1 text-xs font-semibold bg-red-600 text-white rounded-lg py-1.5 hover:bg-red-700 transition-colors"
-                      >
-                        📌 Pinterest
-                      </button>
                     </div>
                   </div>
                 ))}
