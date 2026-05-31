@@ -2359,7 +2359,7 @@ export default function MyRecipeVaultPage() {
                   title="Share"
                   className="text-sm font-semibold text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1 hover:bg-gray-50"
                 >
-                  📤
+                  🔗
                 </button>
               )}
               {/* ⋯ overflow — opens a small popover with Edit, Chef Jen,
