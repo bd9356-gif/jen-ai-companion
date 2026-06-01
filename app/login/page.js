@@ -256,20 +256,9 @@ export default function LoginPage() {
               there. Show a banner before the form so the user knows
               the fix (open in real browser) before they hit the wall. */}
           {inAppBrowser && (
-            <div className="mb-5 rounded-2xl overflow-hidden">
-              <div className="bg-orange-600 px-4 py-4 text-center">
-                <p className="text-2xl mb-1">🔒</p>
-                <p className="font-bold text-white text-base mb-2">Open in Safari to Sign In</p>
-                <button
-                  onClick={() => { const url = window.location.href.includes('?') ? window.location.href + '&openExternal=1' : window.location.href + '?openExternal=1'; window.location.href = url }}
-                  className="w-full py-3 bg-white text-orange-600 font-bold rounded-xl text-base"
-                >
-                  Tap Here → Open in Safari
-                </button>
-              </div>
-              <div className="bg-orange-50 border-2 border-orange-200 border-t-0 px-4 py-2 text-center">
-                <p className="text-xs text-orange-700">Sign-in is blocked inside {inAppBrowser}. Safari is required.</p>
-              </div>
+            <div className="mb-5 bg-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-3 text-sm text-center">
+              <p className="font-bold text-amber-900 mb-1">📱 Opened from {inAppBrowser}</p>
+              <p className="text-amber-800 text-xs leading-snug">Google sign-in is blocked here. Use <strong>Email sign-in</strong> below instead.</p>
             </div>
           )}
 
