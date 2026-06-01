@@ -375,7 +375,6 @@ export default function LoginPage() {
                 No password — we email you a one-time link to click.
               </p>
             </form>
-          )}
 
           <p className="text-center text-xs text-stone-400 mt-6">
             New here? Signing in with any option creates your account automatically.
