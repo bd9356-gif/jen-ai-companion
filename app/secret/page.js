@@ -3959,9 +3959,8 @@ export default function MyRecipeVaultPage() {
         ) : listStyle === 'cardbox' ? (
           <div>
             {/* Learning Vault hero */}
-            <div className="rounded-2xl bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-500 px-5 py-5 text-white mb-4">
-              <h2 className="text-lg font-bold mb-1">🎓 Learning Vault</h2>
-              <p className="text-sm text-white/85 leading-relaxed">Your personal cooking classroom — saved lessons, Chef Jen notes, videos, and quiz results all in one place.</p>
+            <div className="rounded-2xl overflow-hidden mb-4">
+              <img src="/learning-hero.png" alt="Learning Vault" className="w-full h-auto block" />
             </div>
             {/* Chef Jen Teach Notes in Learning Vault — grouped accordion */}
             {portfolioNotes.length > 0 && (() => {
@@ -4098,10 +4097,8 @@ export default function MyRecipeVaultPage() {
           <div>
             {portfolioRecipes.length === 0 ? (
               <div>
-                <div className="rounded-2xl overflow-hidden mb-4 bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-6 py-8 text-center text-white">
-                  <p className="text-4xl mb-2">🎤</p>
-                  <h2 className="text-xl font-bold mb-1">Social Share</h2>
-                  <p className="text-sm text-white/85 leading-relaxed">Share your favorite recipes with the world.<br/>Tap ⋯ on any recipe and choose <strong>📌 Share Later</strong>.</p>
+                <div className="rounded-2xl overflow-hidden mb-4">
+                  <img src="/share-hero.png" alt="Share Later" className="w-full h-auto block" />
                 </div>
                 <div className="text-center py-8 px-6">
                   <p className="text-gray-400 text-sm">No recipes shared yet.</p>
@@ -4110,9 +4107,8 @@ export default function MyRecipeVaultPage() {
               </div>
             ) : (
               <div>
-                <div className="rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 px-5 py-4 text-white mb-3">
-                  <p className="text-lg font-bold">📌 Share Later</p>
-                  <p className="text-sm text-white/90 mt-1">Save recipes here, then share them anywhere when you're ready.</p>
+                <div className="rounded-2xl overflow-hidden mb-3">
+                  <img src="/share-hero.png" alt="Share Later" className="w-full h-auto block" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                 {portfolioRecipes.map(r => (
