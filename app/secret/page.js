@@ -3305,6 +3305,37 @@ export default function MyRecipeVaultPage() {
               </div>
             )}
           </div>
+
+          {/* Delete Account */}
+          <div className="bg-white border-2 border-red-100 rounded-2xl overflow-hidden mt-4">
+            <div className="bg-red-50 px-4 py-3 border-b border-red-100">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                <h2 className="text-base font-bold text-gray-900">Delete Account</h2>
+              </div>
+              <p className="text-xs text-gray-600 mt-1 ml-7">Permanently delete your account and all your data. This cannot be undone.</p>
+            </div>
+            <div className="px-4 py-4">
+              <button
+                onClick={async () => {
+                  if (!window.confirm('Delete your account forever? All recipes, notes, and data will be permanently removed. This cannot be undone.')) return
+                  if (!window.confirm('Are you absolutely sure? This is permanent.')) return
+                  try {
+                    const { error } = await supabase.rpc('delete_user_account')
+                    if (error) { showToast('Could not delete account — contact support@mycompanionapps.com'); return }
+                    await supabase.auth.signOut()
+                    window.location.href = '/'
+                  } catch (err) {
+                    showToast('Could not delete account — contact support@mycompanionapps.com')
+                  }
+                }}
+                className="w-full py-3 bg-red-600 text-white font-semibold rounded-xl text-sm hover:bg-red-700 transition-colors"
+              >
+                🗑 Delete My Account Forever
+              </button>
+            </div>
+          </div>
+
         </main>
       </div>
     )
