@@ -3354,35 +3354,50 @@ export default function MyRecipeVaultPage() {
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600 font-medium">Drop in a URL — Chef Jen does the rest.</p>
+            <p className="text-sm text-gray-600 font-medium">Import from websites, text, JSON, or Share Anywhere.</p>
             <button
               type="button"
               onClick={() => setShowImportInfo(s => !s)}
-              className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ml-2 ${showImportInfo ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ml-2 ${showImportInfo ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
-              {showImportInfo ? '✕' : 'ℹ️'}
+              {showImportInfo ? '✕' : 'How It Works'}
             </button>
+          </div>
+
+          {/* Share Anywhere callout — always visible */}
+          <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4">
+            <p className="text-sm font-bold text-orange-800 mb-1">📱 Share from almost any recipe website</p>
+            <p className="text-xs text-orange-700 leading-relaxed mb-3">Open a recipe in Safari, tap <strong>Share</strong>, choose <strong>MyRecipe Companion</strong> — Chef Jen imports it automatically.</p>
+            <div className="flex items-center justify-center gap-2 text-xs text-orange-600 font-semibold">
+              <span className="bg-white border border-orange-200 rounded-lg px-2 py-1">🌐 Safari</span>
+              <span>→</span>
+              <span className="bg-white border border-orange-200 rounded-lg px-2 py-1">📤 Share</span>
+              <span>→</span>
+              <span className="bg-orange-600 text-white rounded-lg px-2 py-1">MyRecipe</span>
+              <span>→</span>
+              <span className="bg-white border border-orange-200 rounded-lg px-2 py-1">✅ Done</span>
+            </div>
           </div>
 
           {/* Info panel */}
           {showImportInfo && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3 text-sm text-amber-900">
-              <div>
-                <p className="font-semibold mb-1">Share Recipes Instantly</p>
-                <p className="leading-snug text-amber-800">Use the Share button on any recipe website and choose MyRecipe Companion. The app reads the page and turns it into a clean, organized recipe automatically.</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900">
+              <p className="font-bold mb-3">How to Share from Safari</p>
+              <div className="space-y-2">
+                {[
+                  '1. Open any recipe website in Safari',
+                  '2. Tap the Share button (bottom of screen)',
+                  '3. Select MyRecipe Companion',
+                  '4. Chef Jen reads and cleans the recipe',
+                  '5. Review and save to your Recipe Vault',
+                ].map((step, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="shrink-0 w-5 h-5 bg-orange-600 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span>
+                    <p className="text-amber-800 text-xs leading-relaxed">{step.slice(3)}</p>
+                  </div>
+                ))}
               </div>
-              <div>
-                <p className="font-semibold mb-1">Works on Most Recipe Sites</p>
-                <p className="leading-snug text-amber-800">Our reader understands food blogs and most major cooking websites. If a site blocks our reader, switch to Paste mode.</p>
-              </div>
-              <div>
-                <p className="font-semibold mb-1">When Sharing Doesn&apos;t Work</p>
-                <p className="leading-snug text-amber-800">Some apps like Facebook, Instagram, and TikTok don&apos;t provide real recipe data. For those, copy the text and use Paste or type it in with Add.</p>
-              </div>
-              <div className="border-t border-amber-200 pt-3">
-                <p className="font-semibold text-amber-900">One Simple Rule</p>
-                <p className="leading-snug text-amber-800">If you can share it or paste it, MyRecipe Companion can clean it.</p>
-              </div>
+              <p className="text-xs text-amber-700 mt-3 pt-3 border-t border-amber-200">If a site blocks the importer, use <strong>Paste</strong> mode instead.</p>
             </div>
           )}
 
