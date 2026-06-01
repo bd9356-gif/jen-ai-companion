@@ -288,7 +288,7 @@ export default function LoginPage() {
               Have a Gmail address?
             </p>
             <button
-              onClick={handleGoogle}
+              onClick={() => { if (inAppBrowser) { alert("Google sign-in is blocked inside " + inAppBrowser + ". Tap ⋯ and choose Open in Browser, then sign in."); return; } handleGoogle(); }}
               disabled={loading}
               className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-white border-2 border-stone-800 rounded-xl text-base font-semibold text-stone-800 hover:bg-stone-100 transition-colors shadow-sm"
             >
