@@ -3355,6 +3355,7 @@ export default function MyRecipeVaultPage() {
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           <div className="flex items-center justify-between">
             <p className="text-base font-bold text-gray-800">Bring any recipe home — in seconds.</p>
+          <p className="text-xs text-center text-orange-600 font-semibold tracking-wide uppercase">✨ Share Anywhere — our best feature</p>
             <button
               type="button"
               onClick={() => setShowImportInfo(s => !s)}
