@@ -4004,9 +4004,23 @@ export default function MyRecipeVaultPage() {
         ) : listStyle === 'cardbox' ? (
           <div>
             {/* Learning Vault hero */}
-            <div className="rounded-2xl overflow-hidden mb-4">
+            <div className="rounded-2xl overflow-hidden mb-3">
               <img src="/learning-hero.png" alt="Learning Vault" className="w-full h-auto block" />
             </div>
+            {/* Tab nav below hero */}
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden mb-3">
+              {[
+                { key: 'grid', icon: '🔐', label: 'Vault' },
+                { key: 'cardbox', icon: '🎓', label: 'Learning' },
+                { key: 'portfolio', icon: '📌', label: 'Share Later' },
+              ].map(opt => (
+                <button key={opt.key} onClick={() => { setListStyle(opt.key); const url = new URL(window.location.href); if (opt.key === 'grid') url.searchParams.delete('view'); else url.searchParams.set('view', opt.key); window.history.replaceState({}, '', url.toString()); if ((opt.key === 'portfolio' || opt.key === 'cardbox') && user) loadPortfolioNotes(user.id) }}
+                  className={`flex-1 py-2 text-xs font-semibold transition-colors ${listStyle === opt.key ? 'bg-orange-600 text-white' : 'text-gray-500 bg-white hover:bg-gray-50'}`}>
+                  {opt.icon} {opt.label}
+                </button>
+              ))}
+            </div>
+
             {/* Chef Jen Teach Notes in Learning Vault — grouped accordion */}
             {portfolioNotes.length > 0 && (() => {
               const grouped = {}
@@ -4145,6 +4159,19 @@ export default function MyRecipeVaultPage() {
                 <div className="rounded-2xl overflow-hidden mb-4">
                   <img src="/share-hero.png" alt="Share Later" className="w-full h-auto block" />
                 </div>
+                {/* Tab nav below hero */}
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden mb-3">
+              {[
+                { key: 'grid', icon: '🔐', label: 'Vault' },
+                { key: 'cardbox', icon: '🎓', label: 'Learning' },
+                { key: 'portfolio', icon: '📌', label: 'Share Later' },
+              ].map(opt => (
+                <button key={opt.key} onClick={() => { setListStyle(opt.key); const url = new URL(window.location.href); if (opt.key === 'grid') url.searchParams.delete('view'); else url.searchParams.set('view', opt.key); window.history.replaceState({}, '', url.toString()); if ((opt.key === 'portfolio' || opt.key === 'cardbox') && user) loadPortfolioNotes(user.id) }}
+                  className={`flex-1 py-2 text-xs font-semibold transition-colors ${listStyle === opt.key ? 'bg-orange-600 text-white' : 'text-gray-500 bg-white hover:bg-gray-50'}`}>
+                  {opt.icon} {opt.label}
+                </button>
+              ))}
+            </div>
                 <div className="text-center py-8 px-6">
                   <p className="text-gray-400 text-sm">No recipes shared yet.</p>
                   <p className="text-xs text-gray-400 mt-1">Open a recipe, tap ⋯ → Share Recipe to add it here.</p>
@@ -4155,6 +4182,19 @@ export default function MyRecipeVaultPage() {
                 <div className="rounded-2xl overflow-hidden mb-3">
                   <img src="/share-hero.png" alt="Share Later" className="w-full h-auto block" />
                 </div>
+                {/* Tab nav below hero */}
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden mb-3">
+              {[
+                { key: 'grid', icon: '🔐', label: 'Vault' },
+                { key: 'cardbox', icon: '🎓', label: 'Learning' },
+                { key: 'portfolio', icon: '📌', label: 'Share Later' },
+              ].map(opt => (
+                <button key={opt.key} onClick={() => { setListStyle(opt.key); const url = new URL(window.location.href); if (opt.key === 'grid') url.searchParams.delete('view'); else url.searchParams.set('view', opt.key); window.history.replaceState({}, '', url.toString()); if ((opt.key === 'portfolio' || opt.key === 'cardbox') && user) loadPortfolioNotes(user.id) }}
+                  className={`flex-1 py-2 text-xs font-semibold transition-colors ${listStyle === opt.key ? 'bg-orange-600 text-white' : 'text-gray-500 bg-white hover:bg-gray-50'}`}>
+                  {opt.icon} {opt.label}
+                </button>
+              ))}
+            </div>
                 <div className="grid grid-cols-2 gap-3">
                 {portfolioRecipes.map(r => (
                   <div key={r.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
