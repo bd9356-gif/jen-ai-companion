@@ -255,21 +255,23 @@ export default function LoginPage() {
               persist, so signing in is fundamentally broken from
               there. Show a banner before the form so the user knows
               the fix (open in real browser) before they hit the wall. */}
-          {inAppBrowser ? (
-            <div className="flex flex-col items-center justify-center text-center py-8">
-              <p className="text-5xl mb-4">🔒</p>
-              <h2 className="text-xl font-bold text-gray-900 mb-2">One quick step</h2>
-              <p className="text-gray-600 text-sm leading-relaxed mb-6 max-w-xs">
-                To sign in securely, please open this page in Safari first.
-              </p>
-              <button
-                onClick={() => window.open(window.location.href, '_blank')}
-                className="w-full max-w-xs py-4 bg-orange-600 text-white text-base font-bold rounded-2xl shadow-md hover:bg-orange-700 transition-colors"
-              >
-                Open in Safari →
-              </button>
+          {inAppBrowser && (
+            <div className="mb-5 rounded-2xl overflow-hidden">
+              <div className="bg-orange-600 px-4 py-4 text-center">
+                <p className="text-2xl mb-1">🔒</p>
+                <p className="font-bold text-white text-base mb-2">Open in Safari to Sign In</p>
+                <button
+                  onClick={() => window.open(window.location.href, '_blank')}
+                  className="w-full py-3 bg-white text-orange-600 font-bold rounded-xl text-base"
+                >
+                  Tap Here → Open in Safari
+                </button>
+              </div>
+              <div className="bg-orange-50 border-2 border-orange-200 border-t-0 px-4 py-2 text-center">
+                <p className="text-xs text-orange-700">Sign-in is blocked inside {inAppBrowser}. Safari is required.</p>
+              </div>
             </div>
-          ) : (
+          )}
 
           <div className="text-center mb-5">
             <h1 className="text-2xl font-bold text-stone-900">Welcome back</h1>
@@ -384,7 +386,6 @@ export default function LoginPage() {
                 No password — we email you a one-time link to click.
               </p>
             </form>
-          )}
           )}
 
           <p className="text-center text-xs text-stone-400 mt-6">
