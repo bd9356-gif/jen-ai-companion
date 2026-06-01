@@ -139,15 +139,20 @@ export default function RecipeCardPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '480px', margin: '16px auto 0', display: 'flex', gap: '8px' }}>
-        <a
-          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ flex: 1, background: '#1877f2', color: '#fff', padding: '12px', borderRadius: '10px', textAlign: 'center', fontFamily: 'sans-serif', fontSize: '13px', fontWeight: 'bold', textDecoration: 'none' }}
+
+      <div style={{ maxWidth: '480px', margin: '16px auto 0' }}>
+        <button
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({ title: recipe.title, text: shareText, url: shareUrl }).catch(() => {})
+            } else {
+              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank')
+            }
+          }}
+          style={{ width: '100%', background: '#ea580c', color: '#fff', padding: '12px', borderRadius: '10px', textAlign: 'center', fontFamily: 'sans-serif', fontSize: '13px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}
         >
           🔗 Share Anywhere
-        </a>
+        </button>
       </div>
     </div>
   )
