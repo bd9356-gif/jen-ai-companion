@@ -255,16 +255,21 @@ export default function LoginPage() {
               persist, so signing in is fundamentally broken from
               there. Show a banner before the form so the user knows
               the fix (open in real browser) before they hit the wall. */}
-          {inAppBrowser && (
-            <div className="mb-5 bg-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-3 text-sm">
-              <p className="font-bold text-amber-900 mb-1">
-                📱 You&rsquo;re inside {inAppBrowser}&rsquo;s browser
+          {inAppBrowser ? (
+            <div className="flex flex-col items-center justify-center text-center py-8">
+              <p className="text-5xl mb-4">🔒</p>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">One quick step</h2>
+              <p className="text-gray-600 text-sm leading-relaxed mb-6 max-w-xs">
+                To sign in securely, please open this page in Safari first.
               </p>
-              <p className="text-amber-900 leading-snug">
-                Sign-in doesn&rsquo;t work reliably in here &mdash; Google blocks it for security. Tap the <span className="font-bold">⋯</span> menu at the top of this page and choose <span className="font-bold">&ldquo;Open in Safari&rdquo;</span> (or your browser), then sign in from there.
-              </p>
+              <button
+                onClick={() => window.open(window.location.href, '_blank')}
+                className="w-full max-w-xs py-4 bg-orange-600 text-white text-base font-bold rounded-2xl shadow-md hover:bg-orange-700 transition-colors"
+              >
+                Open in Safari →
+              </button>
             </div>
-          )}
+          ) : (
 
           <div className="text-center mb-5">
             <h1 className="text-2xl font-bold text-stone-900">Welcome back</h1>
@@ -379,6 +384,7 @@ export default function LoginPage() {
                 No password — we email you a one-time link to click.
               </p>
             </form>
+          )}
           )}
 
           <p className="text-center text-xs text-stone-400 mt-6">
