@@ -46,9 +46,9 @@ export default function RecipeCardPage() {
 
   return (
     <div style={{ background: '#f5f0e8', minHeight: '100vh', padding: '16px', fontFamily: 'Georgia, serif' }}>
-      <p style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginBottom: '12px' }}>
-        📸 Screenshot this card to share on social media
-      </p>
+      <div style={{ maxWidth: '480px', margin: '0 auto 12px', display: 'flex', alignItems: 'center' }}>
+        <button onClick={() => window.history.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#666', padding: '4px 8px 4px 0' }}>← Back</button>
+      </div>
 
       <div style={{
         maxWidth: '480px', margin: '0 auto', background: '#fff',
