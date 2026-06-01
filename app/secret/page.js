@@ -3353,16 +3353,18 @@ export default function MyRecipeVaultPage() {
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <p className="text-base font-bold text-gray-800">Bring any recipe home — in seconds.</p>
-            <p className="text-xs text-center text-gray-500 mt-0.5">Tap <strong>How It Works</strong> to see Share Anywhere →</p>
-            <button
-              type="button"
-              onClick={() => setShowImportInfo(s => !s)}
-              className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ml-2 ${showImportInfo ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              {showImportInfo ? '✕' : 'How It Works'}
-            </button>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-base font-bold text-gray-800">Bring any recipe home — in seconds.</p>
+              <button
+                type="button"
+                onClick={() => setShowImportInfo(s => !s)}
+                className={`shrink-0 px-3 py-1 rounded-full text-xs font-semibold transition-colors ml-2 ${showImportInfo ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                {showImportInfo ? '✕' : 'How It Works'}
+              </button>
+            </div>
+            <p className="text-xs text-orange-600 font-semibold">✨ Share Anywhere — our best feature</p>
           </div>
 
           {/* Share Anywhere callout — always visible */}
