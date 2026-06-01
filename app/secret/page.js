@@ -2385,9 +2385,6 @@ export default function MyRecipeVaultPage() {
                     >
                       {/* ── Create ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50">Create</p>
-                      <button role="menuitem" onClick={() => { setActionsMenuOpen(false); window.open(`/card/${viewing.id}`, "_blank") }} className="w-full text-left text-sm font-semibold text-amber-700 px-4 py-2.5 hover:bg-amber-50">
-                        ✨ Create Recipe Card
-                      </button>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); generatePhoto(viewing) }} className="w-full text-left text-sm font-semibold text-emerald-600 px-4 py-2.5 hover:bg-emerald-50 border-t border-gray-100">
                         🖼️ Generate AI Photo
                       </button>
