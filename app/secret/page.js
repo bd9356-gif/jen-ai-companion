@@ -3941,7 +3941,7 @@ export default function MyRecipeVaultPage() {
                   promoted from Playbook via "💎 Add to Portfolio". Notes,
                   not recipes — so Add/Import buttons won't apply there.
                   NOT the same as /cards (a separate "chef card" concept). */}
-              <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
+              {listStyle === 'grid' && <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden">
                 {[
                   { key: 'grid', icon: '🔐', title: 'Recipe Vault' },
                   { key: 'cardbox', icon: '🎓', title: 'Learning Vault' },
@@ -3979,7 +3979,7 @@ export default function MyRecipeVaultPage() {
                     {opt.icon}
                   </button>
                 ))}
-              </div>
+              </div>}
               <button onClick={openImportFromClipboard} title="Import Tools" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>
             </div>
           </div>
