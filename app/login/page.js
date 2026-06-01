@@ -257,9 +257,9 @@ export default function LoginPage() {
               the fix (open in real browser) before they hit the wall. */}
           {inAppBrowser && (
             <div className="mb-5 bg-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-3 text-sm text-center">
-              <p className="font-bold text-amber-900 mb-1">📱 Opened from {inAppBrowser}</p>
-              <p className="text-amber-800 text-xs leading-snug">Google sign-in is blocked here. Use <strong>Email sign-in</strong> below instead.</p>
-            </div>
+            <div className="mb-5 bg-amber-50 border-2 border-amber-300 rounded-2xl px-4 py-3 text-sm">
+              <p className="font-bold text-amber-900 mb-1">📱 You're inside {inAppBrowser}</p>
+              <p className="text-amber-900 leading-snug">Tap the <strong>⋯</strong> menu in {inAppBrowser} and choose <strong>&ldquo;Open in Browser&rdquo;</strong> to sign in.</p>
           )}
 
           <div className="text-center mb-5">
