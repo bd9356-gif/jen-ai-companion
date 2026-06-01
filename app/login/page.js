@@ -261,7 +261,7 @@ export default function LoginPage() {
                 <p className="text-2xl mb-1">🔒</p>
                 <p className="font-bold text-white text-base mb-2">Open in Safari to Sign In</p>
                 <button
-                  onClick={() => window.open(window.location.href, '_blank')}
+                  onClick={() => { const url = window.location.href.includes('?') ? window.location.href + '&openExternal=1' : window.location.href + '?openExternal=1'; window.location.href = url }}
                   className="w-full py-3 bg-white text-orange-600 font-bold rounded-xl text-base"
                 >
                   Tap Here → Open in Safari
