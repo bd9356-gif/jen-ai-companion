@@ -3980,7 +3980,7 @@ export default function MyRecipeVaultPage() {
                   </button>
                 ))}
               </div>}
-              <button onClick={openImportFromClipboard} title="Import Tools" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>
+              {listStyle === 'grid' && <button onClick={openImportFromClipboard} title="Import Tools" className="text-xl font-semibold text-gray-600 border-2 border-gray-300 rounded-lg px-3.5 py-2">📥</button>}
             </div>
           </div>
           {/* Conditional search input — only renders when the 🔍 button is
