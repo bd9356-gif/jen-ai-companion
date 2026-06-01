@@ -3397,7 +3397,6 @@ export default function MyRecipeVaultPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-amber-700 mt-3 pt-3 border-t border-amber-200">If a site blocks the importer, use <strong>Paste</strong> mode instead.</p>
             </div>
           )}
 
