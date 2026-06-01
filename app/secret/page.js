@@ -3850,7 +3850,7 @@ export default function MyRecipeVaultPage() {
               shortcut row, and the overflow tag dropdown — into one
               compact control. Native <select> on mobile gives us a clean
               full-screen picker for free. Hidden on Portfolio (no tags). */}
-          <div className="flex items-center justify-between gap-2 mb-3">
+          <div className={`flex items-center justify-between gap-2 ${listStyle !== 'grid' ? 'hidden' : 'mb-3'}`}>
             {listStyle !== 'portfolio' && listStyle !== 'cardbox' ? (
               <select
                 value={searchTag}
