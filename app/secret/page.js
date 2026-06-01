@@ -4113,12 +4113,12 @@ export default function MyRecipeVaultPage() {
                 <div className="grid grid-cols-2 gap-3">
                 {portfolioRecipes.map(r => (
                   <div key={r.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                    {r.photo_url && (
-                      <img src={r.photo_url} alt={r.title} className="w-full h-32 object-cover" loading="lazy" />
-                    )}
-                    <div className="px-4 py-3 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-gray-900 flex-1 min-w-0 truncate">{r.title}</p>
-                      <div className="flex items-center gap-2 shrink-0">
+                    <div className="relative">
+                      {r.photo_url && (
+                        <img src={r.photo_url} alt={r.title} className="w-full h-32 object-cover" loading="lazy" />
+                      )}
+                      {/* Share + remove buttons overlay on image */}
+                      <div className="absolute top-2 right-2 flex gap-1.5">
                         <button
                           onClick={() => {
                             const shareId = r.metadata?.personal_recipe_id || r.id
@@ -4129,7 +4129,7 @@ export default function MyRecipeVaultPage() {
                               window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank')
                             }
                           }}
-                          className="text-sm font-semibold text-white bg-orange-600 rounded-lg px-3 py-1.5 hover:bg-orange-700 transition-colors"
+                          className="text-xs font-semibold text-white bg-orange-600 rounded-lg px-2.5 py-1 shadow-md hover:bg-orange-700 transition-colors"
                           title="Share"
                         >🔗 Share</button>
                         <button
@@ -4137,10 +4137,13 @@ export default function MyRecipeVaultPage() {
                             await supabase.from('personal_recipes').update({ is_in_social_share: false }).eq('id', r.id)
                             setPortfolioRecipes(prev => prev.filter(x => x.id !== r.id))
                           }}
-                          className="shrink-0 text-gray-300 hover:text-red-400 text-xl"
+                          className="text-white bg-black/40 rounded-lg px-2 py-1 text-sm hover:bg-black/60"
                           title="Remove from Share Later"
                         >×</button>
                       </div>
+                    </div>
+                    <div className="px-3 py-2">
+                      <p className="text-sm font-semibold text-gray-900 leading-snug">{r.title}</p>
                     </div>
                   </div>
                 ))}
