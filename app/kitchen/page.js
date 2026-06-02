@@ -58,7 +58,28 @@ async function seedStarterRecipesOnce(user) {
     is_favorite: !!r.is_favorite,
   }))
   const { error: insertError } = await supabase.from('personal_recipes').insert(rows)
-  if (!insertError) localStorage.setItem(flagKey, '1')
+  if (!insertError) {
+    localStorage.setItem(flagKey, '1')
+    // Seed shopping list
+    await supabase.from('shopping_list').insert([
+      { user_id: user.id, ingredient: '1 pound boneless skinless chicken breasts', recipe_title: 'One-Pan Creamy Chicken and Spinach' },
+      { user_id: user.id, ingredient: '4 cups fresh spinach', recipe_title: 'One-Pan Creamy Chicken and Spinach' },
+      { user_id: user.id, ingredient: '1 package Boursin cheese', recipe_title: 'One-Pan Creamy Chicken and Spinach' },
+      { user_id: user.id, ingredient: '1 can fire-roasted diced tomatoes', recipe_title: 'One-Pan Creamy Chicken and Spinach' },
+      { user_id: user.id, ingredient: '1/3 cup white wine or chicken broth', recipe_title: 'One-Pan Creamy Chicken and Spinach' },
+    ])
+    // Seed learning vault — Chef Jen tip
+    await supabase.from('favorites').insert([
+      {
+        user_id: user.id,
+        type: 'ai_answer',
+        is_in_vault: true,
+        title: 'How do I know when my pan is hot enough?',
+        metadata: { question: 'How do I know when my pan is hot enough?', answer: 'When the oil shimmers and looks slightly wavy in the pan you are close. Drop in a small piece of food — it should sizzle right away. If the oil starts to smoke it has gone too far — pull the pan off the heat for a moment before adding food.' },
+        source: 'ai',
+      }
+    ])
+  }
 }
 
 // Backfill is_favorite=true on existing starter rows whose seed missed
