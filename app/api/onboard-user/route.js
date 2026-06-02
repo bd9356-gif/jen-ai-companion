@@ -23,17 +23,7 @@ async function generateRecipe(title, category, tags) {
     messages: [{
       role: 'user',
       content: `Generate a complete recipe for "${title}". Return ONLY valid JSON with these exact fields:
-{
-  "title": "${title}",
-  "description": "one sentence description",
-  "ingredients": ["item 1", "item 2"],
-  "instructions": ["step 1", "step 2"],
-  "servings": "4",
-  "prep_time": "10 mins",
-  "cook_time": "20 mins",
-  "category": "${category}",
-  "tags": ${JSON.stringify(tags)}
-}
+{"title":"${title}","description":"one sentence description","ingredients":["item 1","item 2"],"instructions":["step 1","step 2"],"servings":"4","prep_time":"10 mins","cook_time":"20 mins","category":"${category}","tags":${JSON.stringify(tags)}}
 No markdown, no explanation, just JSON.`
     }]
   })
@@ -63,9 +53,7 @@ export async function POST(req) {
       try {
         const recipe = await generateRecipe(r.title, r.category, r.tags)
         recipes.push(recipe)
-      } catch (e) {
-        // Skip failed recipes
-      }
+      } catch (e) {}
     }
 
     // Insert recipes to vault
@@ -105,7 +93,7 @@ export async function POST(req) {
         week_start: weekStart,
       })
 
-      // Add shopping list items from Chicken Stir Fry
+      // Add shopping list items
       const ingredients = recipes[1]?.ingredients || []
       const shopRows = ingredients.slice(0, 6).map(ingredient => ({
         user_id: userId,
@@ -117,14 +105,17 @@ export async function POST(req) {
       }
     }
 
-    // Add a Chef Jen tip to Learning Vault
+    // Add Chef Jen tip to Learning Vault — match real schema
     await supabase.from('favorites').insert({
       user_id: userId,
       type: 'ai_answer',
       is_in_vault: true,
-      title: 'Chef Jen\'s Top Cooking Tip',
-      content: 'Always mise en place — prepare and measure all your ingredients before you start cooking. This keeps you calm, organized, and in control of your kitchen.',
-      source: 'Chef Jen',
+      title: 'How do I know when my pan is hot enough?',
+      metadata: {
+        question: 'How do I know when my pan is hot enough?',
+        answer: 'A few easy signals: when the oil shimmers and looks wavy in the pan, you\'re close. Drop in a small piece of food — it should sizzle right away. For deep frying, dip a wooden spoon handle in — a steady stream of small bubbles means you\'re around 350°F. If the oil smokes, it\'s too hot.'
+      },
+      source: 'ai',
     })
 
     // Add a learning video to Learning Vault
@@ -141,7 +132,7 @@ export async function POST(req) {
         type: 'video_education',
         is_in_vault: true,
         title: video.title,
-        youtube_id: video.youtube_id,
+        metadata: { youtube_id: video.youtube_id },
       })
     }
 
