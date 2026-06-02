@@ -21,6 +21,13 @@ export default function AuthConfirmPage() {
       if (code) await supabase.auth.exchangeCodeForSession(code)
       // After sign-in, return to the URL the user was originally trying
       // to reach (threaded through ?next=...). Falls back to /kitchen.
+      // Seed new users from template
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        try {
+          await supabase.rpc('seed_new_user', { new_user_id: session.user.id })
+        } catch (e) {}
+      }
       const next = safeNext(params.get('next'))
       window.location.href = next || '/kitchen'
     }
