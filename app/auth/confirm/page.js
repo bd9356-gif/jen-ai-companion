@@ -22,6 +22,7 @@ export default function AuthConfirmPage() {
       // After sign-in, return to the URL the user was originally trying
       // to reach (threaded through ?next=...). Falls back to /kitchen.
       // Onboard new users
+      await new Promise(r => setTimeout(r, 500))
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         try {
