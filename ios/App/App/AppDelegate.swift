@@ -4,6 +4,11 @@ import Capacitor
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
+    // Register local Capacitor plugins
+    override var plugins: [CAPPlugin.Type] {
+        return [WebAuthPlugin.self, WebFetchPlugin.self]
+    }
+
     var window: UIWindow?
 
     // Hardcoded so we only treat our own domain as a Universal Link
