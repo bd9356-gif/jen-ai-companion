@@ -177,6 +177,11 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
+    // Native app: use share sheet (iOS AirPrint via share)
+    if (window.Capacitor) {
+      navigator.share({ title: 'Shopping List', text }).catch(() => {})
+      return
+    }
     const FRAME_ID = 'print-shopping-list-iframe-' + Date.now()
     document.querySelectorAll('[id^="print-shopping-list-iframe"]').forEach(el => el.remove())
     const iframe = document.createElement('iframe')
