@@ -1843,7 +1843,13 @@ export default function MyRecipeVaultPage() {
     div.id = 'mise-print-content'
     div.innerHTML = `<pre>${escaped}</pre>`
     document.body.appendChild(div)
-    window.print()
+    if (window.Capacitor) {
+      if (navigator.share) {
+        navigator.share({ title: 'Mise en Place', text: text }).catch(() => {})
+      }
+    } else {
+      window.print()
+    }
   }
 
   async function deleteRecipe(recipeOrId) {
