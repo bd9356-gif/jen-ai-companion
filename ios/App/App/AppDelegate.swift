@@ -23,8 +23,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        
         return true
+    }
+    
+    override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
+        // Register local Capacitor plugins
+        let bridge = (window?.rootViewController as? CAPBridgeViewController)?.bridge
+        bridge?.registerPluginInstance(WebAuthPlugin())
+        bridge?.registerPluginInstance(WebFetchPlugin())
+        return result
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
