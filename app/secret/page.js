@@ -1834,6 +1834,15 @@ export default function MyRecipeVaultPage() {
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
+    // iOS Capacitor: open in Safari for printing
+    if (window.Capacitor) {
+      const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>Mise en Place</title><style>body{margin:0;padding:24px;font-family:system-ui;font-size:14px;line-height:1.7}pre{white-space:pre-wrap;font-family:inherit}</style></head><body><pre>${escaped}</pre><script>window.onload=function(){window.print()}<\/script></body></html>`
+      const blob = new Blob([html], {type:'text/html'})
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_system')
+      return
+    }
     // Iframe print path — same as Meal Plan's Mise. Self-contained
     // mini-document sidesteps the modal/iOS-Safari interaction that
     // produces blank pages with the body-overlay approach.
