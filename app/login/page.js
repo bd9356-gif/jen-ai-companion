@@ -111,8 +111,9 @@ export default function LoginPage() {
     // our custom Capacitor plugin. Resolves to { url } when the OAuth
     // flow redirects to myrecipe://auth-callback?code=...
     const WebAuth = window.Capacitor?.Plugins?.WebAuth
+    const plugins = Object.keys(window.Capacitor?.Plugins || {}).join(', ')
     if (!WebAuth) {
-      throw new Error('WebAuth plugin not available — Xcode rebuild needed?')
+      throw new Error(`WebAuth plugin not available. Available plugins: ${plugins}`)
     }
     const result = await WebAuth.startSession({
       url: data.url,
