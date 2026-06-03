@@ -110,6 +110,7 @@ export default function LoginPage() {
     // Step 2: open the OAuth URL in ASWebAuthenticationSession via
     // our custom Capacitor plugin. Resolves to { url } when the OAuth
     // flow redirects to myrecipe://auth-callback?code=...
+    await new Promise(r => setTimeout(r, 500))
     const WebAuth = window.Capacitor?.Plugins?.WebAuth
     if (!WebAuth) {
       throw new Error('WebAuth plugin not available — Xcode rebuild needed?')
