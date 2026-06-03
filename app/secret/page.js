@@ -2822,11 +2822,11 @@ export default function MyRecipeVaultPage() {
                         📋 Copy
                       </button>
                       <button
-                        onClick={printMise}
-                        title="Open a printable version of the mise en place"
+                        onClick={() => { const text = miseLines.filter(l=>l.trim()).map((l,i)=>`${i+1}. ${l.trim()}`).join('\n'); if(!text){showToast('Nothing to share');return;} if(navigator.share){navigator.share({title:'Mise en Place',text}).catch(()=>{})} else {navigator.clipboard?.writeText(text).then(()=>showToast('Copied!')).catch(()=>{})} }}
+                        title="Share mise en place"
                         className="text-xs font-semibold text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1 hover:bg-amber-50"
                       >
-                        🖨️ Print
+                        🔗 Share
                       </button>
                     </>
                   )}
