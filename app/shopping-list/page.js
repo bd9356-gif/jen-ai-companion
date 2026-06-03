@@ -177,64 +177,34 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
-    // Direct-DOM print path with @media print rules. Known behavior:
-    // produces 1 correct page + 2 trailing blank pages on iOS Safari
-    // (the auto-print prompt + blank trailer is an iOS print bug we
-    // haven't been able to fully solve from JS land). Reverting to
-    // this version because the nuclear inline-display approach was
-    // even worse — full blanks instead of 1 correct + blanks. User
-    // dismisses the blanks at the printer.
-    const TEMP_ID = 'print-shopping-list-temp'
-    const STYLE_ID = 'print-shopping-list-style-temp'
-    document.getElementById(TEMP_ID)?.remove()
-    document.getElementById(STYLE_ID)?.remove()
-
-    const container = document.createElement('div')
-    container.id = TEMP_ID
-    Object.assign(container.style, {
-      position: 'fixed',
-      inset: '0',
-      background: 'white',
-      zIndex: '99999',
-      padding: '24px',
-      fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
-      fontSize: '14px',
-      lineHeight: '1.7',
-      color: '#111',
-      whiteSpace: 'pre-wrap',
-      overflow: 'auto',
+    const FRAME_ID = 'print-shopping-list-iframe'
+    document.getElementById(FRAME_ID)?.remove()
+    const iframe = document.createElement('iframe')
+    iframe.id = FRAME_ID
+    Object.assign(iframe.style, {
+      position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0', visibility: 'hidden',
     })
-    container.textContent = text
-
-    const styleEl = document.createElement('style')
-    styleEl.id = STYLE_ID
-    styleEl.textContent = `
-      @media print {
-        body > *:not(#${TEMP_ID}) { display: none !important; }
-        #${TEMP_ID} {
-          position: static !important;
-          inset: auto !important;
-          background: white !important;
-          padding: 24px !important;
-          overflow: visible !important;
-        }
-      }
-      @media screen {
-        #${TEMP_ID} { display: none !important; }
-      }
-    `
-
-    document.body.appendChild(container)
-    document.head.appendChild(styleEl)
-
-    const cleanup = () => {
-      container.remove()
-      styleEl.remove()
-      window.removeEventListener('afterprint', cleanup)
+    document.body.appendChild(iframe)
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const html = `<!doctype html>
+<html><head><meta charset="utf-8" /><title>Shopping List</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.7; color: #111; }
+  pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit; }
+  @page { margin: 0.5in; }
+</style></head><body><pre>${escaped}</pre></body></html>`
+    const doc = iframe.contentDocument || iframe.contentWindow.document
+    doc.open(); doc.write(html); doc.close()
+    const triggerPrint = () => {
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print() }
+      catch (err) { console.error('Shopping list print failed', err); showToast('Print failed — try Copy instead') }
+      setTimeout(() => iframe.remove(), 30000)
     }
-    window.addEventListener('afterprint', cleanup)
-    window.print()
-    setTimeout(cleanup, 30000)
+    if (doc.readyState === 'complete') {
+      setTimeout(triggerPrint, 50)
+    } else {
+      iframe.addEventListener('load', () => setTimeout(triggerPrint, 50), { once: true })
+    }
   }
 
   // AI cleanup — round fractions, strip cooking-only measures, merge dupes.
