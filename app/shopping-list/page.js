@@ -233,11 +233,8 @@ export default function ShoppingListPage() {
       window.removeEventListener('afterprint', cleanup)
     }
     window.addEventListener('afterprint', cleanup)
-
-    setTimeout(() => {
-      window.print()
-      setTimeout(cleanup, 30000)
-    }, 100)
+    window.print()
+    setTimeout(cleanup, 30000)
   }
 
   // AI cleanup — round fractions, strip cooking-only measures, merge dupes.
