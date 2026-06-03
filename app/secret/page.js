@@ -1835,32 +1835,15 @@ export default function MyRecipeVaultPage() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
     const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    // Clean up any previous print elements
-    document.getElementById('mise-print-style')?.remove()
-    document.getElementById('mise-print-content')?.remove()
-    const styleEl = document.createElement('style')
+    const styleEl = document.getElementById('mise-print-style') || document.createElement('style')
     styleEl.id = 'mise-print-style'
     styleEl.textContent = `@media print { body > *:not(#mise-print-content) { display:none!important } #mise-print-content { display:block!important; position:static!important; padding:24px; font-family:system-ui; font-size:14px; line-height:1.7; white-space:pre-wrap } } @media screen { #mise-print-content { display:none!important } }`
     document.head.appendChild(styleEl)
-    const div = document.createElement('div')
+    const div = document.getElementById('mise-print-content') || document.createElement('div')
     div.id = 'mise-print-content'
     div.innerHTML = `<pre>${escaped}</pre>`
     document.body.appendChild(div)
-    if (window.Capacitor) {
-      if (navigator.share) {
-        navigator.share({ title: 'Mise en Place', text: text }).catch(() => {})
-      }
-    } else {
-      const cleanup = () => {
-        document.getElementById('mise-print-style')?.remove()
-        document.getElementById('mise-print-content')?.remove()
-        window.removeEventListener('afterprint', cleanup)
-      }
-      window.addEventListener('afterprint', cleanup)
-      // Also clean up after 60s in case afterprint never fires (cancel)
-      setTimeout(cleanup, 60000)
-      window.print()
-    }
+    window.print()
   }
 
   async function deleteRecipe(recipeOrId) {
