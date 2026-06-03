@@ -1837,8 +1837,8 @@ export default function MyRecipeVaultPage() {
     // Iframe print path — same as Meal Plan's Mise. Self-contained
     // mini-document sidesteps the modal/iOS-Safari interaction that
     // produces blank pages with the body-overlay approach.
-    const FRAME_ID = 'print-vault-mise-iframe'
-    document.getElementById(FRAME_ID)?.remove()
+    const FRAME_ID = 'print-vault-mise-iframe-' + Date.now()
+    document.querySelectorAll('[id^="print-vault-mise-iframe"]').forEach(el => el.remove())
     const iframe = document.createElement('iframe')
     iframe.id = FRAME_ID
     Object.assign(iframe.style, {

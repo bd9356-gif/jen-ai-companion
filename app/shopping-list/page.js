@@ -177,8 +177,8 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
-    const FRAME_ID = 'print-shopping-list-iframe'
-    document.getElementById(FRAME_ID)?.remove()
+    const FRAME_ID = 'print-shopping-list-iframe-' + Date.now()
+    document.querySelectorAll('[id^="print-shopping-list-iframe"]').forEach(el => el.remove())
     const iframe = document.createElement('iframe')
     iframe.id = FRAME_ID
     Object.assign(iframe.style, {
