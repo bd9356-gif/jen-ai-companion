@@ -1834,20 +1834,16 @@ export default function MyRecipeVaultPage() {
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
-    // Iframe print path — same as Meal Plan's Mise. Self-contained
-    // mini-document sidesteps the modal/iOS-Safari interaction that
-    // produces blank pages with the body-overlay approach.
-    const w = window.open('', '_blank', 'width=800,height=600')
-    if (!w) { showToast('Allow popups to print'); return }
-    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const html = `<!doctype html>
-<html><head><meta charset="utf-8" /><title>Mise en Place</title>
-<style>
-  body { margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; color: #111; }
-  pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit; }
-  @page { margin: 0.5in; }
-</style></head><body><pre>${escaped}</pre></body></html>`
-    w.document.write(html); w.document.close(); w.focus(); w.print()
+    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    const styleEl = document.getElementById('mise-print-style') || document.createElement('style')
+    styleEl.id = 'mise-print-style'
+    styleEl.textContent = `@media print { body > *:not(#mise-print-content) { display:none!important } #mise-print-content { display:block!important; position:static!important; padding:24px; font-family:system-ui; font-size:14px; line-height:1.7; white-space:pre-wrap } } @media screen { #mise-print-content { display:none!important } }`
+    document.head.appendChild(styleEl)
+    const div = document.getElementById('mise-print-content') || document.createElement('div')
+    div.id = 'mise-print-content'
+    div.innerHTML = `<pre>${escaped}</pre>`
+    document.body.appendChild(div)
+    window.print()
   }
 
   async function deleteRecipe(recipeOrId) {
