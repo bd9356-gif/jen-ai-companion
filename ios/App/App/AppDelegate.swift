@@ -4,7 +4,6 @@ import Capacitor
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
     var window: UIWindow?
 
     // Hardcoded so we only treat our own domain as a Universal Link
