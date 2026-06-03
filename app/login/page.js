@@ -34,8 +34,7 @@ function detectInAppBrowser() {
   const isIOS = /iPhone|iPad|iPod/i.test(ua)
   // Exclude Capacitor WKWebView — it's our own app, not a social in-app browser
   if (typeof window !== 'undefined' && window.Capacitor) return null
-  // Also exclude if no Safari but has Capacitor indicators
-  if (isIOS && !/Safari\//i.test(ua) && !/wv\)/i.test(ua)) return 'in-app browser'
+  if (isIOS && !/Safari\//i.test(ua)) return 'in-app browser'
   // Android catch-all: WebView UAs contain "; wv)".
   if (/Android.*;\s*wv\)/i.test(ua)) return 'in-app browser'
   return null
@@ -111,7 +110,6 @@ export default function LoginPage() {
     // Step 2: open the OAuth URL in ASWebAuthenticationSession via
     // our custom Capacitor plugin. Resolves to { url } when the OAuth
     // flow redirects to myrecipe://auth-callback?code=...
-    await new Promise(r => setTimeout(r, 500))
     const WebAuth = window.Capacitor?.Plugins?.WebAuth
     if (!WebAuth) {
       throw new Error('WebAuth plugin not available — Xcode rebuild needed?')
@@ -159,6 +157,15 @@ export default function LoginPage() {
   async function handleGoogle() {
     setError('')
     setLoading(true)
+    if (isIOSNative) {
+      try {
+        await signInWithProviderNative('google')
+      } catch (err) {
+        if (err.message !== 'USER_CANCELLED') setError(err.message)
+        setLoading(false)
+      }
+      return
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback${nextSuffix()}` }
