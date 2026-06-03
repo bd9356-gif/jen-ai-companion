@@ -8,7 +8,6 @@ import AuthenticationServices
 import UIKit
 
 @objc(WebAuthPlugin)
-@objcMembers
 public class WebAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
     public let identifier = "WebAuthPlugin"
     public let jsName = "WebAuth"

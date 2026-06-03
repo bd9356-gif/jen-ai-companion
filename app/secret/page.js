@@ -2823,7 +2823,7 @@ export default function MyRecipeVaultPage() {
                       </button>
                       <button
                         onClick={printMise}
-                        title="Open a printable version of the mise en place"
+                        title="Print mise en place"
                         className="text-xs font-semibold text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1 hover:bg-amber-50"
                       >
                         🖨️ Print

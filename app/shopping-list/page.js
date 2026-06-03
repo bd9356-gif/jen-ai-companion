@@ -324,7 +324,7 @@ export default function ShoppingListPage() {
                   title="Add or edit the stores you shop at"
                   className="text-xs font-semibold text-sky-700 border border-sky-200 rounded-lg px-2.5 py-1 hover:bg-sky-50"
                 >
-                  🏬 Manage Stores
+                  🏬 Manage
                 </button>
                 {shoppingList.length > 0 && (
                   <button
@@ -348,7 +348,7 @@ export default function ShoppingListPage() {
                 {shoppingList.length > 0 && (
                   <button
                     onClick={printShoppingList}
-                    title="Open a printable version of the shopping list in a new window"
+                    title="Print shopping list"
                     className="text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg px-2.5 py-1 hover:bg-gray-50"
                   >
                     🖨️ Print
