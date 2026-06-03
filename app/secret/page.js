@@ -1834,21 +1834,37 @@ export default function MyRecipeVaultPage() {
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
-    // Native app: use share sheet (iOS AirPrint via share)
-    if (window.Capacitor) {
-      navigator.share({ title: 'Mise en Place — ' + (viewing?.title || ''), text }).catch(() => {})
-      return
+    // Iframe print path — same as Meal Plan's Mise. Self-contained
+    // mini-document sidesteps the modal/iOS-Safari interaction that
+    // produces blank pages with the body-overlay approach.
+    const FRAME_ID = 'print-vault-mise-iframe'
+    document.getElementById(FRAME_ID)?.remove()
+    const iframe = document.createElement('iframe')
+    iframe.id = FRAME_ID
+    Object.assign(iframe.style, {
+      position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0', visibility: 'hidden',
+    })
+    document.body.appendChild(iframe)
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const html = `<!doctype html>
+<html><head><meta charset="utf-8" /><title>Mise en Place</title>
+<style>
+  body { margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; color: #111; }
+  pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit; }
+  @page { margin: 0.5in; }
+</style></head><body><pre>${escaped}</pre></body></html>`
+    const doc = iframe.contentDocument || iframe.contentWindow.document
+    doc.open(); doc.write(html); doc.close()
+    const triggerPrint = () => {
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print() }
+      catch (err) { console.error('Vault mise print failed', err); showToast('Print failed — try Copy instead') }
+      setTimeout(() => iframe.remove(), 30000)
     }
-    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    const styleEl = document.getElementById('mise-print-style') || document.createElement('style')
-    styleEl.id = 'mise-print-style'
-    styleEl.textContent = `@media print { body > *:not(#mise-print-content) { display:none!important } #mise-print-content { display:block!important; position:static!important; padding:24px; font-family:system-ui; font-size:14px; line-height:1.7; white-space:pre-wrap } } @media screen { #mise-print-content { display:none!important } }`
-    document.head.appendChild(styleEl)
-    const div = document.getElementById('mise-print-content') || document.createElement('div')
-    div.id = 'mise-print-content'
-    div.innerHTML = `<pre>${escaped}</pre>`
-    document.body.appendChild(div)
-    window.print()
+    if (doc.readyState === 'complete') {
+      setTimeout(triggerPrint, 50)
+    } else {
+      iframe.addEventListener('load', () => setTimeout(triggerPrint, 50), { once: true })
+    }
   }
 
   async function deleteRecipe(recipeOrId) {
@@ -2807,7 +2823,7 @@ export default function MyRecipeVaultPage() {
                       </button>
                       <button
                         onClick={printMise}
-                        title="Print mise en place"
+                        title="Open a printable version of the mise en place"
                         className="text-xs font-semibold text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1 hover:bg-amber-50"
                       >
                         🖨️ Print
