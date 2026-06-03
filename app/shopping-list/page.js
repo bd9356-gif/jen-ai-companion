@@ -347,11 +347,11 @@ export default function ShoppingListPage() {
                 )}
                 {shoppingList.length > 0 && (
                   <button
-                    onClick={() => { const text = shoppingList.map(i=>`• ${i.ingredient}`).join('\n'); if(!text){return;} if(navigator.share){navigator.share({title:'Shopping List',text}).catch(()=>{})} else {navigator.clipboard?.writeText(text).then(()=>{})} }}
-                    title="Share shopping list"
+                    onClick={printShoppingList}
+                    title="Print shopping list"
                     className="text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg px-2.5 py-1 hover:bg-gray-50"
                   >
-                    🔗 Share
+                    🖨️ Print
                   </button>
                 )}
               </div>
