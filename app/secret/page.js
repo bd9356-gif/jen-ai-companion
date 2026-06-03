@@ -1837,14 +1837,8 @@ export default function MyRecipeVaultPage() {
     // Iframe print path — same as Meal Plan's Mise. Self-contained
     // mini-document sidesteps the modal/iOS-Safari interaction that
     // produces blank pages with the body-overlay approach.
-    const FRAME_ID = 'print-vault-mise-iframe-' + Date.now()
-    document.querySelectorAll('[id^="print-vault-mise-iframe"]').forEach(el => el.remove())
-    const iframe = document.createElement('iframe')
-    iframe.id = FRAME_ID
-    Object.assign(iframe.style, {
-      position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0', visibility: 'hidden',
-    })
-    document.body.appendChild(iframe)
+    const w = window.open('', '_blank', 'width=800,height=600')
+    if (!w) { showToast('Allow popups to print'); return }
     const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     const html = `<!doctype html>
 <html><head><meta charset="utf-8" /><title>Mise en Place</title>
@@ -1853,18 +1847,7 @@ export default function MyRecipeVaultPage() {
   pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: inherit; }
   @page { margin: 0.5in; }
 </style></head><body><pre>${escaped}</pre></body></html>`
-    const doc = iframe.contentDocument || iframe.contentWindow.document
-    doc.open(); doc.write(html); doc.close()
-    const triggerPrint = () => {
-      try { iframe.contentWindow.focus(); iframe.contentWindow.print() }
-      catch (err) { console.error('Vault mise print failed', err); showToast('Print failed — try Copy instead') }
-      setTimeout(() => iframe.remove(), 30000)
-    }
-    if (doc.readyState === 'complete') {
-      setTimeout(triggerPrint, 50)
-    } else {
-      iframe.addEventListener('load', () => setTimeout(triggerPrint, 50), { once: true })
-    }
+    w.document.write(html); w.document.close(); w.focus(); w.print()
   }
 
   async function deleteRecipe(recipeOrId) {
