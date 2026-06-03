@@ -78,7 +78,6 @@ export default function LoginPage() {
     if (typeof window !== 'undefined') {
       const cap = window.Capacitor
       setIsIOSNative(!!(cap && typeof cap.getPlatform === 'function' && cap.getPlatform() === 'ios'))
-      if (cap) { const p = Object.keys(cap.Plugins || {}); console.log('Capacitor plugins:', p.join(', ')); setError('Plugins: ' + p.join(', ')) }
     }
   }, [])
 
