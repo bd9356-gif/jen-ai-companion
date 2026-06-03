@@ -158,15 +158,6 @@ export default function LoginPage() {
   async function handleGoogle() {
     setError('')
     setLoading(true)
-    if (isIOSNative) {
-      try {
-        await signInWithProviderNative('google')
-      } catch (err) {
-        if (err.message !== 'USER_CANCELLED') setError(err.message)
-        setLoading(false)
-      }
-      return
-    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback${nextSuffix()}` }
