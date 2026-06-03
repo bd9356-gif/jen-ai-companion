@@ -1851,12 +1851,15 @@ export default function MyRecipeVaultPage() {
         navigator.share({ title: 'Mise en Place', text: text }).catch(() => {})
       }
     } else {
-      window.print()
-      // Clean up after print
-      setTimeout(() => {
+      const cleanup = () => {
         document.getElementById('mise-print-style')?.remove()
         document.getElementById('mise-print-content')?.remove()
-      }, 1000)
+        window.removeEventListener('afterprint', cleanup)
+      }
+      window.addEventListener('afterprint', cleanup)
+      // Also clean up after 60s in case afterprint never fires (cancel)
+      setTimeout(cleanup, 60000)
+      window.print()
     }
   }
 
