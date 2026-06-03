@@ -1834,6 +1834,11 @@ export default function MyRecipeVaultPage() {
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
+    // Native app: use share sheet (iOS AirPrint via share)
+    if (window.Capacitor) {
+      navigator.share({ title: 'Mise en Place — ' + (viewing?.title || ''), text }).catch(() => {})
+      return
+    }
     const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     const styleEl = document.getElementById('mise-print-style') || document.createElement('style')
     styleEl.id = 'mise-print-style'
