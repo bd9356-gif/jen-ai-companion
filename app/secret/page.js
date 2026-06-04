@@ -2822,7 +2822,7 @@ export default function MyRecipeVaultPage() {
                         📋 Copy
                       </button>
                       <button
-                        onClick={printMise}
+                        onClick={() => window.open(`/print/mise?id=${viewing.id}`, '_blank')}
                         title="Print mise en place"
                         className="text-xs font-semibold text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1 hover:bg-amber-50"
                       >
