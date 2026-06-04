@@ -3560,6 +3560,13 @@ export default function MyRecipeVaultPage() {
             </button>
           )}
 
+          {importing && (
+            <div className="flex items-center justify-center gap-2 py-2">
+              <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-sm text-orange-600 font-medium">Chef Jen is reading the recipe...</p>
+            </div>
+          )}
+
           {/* Add tab — manual recipe entry. Form fields lifted from the
               old standalone view='add' page so users can add a recipe
               directly from Import Tools (the + Add button in the Vault
