@@ -2402,12 +2402,12 @@ export default function MyRecipeVaultPage() {
                         📌 Share Later
                       </button>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); const url = `${window.location.origin}/share/${viewing.id}`; if (navigator.share) { navigator.share({ title: viewing.title, text: `${viewing.title} — Chef Jen approves ♥`, url }).catch(() => {}) } else { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank') } }} className="w-full text-left text-sm font-semibold text-blue-600 px-4 py-2.5 hover:bg-blue-50 border-t border-gray-100">
-                        🔗 Share Anywhere
+                        🔗 Share Now
                       </button>
                       {/* ── Manage ── */}
                       <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50 border-t border-gray-200">Manage</p>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('enhance') }} className="w-full text-left text-sm font-semibold text-purple-600 px-4 py-2.5 hover:bg-purple-50">
-                        ✨ AI Helpers
+                        ✨ Jen's Helpers
                       </button>
                       <button role="menuitem" onClick={() => { setActionsMenuOpen(false); setView('edit') }} className="w-full text-left text-sm font-semibold text-gray-700 px-4 py-2.5 hover:bg-gray-50 border-t border-gray-100">
                         ✏️ Edit Recipe
