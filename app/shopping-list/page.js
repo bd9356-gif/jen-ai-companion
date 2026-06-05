@@ -347,7 +347,7 @@ export default function ShoppingListPage() {
                 )}
                 {shoppingList.length > 0 && (
                   <button
-                    onClick={() => window.open('/print/shopping', '_blank')}
+                    onClick={printShoppingList}
                     title="Print shopping list"
                     className="text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg px-2.5 py-1 hover:bg-gray-50"
                   >
