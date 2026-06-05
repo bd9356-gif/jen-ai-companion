@@ -1474,8 +1474,6 @@ export default function MyRecipeVaultPage() {
       // path picking up a URL the user copied from a hearted iMessage.
       const decoded = stripTapbackPrefix(decodeURIComponent(importParam).trim())
       if (decoded) {
-        setView('import')
-        setImportTab('url')
         setImportUrl(decoded)
         // Strip the param from the URL so a refresh doesn't re-trigger.
         try {
