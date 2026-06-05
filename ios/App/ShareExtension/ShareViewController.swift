@@ -66,6 +66,10 @@ class ShareViewController: UIViewController {
     }
 
     private func finish() {
-        extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
+        extensionContext?.completeRequest(returningItems: nil) { _ in
+            // Open the main app after the extension completes
+            let url = URL(string: "myrecipe://import")!
+            _ = self.extensionContext?.open(url, completionHandler: nil)
+        }
     }
 }
