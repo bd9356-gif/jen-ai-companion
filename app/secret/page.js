@@ -1835,7 +1835,7 @@ export default function MyRecipeVaultPage() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
     if (window.Capacitor?.Plugins?.Print) {
-      window.Capacitor.Plugins.Print.shareText({ text }).catch(() => {})
+      window.Capacitor.Plugins.Print.printText({ text, title: 'Mise en Place' }).catch(() => {})
       return
     }
     // Iframe print path — same as Meal Plan's Mise. Self-contained
