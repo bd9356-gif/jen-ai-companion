@@ -78,8 +78,9 @@ export default function ImportEntryPage() {
         )}
         {status === 'redirecting' && (
           <>
-            <div className="text-4xl mb-3">📥</div>
-            <p className="text-gray-700 font-semibold">Importing recipe…</p>
+            <div className="text-4xl mb-3">👩‍🍳</div>
+            <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-gray-700 font-semibold">Chef Jen is reading the recipe…</p>
             <p className="text-xs text-gray-500 mt-2 break-all">{target}</p>
           </>
         )}
