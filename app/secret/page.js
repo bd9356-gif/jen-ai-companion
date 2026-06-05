@@ -2178,6 +2178,7 @@ export default function MyRecipeVaultPage() {
           if (WebFetch) {
             try {
               setImportError('')
+              showToast('Reading the page...')
               const { html } = await WebFetch.fetchPage({ url: urlToUse, timeoutSeconds: 15 })
               if (html) {
                 const res2 = await fetch('/api/import-recipe', {
