@@ -178,7 +178,7 @@ export default function ShoppingListPage() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
     if (window.Capacitor?.Plugins?.Print) {
-      window.Capacitor.Plugins.Print.shareText({ text }).catch(() => {})
+      window.Capacitor.Plugins.Print.printText({ text, title: 'Shopping List' }).catch(() => {})
       return
     }
     // Direct-DOM print path with @media print rules. Known behavior:
