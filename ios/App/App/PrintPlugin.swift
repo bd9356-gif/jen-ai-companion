@@ -33,19 +33,25 @@ public class PrintPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func printText(_ call: CAPPluginCall) {
-        guard let text = call.getString("text"), let title = call.getString("title") else {
-            call.reject("Missing text or title parameter")
+        guard let text = call.getString("text") else {
+            call.reject("Missing text parameter")
             return
         }
+        let title = call.getString("title") ?? "Print"
         DispatchQueue.main.async {
             let printController = UIPrintInteractionController.shared
-            let printInfo = UIPrintInfo(dictionary: nil)
+            let printInfo = UIPrintInfo.printInfo()
             printInfo.outputType = .general
             printInfo.jobName = title
+            printInfo.orientation = .portrait
             printController.printInfo = printInfo
-            printController.printingItem = text
-            printController.present(animated: true)
-            call.resolve()
+            let formatter = UISimpleTextPrintFormatter(text: text)
+            formatter.startPage = 0
+            formatter.contentInsets = UIEdgeInsets(top: 72, left: 72, bottom: 72, right: 72)
+            printController.printFormatter = formatter
+            printController.present(animated: true) { _, _, _ in
+                call.resolve()
+            }
         }
     }
 }
