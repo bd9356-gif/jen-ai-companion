@@ -27,6 +27,7 @@ function MisePrint() {
     if (!recipe) return
     const timer = setTimeout(() => {
       window.print()
+      window.onafterprint = () => window.history.back()
       window.onafterprint = () => window.close()
     }, 500)
     return () => clearTimeout(timer)
