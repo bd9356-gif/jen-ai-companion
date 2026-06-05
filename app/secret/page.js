@@ -2178,6 +2178,7 @@ export default function MyRecipeVaultPage() {
           setImportUrl('')
           // WKWebView fallback — try fetching HTML via native plugin before
           // giving up and sending the user to the Paste tab.
+          showToast('Trying a different method...')
           const WebFetch = window.Capacitor?.Plugins?.WebFetch
           if (WebFetch) {
             try {
@@ -2217,6 +2218,7 @@ export default function MyRecipeVaultPage() {
               console.log('[WebFetch] failed:', fetchErr)
             }
           }
+          showToast('Could not auto-import — paste the recipe text below')
           setImportTab('paste')
           setTimeout(() => importTextRef.current?.focus(), 100)
         }
