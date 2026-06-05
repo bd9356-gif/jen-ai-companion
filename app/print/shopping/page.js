@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -7,17 +7,14 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export default function PrintShoppingPage() {
+function ShoppingPrint() {
   const [items, setItems] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) { setItems([]); return }
-      supabase
-        .from('shopping_list')
-        .select('ingredient, recipe_title')
-        .eq('user_id', session.user.id)
-        .order('recipe_title')
+      supabase.from('shopping_list').select('ingredient, recipe_title')
+        .eq('user_id', session.user.id).order('recipe_title')
         .then(({ data }) => setItems(data || []))
     })
   }, [])
@@ -33,7 +30,6 @@ export default function PrintShoppingPage() {
 
   if (items === null) return <div style={{ padding: 24, fontFamily: 'system-ui' }}>Loading...</div>
 
-  // Group by recipe title
   const grouped = items.reduce((acc, item) => {
     const key = item.recipe_title || 'Other'
     if (!acc[key]) acc[key] = []
@@ -60,4 +56,8 @@ export default function PrintShoppingPage() {
       ))}
     </div>
   )
+}
+
+export default function PrintShoppingPage() {
+  return <Suspense fallback={<div style={{ padding: 24 }}>Loading...</div>}><ShoppingPrint /></Suspense>
 }
