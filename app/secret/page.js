@@ -2829,14 +2829,14 @@ export default function MyRecipeVaultPage() {
                       <button
                         onClick={copyMise}
                         title="Copy as plain text — paste into Notes / Reminders / etc."
-                        className="text-xs font-semibold text-emerald-700 border border-emerald-200 rounded-lg px-2.5 py-1 hover:bg-emerald-50"
+                        className="text-sm font-semibold text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50"
                       >
                         📋 Copy
                       </button>
                       <button
                         onClick={printMise}
                         title="Print mise en place"
-                        className="text-xs font-semibold text-amber-700 border border-amber-200 rounded-lg px-2.5 py-1 hover:bg-amber-50"
+                        className="text-sm font-semibold text-amber-700 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-50"
                       >
                         🖨️ Print
                       </button>
