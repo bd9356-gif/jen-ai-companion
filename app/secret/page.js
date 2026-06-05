@@ -1831,6 +1831,11 @@ export default function MyRecipeVaultPage() {
     }
   }
 
+  // Clean up any stale print iframes on mount
+  useEffect(() => {
+    document.querySelectorAll('[id^="print-vault-mise-iframe"]').forEach(el => el.remove())
+  }, [])
+
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
