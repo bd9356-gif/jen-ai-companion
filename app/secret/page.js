@@ -929,6 +929,7 @@ export default function MyRecipeVaultPage() {
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
   const [importStatus, setImportStatus] = useState('')
+  const [importElapsed, setImportElapsed] = useState(0)
   const [importError, setImportError] = useState('')
   // Import view active tab. URL is default (most common). Paste is the
   // "site blocked the fetcher" fallback. Add is manual entry + the
@@ -1832,6 +1833,12 @@ export default function MyRecipeVaultPage() {
     }
   }
 
+  useEffect(() => {
+    if (!importing) { setImportElapsed(0); return }
+    const t = setInterval(() => setImportElapsed(e => e + 1), 1000)
+    return () => clearInterval(t)
+  }, [importing])
+
   // Clean up any stale print iframes on mount
   useEffect(() => {
     document.querySelectorAll('[id^="print-vault-mise-iframe"]').forEach(el => el.remove())
@@ -2165,6 +2172,7 @@ export default function MyRecipeVaultPage() {
     if (urlOverride && urlToUse) setImportUrl(urlToUse)
     setImporting(true)
     setImportError('')
+    setImportElapsed(0)
     try {
       const res = await fetch('/api/import-recipe', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3577,7 +3585,7 @@ export default function MyRecipeVaultPage() {
           {importing && (
             <div className="flex items-center justify-center gap-2 py-2">
               <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-sm text-orange-600 font-medium">{importStatus || 'Chef Jen is reading the recipe...'}</p>
+              <p className="text-sm text-orange-600 font-medium">{importStatus || (importElapsed < 4 ? 'Chef Jen is reading the recipe...' : importElapsed < 9 ? 'This site is a little tricky — still working...' : 'Almost there — taking a bit longer than usual...')}</p>
             </div>
           )}
 
