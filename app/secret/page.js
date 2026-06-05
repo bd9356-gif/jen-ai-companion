@@ -928,6 +928,7 @@ export default function MyRecipeVaultPage() {
   const [importText, setImportText] = useState('')
   const [importUrl, setImportUrl] = useState('')
   const [importing, setImporting] = useState(false)
+  const [importStatus, setImportStatus] = useState('')
   const [importError, setImportError] = useState('')
   // Import view active tab. URL is default (most common). Paste is the
   // "site blocked the fetcher" fallback. Add is manual entry + the
@@ -2183,12 +2184,12 @@ export default function MyRecipeVaultPage() {
           setImportUrl('')
           // WKWebView fallback — try fetching HTML via native plugin before
           // giving up and sending the user to the Paste tab.
-          showToast('Trying a different method...')
+          setImportStatus('Trying a different method...')
           const WebFetch = window.Capacitor?.Plugins?.WebFetch
           if (WebFetch) {
             try {
               setImportError('')
-              showToast('Reading the page...')
+              setImportStatus('Reading the page...')
               const { html } = await WebFetch.fetchPage({ url: urlToUse, timeoutSeconds: 15 })
               if (html) {
                 const res2 = await fetch('/api/import-recipe', {
@@ -2261,6 +2262,7 @@ export default function MyRecipeVaultPage() {
       showToast('Got it — review and save when you’re ready ✓')
     } catch (err) { console.error(err) }
     setImporting(false)
+    setImportStatus('')
   }
 
   const filtered = recipes.filter(r => {
@@ -3575,7 +3577,7 @@ export default function MyRecipeVaultPage() {
           {importing && (
             <div className="flex items-center justify-center gap-2 py-2">
               <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-sm text-orange-600 font-medium">Chef Jen is reading the recipe...</p>
+              <p className="text-sm text-orange-600 font-medium">{importStatus || 'Chef Jen is reading the recipe...'}</p>
             </div>
           )}
 
