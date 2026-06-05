@@ -134,10 +134,12 @@ class ShareViewController: UIViewController {
     }
 
     private func finish() {
-        extensionContext?.completeRequest(returningItems: nil) { _ in
-            // Open the main app after the extension completes
-            let url = URL(string: "myrecipe://import")!
-            _ = self.extensionContext?.open(url, completionHandler: nil)
+        // Wait 2.5 seconds so user can read the card, then dismiss
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            self.extensionContext?.completeRequest(returningItems: nil) { _ in
+                let url = URL(string: "myrecipe://import")!
+                _ = self.extensionContext?.open(url, completionHandler: nil)
+            }
         }
     }
 }
