@@ -27,6 +27,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             if let bridge = (self.window?.rootViewController as? CAPBridgeViewController)?.bridge {
                 bridge.registerPluginInstance(WebAuthPlugin())
                 bridge.registerPluginInstance(WebFetchPlugin())
+                bridge.registerPluginInstance(PrintPlugin())
                 NSLog("[AppDelegate] Registered WebAuth and WebFetch plugins")
             }
         }
