@@ -16,21 +16,75 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Make the view transparent — no UI shown
-        view.backgroundColor = UIColor.black.withAlphaComponent(0.6)
-        let label = UILabel()
-        label.text = "✓ Recipe saved!\nOpen MyRecipe Companion to import."
-        label.textColor = .white
-        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
-        label.numberOfLines = 2
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
+        // Blurred background
+        let blur = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        let blurView = UIVisualEffectView(effect: blur)
+        blurView.frame = view.bounds
+        blurView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(blurView)
+
+        // Card container
+        let card = UIView()
+        card.backgroundColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.85)
+        card.layer.cornerRadius = 24
+        card.layer.shadowColor = UIColor.black.cgColor
+        card.layer.shadowOpacity = 0.4
+        card.layer.shadowRadius = 20
+        card.translatesAutoresizingMaskIntoConstraints = false
+        card.alpha = 0
+        view.addSubview(card)
+
+        // Chef hat emoji
+        let emoji = UILabel()
+        emoji.text = "👩‍🍳"
+        emoji.font = UIFont.systemFont(ofSize: 52)
+        emoji.textAlignment = .center
+        emoji.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(emoji)
+
+        // Title
+        let title = UILabel()
+        title.text = "Recipe Saved!"
+        title.textColor = .white
+        title.font = UIFont.systemFont(ofSize: 22, weight: .bold)
+        title.textAlignment = .center
+        title.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(title)
+
+        // Subtitle
+        let subtitle = UILabel()
+        subtitle.text = "Open MyRecipe Companion\nto review and save"
+        subtitle.textColor = UIColor.white.withAlphaComponent(0.7)
+        subtitle.font = UIFont.systemFont(ofSize: 15, weight: .regular)
+        subtitle.numberOfLines = 2
+        subtitle.textAlignment = .center
+        subtitle.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(subtitle)
+
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
-            label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
+            card.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            card.widthAnchor.constraint(equalToConstant: 280),
+
+            emoji.topAnchor.constraint(equalTo: card.topAnchor, constant: 28),
+            emoji.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+
+            title.topAnchor.constraint(equalTo: emoji.bottomAnchor, constant: 12),
+            title.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            title.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
+
+            subtitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8),
+            subtitle.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            subtitle.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
+            subtitle.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -28),
         ])
+
+        // Animate in
+        UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 0.5) {
+            card.alpha = 1
+            card.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
+        }
+        card.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
     }
 
     override func viewDidAppear(_ animated: Bool) {
