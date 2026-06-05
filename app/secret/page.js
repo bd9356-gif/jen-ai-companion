@@ -2181,7 +2181,6 @@ export default function MyRecipeVaultPage() {
       const data = await res.json()
       if (data.error) {
         setImportError(data.error)
-        setImporting(false)
         // If the URL attempt failed, clear the URL field so the user
         // isn't left staring at a bad link, flip to the Paste tab, and
         // focus the textarea — paste is a first-class fallback, not a
