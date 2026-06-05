@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -7,24 +8,20 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export default function PrintMisePage({ searchParams }) {
+export default function PrintMisePage() {
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id')
   const [recipe, setRecipe] = useState(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const id = searchParams?.id
     if (!id) { setError('No recipe ID'); return }
-
-    supabase
-      .from('personal_recipes')
-      .select('title, ingredients')
-      .eq('id', id)
-      .single()
+    supabase.from('personal_recipes').select('title, ingredients').eq('id', id).single()
       .then(({ data, error }) => {
         if (error || !data) { setError('Recipe not found'); return }
         setRecipe(data)
       })
-  }, [])
+  }, [id])
 
   useEffect(() => {
     if (!recipe) return
@@ -43,9 +40,7 @@ export default function PrintMisePage({ searchParams }) {
   return (
     <div style={{ padding: 24, fontFamily: 'system-ui', fontSize: 14, lineHeight: 1.7, maxWidth: 600 }}>
       <style>{`@media print { body { margin: 0; } } @page { margin: 0.5in; }`}</style>
-      <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>
-        Mise en Place — {recipe.title}
-      </h2>
+      <h2 style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>Mise en Place — {recipe.title}</h2>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
         {ings.map((ing, i) => {
           const measure = (typeof ing === 'object' && ing?.measure) || ''
