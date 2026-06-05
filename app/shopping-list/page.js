@@ -177,6 +177,10 @@ export default function ShoppingListPage() {
   function printShoppingList() {
     const text = buildShoppingListText()
     if (!text) { showToast('Nothing to print'); return }
+    if (window.Capacitor?.Plugins?.Print) {
+      window.Capacitor.Plugins.Print.shareText({ text }).catch(() => {})
+      return
+    }
     // Direct-DOM print path with @media print rules. Known behavior:
     // produces 1 correct page + 2 trailing blank pages on iOS Safari
     // (the auto-print prompt + blank trailer is an iOS print bug we

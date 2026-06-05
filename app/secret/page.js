@@ -1834,6 +1834,10 @@ export default function MyRecipeVaultPage() {
   function printMise() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
+    if (window.Capacitor?.Plugins?.Print) {
+      window.Capacitor.Plugins.Print.shareText({ text }).catch(() => {})
+      return
+    }
     // Iframe print path — same as Meal Plan's Mise. Self-contained
     // mini-document sidesteps the modal/iOS-Safari interaction that
     // produces blank pages with the body-overlay approach.
