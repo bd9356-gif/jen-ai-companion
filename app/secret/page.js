@@ -850,6 +850,25 @@ function LearningVaultNote({ note, onRemove }) {
   )
 }
 
+function ImportSpinner({ status }) {
+  const [elapsed, setElapsed] = React.useState(0)
+  React.useEffect(() => {
+    const t = setInterval(() => setElapsed(e => e + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const msg = status || (
+    elapsed < 4 ? 'Chef Jen is reading the recipe...' :
+    elapsed < 9 ? 'This site is a little tricky — still working...' :
+    'Almost there — taking a bit longer than usual...'
+  )
+  return (
+    <div className="flex items-center justify-center gap-2 py-2">
+      <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-sm text-orange-600 font-medium">{msg}</p>
+    </div>
+  )
+}
+
 export default function MyRecipeVaultPage() {
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
@@ -3574,12 +3593,7 @@ export default function MyRecipeVaultPage() {
             </button>
           )}
 
-          {importing && (
-            <div className="flex items-center justify-center gap-2 py-2">
-              <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-sm text-orange-600 font-medium">{importStatus || 'Chef Jen is reading the recipe...'}</p>
-            </div>
-          )}
+          {importing && <ImportSpinner status={importStatus} />}
 
           {/* Add tab — manual recipe entry. Form fields lifted from the
               old standalone view='add' page so users can add a recipe
