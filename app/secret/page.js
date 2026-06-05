@@ -1835,6 +1835,7 @@ export default function MyRecipeVaultPage() {
     const text = buildMiseText()
     if (!text) { showToast('Nothing to print'); return }
     if (window.Capacitor?.Plugins?.Print) {
+      document.querySelectorAll('[id^="print-vault-mise-iframe"]').forEach(el => el.remove())
       window.Capacitor.Plugins.Print.printText({ text, title: 'Mise en Place' }).catch(() => {})
       return
     }
