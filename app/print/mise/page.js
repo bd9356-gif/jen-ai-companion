@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 
@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 )
 
-export default function PrintMisePage() {
+function MisePrint() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const [recipe, setRecipe] = useState(null)
@@ -56,4 +56,8 @@ export default function PrintMisePage() {
       </ul>
     </div>
   )
+}
+
+export default function PrintMisePage() {
+  return <Suspense fallback={<div style={{ padding: 24 }}>Loading...</div>}><MisePrint /></Suspense>
 }
