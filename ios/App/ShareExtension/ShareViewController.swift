@@ -16,7 +16,21 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Make the view transparent — no UI shown
-        view.backgroundColor = .clear
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        let label = UILabel()
+        label.text = "✓ Recipe saved!\nOpen MyRecipe Companion to import."
+        label.textColor = .white
+        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        label.numberOfLines = 2
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 32),
+            label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32)
+        ])
     }
 
     override func viewDidAppear(_ animated: Bool) {
