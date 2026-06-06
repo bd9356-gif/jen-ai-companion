@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Caveat } from "next/font/google";
+import PurchasesProvider from "@/components/PurchasesProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -93,8 +94,8 @@ export default function RootLayout({ children }) {
           });
         `}} />
       </head>
-      <body style={{overflowX: 'hidden', width: '100%'}}>{children}
-        <script dangerouslySetInnerHTML={{__html: `if(window.location.search.includes('openExternal=1')){var c=window.location.href.replace('?openExternal=1','').replace('&openExternal=1','');window.open(c,'_blank');}`}} /></body>
+      <body style={{overflowX: 'hidden', width: '100%'}}><PurchasesProvider>{children}</PurchasesProvider>
+        <script dangerouslySetInnerHTML={{__html: `if(window.location.search.includes('openExternal=1')){var c=window.location.href.replace('?openExternal=1','').replace('&openExternal=1','');window.open(c,'_blank');}`}} /></PurchasesProvider></body>
     </html>
   );
 }
