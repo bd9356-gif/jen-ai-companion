@@ -1916,6 +1916,11 @@ export default function MyRecipeVaultPage() {
   // Hard delete + restore for the Settings → Recently Deleted surface.
   async function generatePhoto(recipe) {
     if (!recipe) return
+    // Check photo limit
+    if (limits && limits.photos === 0) {
+      window.location.href = '/paywall'
+      return
+    }
     showToast('Generating AI photo — this may take up to 60 seconds...')
     try {
       const res = await fetch('/api/generate-photo', {
