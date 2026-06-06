@@ -94,7 +94,7 @@ export default function RootLayout({ children }) {
           });
         `}} />
       </head>
-      <body style={{overflowX: 'hidden', width: '100%'}}><PurchasesProvider>{children}</PurchasesProvider>
+      <body style={{overflowX: 'hidden', width: '100%'}}><PurchasesProvider>{children}
         <script dangerouslySetInnerHTML={{__html: `if(window.location.search.includes('openExternal=1')){var c=window.location.href.replace('?openExternal=1','').replace('&openExternal=1','');window.open(c,'_blank');}`}} /></PurchasesProvider></body>
     </html>
   );
