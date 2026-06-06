@@ -2,30 +2,94 @@
 import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
+
+const PLANS = [
+  {
+    name: 'Premium',
+    price: '$34.99/yr',
+    monthly: '$2.92/mo',
+    color: 'orange',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PREMIUM_PRICE_ID,
+    appleId: 'com.mycompanionapps.recipe.premium.annual',
+    features: [
+      'Unlimited Recipe Vault',
+      'Unlimited imports',
+      'Chef Jen AI — 30/month',
+      'AI Photo Generation — 10/month',
+      'All Kitchen Helpers',
+      'Meal Plan',
+      'Chef Jen Classroom',
+    ],
+  },
+  {
+    name: 'Pro',
+    price: '$59.99/yr',
+    monthly: '$5.00/mo',
+    color: 'purple',
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
+    appleId: 'com.mycompanionapps.recipe.pro.annual',
+    features: [
+      'Everything in Premium',
+      'Unlimited Chef Jen AI',
+      'Unlimited AI Photos',
+      'Early access to new features',
+    ],
+  },
+]
 
 export default function PaywallPage() {
   const [loading, setLoading] = useState(false)
-  const [packages, setPackages] = useState([])
+  const [user, setUser] = useState(null)
   const [error, setError] = useState('')
+  const [iosPackages, setIosPackages] = useState([])
+  const isNative = typeof window !== 'undefined' && Capacitor.getPlatform() === 'ios'
   const router = useRouter()
 
   useEffect(() => {
-    async function loadPackages() {
-      if (Capacitor.getPlatform() !== 'ios') return
-      try {
-        const { Purchases } = await import('@revenuecat/purchases-capacitor')
-        const { current } = await Purchases.getOfferings()
-        if (current?.availablePackages) {
-          setPackages(current.availablePackages)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null)
+    })
+
+    if (isNative) {
+      async function loadPackages() {
+        try {
+          const { Purchases } = await import('@revenuecat/purchases-capacitor')
+          const { current } = await Purchases.getOfferings()
+          if (current?.availablePackages) setIosPackages(current.availablePackages)
+        } catch (err) {
+          console.error('[Paywall]', err)
         }
-      } catch (err) {
-        console.error('[Paywall]', err)
       }
+      loadPackages()
     }
-    loadPackages()
   }, [])
 
-  async function handlePurchase(pkg) {
+  async function handleWebPurchase(plan) {
+    if (!user) { router.push('/login'); return }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/stripe-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: plan.priceId, userId: user.id, email: user.email }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+      else setError('Could not start checkout')
+    } catch (err) {
+      setError('Something went wrong — please try again')
+    }
+    setLoading(false)
+  }
+
+  async function handleIosPurchase(pkg) {
     setLoading(true)
     setError('')
     try {
@@ -33,9 +97,7 @@ export default function PaywallPage() {
       await Purchases.purchasePackage({ aPackage: pkg })
       router.back()
     } catch (err) {
-      if (!err.message?.includes('cancelled')) {
-        setError('Purchase failed — please try again')
-      }
+      if (!err.message?.includes('cancelled')) setError('Purchase failed — please try again')
     }
     setLoading(false)
   }
@@ -62,71 +124,79 @@ export default function PaywallPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-        {/* Hero */}
         <div className="text-center">
           <p className="text-5xl mb-3">👩‍🍳</p>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">MyRecipe Companion</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">MyRecipe Companion</h2>
           <p className="text-gray-500 text-sm">Your AI-powered kitchen</p>
         </div>
 
-        {/* Feature comparison */}
-        <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-5 space-y-3">
+        {/* Free vs paid comparison */}
+        <div className="bg-gray-50 rounded-2xl p-4 text-sm">
+          <div className="grid grid-cols-4 gap-2 mb-2">
+            <p className="font-bold text-gray-700">Feature</p>
+            <p className="text-center text-gray-500 font-semibold">Free</p>
+            <p className="text-center text-orange-700 font-bold">Premium</p>
+            <p className="text-center text-purple-700 font-bold">Pro</p>
+          </div>
           {[
-            { feature: 'Recipe Vault', free: true, premium: true, pro: true },
-            { feature: 'Shopping List & Chef TV', free: true, premium: true, pro: true },
-            { feature: 'URL & Paste Import', free: '3/week', premium: 'Unlimited', pro: 'Unlimited' },
-            { feature: 'Meal Plan', free: false, premium: true, pro: true },
-            { feature: 'Chef Jen AI', free: '10/mo', premium: '50/mo', pro: 'Unlimited' },
-            { feature: 'AI Photo Generation', free: '2/mo', premium: 'Unlimited', pro: 'Unlimited' },
-            { feature: 'Kitchen Helpers', free: 'Polish only', premium: 'All', pro: 'All' },
-            { feature: 'Chef Jen Classroom', free: false, premium: true, pro: true },
-          ].map(({ feature, free, premium, pro }) => (
-            <div key={feature} className="grid grid-cols-4 gap-2 items-center">
-              <p className="text-xs font-semibold text-gray-700 col-span-1">{feature}</p>
-              <p className="text-xs text-center text-gray-500">{free === true ? '✓' : free === false ? '—' : free}</p>
-              <p className="text-xs text-center text-orange-700 font-semibold">{premium === true ? '✓' : premium === false ? '—' : premium}</p>
-              <p className="text-xs text-center text-purple-700 font-semibold">{pro === true ? '✓' : pro === false ? '—' : pro}</p>
+            ['Recipe Vault', '15 max', '∞', '∞'],
+            ['Imports', '3/mo', '∞', '∞'],
+            ['Chef Jen AI', '2/mo', '30/mo', '∞'],
+            ['AI Photos', '—', '10/mo', '∞'],
+            ['Kitchen Helpers', 'Polish', 'All', 'All'],
+            ['Meal Plan', '—', '✓', '✓'],
+          ].map(([feature, free, premium, pro]) => (
+            <div key={feature} className="grid grid-cols-4 gap-2 py-1.5 border-t border-gray-200">
+              <p className="text-gray-700 text-xs">{feature}</p>
+              <p className="text-center text-gray-400 text-xs">{free}</p>
+              <p className="text-center text-orange-700 text-xs font-semibold">{premium}</p>
+              <p className="text-center text-purple-700 text-xs font-semibold">{pro}</p>
             </div>
           ))}
-          <div className="grid grid-cols-4 gap-2 pt-2 border-t border-orange-200">
-            <p className="text-xs text-gray-400">Plan</p>
-            <p className="text-xs text-center text-gray-400">Free</p>
-            <p className="text-xs text-center text-orange-700 font-bold">Premium</p>
-            <p className="text-xs text-center text-purple-700 font-bold">Pro</p>
-          </div>
         </div>
 
-        {/* Purchase buttons */}
+        {/* Plan buttons */}
         <div className="space-y-3">
-          {packages.length === 0 ? (
-            <p className="text-center text-gray-400 text-sm">Loading plans...</p>
-          ) : (
-            packages.map(pkg => {
-              const isPro = pkg.identifier.includes('pro')
-              return (
-                <button
-                  key={pkg.identifier}
-                  onClick={() => handlePurchase(pkg)}
-                  disabled={loading}
-                  className={`w-full py-4 rounded-2xl font-bold text-white text-base disabled:opacity-50 ${
-                    isPro ? 'bg-purple-600 hover:bg-purple-700' : 'bg-orange-600 hover:bg-orange-700'
-                  }`}
-                >
-                  {isPro ? '🚀 Go Pro' : '⭐ Go Premium'} — {pkg.product.priceString}/year
-                </button>
-              )
-            })
-          )}
+          {PLANS.map(plan => (
+            <div key={plan.name} className={`border-2 rounded-2xl p-5 ${plan.color === 'purple' ? 'border-purple-200 bg-purple-50' : 'border-orange-200 bg-orange-50'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className={`font-bold text-lg ${plan.color === 'purple' ? 'text-purple-900' : 'text-orange-900'}`}>{plan.name}</p>
+                  <p className={`text-sm ${plan.color === 'purple' ? 'text-purple-700' : 'text-orange-700'}`}>{plan.monthly} · billed as {plan.price}</p>
+                </div>
+              </div>
+              <ul className="space-y-1 mb-4">
+                {plan.features.map(f => (
+                  <li key={f} className={`text-xs flex items-center gap-2 ${plan.color === 'purple' ? 'text-purple-800' : 'text-orange-800'}`}>
+                    <span>✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => isNative
+                  ? handleIosPurchase(iosPackages.find(p => p.identifier.includes(plan.name.toLowerCase())))
+                  : handleWebPurchase(plan)
+                }
+                disabled={loading}
+                className={`w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 ${plan.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+              >
+                {loading ? 'Loading...' : `Get ${plan.name} — ${plan.price}`}
+              </button>
+            </div>
+          ))}
         </div>
 
         {error && <p className="text-center text-red-600 text-sm">{error}</p>}
 
-        <div className="text-center space-y-2">
-          <button onClick={handleRestore} disabled={loading} className="text-sm text-gray-500 underline">
-            Restore Purchases
-          </button>
-          <p className="text-xs text-gray-400">Cancel anytime. Billed annually.</p>
-        </div>
+        {isNative && (
+          <div className="text-center">
+            <button onClick={handleRestore} disabled={loading} className="text-sm text-gray-500 underline">
+              Restore Purchases
+            </button>
+          </div>
+        )}
+
+        <p className="text-center text-xs text-gray-400">Cancel anytime. Billed annually through {isNative ? 'Apple' : 'Stripe'}.</p>
       </main>
     </div>
   )
