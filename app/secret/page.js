@@ -1987,6 +1987,11 @@ export default function MyRecipeVaultPage() {
 
   async function handleEnhance(action) {
     setEnhancing(true); setEnhanceResult(null); setGeneratedInfo(null)
+    // Free tier: Polish only
+    if (limits && limits.recipes !== Infinity && action !== 'enhance') {
+      window.location.href = '/paywall'
+      return
+    }
     try {
       const res = await fetch('/api/enhance-recipe', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
