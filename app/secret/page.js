@@ -2170,6 +2170,21 @@ export default function MyRecipeVaultPage() {
     }
     if (!textToUse && !urlToUse && !htmlToUse) return
     if (urlOverride && urlToUse) setImportUrl(urlToUse)
+
+    // Check import usage limit
+    if (user) {
+      const weekStart = new Date()
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+      const weekKey = weekStart.toISOString().slice(0, 10)
+      const { data: usageData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
+      const importCount = usageData?.import_count || 0
+      if (limits && importCount >= limits.imports) {
+        window.location.href = '/paywall'
+        return
+      }
+      await supabase.from('user_usage').upsert({ user_id: user.id, month: weekKey, import_count: importCount + 1 }, { onConflict: 'user_id,month' })
+    }
+
     setImporting(true)
     setImportError('')
     setImportElapsed(0)
