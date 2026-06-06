@@ -1713,6 +1713,11 @@ export default function MyRecipeVaultPage() {
 
   async function saveRecipe() {
     if (!form.title.trim()) return
+    // Check recipe vault limit
+    if (limits && recipes.length >= limits.recipes) {
+      window.location.href = '/paywall'
+      return
+    }
     // Preference order: a newly-picked file → the scraped/imported URL → none.
     let photo_url = ''
     if (selectedPhoto) photo_url = await uploadPhoto(selectedPhoto, user.id) || ''
