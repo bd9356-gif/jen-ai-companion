@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useSubscription } from '@/lib/useSubscription'
 import { createClient } from '@supabase/supabase-js'
 import {
   DndContext,
@@ -142,6 +143,8 @@ function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
 }
 
 export default function MealPlanPage() {
+  const { limits } = useSubscription()
+  useEffect(() => { if (limits && limits.recipes !== Infinity) { window.location.href = '/paywall' } }, [limits])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [picks, setPicks] = useState([])

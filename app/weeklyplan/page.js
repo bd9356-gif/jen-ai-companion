@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useSubscription } from '@/lib/useSubscription'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -10,6 +11,8 @@ const supabase = createClient(
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 export default function WeeklyPlanPage() {
+  const { limits } = useSubscription()
+  useEffect(() => { if (limits && limits.recipes !== Infinity) { window.location.href = '/paywall' } }, [limits])
   const [user, setUser] = useState(null)
   const [plan, setPlan] = useState([])
   const [loading, setLoading] = useState(true)
