@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import { useSubscription } from '@/lib/useSubscription'
 import { createClient } from '@supabase/supabase-js'
 import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 import ExpandableItem from '@/components/ExpandableItem'
@@ -851,6 +852,7 @@ function LearningVaultNote({ note, onRemove }) {
 }
 
 export default function MyRecipeVaultPage() {
+  const { tier, limits } = useSubscription()
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [notes, setNotes] = useState([])
