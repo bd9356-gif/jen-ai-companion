@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { normalizeInstructionsArray, instructionsToString } from '@/lib/normalize_instructions'
 import { searchLibrary } from '@/lib/library_search'
 import { pickPrompts } from '@/lib/chef_prompt_bank'
+import { useSubscription, LIMITS } from '@/lib/useSubscription'
 
 /* ─────────────────────────────────────────────────────────────
    Chef Jennifer — single chat-first surface (Cooking School #2).
@@ -40,6 +41,7 @@ export default function ChefPage() {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
+  const { tier, limits } = useSubscription()
   const [user, setUser] = useState(null)
   const [mode, setMode] = useState('teach')        // 'teach' | 'practice'
   const [messages, setMessages] = useState([])
@@ -130,6 +132,16 @@ export default function ChefPage() {
   async function sendMessage(text, modeOverride = null) {
     const trimmed = text.trim()
     if (!trimmed || loading) return
+    // Check Chef Jen usage limit
+    const monthKey = new Date().toISOString().slice(0, 7)
+    const { data: usage } = await supabase.from('user_usage').select('chef_jen_count').eq('user_id', user?.id).eq('month', monthKey).maybeSingle()
+    const count = usage?.chef_jen_count || 0
+    if (count >= limits.chefJen) {
+      window.location.href = '/paywall'
+      return
+    }
+    // Increment usage
+    await supabase.from('user_usage').upsert({ user_id: user.id, month: monthKey, chef_jen_count: count + 1 }, { onConflict: 'user_id,month' })
     // Allow callers (the Practice button) to switch mode and send in one
     // step. State updates are queued, so we use the local `useMode` value
     // throughout this fn rather than reading `mode` from state mid-flight.
