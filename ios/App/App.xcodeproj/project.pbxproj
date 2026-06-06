@@ -16,6 +16,9 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		F465E91F2FBCAF5D00A02627 /* ShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F465E9152FBCAF5D00A02627 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F48F6A562FD0F163005696C2 /* WebFetchPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48F6A552FD0F163005696C2 /* WebFetchPlugin.swift */; };
+		F48F6A5F2FD2E9C9005696C2 /* PrintPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48F6A5E2FD2E9C9005696C2 /* PrintPlugin.swift */; };
+		F48F6A622FD47BB7005696C2 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F48F6A612FD47BB7005696C2 /* StoreKit.framework */; };
 		F4F851D02FBDE27E0022A90F /* WebAuthPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F851CF2FBDE27E0022A90F /* WebAuthPlugin.swift */; };
 /* End PBXBuildFile section */
 
@@ -56,6 +59,9 @@
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		F465E9102FBC9F8F00A02627 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		F465E9152FBCAF5D00A02627 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F48F6A552FD0F163005696C2 /* WebFetchPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebFetchPlugin.swift; sourceTree = "<group>"; };
+		F48F6A5E2FD2E9C9005696C2 /* PrintPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintPlugin.swift; sourceTree = "<group>"; };
+		F48F6A612FD47BB7005696C2 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		F4F851CF2FBDE27E0022A90F /* WebAuthPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -79,6 +85,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+				F48F6A622FD47BB7005696C2 /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +105,7 @@
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				F465E9162FBCAF5D00A02627 /* ShareExtension */,
+				F48F6A602FD47BB7005696C2 /* Frameworks */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -115,6 +123,8 @@
 			isa = PBXGroup;
 			children = (
 				F4F851CF2FBDE27E0022A90F /* WebAuthPlugin.swift */,
+				F48F6A552FD0F163005696C2 /* WebFetchPlugin.swift */,
+				F48F6A5E2FD2E9C9005696C2 /* PrintPlugin.swift */,
 				F465E9102FBC9F8F00A02627 /* App.entitlements */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -126,6 +136,14 @@
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		F48F6A602FD47BB7005696C2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F48F6A612FD47BB7005696C2 /* StoreKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -243,7 +261,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F48F6A5F2FD2E9C9005696C2 /* PrintPlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				F48F6A562FD0F163005696C2 /* WebFetchPlugin.swift in Sources */,
 				F4F851D02FBDE27E0022A90F /* WebAuthPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
