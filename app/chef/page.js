@@ -343,7 +343,7 @@ export default function ChefPage() {
               : 'text-gray-500 bg-gray-50'
         }`}>
           {chefJenCount >= limits.chefJen
-            ? '✋ You've used all your Chef Jen interactions this month — upgrade for more'
+            ? "✋ You've used all your Chef Jen interactions this month — upgrade for more"
             : chefJenCount >= limits.chefJen - 1
               ? `⚠️ Last Chef Jen interaction this month — upgrade for more`
               : `👩‍🍳 ${limits.chefJen - chefJenCount} of ${limits.chefJen} Chef Jen interactions remaining this month`
