@@ -73,8 +73,10 @@ export default function PaywallPage() {
   }, [])
 
   async function handleWebPurchase(plan) {
-    if (!sessionChecked) return
-    if (!user) { router.push('/login'); return }
+    if (!user) {
+      window.location.href = '/login?next=/paywall'
+      return
+    }
     setLoading(true)
     setError('')
     try {
