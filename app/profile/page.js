@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -24,6 +25,21 @@ export default function ProfilePage() {
     setSigningOut(true)
     await supabase.auth.signOut()
     window.location.href = '/'
+  }
+
+  async function handleDeleteAccount() {
+    if (!window.confirm('Delete your account forever? All recipes, notes, and data will be permanently removed. This cannot be undone.')) return
+    if (!window.confirm('Are you absolutely sure? This is permanent.')) return
+    setDeleting(true)
+    try {
+      const { error } = await supabase.rpc('delete_user_account')
+      if (error) { alert('Could not delete account — contact support@mycompanionapps.com'); setDeleting(false); return }
+      await supabase.auth.signOut()
+      window.location.href = '/'
+    } catch (err) {
+      alert('Could not delete account — contact support@mycompanionapps.com')
+      setDeleting(false)
+    }
   }
 
   function getInitials(user) {
@@ -105,6 +121,14 @@ export default function ProfilePage() {
           className="w-full py-4 bg-white text-red-500 font-semibold rounded-2xl shadow-sm hover:bg-red-50 transition-colors disabled:opacity-50"
         >
           {signingOut ? 'Signing out...' : 'Sign Out'}
+        </button>
+
+        <button
+          onClick={handleDeleteAccount}
+          disabled={deleting}
+          className="w-full py-4 bg-white text-red-600 font-semibold rounded-2xl shadow-sm border-2 border-red-100 hover:bg-red-50 transition-colors disabled:opacity-50"
+        >
+          {deleting ? 'Deleting...' : '🗑 Delete My Account'}
         </button>
 
       </main>
