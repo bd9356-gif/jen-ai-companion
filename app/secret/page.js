@@ -2968,24 +2968,27 @@ export default function MyRecipeVaultPage() {
               fit one row on a phone without stacking. */}
           <div className="grid grid-cols-4 gap-1 bg-gray-100 rounded-xl p-1">
             {[
-              { key: 'polish', label: 'Polish' },
-              { key: 'resize', label: 'Resize' },
-              { key: 'info', label: 'Details' },
-              { key: 'transform', label: 'Adjust' },
+              { key: 'polish', label: 'Polish', free: true },
+              { key: 'resize', label: 'Resize', free: false },
+              { key: 'info', label: 'Details', free: false },
+              { key: 'transform', label: 'Adjust', free: false },
             ].map(t => {
               const active = helperTab === t.key
+              const locked = !t.free && limits?.recipes !== Infinity
               return (
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => setHelperTab(t.key)}
+                  onClick={() => locked ? window.location.href = '/paywall' : setHelperTab(t.key)}
                   className={
                     active
                       ? 'py-1.5 rounded-lg text-sm font-semibold bg-orange-600 text-white shadow-sm'
-                      : 'py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-800'
+                      : locked
+                        ? 'py-1.5 rounded-lg text-sm font-semibold text-gray-400'
+                        : 'py-1.5 rounded-lg text-sm font-semibold text-gray-600 hover:text-gray-800'
                   }
                 >
-                  {t.label}
+                  {locked ? '🔒' : ''}{t.label}
                 </button>
               )
             })}
