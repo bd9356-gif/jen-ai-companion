@@ -26,6 +26,7 @@ export default function CardsPage() {
   const [user, setUser] = useState(null)
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
+  const { limits } = useSubscription()
   const [viewing, setViewing] = useState(null)
   const [search, setSearch] = useState('')
   const [showSearch, setShowSearch] = useState(false)
@@ -362,6 +363,11 @@ export default function CardsPage() {
 
   async function getSuggestions() {
     if (!viewing) return
+    const chefJenLimit = limits?.chefJen ?? 2
+    if (chefJenLimit !== Infinity) {
+      window.location.href = '/paywall'
+      return
+    }
     setLoadingSuggestions(true)
     setSuggestions(null)
     try {
