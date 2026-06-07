@@ -195,6 +195,7 @@ function SkeletonCard() {
 }
 
 export default function VideosPage() {
+  const { limits } = useSubscription()
   const [user, setUser] = useState(null)
   const [videos, setVideos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -470,6 +471,15 @@ export default function VideosPage() {
   // Vault delete is permanent — see AGENTS.md "Notebook delete semantics".
   async function saveToKitchen(video) {
     if (!user) return
+    // Check vault limit
+    const recipeLimit = limits?.recipes ?? 15
+    if (recipeLimit !== Infinity) {
+      const { count } = await supabase.from('personal_recipes').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null)
+      if (count >= recipeLimit) {
+        window.location.href = '/paywall'
+        return
+      }
+    }
     const meta = metadata[video.id]
     if (!meta?.ingredients?.length) return
     const { error } = await supabase.from('personal_recipes').insert({
