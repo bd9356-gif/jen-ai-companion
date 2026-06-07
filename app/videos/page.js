@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
+import { useSubscription } from '@/lib/useSubscription'
 import { createClient } from '@supabase/supabase-js'
 import UnifiedVideoPlayer from '@/components/UnifiedVideoPlayer'
 
