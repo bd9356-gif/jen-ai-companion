@@ -157,18 +157,6 @@ export default async function SharePage({ params }) {
           </div>
         )}
 
-        {/* CTA */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center shadow-sm">
-          <p className="text-2xl mb-2">👨‍🍳</p>
-          <p className="font-bold text-gray-900 mb-1">Made with MyRecipe Companion</p>
-          <p className="text-sm text-gray-500 mb-4">Your personal AI cooking assistant. Ask Chef Jen for any recipe.</p>
-          <a
-            href="https://recipe.mycompanionapps.com"
-            className="inline-block bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl text-sm"
-          >
-            Try MyRecipe Companion Free →
-          </a>
-        </div>
       </main>
     </div>
   )
