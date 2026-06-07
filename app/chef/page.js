@@ -334,7 +334,7 @@ export default function ChefPage() {
       </header>
 
       {/* Usage indicator — only show for free/premium users with a limit */}
-      {limits && limits.chefJen !== Infinity && (
+      {limits && limits.chefJen < 9999 && (
         <div className={`max-w-2xl mx-auto w-full px-4 py-1.5 text-center text-xs font-semibold ${
           chefJenCount >= limits.chefJen
             ? 'text-red-600 bg-red-50'
