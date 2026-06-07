@@ -42,6 +42,7 @@ export default function ChefPage() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
   const { tier, limits } = useSubscription()
+  const [chefJenCount, setChefJenCount] = useState(0)
   const [user, setUser] = useState(null)
   const [mode, setMode] = useState('teach')        // 'teach' | 'practice'
   const [messages, setMessages] = useState([])
@@ -52,7 +53,12 @@ export default function ChefPage() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const monthKey = new Date().toISOString().slice(0, 7)
+        const { data: usage } = await supabase.from('user_usage').select('chef_jen_count').eq('user_id', session.user.id).eq('month', monthKey).maybeSingle()
+        setChefJenCount(usage?.chef_jen_count || 0)
+      }
       if (session) setUser(session.user)
     })
   }, [])
@@ -143,6 +149,7 @@ export default function ChefPage() {
     }
     // Increment usage
     await supabase.from('user_usage').upsert({ user_id: user.id, month: monthKey, chef_jen_count: count + 1 }, { onConflict: 'user_id,month' })
+    setChefJenCount(count + 1)
     // Allow callers (the Practice button) to switch mode and send in one
     // step. State updates are queued, so we use the local `useMode` value
     // throughout this fn rather than reading `mode` from state mid-flight.
@@ -325,6 +332,24 @@ export default function ChefPage() {
           <img src="/jen-classroom.png" alt="Chef Jennifer's Classroom" style={{height:'70px',width:'260px',objectFit:'contain'}} />
         </div>
       </header>
+
+      {/* Usage indicator — only show for free/premium users with a limit */}
+      {limits && limits.chefJen !== Infinity && (
+        <div className={`max-w-2xl mx-auto w-full px-4 py-1.5 text-center text-xs font-semibold ${
+          chefJenCount >= limits.chefJen
+            ? 'text-red-600 bg-red-50'
+            : chefJenCount >= limits.chefJen - 1
+              ? 'text-orange-600 bg-orange-50'
+              : 'text-gray-500 bg-gray-50'
+        }`}>
+          {chefJenCount >= limits.chefJen
+            ? '✋ You've used all your Chef Jen interactions this month — upgrade for more'
+            : chefJenCount >= limits.chefJen - 1
+              ? `⚠️ Last Chef Jen interaction this month — upgrade for more`
+              : `👩‍🍳 ${limits.chefJen - chefJenCount} of ${limits.chefJen} Chef Jen interactions remaining this month`
+          }
+        </div>
+      )}
 
       <main className="flex-1 min-h-0 max-w-2xl mx-auto w-full px-4 pt-1 pb-2 flex flex-col">
         {/* Mode-aware heading at the TOP of <main> when the chat
