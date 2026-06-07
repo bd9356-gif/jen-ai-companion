@@ -20,8 +20,8 @@ const PLANS = [
     features: [
       'Unlimited Recipe Vault',
       'Unlimited imports',
-      'Chef Jen AI — 30/month',
-      'AI Photo Generation — 10/month',
+      'Chef Jen AI — 5/month',
+      'AI Photo Generation — 5/month',
       'All Kitchen Helpers',
       'Meal Plan',
       'Chef Jen Classroom',
@@ -146,8 +146,8 @@ export default function PaywallPage() {
           {[
             ['Recipe Vault', '15 max', '∞', '∞'],
             ['Imports', '3/mo', '∞', '∞'],
-            ['Chef Jen AI', '2/mo', '30/mo', '∞'],
-            ['AI Photos', '—', '10/mo', '∞'],
+            ['Chef Jen AI', '2/mo', '5/mo', '∞'],
+            ['AI Photos', '—', '5/mo', '∞'],
             ['Kitchen Helpers', 'Polish', 'All', 'All'],
             ['Meal Plan', '—', '✓', '✓'],
           ].map(([feature, free, premium, pro]) => (
