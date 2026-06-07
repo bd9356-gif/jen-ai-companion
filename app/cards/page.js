@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { useSubscription } from '@/lib/useSubscription'
 import { createClient } from '@supabase/supabase-js'
 
 // Tag taxonomy — mirrors `app/secret/page.js`. Duplicated here so the
