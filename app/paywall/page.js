@@ -46,6 +46,7 @@ const PLANS = [
 export default function PaywallPage() {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState(null)
+  const [sessionChecked, setSessionChecked] = useState(false)
   const [error, setError] = useState('')
   const [iosPackages, setIosPackages] = useState([])
   const isNative = typeof window !== 'undefined' && Capacitor.getPlatform() === 'ios'
@@ -54,6 +55,7 @@ export default function PaywallPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null)
+      setSessionChecked(true)
     })
 
     if (isNative) {
@@ -71,6 +73,7 @@ export default function PaywallPage() {
   }, [])
 
   async function handleWebPurchase(plan) {
+    if (!sessionChecked) return
     if (!user) { router.push('/login'); return }
     setLoading(true)
     setError('')
