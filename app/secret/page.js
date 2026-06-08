@@ -1715,9 +1715,9 @@ export default function MyRecipeVaultPage() {
 
   async function saveRecipe() {
     if (!form.title.trim()) return
-    // Check recipe vault limit — wait for subscription to load
+    // Check recipe vault limit — skip for unlimited tiers
     const recipeLimit = limits?.recipes ?? 15
-    if (recipes.length >= recipeLimit) {
+    if (recipeLimit !== Infinity && recipes.length >= recipeLimit) {
       window.location.href = '/paywall'
       return
     }
