@@ -2206,8 +2206,6 @@ export default function MyRecipeVaultPage() {
         return
       }
       await supabase.rpc('increment_import_count', { p_user_id: user.id, p_month: monthKey })
-      if (upsertError) console.error('import upsert error:', upsertError)
-      else console.log('import count written:', importCount + 1, 'month:', monthKey)
     }
 
     setImporting(true)
