@@ -1940,6 +1940,30 @@ export default function MyRecipeVaultPage() {
       window.location.href = '/paywall'
       return
     }
+    // Check monthly photo limit (premium=5, pro=unlimited)
+    const photoLimit = photoTier === 'pro' ? Infinity : 5
+    if (photoLimit !== Infinity) {
+      const monthKey = new Date().toISOString().slice(0, 7)
+      const { data: photoUsage } = await supabase.from('user_usage').select('photo_count').eq('user_id', user.id).eq('month', monthKey).maybeSingle()
+      const photoCount = photoUsage?.photo_count || 0
+      if (photoCount >= photoLimit) {
+        window.location.href = '/paywall'
+        return
+      }
+      await supabase.rpc('increment_photo_count', { p_user_id: user.id, p_month: monthKey })
+    }
+    // Check monthly photo limit (premium=5, pro=unlimited)
+    const photoLimit = photoTier === 'pro' ? Infinity : 5
+    if (photoLimit !== Infinity) {
+      const monthKey = new Date().toISOString().slice(0, 7)
+      const { data: photoUsage } = await supabase.from('user_usage').select('photo_count').eq('user_id', user.id).eq('month', monthKey).maybeSingle()
+      const photoCount = photoUsage?.photo_count || 0
+      if (photoCount >= photoLimit) {
+        window.location.href = '/paywall'
+        return
+      }
+      await supabase.rpc('increment_photo_count', { p_user_id: user.id, p_month: monthKey })
+    }
     showToast('Generating AI photo — this may take up to 60 seconds...')
     try {
       const res = await fetch('/api/generate-photo', {
