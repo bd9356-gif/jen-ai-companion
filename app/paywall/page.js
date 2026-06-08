@@ -123,7 +123,7 @@ export default function PaywallPage() {
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 bg-white border-b border-gray-100 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2">
-          <button onClick={() => router.back()} className="text-sm text-gray-500">← Back</button>
+          <button onClick={() => window.history.length > 1 ? router.back() : window.location.href = '/kitchen'} className="text-sm text-gray-500">← Back</button>
           <h1 className="text-lg font-bold text-gray-900">Upgrade</h1>
         </div>
       </header>
