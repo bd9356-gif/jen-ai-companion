@@ -364,10 +364,12 @@ export default function CardsPage() {
 
   async function getSuggestions() {
     if (!viewing) return
-    const chefJenLimit = limits?.chefJen ?? 2
-    if (chefJenLimit !== Infinity) {
-      window.location.href = '/paywall'
-      return
+    // Query subscription directly
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user) {
+      const { data } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', session.user.id).maybeSingle()
+      const tier = (data?.tier && data?.expires_at && new Date(data.expires_at) > new Date()) ? data.tier : 'free'
+      if (tier === 'free') { window.location.href = '/paywall'; return }
     }
     setLoadingSuggestions(true)
     setSuggestions(null)
