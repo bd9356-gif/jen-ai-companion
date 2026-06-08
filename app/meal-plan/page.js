@@ -143,8 +143,8 @@ function SortablePick({ pick, bucketKey, onMove, onRemove, onToggleSide }) {
 }
 
 export default function MealPlanPage() {
-  const { limits } = useSubscription()
-  useEffect(() => { if (limits && limits.recipes !== Infinity) { window.location.href = '/paywall' } }, [limits])
+  const { limits, loading: subLoading } = useSubscription()
+  useEffect(() => { if (!subLoading && limits && limits.recipes !== Infinity) { window.location.href = '/paywall' } }, [limits, subLoading])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [picks, setPicks] = useState([])
