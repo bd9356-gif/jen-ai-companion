@@ -2199,7 +2199,7 @@ export default function MyRecipeVaultPage() {
         window.location.href = '/paywall'
         return
       }
-      await supabase.from('user_usage').upsert({ user_id: user.id, month: weekKey, import_count: importCount + 1 }, { onConflict: 'user_id,month' })
+      await supabase.from('user_usage').upsert({ user_id: user.id, month: weekKey, chef_jen_count: 0, import_count: importCount + 1, photo_count: 0 }, { onConflict: 'user_id,month' })
     }
 
     setImporting(true)
