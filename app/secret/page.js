@@ -932,7 +932,6 @@ export default function MyRecipeVaultPage() {
   const [importing, setImporting] = useState(false)
   const [importStatus, setImportStatus] = useState('')
   const [importElapsed, setImportElapsed] = useState(0)
-  const [importCount, setImportCount] = useState(0)
   const [importError, setImportError] = useState('')
   // Import view active tab. URL is default (most common). Paste is the
   // "site blocked the fetcher" fallback. Add is manual entry + the
@@ -1576,17 +1575,9 @@ export default function MyRecipeVaultPage() {
   // the URL field (where it belongs), and the URL fetch handles the
   // image. If URL fails, handleImport's existing auto-fallback flips
   // them to Paste tab with the textarea focused.
-  async function openImportFromClipboard() {
+  function openImportFromClipboard() {
     setView('import')
     setImportTab('url')
-    // Load import count for indicator
-    if (user) {
-      const weekStart = new Date()
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
-      const weekKey = weekStart.toISOString().slice(0, 10)
-      const { data } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
-      setImportCount(data?.import_count || 0)
-    }
   }
 
   // ── pasteFromClipboardToTextarea() — manual fallback button ──
@@ -1724,11 +1715,9 @@ export default function MyRecipeVaultPage() {
 
   async function saveRecipe() {
     if (!form.title.trim()) return
-    // Check recipe vault limit — query subscription directly
-    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
-    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
-    const recipeLimit = activeTier === 'free' ? 15 : Infinity
-    if (recipeLimit !== Infinity && recipes.length >= recipeLimit) {
+    // Check recipe vault limit — wait for subscription to load
+    const recipeLimit = limits?.recipes ?? 15
+    if (recipes.length >= recipeLimit) {
       window.location.href = '/paywall'
       return
     }
@@ -1928,10 +1917,8 @@ export default function MyRecipeVaultPage() {
   // Hard delete + restore for the Settings → Recently Deleted surface.
   async function generatePhoto(recipe) {
     if (!recipe) return
-    // Check photo limit — query subscription directly
-    const { data: photoSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
-    const photoTier = (photoSubData?.tier && photoSubData?.expires_at && new Date(photoSubData.expires_at) > new Date()) ? photoSubData.tier : 'free'
-    if (photoTier === 'free') {
+    // Check photo limit
+    if (limits && limits.photos === 0) {
       window.location.href = '/paywall'
       return
     }
@@ -2001,10 +1988,8 @@ export default function MyRecipeVaultPage() {
 
   async function handleEnhance(action) {
     setEnhancing(true); setEnhanceResult(null); setGeneratedInfo(null)
-    // Free tier: Polish only — query subscription directly
-    const { data: enhSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user?.id).maybeSingle()
-    const enhTier = (enhSubData?.tier && enhSubData?.expires_at && new Date(enhSubData.expires_at) > new Date()) ? enhSubData.tier : 'free'
-    if (enhTier === 'free' && action !== 'enhance') {
+    // Free tier: Polish only
+    if (limits && limits.recipes !== Infinity && action !== 'enhance') {
       window.location.href = '/paywall'
       return
     }
@@ -2211,16 +2196,12 @@ export default function MyRecipeVaultPage() {
       const weekKey = weekStart.toISOString().slice(0, 10)
       const { data: usageData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
       const importCount = usageData?.import_count || 0
-      // Query subscription directly
-      const { data: impSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
-      const impTier = (impSubData?.tier && impSubData?.expires_at && new Date(impSubData.expires_at) > new Date()) ? impSubData.tier : 'free'
-      const importLimit = impTier === 'free' ? 3 : Infinity
+      const importLimit = limits?.imports ?? 3
       if (importLimit !== Infinity && importCount >= importLimit) {
         window.location.href = '/paywall'
         return
       }
       await supabase.from('user_usage').upsert({ user_id: user.id, month: weekKey, import_count: importCount + 1 }, { onConflict: 'user_id,month' })
-      setImportCount(importCount + 1)
     }
 
     setImporting(true)
@@ -2317,13 +2298,6 @@ export default function MyRecipeVaultPage() {
         fat_g: data.fat_g ?? null,
       })
       setImportText(''); setImportUrl(''); setImportTab('add'); setImportPrefilled(true)
-      // Refresh import count for indicator
-      if (user) {
-        const wk = new Date(); wk.setDate(wk.getDate() - wk.getDay())
-        const wkKey = wk.toISOString().slice(0, 10)
-        const { data: refreshData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', wkKey).maybeSingle()
-        setImportCount(refreshData?.import_count || 0)
-      }
       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
       // Toast speaks AS Chef Jen, not about her — she's handing the
       // imported recipe back to the user. Fires AFTER the form is
@@ -3439,18 +3413,6 @@ export default function MyRecipeVaultPage() {
             <h1 className="text-lg font-bold text-gray-900">Bring in a Recipe</h1>
           </div>
         </header>
-        {tier === 'free' && (
-          <div className={`max-w-2xl mx-auto w-full px-4 py-1.5 text-center text-xs font-semibold ${
-            importCount >= 3 ? 'text-red-600 bg-red-50' :
-            importCount >= 2 ? 'text-orange-600 bg-orange-50' :
-            'text-gray-500 bg-gray-50'
-          }`}>
-            {importCount >= 3
-              ? "You've used all 3 imports this month — upgrade for unlimited"
-              : `📥 ${3 - importCount} of 3 imports remaining this month`
-            }
-          </div>
-        )}
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           <div>
             <div className="flex items-center justify-between mb-1">
