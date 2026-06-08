@@ -1715,8 +1715,10 @@ export default function MyRecipeVaultPage() {
 
   async function saveRecipe() {
     if (!form.title.trim()) return
-    // Check recipe vault limit — skip for unlimited tiers
-    const recipeLimit = limits?.recipes ?? 15
+    // Check recipe vault limit — query subscription directly
+    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
+    const recipeLimit = activeTier === 'free' ? 15 : Infinity
     if (recipeLimit !== Infinity && recipes.length >= recipeLimit) {
       window.location.href = '/paywall'
       return
@@ -1917,8 +1919,10 @@ export default function MyRecipeVaultPage() {
   // Hard delete + restore for the Settings → Recently Deleted surface.
   async function generatePhoto(recipe) {
     if (!recipe) return
-    // Check photo limit
-    if (limits && limits.photos === 0) {
+    // Check photo limit — query subscription directly
+    const { data: photoSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const photoTier = (photoSubData?.tier && photoSubData?.expires_at && new Date(photoSubData.expires_at) > new Date()) ? photoSubData.tier : 'free'
+    if (photoTier === 'free') {
       window.location.href = '/paywall'
       return
     }
@@ -2191,17 +2195,17 @@ export default function MyRecipeVaultPage() {
 
     // Check import usage limit
     if (user) {
-      const weekKey = new Date().toISOString().slice(0, 7)
+      const weekStart = new Date()
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+      const weekKey = weekStart.toISOString().slice(0, 10)
       const { data: usageData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
       const importCount = usageData?.import_count || 0
-      const { data: impSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
-      const impTier = (impSubData?.tier && impSubData?.expires_at && new Date(impSubData.expires_at) > new Date()) ? impSubData.tier : 'free'
-      const importLimit = impTier === 'free' ? 3 : Infinity
+      const importLimit = limits?.imports ?? 3
       if (importLimit !== Infinity && importCount >= importLimit) {
         window.location.href = '/paywall'
         return
       }
-      await supabase.from('user_usage').upsert({ user_id: user.id, month: weekKey, chef_jen_count: 0, import_count: importCount + 1, photo_count: 0 }, { onConflict: 'user_id,month' })
+      await supabase.from('user_usage').upsert({ user_id: user.id, month: weekKey, import_count: importCount + 1 }, { onConflict: 'user_id,month' })
     }
 
     setImporting(true)
