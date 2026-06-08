@@ -2191,9 +2191,7 @@ export default function MyRecipeVaultPage() {
 
     // Check import usage limit
     if (user) {
-      const weekStart = new Date()
-      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
-      const weekKey = weekStart.toISOString().slice(0, 10)
+      const weekKey = new Date().toISOString().slice(0, 7)
       const { data: usageData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
       const importCount = usageData?.import_count || 0
       const importLimit = limits?.imports ?? 3
