@@ -939,6 +939,8 @@ export default function MyRecipeVaultPage() {
   // JSON is power-user import/export. Values: 'url' | 'paste' | 'add' | 'json'.
   const [importTab, setImportTab] = useState('url')
   const [importPrefilled, setImportPrefilled] = useState(false)
+  const [importUsage, setImportUsage] = useState(0)
+  const [importTier, setImportTier] = useState('free')
   const [showImportInfo, setShowImportInfo] = useState(false)
   // Paste tab — used to track which of 3 collapsible "how to get
   // content" option groups (Text / Print Capture / Share Shortcut)
@@ -1018,6 +1020,7 @@ export default function MyRecipeVaultPage() {
         return
       }
       setUser(session.user)
+      loadImportUsage(session.user.id)
       loadRecipes(session.user.id)
       loadNotes(session.user.id)
       loadEducationVideos(session.user.id)
@@ -1713,6 +1716,17 @@ export default function MyRecipeVaultPage() {
     }
   }
 
+  async function loadImportUsage(userId) {
+    const monthKey = new Date().toISOString().slice(0, 7)
+    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', userId).maybeSingle()
+    const tier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
+    setImportTier(tier)
+    if (tier === 'free') {
+      const { data: usageData } = await supabase.from('user_usage').select('import_count').eq('user_id', userId).eq('month', monthKey).maybeSingle()
+      setImportUsage(usageData?.import_count || 0)
+    }
+  }
+
   async function saveRecipe() {
     if (!form.title.trim()) return
     // Check recipe vault limit — query subscription directly
@@ -2206,7 +2220,7 @@ export default function MyRecipeVaultPage() {
         return
       }
       const { error: rpcError } = await supabase.rpc('increment_import_count', { p_user_id: user.id, p_month: monthKey })
-      console.log('RPC result - user:', user.id, 'month:', monthKey, 'error:', rpcError)
+      if (!rpcError) setImportUsage(prev => prev + 1)
     }
 
     setImporting(true)
@@ -3613,6 +3627,14 @@ export default function MyRecipeVaultPage() {
               <p className="text-sm font-bold text-red-800">Couldn&apos;t import from URL</p>
               <p className="text-sm text-red-700">{importError}</p>
               <p className="text-sm text-red-600">💡 Tip: Switch to <button type="button" onClick={() => setImportTab('paste')} className="underline font-semibold">Paste mode</button> — copy the recipe text from the page and paste it here instead.</p>
+            </div>
+          )}
+
+          {/* Import usage indicator — free tier only */}
+          {importTier === 'free' && (importTab === 'url' || importTab === 'paste') && (
+            <div className="flex items-center justify-between px-1">
+              <p className="text-xs text-gray-400">{importUsage} of 3 imports used this month</p>
+              {importUsage >= 2 && <button onClick={() => window.location.href = '/paywall'} className="text-xs text-orange-600 font-semibold">Upgrade ›</button>}
             </div>
           )}
 
