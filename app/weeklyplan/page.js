@@ -12,16 +12,7 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 
 export default function WeeklyPlanPage() {
   const { limits } = useSubscription()
-  useEffect(() => {
-    async function checkSub() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) return
-      const { data } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', session.user.id).maybeSingle()
-      const tier = (data?.tier && data?.expires_at && new Date(data.expires_at) > new Date()) ? data.tier : 'free'
-      if (tier === 'free') window.location.href = '/paywall'
-    }
-    checkSub()
-  }, [])
+  useEffect(() => { if (limits && limits.recipes !== Infinity) { window.location.href = '/paywall' } }, [limits])
   const [user, setUser] = useState(null)
   const [plan, setPlan] = useState([])
   const [loading, setLoading] = useState(true)

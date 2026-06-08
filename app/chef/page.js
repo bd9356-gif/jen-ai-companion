@@ -142,11 +142,8 @@ export default function ChefPage() {
     const monthKey = new Date().toISOString().slice(0, 7)
     const { data: usage } = await supabase.from('user_usage').select('chef_jen_count').eq('user_id', user?.id).eq('month', monthKey).maybeSingle()
     const count = usage?.chef_jen_count || 0
-    // Query subscription directly
-    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user?.id).maybeSingle()
-    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
-    const chefJenLimit = activeTier === 'pro' ? Infinity : activeTier === 'premium' ? 5 : 2
-    if (chefJenLimit !== Infinity && count >= chefJenLimit) {
+    const chefJenLimit = limits?.chefJen ?? 2
+    if (count >= chefJenLimit) {
       window.location.href = '/paywall'
       return
     }
@@ -271,13 +268,6 @@ export default function ChefPage() {
     if (savedKeys.has(k)) return
     const r = msg.recipe
     if (!r) return
-    // Check vault limit — query subscription directly
-    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
-    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
-    if (activeTier === 'free') {
-      const { count } = await supabase.from('personal_recipes').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null)
-      if (count >= 15) { window.location.href = '/paywall'; return }
-    }
     const ings = Array.isArray(r.ingredients) ? r.ingredients.map(i => typeof i === 'string' ? {name:i,measure:''} : {name:i?.name||'',measure:i?.measure||''}) : []
     const { error } = await supabase.from('personal_recipes').insert({
       user_id: user.id, title: r.title, description: r.description||'',

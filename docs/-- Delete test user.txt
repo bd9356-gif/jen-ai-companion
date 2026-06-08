@@ -1,0 +1,11 @@
+
+
+-- Delete test user (replace USER_ID with actual ID from auth.users)
+DELETE FROM personal_recipes WHERE user_id = '508940fb-3519-4cc5-89fb-d2691e11d974';
+DELETE FROM favorites WHERE user_id = '508940fb-3519-4cc5-89fb-d2691e11d974';
+DELETE FROM weekly_plan WHERE user_id = '508940fb-3519-4cc5-89fb-d2691e11d974';
+DELETE FROM shopping_list WHERE user_id = '508940fb-3519-4cc5-89fb-d2691e11d974';
+DELETE FROM auth.users WHERE id = '508940fb-3519-4cc5-89fb-d2691e11d974';
+
+-- Get current hotmail user ID
+SELECT id, email, created_at FROM auth.users WHERE email ILIKE '%hotmail%' ORDER BY created_at DESC LIMIT 1;
