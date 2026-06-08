@@ -2205,7 +2205,9 @@ export default function MyRecipeVaultPage() {
         window.location.href = '/paywall'
         return
       }
-      await supabase.from('user_usage').upsert({ user_id: user.id, month: monthKey, import_count: importCount + 1 }, { onConflict: 'user_id,month' })
+      const { error: upsertError } = await supabase.from('user_usage').upsert({ user_id: user.id, month: monthKey, import_count: importCount + 1 }, { onConflict: 'user_id,month' })
+      if (upsertError) console.error('import upsert error:', upsertError)
+      else console.log('import count written:', importCount + 1, 'month:', monthKey)
     }
 
     setImporting(true)
