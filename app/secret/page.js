@@ -1715,9 +1715,11 @@ export default function MyRecipeVaultPage() {
 
   async function saveRecipe() {
     if (!form.title.trim()) return
-    // Check recipe vault limit — wait for subscription to load
-    const recipeLimit = limits?.recipes ?? 15
-    if (recipes.length >= recipeLimit) {
+    // Check recipe vault limit — query subscription directly
+    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
+    const recipeLimit = activeTier === 'free' ? 15 : Infinity
+    if (recipeLimit !== Infinity && recipes.length >= recipeLimit) {
       window.location.href = '/paywall'
       return
     }
@@ -1917,8 +1919,10 @@ export default function MyRecipeVaultPage() {
   // Hard delete + restore for the Settings → Recently Deleted surface.
   async function generatePhoto(recipe) {
     if (!recipe) return
-    // Check photo limit
-    if (limits && limits.photos === 0) {
+    // Check photo limit — query subscription directly
+    const { data: photoSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const photoTier = (photoSubData?.tier && photoSubData?.expires_at && new Date(photoSubData.expires_at) > new Date()) ? photoSubData.tier : 'free'
+    if (photoTier === 'free') {
       window.location.href = '/paywall'
       return
     }
@@ -1988,8 +1992,10 @@ export default function MyRecipeVaultPage() {
 
   async function handleEnhance(action) {
     setEnhancing(true); setEnhanceResult(null); setGeneratedInfo(null)
-    // Free tier: Polish only
-    if (limits && limits.recipes !== Infinity && action !== 'enhance') {
+    // Free tier: Polish only — query subscription directly
+    const { data: enhSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user?.id).maybeSingle()
+    const enhTier = (enhSubData?.tier && enhSubData?.expires_at && new Date(enhSubData.expires_at) > new Date()) ? enhSubData.tier : 'free'
+    if (enhTier === 'free' && action !== 'enhance') {
       window.location.href = '/paywall'
       return
     }
