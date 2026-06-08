@@ -268,6 +268,13 @@ export default function ChefPage() {
     if (savedKeys.has(k)) return
     const r = msg.recipe
     if (!r) return
+    // Check vault limit — query subscription directly
+    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
+    if (activeTier === 'free') {
+      const { count } = await supabase.from('personal_recipes').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null)
+      if (count >= 15) { window.location.href = '/paywall'; return }
+    }
     const ings = Array.isArray(r.ingredients) ? r.ingredients.map(i => typeof i === 'string' ? {name:i,measure:''} : {name:i?.name||'',measure:i?.measure||''}) : []
     const { error } = await supabase.from('personal_recipes').insert({
       user_id: user.id, title: r.title, description: r.description||'',
