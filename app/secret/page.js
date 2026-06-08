@@ -2196,7 +2196,9 @@ export default function MyRecipeVaultPage() {
       const weekKey = weekStart.toISOString().slice(0, 10)
       const { data: usageData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
       const importCount = usageData?.import_count || 0
-      const importLimit = limits?.imports ?? 3
+      const { data: impSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+      const impTier = (impSubData?.tier && impSubData?.expires_at && new Date(impSubData.expires_at) > new Date()) ? impSubData.tier : 'free'
+      const importLimit = impTier === 'free' ? 3 : Infinity
       if (importLimit !== Infinity && importCount >= importLimit) {
         window.location.href = '/paywall'
         return
