@@ -142,8 +142,11 @@ export default function ChefPage() {
     const monthKey = new Date().toISOString().slice(0, 7)
     const { data: usage } = await supabase.from('user_usage').select('chef_jen_count').eq('user_id', user?.id).eq('month', monthKey).maybeSingle()
     const count = usage?.chef_jen_count || 0
-    const chefJenLimit = limits?.chefJen ?? 2
-    if (count >= chefJenLimit) {
+    // Query subscription directly
+    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user?.id).maybeSingle()
+    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
+    const chefJenLimit = activeTier === 'pro' ? Infinity : activeTier === 'premium' ? 5 : 2
+    if (chefJenLimit !== Infinity && count >= chefJenLimit) {
       window.location.href = '/paywall'
       return
     }
