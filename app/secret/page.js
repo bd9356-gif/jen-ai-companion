@@ -2205,7 +2205,8 @@ export default function MyRecipeVaultPage() {
         window.location.href = '/paywall'
         return
       }
-      await supabase.rpc('increment_import_count', { p_user_id: user.id, p_month: monthKey })
+      const { error: rpcError } = await supabase.rpc('increment_import_count', { p_user_id: user.id, p_month: monthKey })
+      console.log('RPC result - user:', user.id, 'month:', monthKey, 'error:', rpcError)
     }
 
     setImporting(true)
