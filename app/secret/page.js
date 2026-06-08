@@ -1992,8 +1992,10 @@ export default function MyRecipeVaultPage() {
 
   async function handleEnhance(action) {
     setEnhancing(true); setEnhanceResult(null); setGeneratedInfo(null)
-    // Free tier: Polish only
-    if (limits && limits.recipes !== Infinity && action !== 'enhance') {
+    // Free tier: Polish only — query subscription directly
+    const { data: enhSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user?.id).maybeSingle()
+    const enhTier = (enhSubData?.tier && enhSubData?.expires_at && new Date(enhSubData.expires_at) > new Date()) ? enhSubData.tier : 'free'
+    if (enhTier === 'free' && action !== 'enhance') {
       window.location.href = '/paywall'
       return
     }
