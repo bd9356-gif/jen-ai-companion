@@ -12,14 +12,38 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [subscription, setSubscription] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
+      loadSubscription(session.user.id)
       setLoading(false)
     })
   }, [])
+
+  async function loadSubscription(userId) {
+    const { data } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', userId).maybeSingle()
+    setSubscription(data)
+  }
+
+  function getActiveTier() {
+    if (!subscription?.tier || !subscription?.expires_at) return 'free'
+    return new Date(subscription.expires_at) > new Date() ? subscription.tier : 'free'
+  }
+
+  function getTierLabel(tier) {
+    if (tier === 'premium') return 'Premium'
+    if (tier === 'pro') return 'Pro'
+    return 'Free'
+  }
+
+  function getTierColor(tier) {
+    if (tier === 'pro') return { bg: 'bg-purple-50', text: 'text-purple-700', badge: 'bg-purple-100 text-purple-700' }
+    if (tier === 'premium') return { bg: 'bg-orange-50', text: 'text-orange-700', badge: 'bg-orange-100 text-orange-700' }
+    return { bg: 'bg-gray-50', text: 'text-gray-600', badge: 'bg-gray-100 text-gray-600' }
+  }
 
   async function handleSignOut() {
     setSigningOut(true)
@@ -56,6 +80,9 @@ export default function ProfilePage() {
     </div>
   )
 
+  const activeTier = getActiveTier()
+  const tierColors = getTierColor(activeTier)
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
@@ -78,6 +105,35 @@ export default function ProfilePage() {
           </div>
           <p className="text-lg font-bold text-gray-900">{user?.user_metadata?.full_name || 'My Account'}</p>
           <p className="text-sm text-gray-500 mt-0.5">{user?.email}</p>
+        </div>
+
+        {/* Subscription */}
+        <div className={`rounded-2xl shadow-sm overflow-hidden ${tierColors.bg}`}>
+          <div className="px-4 py-3 border-b border-white/50">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Subscription</p>
+          </div>
+          <div className="px-4 py-3 flex items-center justify-between border-b border-white/50">
+            <p className="text-sm text-gray-600">Plan</p>
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${tierColors.badge}`}>
+              {getTierLabel(activeTier)}
+            </span>
+          </div>
+          {activeTier !== 'free' && subscription?.expires_at && (
+            <div className="px-4 py-3 flex items-center justify-between border-b border-white/50">
+              <p className="text-sm text-gray-600">Renews</p>
+              <p className={`text-sm font-medium ${tierColors.text}`}>
+                {new Date(subscription.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </p>
+            </div>
+          )}
+          {activeTier === 'free' && (
+            <button
+              onClick={() => window.location.href = '/paywall'}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/30 transition-colors">
+              <p className="text-sm text-gray-700 font-medium">Upgrade to Premium or Pro</p>
+              <span className="text-gray-400 text-lg">›</span>
+            </button>
+          )}
         </div>
 
         {/* Account Info */}
