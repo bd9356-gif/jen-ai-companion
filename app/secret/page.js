@@ -1715,8 +1715,10 @@ export default function MyRecipeVaultPage() {
 
   async function saveRecipe() {
     if (!form.title.trim()) return
-    // Check recipe vault limit — skip for unlimited tiers
-    const recipeLimit = limits?.recipes ?? 15
+    // Check recipe vault limit — query subscription directly
+    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
+    const recipeLimit = activeTier === 'free' ? 15 : Infinity
     if (recipeLimit !== Infinity && recipes.length >= recipeLimit) {
       window.location.href = '/paywall'
       return
