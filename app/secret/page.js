@@ -2196,7 +2196,8 @@ export default function MyRecipeVaultPage() {
       const weekKey = weekStart.toISOString().slice(0, 10)
       const { data: usageData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
       const importCount = usageData?.import_count || 0
-      if (limits && importCount >= limits.imports) {
+      const importLimit = limits?.imports ?? 3
+      if (importLimit !== Infinity && importCount >= importLimit) {
         window.location.href = '/paywall'
         return
       }
