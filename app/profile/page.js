@@ -12,15 +12,11 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [subscription, setSubscription] = useState(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { window.location.href = '/login'; return }
       setUser(session.user)
-      // Load subscription
-      const { data } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', session.user.id).maybeSingle()
-      setSubscription(data || { tier: 'free', expires_at: null })
       setLoading(false)
     })
   }, [])
@@ -99,38 +95,6 @@ export default function ProfilePage() {
               {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}
             </p>
           </div>
-        </div>
-
-        {/* Subscription */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-50">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Subscription</p>
-          </div>
-          <div className="px-4 py-3 flex items-center justify-between border-b border-gray-50">
-            <p className="text-sm text-gray-600">Current Plan</p>
-            <span className={`text-sm font-bold capitalize ${
-              subscription?.tier === 'pro' ? 'text-purple-600' :
-              subscription?.tier === 'premium' ? 'text-orange-600' :
-              'text-gray-500'
-            }`}>
-              {subscription?.tier === 'pro' ? '🚀 Pro' :
-               subscription?.tier === 'premium' ? '⭐ Premium' :
-               '🆓 Free'}
-            </span>
-          </div>
-          {subscription?.expires_at && subscription?.tier !== 'free' && (
-            <div className="px-4 py-3 flex items-center justify-between border-b border-gray-50">
-              <p className="text-sm text-gray-600">Renews</p>
-              <p className="text-sm text-gray-900">{new Date(subscription.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-            </div>
-          )}
-          {(!subscription?.tier || subscription?.tier === 'free') && (
-            <button onClick={() => window.location.href = '/paywall'}
-              className="w-full px-4 py-3 flex items-center justify-between hover:bg-orange-50 transition-colors">
-              <p className="text-sm text-orange-600 font-semibold">Upgrade to Premium or Pro</p>
-              <span className="text-orange-400 text-lg">›</span>
-            </button>
-          )}
         </div>
 
         {/* App Links */}
