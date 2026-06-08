@@ -473,7 +473,10 @@ export default function VideosPage() {
   async function saveToKitchen(video) {
     if (!user) return
     // Check vault limit
-    const recipeLimit = limits?.recipes ?? 15
+    // Query subscription directly to avoid timing issues
+    const { data: subData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const activeTier = (subData?.tier && subData?.expires_at && new Date(subData.expires_at) > new Date()) ? subData.tier : 'free'
+    const recipeLimit = activeTier === 'free' ? 15 : Infinity
     if (recipeLimit !== Infinity) {
       const { count } = await supabase.from('personal_recipes').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null)
       if (count >= recipeLimit) {
