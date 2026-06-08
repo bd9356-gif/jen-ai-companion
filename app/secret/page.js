@@ -932,6 +932,7 @@ export default function MyRecipeVaultPage() {
   const [importing, setImporting] = useState(false)
   const [importStatus, setImportStatus] = useState('')
   const [importElapsed, setImportElapsed] = useState(0)
+  const [importCount, setImportCount] = useState(0)
   const [importError, setImportError] = useState('')
   // Import view active tab. URL is default (most common). Paste is the
   // "site blocked the fetcher" fallback. Add is manual entry + the
@@ -1575,9 +1576,17 @@ export default function MyRecipeVaultPage() {
   // the URL field (where it belongs), and the URL fetch handles the
   // image. If URL fails, handleImport's existing auto-fallback flips
   // them to Paste tab with the textarea focused.
-  function openImportFromClipboard() {
+  async function openImportFromClipboard() {
     setView('import')
     setImportTab('url')
+    // Load import count for indicator
+    if (user) {
+      const weekStart = new Date()
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+      const weekKey = weekStart.toISOString().slice(0, 10)
+      const { data } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', weekKey).maybeSingle()
+      setImportCount(data?.import_count || 0)
+    }
   }
 
   // ── pasteFromClipboardToTextarea() — manual fallback button ──
@@ -2208,6 +2217,7 @@ export default function MyRecipeVaultPage() {
         return
       }
       await supabase.from('user_usage').upsert({ user_id: user.id, month: weekKey, import_count: importCount + 1 }, { onConflict: 'user_id,month' })
+      setImportCount(importCount + 1)
     }
 
     setImporting(true)
@@ -3419,6 +3429,18 @@ export default function MyRecipeVaultPage() {
             <h1 className="text-lg font-bold text-gray-900">Bring in a Recipe</h1>
           </div>
         </header>
+        {tier === 'free' && (
+          <div className={`max-w-2xl mx-auto w-full px-4 py-1.5 text-center text-xs font-semibold ${
+            importCount >= 3 ? 'text-red-600 bg-red-50' :
+            importCount >= 2 ? 'text-orange-600 bg-orange-50' :
+            'text-gray-500 bg-gray-50'
+          }`}>
+            {importCount >= 3
+              ? "You've used all 3 imports this month — upgrade for unlimited"
+              : `📥 ${3 - importCount} of 3 imports remaining this month`
+            }
+          </div>
+        )}
         <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           <div>
             <div className="flex items-center justify-between mb-1">
