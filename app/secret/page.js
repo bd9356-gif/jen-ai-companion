@@ -2317,6 +2317,13 @@ export default function MyRecipeVaultPage() {
         fat_g: data.fat_g ?? null,
       })
       setImportText(''); setImportUrl(''); setImportTab('add'); setImportPrefilled(true)
+      // Refresh import count for indicator
+      if (user) {
+        const wk = new Date(); wk.setDate(wk.getDate() - wk.getDay())
+        const wkKey = wk.toISOString().slice(0, 10)
+        const { data: refreshData } = await supabase.from('user_usage').select('import_count').eq('user_id', user.id).eq('month', wkKey).maybeSingle()
+        setImportCount(refreshData?.import_count || 0)
+      }
       setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
       // Toast speaks AS Chef Jen, not about her — she's handing the
       // imported recipe back to the user. Fires AFTER the form is
