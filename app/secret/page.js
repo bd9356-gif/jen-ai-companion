@@ -1919,8 +1919,10 @@ export default function MyRecipeVaultPage() {
   // Hard delete + restore for the Settings → Recently Deleted surface.
   async function generatePhoto(recipe) {
     if (!recipe) return
-    // Check photo limit
-    if (limits && limits.photos === 0) {
+    // Check photo limit — query subscription directly
+    const { data: photoSubData } = await supabase.from('user_subscriptions').select('tier, expires_at').eq('user_id', user.id).maybeSingle()
+    const photoTier = (photoSubData?.tier && photoSubData?.expires_at && new Date(photoSubData.expires_at) > new Date()) ? photoSubData.tier : 'free'
+    if (photoTier === 'free') {
       window.location.href = '/paywall'
       return
     }
