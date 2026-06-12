@@ -128,7 +128,7 @@ export default async function SharePage({ params }) {
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Ingredients</h2>
             <ul className="space-y-1.5">
               {ingredients.map((ing, i) => {
-                const text = typeof ing === 'string' ? ing : `${ing.measure || ''} ${ing.name || ''}`.trim()
+                const text = typeof ing === 'string' ? ing : `${ing.measure || ing.amount || ''} ${ing.name || ''}`.trim()
                 return (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
                     <span className="text-orange-400 mt-0.5 shrink-0">•</span>
