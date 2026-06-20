@@ -10,6 +10,7 @@ struct RecipeVaultView: View {
     @State private var searchText = ""
     @State private var selectedFilter = ""
     @State private var sortOrder: SortOrder = .dateDesc
+    @State private var selectedRecipe: Recipe? = nil
 
     var columns: [GridItem] {
         let count = sizeClass == .regular ? 4 : 2
@@ -219,17 +220,11 @@ struct RecipeVaultView: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 8) {
                         ForEach(filtered) { recipe in
-                            NavigationLink {
-                                RecipeDetailView(
-                                    recipe: recipe,
-                                    onUpdate: { updated in recipeService.updateRecipe(updated) },
-                                    onDelete: { id in recipeService.removeRecipe(id: id) }
-                                )
-                                .environmentObject(authManager)
-                            } label: {
-                                RecipeGridTile(recipe: recipe)
-                            }
-                            .buttonStyle(.plain)
+                            RecipeGridTile(recipe: recipe)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    selectedRecipe = recipe
+                                }
                         }
                     }
                     .padding(8)
@@ -242,6 +237,21 @@ struct RecipeVaultView: View {
             }
         }
         .navigationBarHidden(true)
+        .sheet(item: $selectedRecipe) { recipe in
+            NavigationView {
+                RecipeDetailView(
+                    recipe: recipe,
+                    onUpdate: { updated in recipeService.updateRecipe(updated) },
+                    onDelete: { id in recipeService.removeRecipe(id: id); selectedRecipe = nil }
+                )
+                .environmentObject(authManager)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Close") { selectedRecipe = nil }
+                    }
+                }
+            }
+        }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager).environmentObject(authManager) }
         .task {
             if let user = authManager.user { await recipeService.fetchRecipes(userId: user.id) }
