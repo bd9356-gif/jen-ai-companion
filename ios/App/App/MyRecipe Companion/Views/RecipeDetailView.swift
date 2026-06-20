@@ -3,6 +3,8 @@ import Supabase
 
 struct RecipeDetailView: View {
     @State var recipe: Recipe
+    @Environment(\.horizontalSizeClass) var sizeClass
+    @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var authManager: AuthManager
     var onUpdate: ((Recipe) -> Void)? = nil
     var onDelete: ((UUID) -> Void)? = nil
@@ -29,7 +31,6 @@ struct RecipeDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-
                 // ── Hero Photo ──
                 if let photoUrl = recipe.photo_url, !photoUrl.isEmpty,
                    let url = URL(string: photoUrl + "?t=\(Int(recipe.created_at?.timeIntervalSince1970 ?? 0))") {
@@ -184,6 +185,8 @@ struct RecipeDetailView: View {
                 .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 32)
             }
         }
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle("")
         .onAppear {
@@ -191,6 +194,11 @@ struct RecipeDetailView: View {
             isInShareQueue = recipe.is_in_share_queue ?? false
         }
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if sizeClass == .regular {
+                    Button("Close") { dismiss() }
+                }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 12) {
                     Button { Task { await toggleFavorite() } } label: {

@@ -3,8 +3,8 @@ import Supabase
 
 struct RecipeVaultView: View {
     @Environment(\.dismiss) var dismiss
-    @StateObject var recipeService = RecipeService()
     @Environment(\.horizontalSizeClass) var sizeClass
+    @StateObject var recipeService = RecipeService()
     @State private var showPaywall = false
     @EnvironmentObject var authManager: AuthManager
     @State private var searchText = ""
@@ -77,15 +77,17 @@ struct RecipeVaultView: View {
                 Image("recipe-vault-hero")
                     .resizable().scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: 100)
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .padding(8)
-                        .background(Color(.systemBackground).opacity(0.9))
-                        .clipShape(Circle())
+                if sizeClass != .regular {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .padding(8)
+                            .background(Color(.systemBackground).opacity(0.9))
+                            .clipShape(Circle())
+                    }
+                    .padding(.leading, 12).padding(.bottom, 8)
                 }
-                .padding(.leading, 12).padding(.bottom, 8)
             }
             .frame(maxWidth: .infinity)
 
@@ -237,7 +239,7 @@ struct RecipeVaultView: View {
             }
         }
         .navigationBarHidden(true)
-        .sheet(item: $selectedRecipe) { recipe in
+        .fullScreenCover(item: $selectedRecipe) { recipe in
             NavigationView {
                 RecipeDetailView(
                     recipe: recipe,
@@ -245,12 +247,8 @@ struct RecipeVaultView: View {
                     onDelete: { id in recipeService.removeRecipe(id: id); selectedRecipe = nil }
                 )
                 .environmentObject(authManager)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Close") { selectedRecipe = nil }
-                    }
-                }
             }
+            .navigationViewStyle(.stack)
             .onDisappear {
                 if let user = authManager.user {
                     Task { await recipeService.fetchRecipes(userId: user.id) }

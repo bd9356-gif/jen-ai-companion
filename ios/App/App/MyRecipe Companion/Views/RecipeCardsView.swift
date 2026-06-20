@@ -14,7 +14,11 @@ struct RecipeCardsView: View {
     @State private var selectedFilter = ""
     @State private var sortOrder: CardSortOrder = .dateDesc
 
-    let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+    @Environment(\.horizontalSizeClass) var sizeClass
+    var columns: [GridItem] {
+        let count = sizeClass == .regular ? 4 : 2
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+    }
 
     enum CardSortOrder: String, CaseIterable {
         case dateDesc = "Newest First"

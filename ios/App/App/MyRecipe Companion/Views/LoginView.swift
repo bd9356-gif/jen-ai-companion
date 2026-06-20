@@ -5,13 +5,13 @@ struct LoginView: View {
     @EnvironmentObject var authManager: AuthManager
     @State private var errorMessage = ""
 
+    @Environment(\.horizontalSizeClass) var sizeClass
     var body: some View {
         ZStack {
             Color.orange.opacity(0.05).ignoresSafeArea()
 
             VStack(spacing: 32) {
                 Spacer()
-
                 VStack(spacing: 12) {
                     Text("👩‍🍳").font(.system(size: 80))
                     Text("MyRecipe Companion").font(.title).fontWeight(.bold)
@@ -87,6 +87,7 @@ struct LoginView: View {
                     }
                 }
                 .padding(.horizontal, 24).padding(.bottom, 40)
+                .frame(maxWidth: sizeClass == .regular ? 480 : .infinity)
             }
         }
     }

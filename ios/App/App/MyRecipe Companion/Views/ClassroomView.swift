@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ClassroomView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     var startingMode: ClassroomMode = .learn
     @State private var mode: ClassroomMode = .learn
@@ -58,15 +59,17 @@ struct ClassroomView: View {
                 Image("cooking-school")
                     .resizable().scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: 100)
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .padding(8)
-                        .background(Color(.systemBackground).opacity(0.9))
-                        .clipShape(Circle())
+                if sizeClass != .regular {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .padding(8)
+                            .background(Color(.systemBackground).opacity(0.9))
+                            .clipShape(Circle())
+                    }
+                    .padding(.leading, 12).padding(.bottom, 8)
                 }
-                .padding(.leading, 12).padding(.bottom, 8)
             }
             .frame(maxWidth: .infinity)
 
