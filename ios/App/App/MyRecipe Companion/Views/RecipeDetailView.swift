@@ -195,9 +195,7 @@ struct RecipeDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                if sizeClass == .regular {
-                    Button("Close") { dismiss() }
-                }
+                Button("Close") { dismiss() }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 12) {
