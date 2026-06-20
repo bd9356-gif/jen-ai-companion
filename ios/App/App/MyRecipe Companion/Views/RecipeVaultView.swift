@@ -252,15 +252,12 @@ struct RecipeVaultView: View {
         }
         .navigationBarHidden(true)
         .sheet(item: $selectedRecipe) { recipe in
-            NavigationView {
-                RecipeDetailView(
-                    recipe: recipe,
-                    onUpdate: { updated in recipeService.updateRecipe(updated) },
-                    onDelete: { id in recipeService.removeRecipe(id: id); selectedRecipe = nil }
-                )
-                .environmentObject(authManager)
-            }
-            .navigationViewStyle(.stack)
+            RecipeDetailView(
+                recipe: recipe,
+                onUpdate: { updated in recipeService.updateRecipe(updated) },
+                onDelete: { id in recipeService.removeRecipe(id: id); selectedRecipe = nil }
+            )
+            .environmentObject(authManager)
             .onDisappear {
                 if let user = authManager.user {
                     Task { await recipeService.fetchRecipes(userId: user.id) }
