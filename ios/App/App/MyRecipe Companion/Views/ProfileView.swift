@@ -36,7 +36,7 @@ struct ProfileView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .topLeading) {
+            ZStack(alignment: .bottomLeading) {
                 Image("your-profile-hero")
                     .resizable().scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: 100)
@@ -48,7 +48,7 @@ struct ProfileView: View {
                         .background(Color(.systemBackground).opacity(0.8))
                         .clipShape(Circle())
                 }
-                .padding(.top, 8).padding(.leading, 12)
+                .padding(.leading, 12).padding(.bottom, 8)
             }
             List {
             Section {
