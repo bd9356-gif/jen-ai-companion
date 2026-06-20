@@ -224,9 +224,7 @@ struct RecipeVaultView: View {
                         ForEach(filtered) { recipe in
                             RecipeGridTile(recipe: recipe)
                                 .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedRecipe = recipe
-                                }
+                                .onTapGesture { selectedRecipe = recipe }
                         }
                     }
                     .padding(8)
@@ -239,7 +237,7 @@ struct RecipeVaultView: View {
             }
         }
         .navigationBarHidden(true)
-        .fullScreenCover(item: $selectedRecipe) { recipe in
+        .sheet(item: $selectedRecipe) { recipe in
             NavigationView {
                 RecipeDetailView(
                     recipe: recipe,

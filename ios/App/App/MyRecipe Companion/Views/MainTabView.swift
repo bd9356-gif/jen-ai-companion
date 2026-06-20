@@ -19,13 +19,15 @@ struct MainTabView: View {
                 .navigationTitle("MyRecipe")
                 .accentColor(.orange)
             } detail: {
-                switch sidebarSelection ?? 0 {
-                case 0: KitchenHubView().environmentObject(authManager)
-                case 1: RecipeVaultView().environmentObject(authManager)
-                case 2: ImportView().environmentObject(authManager)
-                case 3: ClassroomView().environmentObject(authManager)
-                case 4: MoreView().environmentObject(authManager)
-                default: KitchenHubView().environmentObject(authManager)
+                NavigationStack {
+                    switch sidebarSelection ?? 0 {
+                    case 0: KitchenHubView().environmentObject(authManager)
+                    case 1: RecipeVaultView().environmentObject(authManager)
+                    case 2: ImportView().environmentObject(authManager)
+                    case 3: ClassroomView().environmentObject(authManager)
+                    case 4: MoreView().environmentObject(authManager)
+                    default: KitchenHubView().environmentObject(authManager)
+                    }
                 }
             }
             .accentColor(.orange)

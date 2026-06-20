@@ -445,12 +445,15 @@ struct RecipeDetailView: View {
         let items: [Any] = [recipe.title + " — Chef Jen approves ♥", shareURL]
         let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first,
-           let rootVC = window.rootViewController {
+           let window = windowScene.windows.first {
             av.popoverPresentationController?.sourceView = window
             av.popoverPresentationController?.sourceRect = CGRect(
                 x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
-            rootVC.present(av, animated: true)
+            var topVC = window.rootViewController
+            while let presented = topVC?.presentedViewController {
+                topVC = presented
+            }
+            topVC?.present(av, animated: true)
         }
     }
 
