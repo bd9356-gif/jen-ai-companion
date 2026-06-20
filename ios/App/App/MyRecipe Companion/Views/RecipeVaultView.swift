@@ -222,9 +222,23 @@ struct RecipeVaultView: View {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 8) {
                         ForEach(filtered) { recipe in
-                            RecipeGridTile(recipe: recipe)
-                                .contentShape(Rectangle())
-                                .onTapGesture { selectedRecipe = recipe }
+                            if sizeClass == .regular {
+                                NavigationLink {
+                                    RecipeDetailView(
+                                        recipe: recipe,
+                                        onUpdate: { updated in recipeService.updateRecipe(updated) },
+                                        onDelete: { id in recipeService.removeRecipe(id: id) }
+                                    )
+                                    .environmentObject(authManager)
+                                } label: {
+                                    RecipeGridTile(recipe: recipe)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                RecipeGridTile(recipe: recipe)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { selectedRecipe = recipe }
+                            }
                         }
                     }
                     .padding(8)
