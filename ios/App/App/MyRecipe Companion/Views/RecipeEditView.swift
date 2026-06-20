@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import PhotosUI
 
 struct RecipeEditView: View {
     let recipe: Recipe
@@ -19,6 +20,12 @@ struct RecipeEditView: View {
     @State private var newTag = ""
     @State private var isSaving = false
     @State private var errorMessage = ""
+
+    // ── Photo ──
+    @State private var selectedPhoto: PhotosPickerItem? = nil
+    @State private var photoPreview: UIImage? = nil
+    @State private var newPhotoUrl: String? = nil
+    @State private var isUploadingPhoto = false
 
     struct EditableIngredient: Identifiable {
         let id = UUID()
@@ -52,6 +59,55 @@ struct RecipeEditView: View {
     var body: some View {
         NavigationView {
             Form {
+
+                // ── Photo Section ──
+                Section("Recipe Photo") {
+                    VStack(spacing: 10) {
+                        // Preview
+                        if let preview = photoPreview {
+                            Image(uiImage: preview)
+                                .resizable().scaledToFill()
+                                .frame(maxWidth: .infinity).frame(height: 160)
+                                .clipped().cornerRadius(10)
+                        } else if let photoUrl = recipe.photo_url, !photoUrl.isEmpty, let url = URL(string: photoUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image.resizable().scaledToFill()
+                                        .frame(maxWidth: .infinity).frame(height: 160)
+                                        .clipped().cornerRadius(10)
+                                default:
+                                    photoPlaceholder
+                                }
+                            }
+                        } else {
+                            photoPlaceholder
+                        }
+
+                        // Picker button
+                        PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                            HStack(spacing: 6) {
+                                if isUploadingPhoto {
+                                    ProgressView().scaleEffect(0.8)
+                                    Text("Uploading...").font(.subheadline)
+                                } else {
+                                    Image(systemName: "photo.badge.plus")
+                                    Text(recipe.photo_url?.isEmpty == false || photoPreview != nil
+                                         ? "Change Photo" : "Add Photo")
+                                    .font(.subheadline).fontWeight(.semibold)
+                                }
+                            }
+                            .foregroundColor(.orange)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Color.orange.opacity(0.08))
+                            .cornerRadius(10)
+                        }
+                        .disabled(isUploadingPhoto)
+                    }
+                    .padding(.vertical, 4)
+                }
+
                 Section("Recipe Details") {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Title").font(.caption).foregroundColor(.gray)
@@ -94,7 +150,6 @@ struct RecipeEditView: View {
                         .padding(.vertical, 4)
                     }
 
-                    // Custom tags
                     if !tags.filter({ !curatedTags.flatMap(\.1).contains($0) }).isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Custom").font(.caption).foregroundColor(.gray)
@@ -180,8 +235,51 @@ struct RecipeEditView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") { Task { await saveRecipe() } }
                         .fontWeight(.semibold)
-                        .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
+                        .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSaving || isUploadingPhoto)
                 }
+            }
+            .onChange(of: selectedPhoto) { _, newItem in
+                guard let newItem else { return }
+                Task { await handlePhotoPick(newItem) }
+            }
+        }
+    }
+
+    // ── Photo placeholder ──
+    var photoPlaceholder: some View {
+        ZStack {
+            Color.orange.opacity(0.06)
+            VStack(spacing: 6) {
+                Image(systemName: "photo").font(.system(size: 36)).foregroundColor(.orange.opacity(0.4))
+                Text("No photo yet").font(.caption).foregroundColor(.gray)
+            }
+        }
+        .frame(maxWidth: .infinity).frame(height: 160).cornerRadius(10)
+    }
+
+    // ── Handle photo pick ──
+    func handlePhotoPick(_ item: PhotosPickerItem) async {
+        guard let data = try? await item.loadTransferable(type: Data.self),
+              let image = UIImage(data: data) else { return }
+
+        await MainActor.run {
+            photoPreview = image
+            isUploadingPhoto = true
+        }
+
+        do {
+            let compressed = image.jpegData(compressionQuality: 0.7) ?? data
+            let path = "recipe-photos/\(recipe.id.uuidString)/cover.jpg"
+            try await supabase.storage.from("personal_recipes").upload(path, data: compressed, options: .init(upsert: true))
+            let url = try supabase.storage.from("personal_recipes").getPublicURL(path: path)
+            await MainActor.run {
+                newPhotoUrl = url.absoluteString
+                isUploadingPhoto = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "Photo upload failed: \(error.localizedDescription)"
+                isUploadingPhoto = false
             }
         }
     }
@@ -200,8 +298,9 @@ struct RecipeEditView: View {
                 .object(["name": .string(ing.name), "measure": .string(ing.measure), "amount": .string(ing.measure)])
             })
             let tagsAnyJSON: AnyJSON = .array(tags.map { .string($0) })
+            let finalPhotoUrl = newPhotoUrl ?? recipe.photo_url ?? ""
 
-            let updateData: [String: AnyJSON] = [
+            var updateData: [String: AnyJSON] = [
                 "title": .string(title),
                 "description": .string(description),
                 "category": .string(category),
@@ -213,6 +312,9 @@ struct RecipeEditView: View {
                 "ingredients": ingredientsAnyJSON,
                 "tags": tagsAnyJSON
             ]
+            if newPhotoUrl != nil {
+                updateData["photo_url"] = .string(finalPhotoUrl)
+            }
 
             try await supabase.from("personal_recipes").update(updateData).eq("id", value: recipe.id).execute()
 
@@ -222,7 +324,7 @@ struct RecipeEditView: View {
             let updated = Recipe(
                 id: recipe.id, title: title, description: description,
                 ingredients: updatedIngredients, instructions: instructions,
-                photo_url: recipe.photo_url, source_url: recipe.source_url,
+                photo_url: finalPhotoUrl, source_url: recipe.source_url,
                 family_notes: familyNotes, created_at: recipe.created_at,
                 user_id: recipe.user_id, deleted_at: recipe.deleted_at,
                 is_favorite: recipe.is_favorite, category: category,

@@ -10,8 +10,49 @@ struct RecipeCardsView: View {
     @State private var isLoading = true
     @State private var selectedRecipe: Recipe? = nil
     @State private var refreshID = UUID()
+    @State private var searchText = ""
+    @State private var selectedFilter = ""
+    @State private var sortOrder: CardSortOrder = .dateDesc
 
     let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+
+    enum CardSortOrder: String, CaseIterable {
+        case dateDesc = "Newest First"
+        case dateAsc = "Oldest First"
+        case titleAsc = "Title A–Z"
+        case titleDesc = "Title Z–A"
+    }
+
+    let curatedTagGroups = [
+        ("🍽 Meal", ["breakfast", "lunch", "dinner", "dessert", "side", "snack"]),
+        ("🥩 Protein", ["chicken", "beef", "seafood", "pasta", "vegetarian"]),
+        ("✨ Style", ["quick", "comfort", "healthy", "baking", "holiday"])
+    ]
+    let curatedTags = ["breakfast","lunch","dinner","dessert","side","snack","chicken","beef","seafood","pasta","vegetarian","quick","comfort","healthy","baking","holiday"]
+
+    var allUsedTags: [String] {
+        Array(Set(recipes.flatMap { $0.tags ?? [] })).sorted()
+    }
+
+    var filtered: [Recipe] {
+        var result = recipes
+        if !selectedFilter.isEmpty {
+            result = result.filter { ($0.tags ?? []).contains(selectedFilter) }
+        }
+        if !searchText.isEmpty {
+            result = result.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+        }
+        switch sortOrder {
+        case .dateDesc: return result
+        case .dateAsc: return result.reversed()
+        case .titleAsc: return result.sorted { $0.title < $1.title }
+        case .titleDesc: return result.sorted { $0.title > $1.title }
+        }
+    }
+
+    var filterLabel: String {
+        selectedFilter.isEmpty ? "All Recipes" : "#\(selectedFilter)"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,6 +85,81 @@ struct RecipeCardsView: View {
 
             Divider()
 
+            // ── Filter + Sort bar ──
+            HStack(spacing: 8) {
+                Menu {
+                    Button { selectedFilter = "" } label: {
+                        HStack { Text("All Recipes"); if selectedFilter == "" { Image(systemName: "checkmark") } }
+                    }
+                    ForEach(curatedTagGroups, id: \.0) { group, tags in
+                        let used = tags.filter { allUsedTags.contains($0) }
+                        if !used.isEmpty {
+                            Section(group) {
+                                ForEach(used, id: \.self) { tag in
+                                    Button { selectedFilter = tag } label: {
+                                        HStack { Text("#\(tag)"); if selectedFilter == tag { Image(systemName: "checkmark") } }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    let customTags = allUsedTags.filter { !curatedTags.contains($0) }
+                    if !customTags.isEmpty {
+                        Section("✏️ Custom") {
+                            ForEach(customTags, id: \.self) { tag in
+                                Button { selectedFilter = tag } label: {
+                                    HStack { Text("#\(tag)"); if selectedFilter == tag { Image(systemName: "checkmark") } }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(filterLabel)
+                            .font(.subheadline).fontWeight(.semibold)
+                            .foregroundColor(selectedFilter.isEmpty ? .primary : .orange)
+                        Image(systemName: "chevron.down").font(.caption).foregroundColor(.gray)
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(selectedFilter.isEmpty ? Color(.systemGray6) : Color.orange.opacity(0.1))
+                    .cornerRadius(10)
+                }
+                Spacer()
+                Text("\(filtered.count) recipes").font(.caption).foregroundColor(.gray)
+                Menu {
+                    ForEach(CardSortOrder.allCases, id: \.self) { order in
+                        Button { sortOrder = order } label: {
+                            HStack {
+                                Text(order.rawValue)
+                                if sortOrder == order { Image(systemName: "checkmark") }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .padding(8)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 6)
+
+            // ── Search bar ──
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").foregroundColor(.gray).font(.subheadline)
+                TextField("Search recipes", text: $searchText).font(.subheadline)
+                if !searchText.isEmpty {
+                    Button { searchText = "" } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundColor(.gray).font(.subheadline)
+                    }
+                }
+            }
+            .padding(.horizontal, 12).padding(.vertical, 9)
+            .background(Color(.systemGray6)).cornerRadius(12)
+            .padding(.horizontal, 16).padding(.bottom, 6)
+
+            Divider()
+
             if isLoading {
                 Spacer(); ProgressView(); Spacer()
             } else if recipes.isEmpty {
@@ -56,10 +172,20 @@ struct RecipeCardsView: View {
                         .multilineTextAlignment(.center).padding(.horizontal, 32)
                 }
                 Spacer()
+            } else if filtered.isEmpty {
+                Spacer()
+                VStack(spacing: 16) {
+                    Text("🔍").font(.system(size: 60))
+                    Text("No results").font(.title3).fontWeight(.semibold)
+                    Text("Try a different filter or search")
+                        .font(.subheadline).foregroundColor(.gray)
+                        .multilineTextAlignment(.center).padding(.horizontal, 32)
+                }
+                Spacer()
             } else {
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 12) {
-                        ForEach(recipes) { recipe in
+                        ForEach(filtered) { recipe in
                             Button { selectedRecipe = recipe } label: {
                                 RecipeCardTile(recipe: recipe)
                             }
@@ -146,13 +272,14 @@ struct RecipeCardDetailView: View {
     @State private var memories: [RecipeMemory] = []
     @State private var selectedMemoryPhoto: PhotosPickerItem? = nil
     @State private var isUploadingMemory = false
-    @State private var openSections: Set<String> = ["notes", "memories"]
+    @State private var openSections: Set<String> = []
     @State private var showRemoveConfirm = false
     @State private var showFullRecipe = false
     @State private var showMiseEnPlace = false
     @State private var editingCaption: RecipeMemory? = nil
     @State private var editCaptionText = ""
     @State private var fullscreenMemory: RecipeMemory? = nil
+    @State private var fullscreenRecipePhoto = false
 
     struct RecipeMemory: Identifiable, Codable {
         let id: UUID
@@ -196,10 +323,44 @@ struct RecipeCardDetailView: View {
             }
             .alert("Edit Caption", isPresented: Binding(get: { editingCaption != nil }, set: { if !$0 { editingCaption = nil } })) {
                 TextField("Caption", text: $editCaptionText)
-                Button("Save") { Task { await updateCaption() } }
+                Button("Save") {
+                    let memoryToUpdate = editingCaption
+                    let text = editCaptionText
+                    editingCaption = nil
+                    guard let memory = memoryToUpdate else { return }
+                    Task {
+                        await MainActor.run {
+                            if let index = memories.firstIndex(where: { $0.id == memory.id }) {
+                                memories[index].caption = text
+                            }
+                        }
+                        do {
+                            try await supabase.from("recipe_memories")
+                                .update(["caption": text])
+                                .eq("id", value: memory.id)
+                                .execute()
+                            print("caption saved ok")
+                        } catch {
+                            print("caption save error:", error)
+                        }
+                    }
+                }
                 Button("Cancel", role: .cancel) { editingCaption = nil }
             }
             .fullScreenCover(item: $fullscreenMemory) { memory in fullscreenView(memory) }
+            .fullScreenCover(isPresented: $fullscreenRecipePhoto) {
+                if let photoUrl = recipe.photo_url, let url = URL(string: photoUrl) {
+                    ZStack(alignment: .topTrailing) {
+                        Color.black.ignoresSafeArea()
+                        AsyncImage(url: url) { image in
+                            image.resizable().scaledToFit().frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } placeholder: { ProgressView().tint(.white) }
+                        Button { fullscreenRecipePhoto = false } label: {
+                            Image(systemName: "xmark.circle.fill").font(.title).foregroundColor(.white).padding(20)
+                        }
+                    }
+                }
+            }
             .task { await loadCardData() }
             .onChange(of: selectedMemoryPhoto) { _, _ in Task { await uploadMemory() } }
         }
@@ -210,27 +371,31 @@ struct RecipeCardDetailView: View {
             AsyncImage(url: url) { phase in
                 switch phase {
                 case .success(let image):
-                    image.resizable().scaledToFill().frame(maxWidth: .infinity).frame(height: 220).clipped()
+                    image.resizable().scaledToFill()
+                        .frame(maxWidth: .infinity).frame(height: 160).clipped()
+                        .onTapGesture { fullscreenMemory = nil; fullscreenRecipePhoto = true }
                 default:
-                    Color.orange.opacity(0.06).frame(maxWidth: .infinity).frame(height: 180)
+                    Color.orange.opacity(0.06).frame(maxWidth: .infinity).frame(height: 160)
                 }
             }
         } else {
             Image("chef-logo").resizable().scaledToFit()
-                .frame(maxWidth: .infinity).frame(height: 180).background(Color.orange.opacity(0.06))
+                .frame(maxWidth: .infinity).frame(height: 160).background(Color.orange.opacity(0.06))
         }
     }
 
     @ViewBuilder var contentSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             titleSection
-            actionButtons
+            miseEnPlaceButton
+            Divider().padding(.vertical, 12).padding(.horizontal, 20)
+            ingredientsSection
+            Divider().padding(.horizontal, 20)
+            viewRecipeButton
             Divider().padding(.vertical, 12).padding(.horizontal, 20)
             memoriesSection
             Divider().padding(.horizontal, 20)
             specialNotesSection
-            Divider().padding(.horizontal, 20)
-            ingredientsSection
             removeButton
         }
     }
@@ -252,31 +417,33 @@ struct RecipeCardDetailView: View {
         .padding(.horizontal, 20).padding(.top, 16)
     }
 
-    @ViewBuilder var actionButtons: some View {
-        VStack(spacing: 8) {
-            Button { showMiseEnPlace = true } label: {
-                HStack {
-                    Text("👨‍🍳")
-                    Text("Mise en Place").font(.footnote).fontWeight(.semibold)
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.caption2).foregroundColor(.gray)
-                }
-                .padding(.horizontal, 14).padding(.vertical, 10)
-                .background(Color(.systemGray6)).foregroundColor(.primary).cornerRadius(10)
+    @ViewBuilder var miseEnPlaceButton: some View {
+        Button { showMiseEnPlace = true } label: {
+            HStack {
+                Text("👨‍🍳")
+                Text("Mise en Place").font(.footnote).fontWeight(.semibold)
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption2).foregroundColor(.gray)
             }
-            Button { showFullRecipe = true } label: {
-                HStack {
-                    Image(systemName: "book.fill").font(.caption)
-                    Text("View Recipe Details").font(.footnote).fontWeight(.semibold)
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.caption2).foregroundColor(.orange.opacity(0.6))
-                }
-                .padding(.horizontal, 14).padding(.vertical, 10)
-                .background(Color.orange.opacity(0.08)).foregroundColor(.orange).cornerRadius(10)
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.orange.opacity(0.2), lineWidth: 1))
-            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .background(Color(.systemGray6)).foregroundColor(.primary).cornerRadius(10)
         }
         .padding(.horizontal, 20).padding(.top, 12)
+    }
+
+    @ViewBuilder var viewRecipeButton: some View {
+        Button { showFullRecipe = true } label: {
+            HStack {
+                Image(systemName: "book.fill").font(.caption)
+                Text("View Recipe Details").font(.footnote).fontWeight(.semibold)
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption2).foregroundColor(.orange.opacity(0.6))
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .background(Color.orange.opacity(0.08)).foregroundColor(.orange).cornerRadius(10)
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.orange.opacity(0.2), lineWidth: 1))
+        }
+        .padding(.horizontal, 20).padding(.vertical, 12)
     }
 
     @ViewBuilder var memoriesSection: some View {
@@ -344,7 +511,6 @@ struct RecipeCardDetailView: View {
                 }
                 .padding(.horizontal, 20).padding(.bottom, 12)
             }
-            Divider().padding(.horizontal, 20)
         }
     }
 
@@ -357,16 +523,17 @@ struct RecipeCardDetailView: View {
             .frame(maxWidth: .infinity).padding(.vertical, 10)
             .background(Color.red.opacity(0.06)).foregroundColor(.red).cornerRadius(10)
         }
-        .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 40)
+        .padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 40)
     }
 
     @ViewBuilder func memoryCard(_ memory: RecipeMemory) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             ZStack(alignment: .topTrailing) {
                 AsyncImage(url: URL(string: memory.image_url)) { image in
-                    image.resizable().scaledToFit()
-                } placeholder: { Color.gray.opacity(0.15).frame(height: 200) }
-                .frame(maxWidth: .infinity).cornerRadius(12).onTapGesture { fullscreenMemory = memory }
+                    image.resizable().scaledToFill()
+                } placeholder: { Color.gray.opacity(0.15) }
+                .frame(maxWidth: .infinity).frame(height: 160).clipped()
+                .cornerRadius(12).onTapGesture { fullscreenMemory = memory }
                 Button { Task { await deleteMemory(memory) } } label: {
                     Image(systemName: "xmark.circle.fill").font(.title2).foregroundColor(.white)
                         .shadow(color: .black.opacity(0.4), radius: 2, x: 0, y: 1)
@@ -374,10 +541,20 @@ struct RecipeCardDetailView: View {
                 .padding(8)
             }
             if let caption = memory.caption, !caption.isEmpty {
-                Text(caption).font(.caption).foregroundColor(.secondary).padding(.horizontal, 4)
+                Button { editingCaption = memory; editCaptionText = caption } label: {
+                    HStack(spacing: 4) {
+                        Text(caption).font(.caption).italic().foregroundColor(.secondary)
+                        Image(systemName: "pencil").font(.caption2).foregroundColor(.orange)
+                    }
+                    .padding(.horizontal, 4)
+                }
             } else {
                 Button { editingCaption = memory; editCaptionText = "" } label: {
-                    Text("Add caption...").font(.caption).foregroundColor(.orange).padding(.horizontal, 4)
+                    HStack(spacing: 4) {
+                        Image(systemName: "text.bubble").font(.caption2)
+                        Text("Add caption...").font(.caption)
+                    }
+                    .foregroundColor(.orange).padding(.horizontal, 4)
                 }
             }
         }
@@ -441,13 +618,28 @@ struct RecipeCardDetailView: View {
     }
 
     func updateCaption() async {
-        guard let memory = editingCaption, let user = authManager.user else { return }
+        guard let memory = editingCaption else { return }
+        let captionText = editCaptionText
+        print("updateCaption: saving '\(captionText)' to memory \(memory.id)")
+        await MainActor.run {
+            if let index = memories.firstIndex(where: { $0.id == memory.id }) {
+                memories[index].caption = captionText
+                print("updateCaption: local state updated, memories count \(memories.count)")
+            } else {
+                print("updateCaption: could not find memory in local array!")
+            }
+            editingCaption = nil
+        }
         do {
-            try await supabase.from("recipe_memories").update(["caption": editCaptionText])
-                .eq("id", value: memory.id).eq("user_id", value: user.id).execute()
+            try await supabase.from("recipe_memories")
+                .update(["caption": captionText])
+                .eq("id", value: memory.id)
+                .execute()
+            print("updateCaption: Supabase save succeeded")
+        } catch {
+            print("updateCaption error:", error)
             await loadCardData()
-        } catch { print("updateCaption error:", error) }
-        editingCaption = nil
+        }
     }
 
     func deleteMemory(_ memory: RecipeMemory) async {
