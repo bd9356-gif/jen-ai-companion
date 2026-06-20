@@ -5,7 +5,9 @@ import PhotosUI
 struct RecipeEditView: View {
     let recipe: Recipe
     var onSave: (Recipe) -> Void
+    var onDelete: ((UUID) -> Void)? = nil
     @Environment(\.dismiss) var dismiss
+    @State private var showDeleteConfirm = false
 
     @State private var title: String
     @State private var description: String
@@ -39,9 +41,10 @@ struct RecipeEditView: View {
         ("✨ Style", ["quick", "comfort", "healthy", "baking", "holiday"])
     ]
 
-    init(recipe: Recipe, onSave: @escaping (Recipe) -> Void) {
+    init(recipe: Recipe, onSave: @escaping (Recipe) -> Void, onDelete: ((UUID) -> Void)? = nil) {
         self.recipe = recipe
         self.onSave = onSave
+        self.onDelete = onDelete
         _title = State(initialValue: recipe.title)
         _description = State(initialValue: recipe.description ?? "")
         _category = State(initialValue: recipe.category ?? "")
@@ -237,6 +240,35 @@ struct RecipeEditView: View {
                         .fontWeight(.semibold)
                         .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isSaving || isUploadingPhoto)
                 }
+                if onDelete != nil {
+                    ToolbarItem(placement: .bottomBar) {
+                        Button(role: .destructive) { showDeleteConfirm = true } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "trash")
+                                Text("Delete Recipe").fontWeight(.semibold)
+                            }
+                            .foregroundColor(.red)
+                        }
+                    }
+                }
+            }
+            .confirmationDialog("Delete Recipe", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    Task {
+                        do {
+                            try await supabase.from("personal_recipes")
+                                .update(["deleted_at": ISO8601DateFormatter().string(from: Date())])
+                                .eq("id", value: recipe.id).execute()
+                            onDelete?(recipe.id)
+                            dismiss()
+                        } catch {
+                            errorMessage = "Delete failed: \(error.localizedDescription)"
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This recipe will be moved to Recently Deleted.")
             }
             .onChange(of: selectedPhoto) { _, newItem in
                 guard let newItem else { return }

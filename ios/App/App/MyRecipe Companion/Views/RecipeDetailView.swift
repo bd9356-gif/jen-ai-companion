@@ -31,7 +31,8 @@ struct RecipeDetailView: View {
             VStack(spacing: 0) {
 
                 // ── Hero Photo ──
-                if let photoUrl = recipe.photo_url, !photoUrl.isEmpty, let url = URL(string: photoUrl) {
+                if let photoUrl = recipe.photo_url, !photoUrl.isEmpty,
+                   let url = URL(string: photoUrl + "?t=\(Int(recipe.created_at?.timeIntervalSince1970 ?? 0))") {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):
@@ -82,11 +83,7 @@ struct RecipeDetailView: View {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 6) {
                                     ForEach(tags, id: \.self) { tag in
-                                        Text("#\(tag)")
-                                            .font(.caption2).fontWeight(.semibold)
-                                            .padding(.horizontal, 8).padding(.vertical, 3)
-                                            .background(Color.orange.opacity(0.08))
-                                            .foregroundColor(.orange).cornerRadius(8)
+                                        tagChip(tag)
                                     }
                                 }
                             }
@@ -124,18 +121,7 @@ struct RecipeDetailView: View {
                             ) {
                                 VStack(alignment: .leading, spacing: 6) {
                                     ForEach(Array(ingredients.enumerated()), id: \.offset) { _, ing in
-                                        HStack(alignment: .top, spacing: 8) {
-                                            Circle().fill(Color.orange)
-                                                .frame(width: 5, height: 5).padding(.top, 5)
-                                            VStack(alignment: .leading, spacing: 1) {
-                                                if let name = ing.name, !name.isEmpty {
-                                                    Text(name).font(.footnote)
-                                                }
-                                                if let qty = ing.amount ?? ing.measure, !qty.isEmpty {
-                                                    Text(qty).font(.caption).foregroundColor(.gray)
-                                                }
-                                            }
-                                        }
+                                        ingredientRow(ing)
                                     }
                                 }
                                 .padding(.horizontal, 20).padding(.bottom, 12)
@@ -161,18 +147,7 @@ struct RecipeDetailView: View {
                             ) {
                                 VStack(alignment: .leading, spacing: 10) {
                                     ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                                        HStack(alignment: .top, spacing: 8) {
-                                            Text("\(index + 1)")
-                                                .font(.caption2).fontWeight(.bold)
-                                                .foregroundColor(.white)
-                                                .frame(width: 20, height: 20)
-                                                .background(Color.orange)
-                                                .clipShape(Circle())
-                                                .padding(.top, 1)
-                                            Text(step.trimmingCharacters(in: .whitespaces))
-                                                .font(.footnote).lineSpacing(3)
-                                                .fixedSize(horizontal: false, vertical: true)
-                                        }
+                                        stepRow(index: index, text: step)
                                     }
                                 }
                                 .padding(.horizontal, 20).padding(.bottom, 12)
@@ -183,9 +158,9 @@ struct RecipeDetailView: View {
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.systemGray5), lineWidth: 1))
                     }
 
-                    // ── My Kitchen Actions ──
+                    // ── Kitchen Actions ──
                     CollapsibleSection(
-                        title: "🍳 My Kitchen Actions",
+                        title: "🍳 Kitchen Actions",
                         isOpen: actionsOpen,
                         onToggle: {
                             withAnimation(.easeInOut(duration: 0.2)) { actionsOpen.toggle() }
@@ -231,10 +206,13 @@ struct RecipeDetailView: View {
             }
         }
         .sheet(isPresented: $showEdit) {
-            RecipeEditView(recipe: recipe) { updated in
+            RecipeEditView(recipe: recipe, onSave: { updated in
                 recipe = updated
                 onUpdate?(updated)
-            }
+            }, onDelete: { id in
+                onDelete?(id)
+                dismiss()
+            })
         }
         .sheet(isPresented: $showMiseEnPlace) {
             MiseEnPlaceSheetView(recipe: recipe)
@@ -329,6 +307,44 @@ struct RecipeDetailView: View {
     }
 
     // MARK: - Action Buttons
+    @ViewBuilder func ingredientRow(_ ing: Ingredient) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Circle().fill(Color.orange)
+                .frame(width: 5, height: 5).padding(.top, 5)
+            VStack(alignment: .leading, spacing: 1) {
+                if let name = ing.name, !name.isEmpty {
+                    Text(name).font(.footnote)
+                }
+                if let qty = ing.amount ?? ing.measure, !qty.isEmpty {
+                    Text(qty).font(.caption).foregroundColor(.gray)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder func tagChip(_ tag: String) -> some View {
+        Text("#\(tag)")
+            .font(.caption2).fontWeight(.semibold)
+            .padding(.horizontal, 8).padding(.vertical, 3)
+            .background(Color.orange.opacity(0.08))
+            .foregroundColor(.orange).cornerRadius(8)
+    }
+
+    @ViewBuilder func stepRow(index: Int, text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("\(index + 1)")
+                .font(.caption2).fontWeight(.bold)
+                .foregroundColor(.white)
+                .frame(width: 20, height: 20)
+                .background(Color.orange)
+                .clipShape(Circle())
+                .padding(.top, 1)
+            Text(text.trimmingCharacters(in: .whitespaces))
+                .font(.footnote).lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     var actionButtons: some View {
         VStack(spacing: 8) {
             Button { showMiseEnPlace = true } label: {
@@ -389,17 +405,6 @@ struct RecipeDetailView: View {
                 .cornerRadius(12)
             }
 
-            Button(role: .destructive) { showDeleteConfirm = true } label: {
-                HStack {
-                    Image(systemName: "trash").font(.subheadline)
-                    Text("Delete Recipe").font(.subheadline).fontWeight(.semibold)
-                    Spacer()
-                }
-                .padding(.horizontal, 14).padding(.vertical, 11)
-                .background(Color.red.opacity(0.06))
-                .foregroundColor(.red)
-                .cornerRadius(12)
-            }
             .disabled(isDeleting)
         }
     }
@@ -525,15 +530,3 @@ struct InfoTile: View {
         .cornerRadius(10)
     }
 }
-import SwiftUI
-import Supabase
-
-struct LibraryNote: Identifiable, Codable {
-    let id: UUID
-    var title: String
-    var content: String?
-    var question: String?
-    var source: String?
-    var created_at: Date?
-}
-

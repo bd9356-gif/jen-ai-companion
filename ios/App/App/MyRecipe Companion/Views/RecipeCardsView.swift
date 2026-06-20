@@ -269,8 +269,17 @@ struct RecipeCardDetailView: View {
     @State private var showMiseEnPlace = false
     @State private var editingCaption: RecipeMemory? = nil
     @State private var editCaptionText = ""
-    @State private var fullscreenMemory: RecipeMemory? = nil
-    @State private var fullscreenRecipePhoto = false
+    enum FullscreenItem: Identifiable {
+        case memory(RecipeMemory)
+        case recipePhoto(String)
+        var id: String {
+            switch self {
+            case .memory(let m): return m.id.uuidString
+            case .recipePhoto(let url): return url
+            }
+        }
+    }
+    @State private var fullscreenItem: FullscreenItem? = nil
 
     struct RecipeMemory: Identifiable, Codable {
         let id: UUID
@@ -338,15 +347,17 @@ struct RecipeCardDetailView: View {
                 }
                 Button("Cancel", role: .cancel) { editingCaption = nil }
             }
-            .fullScreenCover(item: $fullscreenMemory) { memory in fullscreenView(memory) }
-            .fullScreenCover(isPresented: $fullscreenRecipePhoto) {
-                if let photoUrl = recipe.photo_url, let url = URL(string: photoUrl) {
+            .fullScreenCover(item: $fullscreenItem) { item in
+                switch item {
+                case .memory(let memory):
+                    fullscreenView(memory)
+                case .recipePhoto(let url):
                     ZStack(alignment: .topTrailing) {
                         Color.black.ignoresSafeArea()
-                        AsyncImage(url: url) { image in
+                        AsyncImage(url: URL(string: url)) { image in
                             image.resizable().scaledToFit().frame(maxWidth: .infinity, maxHeight: .infinity)
                         } placeholder: { ProgressView().tint(.white) }
-                        Button { fullscreenRecipePhoto = false } label: {
+                        Button { fullscreenItem = nil } label: {
                             Image(systemName: "xmark.circle.fill").font(.title).foregroundColor(.white).padding(20)
                         }
                     }
@@ -364,7 +375,11 @@ struct RecipeCardDetailView: View {
                 case .success(let image):
                     image.resizable().scaledToFill()
                         .frame(maxWidth: .infinity).frame(height: 160).clipped()
-                        .onTapGesture { fullscreenMemory = nil; fullscreenRecipePhoto = true }
+                        .onTapGesture {
+                            if let url = recipe.photo_url, !url.isEmpty {
+                                fullscreenItem = .recipePhoto(url)
+                            }
+                        }
                 default:
                     Color.orange.opacity(0.06).frame(maxWidth: .infinity).frame(height: 160)
                 }
@@ -518,18 +533,26 @@ struct RecipeCardDetailView: View {
     }
 
     @ViewBuilder func memoryCard(_ memory: RecipeMemory) -> some View {
+        let imageUrl = memory.image_url
+        let memoryId = memory.id
         VStack(alignment: .leading, spacing: 6) {
             ZStack(alignment: .topTrailing) {
-                AsyncImage(url: URL(string: memory.image_url)) { image in
+                AsyncImage(url: URL(string: imageUrl)) { image in
                     image.resizable().scaledToFill()
                 } placeholder: { Color.gray.opacity(0.15) }
                 .frame(maxWidth: .infinity).frame(height: 160).clipped()
-                .cornerRadius(12).onTapGesture { fullscreenMemory = memory }
+                .cornerRadius(12)
                 Button { Task { await deleteMemory(memory) } } label: {
                     Image(systemName: "xmark.circle.fill").font(.title2).foregroundColor(.white)
                         .shadow(color: .black.opacity(0.4), radius: 2, x: 0, y: 1)
                 }
                 .padding(8)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if let m = memories.first(where: { $0.id == memoryId }) {
+                    fullscreenItem = .memory(m)
+                }
             }
             if let caption = memory.caption, !caption.isEmpty {
                 Button { editingCaption = memory; editCaptionText = caption } label: {
@@ -557,7 +580,7 @@ struct RecipeCardDetailView: View {
             AsyncImage(url: URL(string: memory.image_url)) { image in
                 image.resizable().scaledToFit().frame(maxWidth: .infinity, maxHeight: .infinity)
             } placeholder: { ProgressView().tint(.white) }
-            Button { fullscreenMemory = nil } label: {
+            Button { fullscreenItem = nil } label: {
                 Image(systemName: "xmark.circle.fill").font(.title).foregroundColor(.white).padding(20)
             }
         }
