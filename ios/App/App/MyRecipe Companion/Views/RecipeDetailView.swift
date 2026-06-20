@@ -188,6 +188,7 @@ struct RecipeDetailView: View {
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(sizeClass == .regular)
         .navigationTitle("")
         .onAppear {
             isFavorite = recipe.is_favorite ?? false
