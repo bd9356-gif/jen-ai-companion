@@ -475,6 +475,9 @@ struct StoreManagerView: View {
                             Text("Default").font(.caption).foregroundColor(.orange)
                                 .padding(.horizontal, 8).padding(.vertical, 2)
                                 .background(Color.orange.opacity(0.1)).cornerRadius(6)
+                        } else {
+                            Button("Set Default") { Task { await setDefaultStore(store) } }
+                                .font(.caption).foregroundColor(.blue)
                         }
                     }
                 }
@@ -505,6 +508,24 @@ struct StoreManagerView: View {
                 }
             }
         }
+    }
+
+    func setDefaultStore(_ store: Store) async {
+        guard let user = authManager.user else { return }
+        do {
+            // Clear all defaults first
+            try await supabase.from("stores").update(["is_default": false])
+                .eq("user_id", value: user.id).execute()
+            // Set new default
+            try await supabase.from("stores").update(["is_default": true])
+                .eq("id", value: store.id).execute()
+            await MainActor.run {
+                for i in stores.indices { stores[i].is_default = false }
+                if let idx = stores.firstIndex(where: { $0.id == store.id }) {
+                    stores[idx].is_default = true
+                }
+            }
+        } catch { print("setDefaultStore error:", error) }
     }
 
     func addStore() async {

@@ -251,6 +251,11 @@ struct RecipeVaultView: View {
                     }
                 }
             }
+            .onDisappear {
+                if let user = authManager.user {
+                    Task { await recipeService.fetchRecipes(userId: user.id) }
+                }
+            }
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager).environmentObject(authManager) }
         .task {

@@ -71,15 +71,6 @@ struct RecipeCardsView: View {
                         .clipShape(Circle())
                 }
                 .padding(.leading, 12).padding(.bottom, 8)
-                HStack {
-                    Spacer()
-                    Text("\(recipes.count) recipes")
-                        .font(.caption).foregroundColor(.secondary)
-                        .padding(.horizontal, 10).padding(.vertical, 4)
-                        .background(Color(.systemBackground).opacity(0.9))
-                        .cornerRadius(8)
-                }
-                .padding(.trailing, 12).padding(.bottom, 8)
             }
             .frame(maxWidth: .infinity)
 

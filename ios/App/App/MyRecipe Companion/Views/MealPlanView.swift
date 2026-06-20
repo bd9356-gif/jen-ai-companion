@@ -25,6 +25,8 @@ struct MealPlanView: View {
 
     var selected: Set<UUID> { Set(selectionOrder) }
     @State private var showMise = false
+    @State private var showMisePicker = false
+    @State private var miseEnPlaceRecipe: Recipe? = nil
     @State private var showShoppingPicker = false
 
     var sortedPicks: [MyPick] {
@@ -198,13 +200,48 @@ struct MealPlanView: View {
                     Task { await addPick(recipe: recipe) }
                 }
             }
-            .sheet(isPresented: $showMise) {
+            .sheet(isPresented: $showMisePicker) {
                 let orderedRecipes = selectionOrder.compactMap { id -> Recipe? in
                     guard let pick = picks.first(where: { $0.id == id }),
                           let recipeId = pick.recipe_id else { return nil }
                     return recipes.first(where: { $0.id == recipeId })
                 }
-                MiseEnPlaceSheetView(recipes: orderedRecipes)
+                NavigationView {
+                    List(orderedRecipes) { recipe in
+                        Button {
+                            miseEnPlaceRecipe = recipe
+                            showMisePicker = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showMise = true
+                            }
+                        } label: {
+                            HStack {
+                                Text("👨‍🍳").font(.title3)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(recipe.title).font(.subheadline).fontWeight(.semibold).foregroundColor(.primary)
+                                    if let cat = recipe.category, !cat.isEmpty {
+                                        Text(cat).font(.caption).foregroundColor(.orange)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.caption2).foregroundColor(.gray)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                    .navigationTitle("Select a Meal")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Cancel") { showMisePicker = false }
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showMise) {
+                if let recipe = miseEnPlaceRecipe {
+                    MiseEnPlaceSheetView(recipe: recipe)
+                }
             }
             .sheet(isPresented: $showShoppingPicker) {
                 let orderedRecipes = selectionOrder.compactMap { id -> Recipe? in
@@ -225,7 +262,7 @@ struct MealPlanView: View {
         VStack(spacing: 0) {
             Divider()
             HStack(spacing: 10) {
-                Button { showMise = true } label: {
+                Button { showMisePicker = true } label: {
                     VStack(spacing: 3) {
                         Image(systemName: "list.bullet.clipboard").font(.title3)
                         Text("Mise en Place").font(.caption2).fontWeight(.semibold)

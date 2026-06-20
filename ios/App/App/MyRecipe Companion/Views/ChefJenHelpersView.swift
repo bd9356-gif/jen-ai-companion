@@ -44,21 +44,21 @@ struct ChefJenHelpersView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // ── Banner ──
-                ZStack(alignment: .topLeading) {
-                    Image("jen-sign")
-                        .resizable().scaledToFit()
-                        .frame(maxWidth: .infinity, maxHeight: 100)
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .padding(8)
-                            .background(Color(.systemBackground).opacity(0.8))
-                            .clipShape(Circle())
+                // ── Back ──
+                Button { dismiss() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left").font(.system(size: 16, weight: .semibold))
+                        Text("Back").font(.subheadline).fontWeight(.semibold)
                     }
-                    .padding(.top, 8).padding(.leading, 12)
+                    .foregroundColor(.primary)
+                    .padding(.horizontal, 16).padding(.vertical, 8)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // ── Banner ──
+                Image("jen-sign")
+                    .resizable().scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: 100)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(Array(["✨ Polish", "📏 Resize", "📋 Details", "🔄 Adjust", "📸 Photo"].enumerated()), id: \.offset) { index, label in
@@ -523,12 +523,22 @@ struct ChefJenHelpersView: View {
     func saveTransformAsNew(_ result: EnhancedRecipe) async {
         guard let user = authManager.user else { return }
         let newIngs = result.ingredients ?? []
+        let newId = UUID()
         do {
-            let insertData: [String: AnyJSON] = ["user_id": .string(user.id.uuidString), "title": .string(result.title ?? "\(recipe.title) (adjusted)"), "description": .string(result.description ?? ""), "instructions": .string(result.instructions ?? ""), "ingredients": toAnyJSON(newIngs), "photo_url": .string(recipe.photo_url ?? "")]
+            let insertData: [String: AnyJSON] = [
+                "id": .string(newId.uuidString),
+                "user_id": .string(user.id.uuidString),
+                "title": .string(result.title ?? "\(recipe.title) (adjusted)"),
+                "description": .string(result.description ?? ""),
+                "instructions": .string(result.instructions ?? ""),
+                "ingredients": toAnyJSON(newIngs),
+                "photo_url": .string(recipe.photo_url ?? "")
+            ]
             try await supabase.from("personal_recipes").insert(insertData).execute()
             await MainActor.run { successMessage = "Saved as new recipe ✓"; transformResult = nil }
         } catch {
-            await MainActor.run { errorMessage = "Save failed: \(error.localizedDescription)" }
+            print("saveTransformAsNew error:", error)
+            await MainActor.run { errorMessage = "Save as new failed: \(error.localizedDescription)" }
         }
     }
 

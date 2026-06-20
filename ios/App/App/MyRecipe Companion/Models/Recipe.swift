@@ -1,20 +1,20 @@
 import Foundation
 
-struct Ingredient: Codable {
+struct Ingredient: Codable, Equatable {
     var name: String?
     var amount: String?
     var measure: String?
     var unit: String?
 }
 
-struct RecipeNutrition: Codable {
+struct RecipeNutrition: Codable, Equatable {
     var calories: String?
     var protein: String?
     var carbs: String?
     var fat: String?
 }
 
-struct Recipe: Identifiable, Codable {
+struct Recipe: Identifiable, Codable, Equatable {
     let id: UUID
     var title: String
     var description: String?
