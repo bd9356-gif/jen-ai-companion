@@ -60,14 +60,11 @@ struct MyRecipeCompanionApp: App {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                // Fallback: if app becomes active and there's a pending URL, switch to Import tab
+                // Fallback: if app becomes active and there's a pending URL, switch to More tab
                 let defaults = UserDefaults(suiteName: "group.com.mycompanionapps.recipe")
                 if defaults?.string(forKey: "pendingImportURL") != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         selectedTab = 4
-                        // Clear after use so it doesn't trigger again
-                        defaults?.removeObject(forKey: "pendingImportURL")
-                        defaults?.synchronize()
                     }
                 }
             }
