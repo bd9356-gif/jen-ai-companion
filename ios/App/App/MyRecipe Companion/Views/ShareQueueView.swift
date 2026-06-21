@@ -131,7 +131,9 @@ struct ShareQueueView: View {
 
     func shareRecipe(_ recipe: Recipe) {
         let shareURL = URL(string: "https://recipe.mycompanionapps.com/share/\(recipe.id)")!
-        let av = UIActivityViewController(activityItems: [shareURL], applicationActivities: nil)
+        let title = recipe.title + " — shared from MyRecipe Companion 👩‍🍳"
+        let av = UIActivityViewController(activityItems: [title, shareURL], applicationActivities: nil)
+        av.excludedActivityTypes = [.addToReadingList, .assignToContact, .openInIBooks]
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
             var topVC = window.rootViewController
