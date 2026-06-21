@@ -116,12 +116,6 @@ class ShareViewController: UIViewController {
                 guard let self = self else { return }
                 guard let url = item as? URL else { self.finish(withURL: nil); return }
 
-                // Don't intercept our own share URLs — let them pass through
-                if url.host?.contains("mycompanionapps.com") == true {
-                    self.extensionContext?.completeRequest(returningItems: self.extensionContext?.inputItems)
-                    return
-                }
-
                 let defaults = UserDefaults(suiteName: self.appGroupID)
                 defaults?.set(url.absoluteString, forKey: "pendingImportURL")
                 defaults?.removeObject(forKey: "pendingImportHTML")
