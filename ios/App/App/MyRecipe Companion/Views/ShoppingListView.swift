@@ -88,41 +88,45 @@ struct ShoppingListView: View {
                         .clipShape(Circle())
                 }
                 .padding(.leading, 12).padding(.bottom, 8)
-
-                // Right side controls
-                HStack(spacing: 6) {
-                    Spacer()
-                    if !unchecked.isEmpty {
-                        Button { Task { await aiCleanup() } } label: {
-                            Image(systemName: isCleaningUp ? "clock" : "wand.and.stars")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.orange)
-                                .padding(7)
-                                .background(Color(.systemBackground).opacity(0.9))
-                                .clipShape(Circle())
-                        }
-                        .disabled(isCleaningUp)
-                        Button { printList() } label: {
-                            Image(systemName: "printer")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .padding(7)
-                                .background(Color(.systemBackground).opacity(0.9))
-                                .clipShape(Circle())
-                        }
-                    }
-                    Button { showStoreManager = true } label: {
-                        Image(systemName: "building.2")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .padding(7)
-                            .background(Color(.systemBackground).opacity(0.9))
-                            .clipShape(Circle())
-                    }
-                }
-                .padding(.trailing, 12).padding(.bottom, 8)
             }
             .frame(maxWidth: .infinity)
+
+            // ── Action toolbar ──
+            HStack(spacing: 12) {
+                if !unchecked.isEmpty {
+                    Button { Task { await aiCleanup() } } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: isCleaningUp ? "clock" : "wand.and.stars").font(.caption)
+                            Text(isCleaningUp ? "Tidying..." : "AI Tidy").font(.caption).fontWeight(.semibold)
+                        }
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(Color.orange.opacity(0.1)).cornerRadius(10)
+                    }
+                    .disabled(isCleaningUp)
+
+                    Button { printList() } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "printer").font(.caption)
+                            Text("Print").font(.caption).fontWeight(.semibold)
+                        }
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(Color(.systemGray6)).cornerRadius(10)
+                    }
+                }
+                Spacer()
+                Button { showStoreManager = true } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "building.2").font(.caption)
+                        Text("My Stores").font(.caption).fontWeight(.semibold)
+                    }
+                    .foregroundColor(.primary)
+                    .padding(.horizontal, 12).padding(.vertical, 7)
+                    .background(Color(.systemGray6)).cornerRadius(10)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 8)
 
             Picker("View", selection: $viewMode) {
                 Text("🏬 Store").tag(ViewMode.byStore)
