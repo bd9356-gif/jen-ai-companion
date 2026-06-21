@@ -12,7 +12,7 @@ struct MainTabView: View {
                 List(selection: $sidebarSelection) {
                     Label("Home", systemImage: "house.fill").tag(0)
                     Label("Vault", systemImage: "book.closed.fill").tag(1)
-                    Label("R-Box", systemImage: "archivebox.fill").tag(2)
+                    Label("Box", systemImage: "archivebox.fill").tag(2)
                     Label("School", systemImage: "graduationcap.fill").tag(3)
                     Label("More", systemImage: "ellipsis").tag(4)
                 }
@@ -51,7 +51,7 @@ struct MainTabView: View {
                     RecipeCardsView().environmentObject(authManager)
                 }
                 .navigationViewStyle(.stack)
-                .tabItem { Label("R-Box", systemImage: "archivebox.fill") }
+                .tabItem { Label("Box", systemImage: "archivebox.fill") }
                 .tag(2)
 
                 NavigationView {
