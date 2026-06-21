@@ -1,3 +1,4 @@
+
 import UIKit
 import UniformTypeIdentifiers
 
@@ -115,6 +116,12 @@ class ShareViewController: UIViewController {
             provider.loadItem(forTypeIdentifier: urlType, options: nil) { [weak self] item, _ in
                 guard let self = self else { return }
                 guard let url = item as? URL else { self.finish(withURL: nil); return }
+
+                // Silently cancel if this is our own share URL
+                if url.host?.contains("mycompanionapps.com") == true {
+                    self.extensionContext?.cancelRequest(withError: NSError(domain: "com.mycompanionapps.recipe", code: 0))
+                    return
+                }
 
                 let defaults = UserDefaults(suiteName: self.appGroupID)
                 defaults?.set(url.absoluteString, forKey: "pendingImportURL")
