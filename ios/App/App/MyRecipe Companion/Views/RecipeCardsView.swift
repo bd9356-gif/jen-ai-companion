@@ -192,7 +192,7 @@ struct RecipeCardsView: View {
                 .refreshable { await loadCards() }
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarHidden(sizeClass != .regular)
         .sheet(item: $selectedRecipe) { recipe in
             RecipeCardDetailView(recipe: recipe) {
                 Task { await loadCards(); await MainActor.run { refreshID = UUID() } }

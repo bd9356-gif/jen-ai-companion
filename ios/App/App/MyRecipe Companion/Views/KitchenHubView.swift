@@ -105,7 +105,7 @@ struct KitchenHubView: View {
                 }
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarHidden(sizeClass != .regular)
     }
 }
 

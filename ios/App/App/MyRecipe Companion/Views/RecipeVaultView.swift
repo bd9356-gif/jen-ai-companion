@@ -250,7 +250,7 @@ struct RecipeVaultView: View {
                 }
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarHidden(sizeClass != .regular)
         .sheet(item: $selectedRecipe) { recipe in
             NavigationStack {
                 RecipeDetailView(

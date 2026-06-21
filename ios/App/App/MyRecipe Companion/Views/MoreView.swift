@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MoreView: View {
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.horizontalSizeClass) var sizeClass
     @State private var showPaywall = false
     @State private var showImport = false
 
@@ -53,6 +54,6 @@ struct MoreView: View {
                 ImportView().environmentObject(authManager)
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarHidden(sizeClass != .regular)
     }
 }

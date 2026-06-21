@@ -124,7 +124,7 @@ struct ClassroomView: View {
                 LibraryArticlesView().environmentObject(authManager)
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarHidden(sizeClass != .regular)
         .onAppear { mode = startingMode }
     }
 }
