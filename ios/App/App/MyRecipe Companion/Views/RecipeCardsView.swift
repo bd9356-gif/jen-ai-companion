@@ -472,7 +472,7 @@ struct RecipeCardDetailView: View {
     }
 
     @ViewBuilder var specialNotesSection: some View {
-        CollapsibleSection(title: "⭐ Special Notes", isOpen: openSections.contains("notes"), onToggle: { toggleSection("notes") }) {
+        CollapsibleSection(title: "📝 My Notes", isOpen: openSections.contains("notes"), onToggle: { toggleSection("notes") }) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("What makes this recipe special to you.").font(.caption).foregroundColor(.secondary).padding(.horizontal, 20)
                 TextEditor(text: $specialNotes).frame(minHeight: 100).padding(8)

@@ -246,7 +246,7 @@ struct RecipeEditView: View {
                 } header: { Text("Instructions") }
                 footer: { Text("Swipe left to delete · Hold to reorder").font(.caption).foregroundColor(.gray) }
 
-                Section("Notes") {
+                Section("My Notes") {
                     TextEditor(text: $familyNotes).frame(minHeight: 80)
                 }
 

@@ -170,15 +170,16 @@ struct RecipeDetailView: View {
                         actionButtons
                     }
 
-                    // ── Notes ──
+                    // ── My Notes ──
                     if let notes = recipe.family_notes, !notes.isEmpty {
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("📝").font(.caption)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("📝 My Notes")
+                                .font(.caption).fontWeight(.semibold).foregroundColor(.secondary)
                             Text(notes)
                                 .font(.footnote).foregroundColor(.secondary).lineSpacing(3)
                         }
                         .padding(12)
-                        .background(Color.yellow.opacity(0.08))
+                        .background(Color(.systemGray6))
                         .cornerRadius(10)
                     }
                 }
