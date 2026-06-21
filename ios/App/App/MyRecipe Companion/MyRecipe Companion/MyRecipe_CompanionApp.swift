@@ -20,7 +20,6 @@ struct MyRecipeCompanionApp: App {
                 } else if authManager.isLoggedIn {
                     MainTabView(selectedTab: $selectedTab)
                         .environmentObject(authManager)
-                        .onAppear { selectedTab = 0 }
                 } else {
                     LoginView()
                         .environmentObject(authManager)
@@ -68,6 +67,9 @@ struct MyRecipeCompanionApp: App {
                         selectedTab = 4
                     }
                 }
+            }
+            .onChange(of: authManager.isLoggedIn) { _, isLoggedIn in
+                if isLoggedIn { selectedTab = 0 }
             }
         }
     }
