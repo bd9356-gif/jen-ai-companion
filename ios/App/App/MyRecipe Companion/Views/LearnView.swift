@@ -83,6 +83,8 @@ struct LearnView: View {
                 Divider()
             }
             .background(Color(.systemBackground))
+
+            ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 12) {
 
@@ -171,8 +173,6 @@ struct LearnView: View {
                     withAnimation { proxy.scrollTo(messages.count - 1, anchor: .bottom) }
                 }
             }
-
-            // Input bar removed — moved to top
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager).environmentObject(authManager) }
         .task { await loadMonthlyCount() }
