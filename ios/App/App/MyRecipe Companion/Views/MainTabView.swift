@@ -22,7 +22,7 @@ struct MainTabView: View {
             } detail: {
                 NavigationStack(path: $navPath) {
                     switch sidebarSelection ?? 0 {
-                    case 0: KitchenHubView().environmentObject(authManager)
+                    case 0: KitchenHubView(onSidebarSelect: { tag in sidebarSelection = tag }).environmentObject(authManager)
                     case 1: RecipeVaultView().environmentObject(authManager)
                     case 2: RecipeCardsView().environmentObject(authManager)
                     case 3: ClassroomView().environmentObject(authManager)

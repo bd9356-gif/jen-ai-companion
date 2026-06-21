@@ -3,6 +3,7 @@ import SwiftUI
 struct KitchenHubView: View {
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.horizontalSizeClass) var sizeClass
+    var onSidebarSelect: ((Int) -> Void)? = nil
 
     let cream = Color(.systemBackground)
     let cardBg = Color(.systemBackground)
@@ -42,25 +43,25 @@ struct KitchenHubView: View {
                             .padding(.horizontal, 14).padding(.top, 4)
 
                             VStack(spacing: 4) {
-                                NavigationLink(destination: RecipeVaultView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: 1) {
                                     KitchenBar(iconName: "recipe-vault", title: "Recipe Vault", description: "Where recipes begin their journey", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { RecipeVaultView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
 
-                                NavigationLink(destination: RecipeCardsView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: 2) {
                                     KitchenBar(iconName: "recipe-box", title: "Recipe Box", description: "Your keep-forever recipe collection", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { RecipeCardsView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
 
-                                NavigationLink(destination: MealPlanView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: nil) {
                                     KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "What you're thinking of cooking next", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { MealPlanView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
 
-                                NavigationLink(destination: ShoppingListView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: nil) {
                                     KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Ingredients, organized", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { ShoppingListView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
 
-                                NavigationLink(destination: ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: nil) {
                                     KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Recipes you want to share", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
                             }
                             .padding(.horizontal, 14)
                         }
@@ -82,21 +83,21 @@ struct KitchenHubView: View {
                             .padding(.horizontal, 14)
 
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
-                                NavigationLink(destination: ClassroomView(startingMode: .learn).environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: 3) {
                                     HubCard(iconName: "chef-icon", title: "Chef Jennifer", description: "Learn and Practice", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { ClassroomView(startingMode: .learn).environmentObject(authManager).navigationBarBackButtonHidden(true) }
 
-                                NavigationLink(destination: ClassroomView(startingMode: .videos).environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: 3) {
                                     HubCard(iconName: "class-videos", title: "Class Videos", description: "Watch and Learn", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { ClassroomView(startingMode: .videos).environmentObject(authManager).navigationBarBackButtonHidden(true) }
 
-                                NavigationLink(destination: ClassroomView(startingMode: .library).environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: 3) {
                                     HubCard(iconName: "library", title: "Library", description: "Techniques & guides", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { ClassroomView(startingMode: .library).environmentObject(authManager).navigationBarBackButtonHidden(true) }
 
-                                NavigationLink(destination: ClassroomView(startingMode: .notebook).environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                hubLink(tag: 3) {
                                     HubCard(iconName: "my-notebook", title: "My Notebook", description: "Your saved lessons", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                } destination: { ClassroomView(startingMode: .notebook).environmentObject(authManager).navigationBarBackButtonHidden(true) }
                             }
                             .padding(.horizontal, 14)
                         }
@@ -106,6 +107,17 @@ struct KitchenHubView: View {
             }
         }
         .navigationBarHidden(sizeClass != .regular)
+    }
+
+    @ViewBuilder
+    func hubLink<Label: View, Dest: View>(tag: Int?, @ViewBuilder label: () -> Label, @ViewBuilder destination: () -> Dest) -> some View {
+        if sizeClass == .regular, let tag = tag {
+            Button { onSidebarSelect?(tag) } label: { label() }
+                .buttonStyle(.plain)
+        } else {
+            NavigationLink(destination: destination()) { label() }
+                .buttonStyle(.plain)
+        }
     }
 }
 
