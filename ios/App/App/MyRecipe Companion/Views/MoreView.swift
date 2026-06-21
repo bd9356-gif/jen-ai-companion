@@ -11,12 +11,23 @@ struct MoreView: View {
             // iPad — no NavigationView needed, sidebar provides context
             contentView
                 .navigationBarHidden(false)
+                .onAppear { checkPendingImport() }
         } else {
             // iPhone — needs NavigationView for NavigationLink to work
             NavigationView {
                 contentView
+                    .onAppear { checkPendingImport() }
             }
             .navigationViewStyle(.stack)
+        }
+    }
+
+    func checkPendingImport() {
+        let defaults = UserDefaults(suiteName: "group.com.mycompanionapps.recipe")
+        if let url = defaults?.string(forKey: "pendingImportURL"), !url.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                showImport = true
+            }
         }
     }
 
