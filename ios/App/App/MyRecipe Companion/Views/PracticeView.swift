@@ -81,6 +81,8 @@ struct PracticeView: View {
                 Divider()
             }
             .background(Color(.systemBackground))
+
+            ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         if messages.isEmpty {
@@ -160,8 +162,6 @@ struct PracticeView: View {
                     withAnimation { proxy.scrollTo(messages.count - 1, anchor: .bottom) }
                 }
             }
-
-            // Input bar removed — moved to top
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .task { await loadCounts() }
