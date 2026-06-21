@@ -226,7 +226,7 @@ struct RecipeCardTile: View {
                 Image("chef-logo")
                     .resizable().scaledToFit()
                     .frame(height: 130).frame(maxWidth: .infinity)
-                    .background(Color.orange.opacity(0.06))
+                    .background(Color(.systemBackground))
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(recipe.title).font(.caption).fontWeight(.semibold).lineLimit(2).foregroundColor(.primary)
@@ -378,7 +378,7 @@ struct RecipeCardDetailView: View {
             }
         } else {
             Image("chef-logo").resizable().scaledToFit()
-                .frame(maxWidth: .infinity).frame(height: 160).background(Color.orange.opacity(0.06))
+                .frame(maxWidth: .infinity).frame(height: 160).background(Color(.systemBackground))
         }
     }
 
