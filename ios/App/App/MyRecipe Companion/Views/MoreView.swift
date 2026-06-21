@@ -6,7 +6,13 @@ struct MoreView: View {
     @State private var showImport = false
 
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+
+            // ── Banner ──
+            Image("more-hero")
+                .resizable().scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: 100)
+
             List {
                 Section {
                     Button {
@@ -39,7 +45,7 @@ struct MoreView: View {
                     }
                 }
             }
-            .navigationTitle("More")
+            .listStyle(.insetGrouped)
             .sheet(isPresented: $showPaywall) {
                 PaywallView().environmentObject(authManager)
             }
@@ -47,5 +53,6 @@ struct MoreView: View {
                 ImportView().environmentObject(authManager)
             }
         }
+        .navigationBarHidden(true)
     }
 }
