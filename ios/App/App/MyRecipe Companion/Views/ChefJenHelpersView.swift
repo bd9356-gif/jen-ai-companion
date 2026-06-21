@@ -3,6 +3,7 @@ import Supabase
 
 struct ChefJenHelpersView: View {
     let recipe: Recipe
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.dismiss) var dismiss
     var onRecipeUpdated: ((Recipe) -> Void)?
@@ -103,6 +104,8 @@ struct ChefJenHelpersView: View {
                     .padding()
                 }
             }
+            .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+            .frame(maxWidth: .infinity)
             .navigationBarHidden(true)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

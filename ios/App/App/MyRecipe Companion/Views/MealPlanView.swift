@@ -16,6 +16,7 @@ struct MyPick: Identifiable, Codable, Equatable {
 
 struct MealPlanView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     @State private var picks: [MyPick] = []
     @State private var recipes: [Recipe] = []
@@ -254,6 +255,8 @@ struct MealPlanView: View {
             }
             .task { await loadAll() }
             .onDisappear { saveSelection() }
+            .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+            .frame(maxWidth: .infinity)
         }
         .navigationViewStyle(.stack)
     }

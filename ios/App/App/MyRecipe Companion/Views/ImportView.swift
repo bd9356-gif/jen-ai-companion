@@ -3,6 +3,7 @@ import Supabase
 
 struct ImportView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     @State private var importUrl = ""
     @State private var importText = ""
@@ -170,6 +171,8 @@ struct ImportView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             checkPendingImport()
         }
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     func checkPendingImport() {

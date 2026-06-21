@@ -3,6 +3,7 @@ import RevenueCat
 
 struct PaywallView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     @State private var offerings: Offerings? = nil
     @State private var isLoading = true
@@ -140,6 +141,8 @@ struct PaywallView: View {
             }
         }
         .task { await loadOfferings() }
+        .frame(maxWidth: sizeClass == .regular ? 600 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Feature Table

@@ -57,6 +57,7 @@ struct AisleBucket {
 
 struct ShoppingListView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     @State private var items: [ShoppingItem] = []
     @State private var stores: [Store] = []
@@ -167,6 +168,8 @@ struct ShoppingListView: View {
             }
         }
         .navigationBarHidden(true)
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
         .sheet(isPresented: $showStoreManager) {
             StoreManagerView(stores: $stores).environmentObject(authManager)
         }
