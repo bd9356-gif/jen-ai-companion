@@ -13,6 +13,7 @@ struct RecipeEditView: View {
     @State private var description: String
     @State private var category: String
     @State private var instructions: String
+    @State private var instructionSteps: [String]
     @State private var familyNotes: String
     @State private var prepMinutes: String
     @State private var cookMinutes: String
@@ -49,6 +50,10 @@ struct RecipeEditView: View {
         _description = State(initialValue: recipe.description ?? "")
         _category = State(initialValue: recipe.category ?? "")
         _instructions = State(initialValue: recipe.instructions ?? "")
+        let steps = (recipe.instructions ?? "")
+            .components(separatedBy: "\n")
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        _instructionSteps = State(initialValue: steps.isEmpty ? [""] : steps)
         _familyNotes = State(initialValue: recipe.family_notes ?? "")
         _prepMinutes = State(initialValue: recipe.prep_time_minutes.map { String($0) } ?? "")
         _cookMinutes = State(initialValue: recipe.cook_time_minutes.map { String($0) } ?? "")
@@ -191,22 +196,54 @@ struct RecipeEditView: View {
 
                 Section {
                     ForEach($ingredients) { $ingredient in
-                        HStack(spacing: 8) {
-                            TextField("Qty", text: $ingredient.measure).frame(width: 80).foregroundColor(.gray)
-                            TextField("Ingredient", text: $ingredient.name)
+                        HStack(spacing: 10) {
+                            TextField("Amount", text: $ingredient.measure)
+                                .frame(width: 90)
+                                .padding(.vertical, 6).padding(.horizontal, 8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                                .font(.subheadline)
+                            Rectangle().fill(Color(.systemGray4)).frame(width: 1, height: 28)
+                            TextField("Ingredient name", text: $ingredient.name)
+                                .font(.subheadline)
                         }
+                        .padding(.vertical, 2)
                     }
                     .onDelete { indexSet in ingredients.remove(atOffsets: indexSet) }
                     .onMove { from, to in ingredients.move(fromOffsets: from, toOffset: to) }
-                    Button { ingredients.append(EditableIngredient(name: "", measure: "")) } label: {
+                    Button {
+                        ingredients.append(EditableIngredient(name: "", measure: ""))
+                    } label: {
                         Label("Add Ingredient", systemImage: "plus.circle").foregroundColor(.orange)
                     }
                 } header: { Text("Ingredients") }
-                footer: { Text("Swipe left to delete, drag to reorder").font(.caption) }
+                footer: { Text("Swipe left to delete · Hold to reorder").font(.caption).foregroundColor(.gray) }
 
-                Section("Instructions") {
-                    TextEditor(text: $instructions).frame(minHeight: 150)
-                }
+                Section {
+                    ForEach(Array(instructionSteps.enumerated()), id: \.offset) { index, _ in
+                        HStack(alignment: .top, spacing: 10) {
+                            Text("\(index + 1)")
+                                .font(.caption2).fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .frame(width: 22, height: 22)
+                                .background(Color.orange)
+                                .clipShape(Circle())
+                                .padding(.top, 10)
+                            TextField("Step \(index + 1)", text: $instructionSteps[index], axis: .vertical)
+                                .lineLimit(3...8)
+                                .font(.subheadline)
+                                .padding(.vertical, 6)
+                        }
+                    }
+                    .onDelete { indexSet in instructionSteps.remove(atOffsets: indexSet) }
+                    .onMove { from, to in instructionSteps.move(fromOffsets: from, toOffset: to) }
+                    Button {
+                        instructionSteps.append("")
+                    } label: {
+                        Label("Add Step", systemImage: "plus.circle").foregroundColor(.orange)
+                    }
+                } header: { Text("Instructions") }
+                footer: { Text("Swipe left to delete · Hold to reorder").font(.caption).foregroundColor(.gray) }
 
                 Section("Notes") {
                     TextEditor(text: $familyNotes).frame(minHeight: 80)
@@ -336,7 +373,7 @@ struct RecipeEditView: View {
                 "title": .string(title),
                 "description": .string(description),
                 "category": .string(category),
-                "instructions": .string(instructions),
+                "instructions": .string(instructionSteps.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }.joined(separator: "\n")),
                 "family_notes": .string(familyNotes),
                 "prep_time_minutes": .string(prepMinutes.isEmpty ? "0" : prepMinutes),
                 "cook_time_minutes": .string(cookMinutes.isEmpty ? "0" : cookMinutes),
@@ -355,7 +392,7 @@ struct RecipeEditView: View {
             }
             let updated = Recipe(
                 id: recipe.id, title: title, description: description,
-                ingredients: updatedIngredients, instructions: instructions,
+                ingredients: updatedIngredients, instructions: instructionSteps.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }.joined(separator: "\n"),
                 photo_url: finalPhotoUrl, source_url: recipe.source_url,
                 family_notes: familyNotes, created_at: recipe.created_at,
                 user_id: recipe.user_id, deleted_at: recipe.deleted_at,

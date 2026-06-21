@@ -205,6 +205,9 @@ struct RecipeDetailView: View {
                             .foregroundColor(isFavorite ? .red : .gray)
                             .font(.system(size: 16))
                     }
+                    Button { printRecipe() } label: {
+                        Image(systemName: "printer").font(.system(size: 16))
+                    }
                     Button { shareRecipe() } label: {
                         Image(systemName: "square.and.arrow.up").font(.system(size: 16))
                     }
@@ -437,6 +440,58 @@ struct RecipeDetailView: View {
         } catch {
             await MainActor.run { isInShareQueue = !newValue }
         }
+    }
+
+    func printRecipe() {
+        let formatter = UIMarkupTextPrintFormatter(markupText: buildPrintHTML())
+        let printController = UIPrintInteractionController.shared
+        let printInfo = UIPrintInfo(dictionary: nil)
+        printInfo.jobName = recipe.title
+        printInfo.outputType = .general
+        printController.printInfo = printInfo
+        printController.printFormatter = formatter
+        printController.present(animated: true)
+    }
+
+    func buildPrintHTML() -> String {
+        var html = """
+        <html><head><style>
+        body { font-family: Georgia, serif; max-width: 700px; margin: 40px auto; padding: 0 20px; color: #333; }
+        h1 { font-size: 24px; margin-bottom: 4px; }
+        .meta { color: #888; font-size: 13px; margin-bottom: 16px; }
+        h2 { font-size: 16px; color: #C8401A; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-top: 24px; }
+        ul { padding-left: 20px; } li { margin-bottom: 6px; font-size: 14px; }
+        ol { padding-left: 20px; } ol li { margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+        .notes { background: #fffbea; padding: 12px; border-radius: 6px; font-size: 13px; margin-top: 20px; }
+        </style></head><body>
+        <h1>\(recipe.title)</h1>
+        """
+        var meta: [String] = []
+        if let prep = recipe.prep_time_minutes { meta.append("Prep: \(prep) min") }
+        if let cook = recipe.cook_time_minutes { meta.append("Cook: \(cook) min") }
+        if let s = recipe.servings { meta.append("Serves: \(s)") }
+        if !meta.isEmpty { html += "<p class='meta'>\(meta.joined(separator: " · "))</p>" }
+        if let desc = recipe.description, !desc.isEmpty { html += "<p>\(desc)</p>" }
+        if let ings = recipe.ingredients, !ings.isEmpty {
+            html += "<h2>Ingredients</h2><ul>"
+            for ing in ings {
+                let qty = ing.measure ?? ing.amount ?? ""
+                let name = ing.name ?? ""
+                html += "<li>\(qty.isEmpty ? "" : "\(qty) ")\(name)</li>"
+            }
+            html += "</ul>"
+        }
+        if let instructions = recipe.instructions, !instructions.isEmpty {
+            let steps = instructions.components(separatedBy: "\n").filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            html += "<h2>Instructions</h2><ol>"
+            for step in steps { html += "<li>\(step)</li>" }
+            html += "</ol>"
+        }
+        if let notes = recipe.family_notes, !notes.isEmpty {
+            html += "<div class='notes'>📝 \(notes)</div>"
+        }
+        html += "</body></html>"
+        return html
     }
 
     func shareRecipe() {
