@@ -65,6 +65,9 @@ struct MyRecipeCompanionApp: App {
                 if defaults?.string(forKey: "pendingImportURL") != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         selectedTab = 4
+                        // Clear after use so it doesn't trigger again
+                        defaults?.removeObject(forKey: "pendingImportURL")
+                        defaults?.synchronize()
                     }
                 }
             }
