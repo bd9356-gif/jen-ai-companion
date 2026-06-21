@@ -7,6 +7,20 @@ struct MoreView: View {
     @State private var showImport = false
 
     var body: some View {
+        if sizeClass == .regular {
+            // iPad — no NavigationView needed, sidebar provides context
+            contentView
+                .navigationBarHidden(false)
+        } else {
+            // iPhone — needs NavigationView for NavigationLink to work
+            NavigationView {
+                contentView
+            }
+            .navigationViewStyle(.stack)
+        }
+    }
+
+    var contentView: some View {
         VStack(spacing: 0) {
 
             // ── Banner ──
@@ -16,9 +30,7 @@ struct MoreView: View {
 
             List {
                 Section {
-                    Button {
-                        showImport = true
-                    } label: {
+                    Button { showImport = true } label: {
                         Label("Bring In Recipe", systemImage: "square.and.arrow.down")
                     }
                 }
@@ -47,6 +59,7 @@ struct MoreView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .navigationBarHidden(true)
             .sheet(isPresented: $showPaywall) {
                 PaywallView().environmentObject(authManager)
             }
@@ -54,6 +67,5 @@ struct MoreView: View {
                 ImportView().environmentObject(authManager)
             }
         }
-        .navigationBarHidden(sizeClass != .regular)
     }
 }
