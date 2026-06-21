@@ -5,6 +5,7 @@ import Supabase
 struct EmptyParams: Encodable {}
 
 struct ProfileView: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthManager
     @State private var showPaywall = false
@@ -119,6 +120,8 @@ struct ProfileView: View {
         }
         }
         .navigationBarHidden(true)
+        .frame(maxWidth: sizeClass == .regular ? 600 : .infinity)
+        .frame(maxWidth: .infinity)
         .sheet(isPresented: $showPaywall) {
             PaywallView().environmentObject(authManager)
         }

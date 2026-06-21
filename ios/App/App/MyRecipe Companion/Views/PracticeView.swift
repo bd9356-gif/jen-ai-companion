@@ -2,7 +2,9 @@ import SwiftUI
 import Supabase
 
 struct PracticeView: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.horizontalSizeClass) var sizeClass
     @State private var messages: [(role: String, content: String)] = []
     @State private var inputText = ""
     @State private var isLoading = false
@@ -165,6 +167,10 @@ struct PracticeView: View {
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .task { await loadCounts() }
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     func loadCounts() async {

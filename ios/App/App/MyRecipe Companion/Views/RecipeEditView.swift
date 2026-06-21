@@ -3,6 +3,7 @@ import Supabase
 import PhotosUI
 
 struct RecipeEditView: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
     let recipe: Recipe
     var onSave: (Recipe) -> Void
     var onDelete: ((UUID) -> Void)? = nil
@@ -311,6 +312,8 @@ struct RecipeEditView: View {
                 guard let newItem else { return }
                 Task { await handlePhotoPick(newItem) }
             }
+            .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+            .frame(maxWidth: .infinity)
         }
     }
 

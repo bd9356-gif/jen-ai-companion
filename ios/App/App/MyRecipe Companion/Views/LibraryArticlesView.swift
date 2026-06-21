@@ -12,6 +12,7 @@ struct RecipeArticle: Identifiable, Codable {
 }
 
 struct LibraryArticlesView: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     @State private var articles: [RecipeArticle] = []
     @State private var isLoading = true
@@ -151,6 +152,8 @@ struct LibraryArticlesView: View {
             ArticleDetailView(article: article).environmentObject(authManager)
         }
         .task { await loadArticles() }
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     func topicLabel(_ topic: String) -> String {

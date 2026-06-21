@@ -2,7 +2,10 @@ import SwiftUI
 import Supabase
 
 struct LearnView: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.horizontalSizeClass) var sizeClass
+    @Environment(\.horizontalSizeClass) var sizeClass
     @State private var messages: [(role: String, content: String)] = []
     @State private var inputText = ""
     @State private var isLoading = false
@@ -176,6 +179,10 @@ struct LearnView: View {
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager).environmentObject(authManager) }
         .task { await loadMonthlyCount() }
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     func loadMonthlyCount() async {

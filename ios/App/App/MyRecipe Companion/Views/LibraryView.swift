@@ -2,6 +2,7 @@ import SwiftUI
 import Supabase
 
 struct LibraryView: View {
+    @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
     @State private var notes: [LibraryNote] = []
     @State private var savedVideos: [ChefVideo] = []
@@ -209,6 +210,8 @@ struct LibraryView: View {
         }
         .sheet(item: $selectedNote) { note in NoteDetailView(note: note) }
         .task { await loadAll() }
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     func loadAll() async {
