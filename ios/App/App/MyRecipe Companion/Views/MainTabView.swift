@@ -36,7 +36,7 @@ struct MainTabView: View {
         } else {
             TabView(selection: $selectedTab) {
                 NavigationView {
-                    KitchenHubView().environmentObject(authManager)
+                    KitchenHubView(onTabSelect: { tab in selectedTab = tab }).environmentObject(authManager)
                 }
                 .navigationViewStyle(.stack)
                 .tabItem { Label("Home", systemImage: "house.fill") }

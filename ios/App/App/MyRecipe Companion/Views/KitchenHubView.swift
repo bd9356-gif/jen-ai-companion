@@ -4,6 +4,7 @@ struct KitchenHubView: View {
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.horizontalSizeClass) var sizeClass
     var onSidebarSelect: ((Int) -> Void)? = nil
+    var onTabSelect: ((Int) -> Void)? = nil
 
     let cream = Color(.systemBackground)
     let cardBg = Color(.systemBackground)
@@ -43,25 +44,36 @@ struct KitchenHubView: View {
                             .padding(.horizontal, 14).padding(.top, 4)
 
                             VStack(spacing: 4) {
-                                hubLink(tag: 1) {
+                                // Vault — switch tab/sidebar
+                                Button {
+                                    if sizeClass == .regular { onSidebarSelect?(1) }
+                                    else { onTabSelect?(1) }
+                                } label: {
                                     KitchenBar(iconName: "recipe-vault", title: "Recipe Vault", description: "Where recipes begin their journey", color: orange, cardBg: cardBg)
-                                } destination: { RecipeVaultView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
 
-                                hubLink(tag: 2) {
+                                // Box — switch tab/sidebar
+                                Button {
+                                    if sizeClass == .regular { onSidebarSelect?(2) }
+                                    else { onTabSelect?(2) }
+                                } label: {
                                     KitchenBar(iconName: "recipe-box", title: "Recipe Box", description: "Your keep-forever recipe collection", color: orange, cardBg: cardBg)
-                                } destination: { RecipeCardsView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
 
-                                hubLink(tag: nil) {
+                                // Meal Ideas — push (not a tab)
+                                NavigationLink(destination: MealPlanView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
                                     KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "What you're thinking of cooking next", color: orange, cardBg: cardBg)
-                                } destination: { MealPlanView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
 
-                                hubLink(tag: nil) {
+                                // Shopping List — push (not a tab)
+                                NavigationLink(destination: ShoppingListView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
                                     KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Ingredients, organized", color: orange, cardBg: cardBg)
-                                } destination: { ShoppingListView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
 
-                                hubLink(tag: nil) {
+                                // Social Share — push (not a tab)
+                                NavigationLink(destination: ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
                                     KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Recipes you want to share", color: orange, cardBg: cardBg)
-                                } destination: { ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
                             }
                             .padding(.horizontal, 14)
                         }
@@ -83,21 +95,33 @@ struct KitchenHubView: View {
                             .padding(.horizontal, 14)
 
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
-                                hubLink(tag: 3) {
+                                Button {
+                                    if sizeClass == .regular { onSidebarSelect?(3) }
+                                    else { onTabSelect?(3) }
+                                } label: {
                                     HubCard(iconName: "chef-icon", title: "Chef Jennifer", description: "Learn and Practice", accentColor: blue, cardBg: cardBg)
-                                } destination: { ClassroomView(startingMode: .learn).environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
 
-                                hubLink(tag: 3) {
+                                Button {
+                                    if sizeClass == .regular { onSidebarSelect?(3) }
+                                    else { onTabSelect?(3) }
+                                } label: {
                                     HubCard(iconName: "class-videos", title: "Class Videos", description: "Watch and Learn", accentColor: blue, cardBg: cardBg)
-                                } destination: { ClassroomView(startingMode: .videos).environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
 
-                                hubLink(tag: 3) {
+                                Button {
+                                    if sizeClass == .regular { onSidebarSelect?(3) }
+                                    else { onTabSelect?(3) }
+                                } label: {
                                     HubCard(iconName: "library", title: "Library", description: "Techniques & guides", accentColor: blue, cardBg: cardBg)
-                                } destination: { ClassroomView(startingMode: .library).environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
 
-                                hubLink(tag: 3) {
+                                Button {
+                                    if sizeClass == .regular { onSidebarSelect?(3) }
+                                    else { onTabSelect?(3) }
+                                } label: {
                                     HubCard(iconName: "my-notebook", title: "My Notebook", description: "Your saved lessons", accentColor: blue, cardBg: cardBg)
-                                } destination: { ClassroomView(startingMode: .notebook).environmentObject(authManager).navigationBarBackButtonHidden(true) }
+                                }.buttonStyle(.plain)
                             }
                             .padding(.horizontal, 14)
                         }
@@ -107,17 +131,6 @@ struct KitchenHubView: View {
             }
         }
         .navigationBarHidden(sizeClass != .regular)
-    }
-
-    @ViewBuilder
-    func hubLink<Label: View, Dest: View>(tag: Int?, @ViewBuilder label: () -> Label, @ViewBuilder destination: () -> Dest) -> some View {
-        if sizeClass == .regular, let tag = tag {
-            Button { onSidebarSelect?(tag) } label: { label() }
-                .buttonStyle(.plain)
-        } else {
-            NavigationLink(destination: destination()) { label() }
-                .buttonStyle(.plain)
-        }
     }
 }
 
