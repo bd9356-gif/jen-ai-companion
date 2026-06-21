@@ -75,29 +75,34 @@ struct MealPlanView: View {
                                     .clipShape(Circle())
                             }
                             .padding(.leading, 12).padding(.bottom, 8)
-                            HStack {
-                                Spacer()
-                                if !selectionOrder.isEmpty {
-                                    Button { sortBySelection() } label: {
-                                        Image(systemName: "arrow.up.arrow.down.circle")
-                                            .font(.system(size: 17, weight: .semibold))
-                                            .foregroundColor(.orange)
-                                            .padding(8)
-                                            .background(Color(.systemBackground).opacity(0.9))
-                                            .clipShape(Circle())
+                        }
+                        .frame(maxWidth: .infinity)
+
+                        // ── Action toolbar ──
+                        HStack(spacing: 12) {
+                            if !selectionOrder.isEmpty {
+                                Button { sortBySelection() } label: {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "arrow.up.arrow.down").font(.caption)
+                                        Text("Sort").font(.caption).fontWeight(.semibold)
                                     }
-                                }
-                                Button { showAddPick = true } label: {
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 17, weight: .semibold))
-                                        .foregroundColor(.orange)
-                                        .padding(8)
-                                        .background(Color(.systemBackground).opacity(0.9))
-                                        .clipShape(Circle())
+                                    .foregroundColor(.primary)
+                                    .padding(.horizontal, 12).padding(.vertical, 7)
+                                    .background(Color(.systemGray6)).cornerRadius(10)
                                 }
                             }
-                            .padding(.trailing, 12).padding(.bottom, 8)
+                            Spacer()
+                            Button { showAddPick = true } label: {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "plus").font(.caption)
+                                    Text("Add Meal").font(.caption).fontWeight(.semibold)
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12).padding(.vertical, 7)
+                                .background(Color.orange).cornerRadius(10)
+                            }
                         }
+                        .padding(.horizontal, 16).padding(.vertical, 8)
                         .frame(maxWidth: .infinity)
 
                         Divider()
