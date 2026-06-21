@@ -291,7 +291,7 @@ struct RecipeGridTile: View {
                     Image("chef-logo")
                         .resizable().scaledToFit()
                         .frame(height: 110).frame(maxWidth: .infinity)
-                        .background(Color.orange.opacity(0.06))
+                        .background(Color(.systemBackground))
                 }
                 if recipe.is_favorite == true {
                     Image(systemName: "heart.fill")
