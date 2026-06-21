@@ -30,6 +30,7 @@ struct MainTabView: View {
                     default: KitchenHubView().environmentObject(authManager)
                     }
                 }
+                .id(sidebarSelection)
             }
             .accentColor(.orange)
             .onChange(of: sidebarSelection) { _, _ in
