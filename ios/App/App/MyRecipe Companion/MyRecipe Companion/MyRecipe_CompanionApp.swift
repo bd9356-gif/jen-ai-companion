@@ -20,6 +20,7 @@ struct MyRecipeCompanionApp: App {
                 } else if authManager.isLoggedIn {
                     MainTabView(selectedTab: $selectedTab)
                         .environmentObject(authManager)
+                        .onAppear { selectedTab = 0 }
                 } else {
                     LoginView()
                         .environmentObject(authManager)
@@ -48,12 +49,12 @@ struct MyRecipeCompanionApp: App {
                             defaults?.synchronize()
                             await MainActor.run {
                                 authManager.pendingImportURL = urlString
-                                selectedTab = 2
+                                selectedTab = 4
                             }
                         } else {
                             // Share Extension open — URL already in UserDefaults, just switch tab
                             await MainActor.run {
-                                selectedTab = 2
+                                selectedTab = 4
                             }
                         }
                     }
@@ -64,7 +65,7 @@ struct MyRecipeCompanionApp: App {
                 let defaults = UserDefaults(suiteName: "group.com.mycompanionapps.recipe")
                 if defaults?.string(forKey: "pendingImportURL") != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        selectedTab = 2
+                        selectedTab = 4
                     }
                 }
             }

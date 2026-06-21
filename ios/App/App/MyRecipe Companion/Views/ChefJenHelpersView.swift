@@ -266,7 +266,7 @@ struct ChefJenHelpersView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     if let desc = result.description, !desc.isEmpty {
                         Text(desc).font(.subheadline).italic().foregroundColor(.secondary)
-                            .padding(12).background(Color.orange.opacity(0.08)).cornerRadius(10)
+                            .padding(12).background(Color(.systemGray6)).cornerRadius(10)
                     }
                     HStack(spacing: 12) {
                         Button("Save as New") { Task { await saveTransformAsNew(result) } }
@@ -314,7 +314,7 @@ struct ChefJenHelpersView: View {
                         .background(Color.orange).cornerRadius(8)
                 }
                 .padding(10)
-                .background(Color.orange.opacity(0.06))
+                .background(Color(.systemGray6))
                 .cornerRadius(10)
             }
 
