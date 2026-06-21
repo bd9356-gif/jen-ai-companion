@@ -133,6 +133,7 @@ class AuthManager: NSObject, ObservableObject {
                     self.isLoading = false
                 }
                 await checkSubscription()
+                await seedNewUserIfNeeded(userId: session.user.id)
             } catch {
                 await MainActor.run {
                     self.isLoggedIn = false
@@ -181,8 +182,22 @@ class AuthManager: NSObject, ObservableObject {
             self.user = session.user
             self.isLoggedIn = true
             await checkSubscription()
+            await seedNewUserIfNeeded(userId: session.user.id)
         } catch {
             print("Apple sign in error:", error)
+        }
+    }
+
+    func seedNewUserIfNeeded(userId: UUID) async {
+        // Use UserDefaults to avoid calling seed multiple times
+        let key = "seeded_\(userId.uuidString)"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        do {
+            try await supabase.rpc("seed_new_user", params: ["p_user_id": userId.uuidString]).execute()
+            UserDefaults.standard.set(true, forKey: key)
+            print("seedNewUserIfNeeded: seeded recipes for \(userId)")
+        } catch {
+            print("seedNewUserIfNeeded error:", error)
         }
     }
 
