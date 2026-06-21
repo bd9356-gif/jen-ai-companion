@@ -54,24 +54,10 @@ struct ClassroomView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // ── Banner + Back ──
-            ZStack(alignment: .bottomLeading) {
-                Image("cooking-school")
-                    .resizable().scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: 100)
-                if sizeClass != .regular {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .padding(8)
-                            .background(Color(.systemBackground).opacity(0.9))
-                            .clipShape(Circle())
-                    }
-                    .padding(.leading, 12).padding(.bottom, 8)
-                }
-            }
-            .frame(maxWidth: .infinity)
+            // ── Banner ──
+            Image("cooking-school")
+                .resizable().scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: 100)
 
             // ── Mode strip ──
             HStack(spacing: 12) {

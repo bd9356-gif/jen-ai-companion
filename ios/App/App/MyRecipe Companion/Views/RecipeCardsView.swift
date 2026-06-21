@@ -61,22 +61,10 @@ struct RecipeCardsView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // ── Banner + Back ──
-            ZStack(alignment: .bottomLeading) {
-                Image("recipe-box-hero")
-                    .resizable().scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: 100)
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
-                        .padding(8)
-                        .background(Color(.systemBackground).opacity(0.9))
-                        .clipShape(Circle())
-                }
-                .padding(.leading, 12).padding(.bottom, 8)
-            }
-            .frame(maxWidth: .infinity)
+            // ── Banner ──
+            Image("recipe-box-hero")
+                .resizable().scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: 100)
 
             Divider()
 
