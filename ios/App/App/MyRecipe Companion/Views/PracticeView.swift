@@ -54,7 +54,33 @@ struct PracticeView: View {
                 .background(atLimit ? Color.red.opacity(0.06) : Color.orange.opacity(0.06))
             }
 
-            ScrollViewReader { proxy in
+            // ── Input bar (top) ──
+            VStack(spacing: 0) {
+                HStack(spacing: 10) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "flame").font(.caption).foregroundColor(.orange)
+                        TextField("What do you want to make?", text: $inputText, axis: .vertical)
+                            .font(.footnote).lineLimit(1...4)
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 10)
+                    .background(Color(.systemGray6)).cornerRadius(22)
+
+                    Button {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        Task { await sendMessage() }
+                    } label: {
+                        Image(systemName: "arrow.up")
+                            .font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+                            .frame(width: 34, height: 34)
+                            .background(inputText.trimmingCharacters(in: .whitespaces).isEmpty || atLimit ? Color.gray.opacity(0.4) : Color.orange)
+                            .clipShape(Circle())
+                    }
+                    .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isLoading || atLimit)
+                }
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                Divider()
+            }
+            .background(Color(.systemBackground))
                 ScrollView {
                     LazyVStack(spacing: 12) {
                         if messages.isEmpty {
@@ -135,32 +161,7 @@ struct PracticeView: View {
                 }
             }
 
-            VStack(spacing: 0) {
-                Divider()
-                HStack(spacing: 10) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "flame").font(.caption).foregroundColor(.orange)
-                        TextField("What do you want to make?", text: $inputText, axis: .vertical)
-                            .font(.footnote).lineLimit(1...4)
-                    }
-                    .padding(.horizontal, 14).padding(.vertical, 10)
-                    .background(Color(.systemGray6)).cornerRadius(22)
-
-                    Button {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        Task { await sendMessage() }
-                    } label: {
-                        Image(systemName: "arrow.up")
-                            .font(.system(size: 14, weight: .bold)).foregroundColor(.white)
-                            .frame(width: 34, height: 34)
-                            .background(inputText.trimmingCharacters(in: .whitespaces).isEmpty || atLimit ? Color.gray.opacity(0.4) : Color.orange)
-                            .clipShape(Circle())
-                    }
-                    .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isLoading || atLimit)
-                }
-                .padding(.horizontal, 16).padding(.vertical, 10)
-            }
-            .background(Color(.systemBackground))
+            // Input bar removed — moved to top
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .task { await loadCounts() }

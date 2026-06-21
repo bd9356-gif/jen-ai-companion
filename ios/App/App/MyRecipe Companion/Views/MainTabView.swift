@@ -10,9 +10,9 @@ struct MainTabView: View {
         if sizeClass == .regular {
             NavigationSplitView {
                 List(selection: $sidebarSelection) {
-                    Label("Kitchen", systemImage: "house.fill").tag(0)
+                    Label("Home", systemImage: "house.fill").tag(0)
                     Label("Vault", systemImage: "book.closed.fill").tag(1)
-                    Label("Import", systemImage: "square.and.arrow.down").tag(2)
+                    Label("R-Box", systemImage: "archivebox.fill").tag(2)
                     Label("School", systemImage: "graduationcap.fill").tag(3)
                     Label("More", systemImage: "ellipsis").tag(4)
                 }
@@ -23,7 +23,7 @@ struct MainTabView: View {
                     switch sidebarSelection ?? 0 {
                     case 0: KitchenHubView().environmentObject(authManager)
                     case 1: RecipeVaultView().environmentObject(authManager)
-                    case 2: ImportView().environmentObject(authManager)
+                    case 2: RecipeCardsView().environmentObject(authManager)
                     case 3: ClassroomView().environmentObject(authManager)
                     case 4: MoreView().environmentObject(authManager)
                     default: KitchenHubView().environmentObject(authManager)
@@ -37,7 +37,7 @@ struct MainTabView: View {
                     KitchenHubView().environmentObject(authManager)
                 }
                 .navigationViewStyle(.stack)
-                .tabItem { Label("Kitchen", systemImage: "house.fill") }
+                .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
                 NavigationView {
@@ -47,9 +47,12 @@ struct MainTabView: View {
                 .tabItem { Label("Vault", systemImage: "book.closed.fill") }
                 .tag(1)
 
-                ImportView()
-                    .tabItem { Label("Import", systemImage: "square.and.arrow.down") }
-                    .tag(2)
+                NavigationView {
+                    RecipeCardsView().environmentObject(authManager)
+                }
+                .navigationViewStyle(.stack)
+                .tabItem { Label("R-Box", systemImage: "archivebox.fill") }
+                .tag(2)
 
                 NavigationView {
                     ClassroomView().environmentObject(authManager)
