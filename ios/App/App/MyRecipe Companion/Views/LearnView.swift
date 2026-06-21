@@ -4,8 +4,6 @@ import Supabase
 struct LearnView: View {
     @Environment(\.horizontalSizeClass) var sizeClass
     @EnvironmentObject var authManager: AuthManager
-    @Environment(\.horizontalSizeClass) var sizeClass
-    @Environment(\.horizontalSizeClass) var sizeClass
     @State private var messages: [(role: String, content: String)] = []
     @State private var inputText = ""
     @State private var isLoading = false
