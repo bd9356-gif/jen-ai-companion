@@ -19,16 +19,16 @@ struct PaywallView: View {
                     // ── Hero ──
                     ZStack {
                         LinearGradient(
-                            colors: [Color.orange.opacity(0.9), Color.orange.opacity(0.6)],
+                            colors: [Color(red: 0.78, green: 0.25, blue: 0.10), Color.orange.opacity(0.8)],
                             startPoint: .topLeading, endPoint: .bottomTrailing
                         )
                         VStack(spacing: 10) {
                             Text("👩‍🍳")
                                 .font(.system(size: 64))
                                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                            Text("Chef Jen is waiting")
+                            Text("Unlock Your Full Kitchen")
                                 .font(.title2).fontWeight(.bold).foregroundColor(.white)
-                            Text("Unlock your full kitchen companion")
+                            Text("Everything Chef Jen has to offer")
                                 .font(.subheadline).foregroundColor(.white.opacity(0.85))
                         }
                         .padding(.vertical, 32)
@@ -46,6 +46,7 @@ struct PaywallView: View {
                                 TierPill(
                                     label: "Premium",
                                     price: "$34.99/yr",
+                                    subprice: "Just $2.92/mo",
                                     badge: nil,
                                     isSelected: selectedTier == "premium",
                                     color: .orange
@@ -53,10 +54,11 @@ struct PaywallView: View {
 
                                 TierPill(
                                     label: "Pro",
-                                    price: "$59.99/yr",
+                                    price: "$49.99/yr",
+                                    subprice: "Just $4.17/mo",
                                     badge: "Best Value",
                                     isSelected: selectedTier == "pro",
-                                    color: .purple
+                                    color: Color(red: 0.5, green: 0.2, blue: 0.8)
                                 ) { selectedTier = "pro" }
                             }
                         }
@@ -76,13 +78,13 @@ struct PaywallView: View {
                                         if isPurchasing {
                                             ProgressView().tint(.white)
                                         } else {
-                                            Text(selectedTier == "pro" ? "Get Pro — $59.99/yr" : "Get Premium — $34.99/yr")
+                                            Text(selectedTier == "pro" ? "Get Pro — $49.99/yr" : "Get Premium — $34.99/yr")
                                                 .fontWeight(.bold)
                                         }
                                     }
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16)
-                                    .background(selectedTier == "pro" ? Color.purple : Color.orange)
+                                    .background(selectedTier == "pro" ? Color(red: 0.5, green: 0.2, blue: 0.8) : Color.orange)
                                     .foregroundColor(.white)
                                     .cornerRadius(14)
                                 }
@@ -111,7 +113,7 @@ struct PaywallView: View {
                         VStack(spacing: 6) {
                             Text("Always free")
                                 .font(.caption).fontWeight(.semibold).foregroundColor(.secondary)
-                            Text("Recipe Vault • Meal Plan • Chef TV • 3 imports/month")
+                            Text("Recipe Vault (15) • Meal Ideas • Shopping List • Chef TV • 3 imports/month")
                                 .font(.caption2).foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
                         }
@@ -130,9 +132,7 @@ struct PaywallView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
+                    Button { dismiss() } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.white)
                             .font(.system(size: 22))
@@ -157,7 +157,7 @@ struct PaywallView: View {
                     .foregroundColor(selectedTier == "premium" ? .orange : .gray)
                     .frame(width: 72, alignment: .center)
                 Text("Pro").font(.caption).fontWeight(.semibold)
-                    .foregroundColor(selectedTier == "pro" ? .purple : .gray)
+                    .foregroundColor(selectedTier == "pro" ? Color(red: 0.5, green: 0.2, blue: 0.8) : .gray)
                     .frame(width: 56, alignment: .center)
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
@@ -169,24 +169,40 @@ struct PaywallView: View {
                     label: "Recipe imports", free: "3/mo", premium: "Unlimited", pro: "Unlimited",
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
+                FeatureRow(icon: "books.vertical",
+                    label: "Recipe Vault", free: "15 max", premium: "Unlimited", pro: "Unlimited",
+                    selected: selectedTier)
+                Divider().padding(.leading, 14)
+                FeatureRow(icon: "archivebox.fill",
+                    label: "Recipe Box + Memories", free: "3 cards", premium: "Unlimited", pro: "Unlimited",
+                    selected: selectedTier)
+                Divider().padding(.leading, 14)
+                FeatureRow(icon: "photo.fill",
+                    label: "Memory Photos", free: "—", premium: "✓", pro: "✓",
+                    selected: selectedTier)
+                Divider().padding(.leading, 14)
                 FeatureRow(icon: "sparkles",
-                    label: "Chef Jen AI", free: "2/mo", premium: "5/mo", pro: "Unlimited",
-                    selected: selectedTier)
-                Divider().padding(.leading, 14)
-                FeatureRow(icon: "camera.fill",
-                    label: "AI food photos", free: "—", premium: "5/mo", pro: "Unlimited",
-                    selected: selectedTier)
-                Divider().padding(.leading, 14)
-                FeatureRow(icon: "rectangle.on.rectangle",
-                    label: "Recipe Box cards", free: "—", premium: "✓", pro: "✓",
+                    label: "Chef Jen AI", free: "3 uses", premium: "5/mo", pro: "Unlimited",
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "wand.and.stars",
-                    label: "Kitchen Helpers", free: "—", premium: "✓", pro: "✓",
+                    label: "Kitchen Helpers", free: "1 use", premium: "✓", pro: "✓",
+                    selected: selectedTier)
+                Divider().padding(.leading, 14)
+                FeatureRow(icon: "graduationcap.fill",
+                    label: "Learn & Practice", free: "3 uses", premium: "✓", pro: "✓",
+                    selected: selectedTier)
+                Divider().padding(.leading, 14)
+                FeatureRow(icon: "printer.fill",
+                    label: "Print recipes", free: "—", premium: "✓", pro: "✓",
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "square.and.arrow.up",
                     label: "Social sharing", free: "—", premium: "✓", pro: "✓",
+                    selected: selectedTier)
+                Divider().padding(.leading, 14)
+                FeatureRow(icon: "camera.fill",
+                    label: "AI food photos", free: "—", premium: "—", pro: "✓",
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "bolt.fill",
@@ -211,12 +227,6 @@ struct PaywallView: View {
     }
 
     func purchase(tier: String) async {
-        // Debug - print available packages
-        if let offering = offerings?.offering(identifier: "default") {
-            print("🛒 Available packages:", offering.availablePackages.map { $0.identifier })
-        } else {
-            print("🛒 No default offering found")
-        }
         isPurchasing = true; errorMessage = ""
         let offeringId = "default"
         let packageId = tier == "pro" ? "annual_pro" : "annual_premium"
@@ -251,6 +261,7 @@ struct PaywallView: View {
 struct TierPill: View {
     let label: String
     let price: String
+    let subprice: String
     let badge: String?
     let isSelected: Bool
     let color: Color
@@ -273,7 +284,10 @@ struct TierPill: View {
                     .font(.subheadline).fontWeight(.bold)
                     .foregroundColor(isSelected ? color : .primary)
                 Text(price)
-                    .font(.caption).foregroundColor(isSelected ? color : .gray)
+                    .font(.caption).fontWeight(.semibold)
+                    .foregroundColor(isSelected ? color : .gray)
+                Text(subprice)
+                    .font(.caption2).foregroundColor(.gray)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
@@ -310,7 +324,7 @@ struct FeatureRow: View {
                 .frame(width: 72, alignment: .center)
             Text(pro)
                 .font(.caption).fontWeight(.medium)
-                .foregroundColor(selected == "pro" ? .purple : .secondary)
+                .foregroundColor(selected == "pro" ? Color(red: 0.5, green: 0.2, blue: 0.8) : .secondary)
                 .frame(width: 56, alignment: .center)
         }
         .padding(.horizontal, 14).padding(.vertical, 10)
