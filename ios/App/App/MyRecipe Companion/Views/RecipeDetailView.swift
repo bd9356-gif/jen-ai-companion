@@ -20,6 +20,7 @@ struct RecipeDetailView: View {
     @State private var showMiseEnPlace = false
     @State private var mealIdeaAdded = false
     @State private var instructionsOpen = false
+    @State private var showPaywall = false
     @Environment(\.dismiss) var dismiss
 
     var hasDetailInfo: Bool {
@@ -208,14 +209,25 @@ struct RecipeDetailView: View {
                     }
                     Button { printRecipe() } label: {
                         Image(systemName: "printer").font(.system(size: 16))
+                            .foregroundColor(authManager.subscriptionTier == .free ? .gray : .primary)
+                    }
+                    .disabled(authManager.subscriptionTier == .free)
+                    .onTapGesture {
+                        if authManager.subscriptionTier == .free { showPaywall = true }
                     }
                     Button { shareRecipe() } label: {
                         Image(systemName: "square.and.arrow.up").font(.system(size: 16))
+                            .foregroundColor(authManager.subscriptionTier == .free ? .gray : .primary)
+                    }
+                    .disabled(authManager.subscriptionTier == .free)
+                    .onTapGesture {
+                        if authManager.subscriptionTier == .free { showPaywall = true }
                     }
                     Button("Edit") { showEdit = true }.font(.system(size: 15))
                 }
             }
         }
+        .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .sheet(isPresented: $showEdit) {
             RecipeEditView(recipe: recipe, onSave: { updated in
                 recipe = updated

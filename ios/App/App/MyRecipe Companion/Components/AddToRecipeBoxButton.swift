@@ -7,26 +7,42 @@ struct AddToRecipeBoxButton: View {
     @State private var isInBox = false
     @State private var isLoading = true
     @State private var isWorking = false
+    @State private var boxCount = 0
+    @State private var showPaywall = false
+
+    let freeBoxLimit = 3
+
+    var isAtFreeLimit: Bool {
+        authManager.subscriptionTier == .free && !isInBox && boxCount >= freeBoxLimit
+    }
 
     var body: some View {
         Button {
-            Task { await toggleBox() }
+            if isAtFreeLimit {
+                showPaywall = true
+            } else {
+                Task { await toggleBox() }
+            }
         } label: {
             HStack {
-                Image(systemName: isInBox ? "checkmark.circle.fill" : "plus.circle")
-                    .font(.subheadline).foregroundColor(isInBox ? .green : .orange)
-                Text(isInBox ? "In Your Recipe Box" : "Add to Recipe Box")
+                Image(systemName: isAtFreeLimit ? "lock.fill" : isInBox ? "checkmark.circle.fill" : "plus.circle")
+                    .font(.subheadline)
+                    .foregroundColor(isAtFreeLimit ? .gray : isInBox ? .green : .orange)
+                Text(isAtFreeLimit ? "Recipe Box full — upgrade to add more" : isInBox ? "In Your Recipe Box" : "Add to Recipe Box")
                     .font(.subheadline).fontWeight(.semibold)
-                    .foregroundColor(isInBox ? .green : .primary)
+                    .foregroundColor(isAtFreeLimit ? .gray : isInBox ? .green : .primary)
                 Spacer()
                 Image(systemName: "chevron.right").font(.caption2).foregroundColor(.gray)
             }
             .padding(.horizontal, 14).padding(.vertical, 11)
-            .background(isInBox ? Color.green.opacity(0.06) : Color(.systemGray6))
+            .background(isAtFreeLimit ? Color(.systemGray6) : isInBox ? Color.green.opacity(0.06) : Color(.systemGray6))
             .cornerRadius(12)
         }
         .disabled(isWorking || isLoading)
         .task { await checkBox() }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView().environmentObject(authManager)
+        }
     }
 
     func checkBox() async {
@@ -37,7 +53,16 @@ struct AddToRecipeBoxButton: View {
                 .eq("user_id", value: user.id)
                 .eq("recipe_id", value: recipeId)
                 .execute().value
-            await MainActor.run { isInBox = !result.isEmpty; isLoading = false }
+            // Also get total box count for free tier limit
+            let allCards: [[String: String]] = try await supabase
+                .from("recipe_cards").select("id")
+                .eq("user_id", value: user.id)
+                .execute().value
+            await MainActor.run {
+                isInBox = !result.isEmpty
+                boxCount = allCards.count
+                isLoading = false
+            }
         } catch { await MainActor.run { isLoading = false } }
     }
 
@@ -48,11 +73,11 @@ struct AddToRecipeBoxButton: View {
             if isInBox {
                 try await supabase.from("recipe_cards").delete()
                     .eq("user_id", value: user.id).eq("recipe_id", value: recipeId).execute()
-                await MainActor.run { isInBox = false }
+                await MainActor.run { isInBox = false; boxCount = max(0, boxCount - 1) }
             } else {
                 try await supabase.from("recipe_cards")
                     .insert(["user_id": user.id.uuidString, "recipe_id": recipeId.uuidString]).execute()
-                await MainActor.run { isInBox = true }
+                await MainActor.run { isInBox = true; boxCount += 1 }
             }
         } catch { print("toggleBox error:", error) }
         isWorking = false

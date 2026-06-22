@@ -13,18 +13,39 @@ struct PracticeView: View {
     @State private var savedSuccess = false
     @State private var showPaywall = false
     @State private var monthlyCount = 0
+    @State private var lifetimeCount = 0
     @State private var totalRecipes = 0
 
-    var limit: Int {
+    let freeLifetimeLimit = 3
+    let premiumMonthlyLimit = 5
+
+    var atLimit: Bool {
         switch authManager.subscriptionTier {
-        case .free: return 2
-        case .premium: return 5
+        case .free: return lifetimeCount >= freeLifetimeLimit
+        case .premium: return monthlyCount >= premiumMonthlyLimit
+        case .pro: return false
+        }
+    }
+
+    var remaining: Int {
+        switch authManager.subscriptionTier {
+        case .free: return max(0, freeLifetimeLimit - lifetimeCount)
+        case .premium: return max(0, premiumMonthlyLimit - monthlyCount)
         case .pro: return Int.max
         }
     }
 
-    var atLimit: Bool { monthlyCount >= limit }
-    var remaining: Int { max(0, limit - monthlyCount) }
+    var usageBannerText: String {
+        switch authManager.subscriptionTier {
+        case .free:
+            return atLimit ? "Free uses reached — upgrade to keep cooking" :
+                "\(remaining) free recipe\(remaining == 1 ? "" : "s") remaining"
+        case .premium:
+            return atLimit ? "Monthly limit reached — upgrade to Pro for unlimited" :
+                "\(remaining) recipe\(remaining == 1 ? "" : "s") left this month"
+        case .pro: return ""
+        }
+    }
 
     var quickPrompts: [String] {
         ["Make me a simple weeknight dinner",
@@ -39,9 +60,7 @@ struct PracticeView: View {
                 HStack(spacing: 8) {
                     Image(systemName: atLimit ? "lock.fill" : "flame")
                         .foregroundColor(atLimit ? .red : .orange).font(.caption)
-                    Text(atLimit
-                         ? "Monthly limit reached — upgrade for more recipes"
-                         : "\(remaining) Chef Jen use\(remaining == 1 ? "" : "s") left this month")
+                    Text(usageBannerText)
                         .font(.caption).foregroundColor(atLimit ? .red : .orange)
                     Spacer()
                     if atLimit {
@@ -178,11 +197,15 @@ struct PracticeView: View {
         let usage: [[String: Int]] = (try? await supabase.from("user_usage")
             .select("chef_jen_count").eq("user_id", value: user.id).eq("month", value: month)
             .execute().value) ?? []
+        let lifetime: [[String: Int]] = (try? await supabase.from("user_usage")
+            .select("practice_count").eq("user_id", value: user.id).eq("month", value: "lifetime")
+            .execute().value) ?? []
         let recipes: [[String: String]] = (try? await supabase.from("personal_recipes")
             .select("id").eq("user_id", value: user.id).is("deleted_at", value: nil)
             .execute().value) ?? []
         await MainActor.run {
             monthlyCount = usage.first?["chef_jen_count"] ?? 0
+            lifetimeCount = lifetime.first?["practice_count"] ?? 0
             totalRecipes = recipes.count
         }
     }
@@ -226,10 +249,17 @@ struct PracticeView: View {
                 if !ingredientText.isEmpty { reply += "\n\n**Ingredients:**\n\(ingredientText)" }
                 if !instructions.isEmpty { reply += "\n\n**Instructions:**\n\(instructions)" }
                 messages.append((role: "assistant", content: reply))
-                await MainActor.run { monthlyCount += 1 }
-                try? await supabase.rpc("increment_chef_jen_count", params: [
-                    "p_user_id": user.id.uuidString, "p_month": month
-                ]).execute()
+                await MainActor.run {
+                    if authManager.subscriptionTier == .free { lifetimeCount += 1 }
+                    else { monthlyCount += 1 }
+                }
+                if authManager.subscriptionTier == .free {
+                    try? await supabase.rpc("increment_practice_count", params: ["p_user_id": user.id.uuidString]).execute()
+                } else {
+                    try? await supabase.rpc("increment_chef_jen_count", params: [
+                        "p_user_id": user.id.uuidString, "p_month": month
+                    ]).execute()
+                }
             } else {
                 errorMessage = "Could not generate recipe. Try again."
             }

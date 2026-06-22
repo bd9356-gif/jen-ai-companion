@@ -12,17 +12,38 @@ struct LearnView: View {
     @State private var savedLesson = false
     @State private var showPaywall = false
     @State private var monthlyCount = 0
+    @State private var lifetimeCount = 0
 
-    var limit: Int {
+    let freeLifetimeLimit = 3
+    let premiumMonthlyLimit = 5
+
+    var atLimit: Bool {
         switch authManager.subscriptionTier {
-        case .free: return 2
-        case .premium: return 5
+        case .free: return lifetimeCount >= freeLifetimeLimit
+        case .premium: return monthlyCount >= premiumMonthlyLimit
+        case .pro: return false
+        }
+    }
+
+    var remaining: Int {
+        switch authManager.subscriptionTier {
+        case .free: return max(0, freeLifetimeLimit - lifetimeCount)
+        case .premium: return max(0, premiumMonthlyLimit - monthlyCount)
         case .pro: return Int.max
         }
     }
 
-    var atLimit: Bool { monthlyCount >= limit }
-    var remaining: Int { max(0, limit - monthlyCount) }
+    var usageBannerText: String {
+        switch authManager.subscriptionTier {
+        case .free:
+            return atLimit ? "Free uses reached — upgrade to continue learning" :
+                "\(remaining) free use\(remaining == 1 ? "" : "s") remaining"
+        case .premium:
+            return atLimit ? "Monthly limit reached — upgrade to Pro for unlimited" :
+                "\(remaining) use\(remaining == 1 ? "" : "s") left this month"
+        case .pro: return ""
+        }
+    }
 
     var quickPrompts: [String] {
         ["What can I make with chicken and pasta?",
@@ -39,9 +60,7 @@ struct LearnView: View {
                 HStack(spacing: 8) {
                     Image(systemName: atLimit ? "lock.fill" : "sparkles")
                         .foregroundColor(atLimit ? .red : .orange).font(.caption)
-                    Text(atLimit
-                         ? "Monthly limit reached — upgrade for more Chef Jen"
-                         : "\(remaining) Chef Jen question\(remaining == 1 ? "" : "s") left this month")
+                    Text(usageBannerText)
                         .font(.caption).foregroundColor(atLimit ? .red : .orange)
                     Spacer()
                     if atLimit {
@@ -179,17 +198,23 @@ struct LearnView: View {
         .task { await loadMonthlyCount() }
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
-        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
-        .frame(maxWidth: .infinity)
     }
 
     func loadMonthlyCount() async {
         guard let user = authManager.user else { return }
         let month = monthKey()
-        let result: [[String: Int]] = (try? await supabase.from("user_usage")
+        // Load monthly count for Premium
+        let monthly: [[String: Int]] = (try? await supabase.from("user_usage")
             .select("chef_jen_count").eq("user_id", value: user.id).eq("month", value: month)
             .execute().value) ?? []
-        await MainActor.run { monthlyCount = result.first?["chef_jen_count"] ?? 0 }
+        // Load lifetime count for Free
+        let lifetime: [[String: Int]] = (try? await supabase.from("user_usage")
+            .select("learn_count").eq("user_id", value: user.id).eq("month", value: "lifetime")
+            .execute().value) ?? []
+        await MainActor.run {
+            monthlyCount = monthly.first?["chef_jen_count"] ?? 0
+            lifetimeCount = lifetime.first?["learn_count"] ?? 0
+        }
     }
 
     func sendMessage() async {
@@ -225,8 +250,15 @@ struct LearnView: View {
                 messages.append((role: "assistant", content: clean))
 
                 // Increment count
-                await MainActor.run { monthlyCount += 1 }
-                try? await incrementChefJenCount()
+                await MainActor.run {
+                    if authManager.subscriptionTier == .free { lifetimeCount += 1 }
+                    else { monthlyCount += 1 }
+                }
+                if authManager.subscriptionTier == .free {
+                    try? await supabase.rpc("increment_learn_count", params: ["p_user_id": authManager.user?.id.uuidString ?? ""]).execute()
+                } else {
+                    try? await incrementChefJenCount()
+                }
             } else {
                 errorMessage = "Chef Jen is unavailable right now. Try again."
             }

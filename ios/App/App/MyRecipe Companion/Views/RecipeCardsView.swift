@@ -265,6 +265,7 @@ struct RecipeCardDetailView: View {
     @State private var showMiseEnPlace = false
     @State private var editingCaption: RecipeMemory? = nil
     @State private var editCaptionText = ""
+    @State private var showPaywall = false
     enum FullscreenItem: Identifiable {
         case memory(RecipeMemory)
         case recipePhoto(String)
@@ -310,6 +311,7 @@ struct RecipeCardDetailView: View {
             } message: {
                 Text("This won't delete the recipe from your vault.")
             }
+            .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
             .sheet(isPresented: $showMiseEnPlace) { MiseEnPlaceSheetView(recipe: recipe) }
             .sheet(isPresented: $showFullRecipe) {
                 NavigationStack {
@@ -459,15 +461,27 @@ struct RecipeCardDetailView: View {
                     VStack(spacing: 10) { ForEach(memories) { memory in memoryCard(memory) } }.padding(.horizontal, 20)
                 }
                 if memories.count < 3 {
-                    PhotosPicker(selection: $selectedMemoryPhoto, matching: .images) {
-                        HStack {
-                            if isUploadingMemory { ProgressView().scaleEffect(0.8); Text("Uploading...").font(.footnote) }
-                            else { Image(systemName: "plus.circle"); Text("Add Memory (\(memories.count)/3)").font(.footnote).fontWeight(.semibold) }
+                    if authManager.subscriptionTier == .free {
+                        Button { showPaywall = true } label: {
+                            HStack {
+                                Image(systemName: "lock.fill").foregroundColor(.gray)
+                                Text("Upgrade to add Memory Photos").font(.footnote).fontWeight(.semibold).foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity).padding(.vertical, 10)
+                            .background(Color(.systemGray5)).cornerRadius(10)
                         }
-                        .frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .background(Color(.systemGray5)).foregroundColor(.primary).cornerRadius(10)
+                        .padding(.horizontal, 20)
+                    } else {
+                        PhotosPicker(selection: $selectedMemoryPhoto, matching: .images) {
+                            HStack {
+                                if isUploadingMemory { ProgressView().scaleEffect(0.8); Text("Uploading...").font(.footnote) }
+                                else { Image(systemName: "plus.circle"); Text("Add Memory (\(memories.count)/3)").font(.footnote).fontWeight(.semibold) }
+                            }
+                            .frame(maxWidth: .infinity).padding(.vertical, 10)
+                            .background(Color(.systemGray5)).foregroundColor(.primary).cornerRadius(10)
+                        }
+                        .padding(.horizontal, 20).disabled(isUploadingMemory)
                     }
-                    .padding(.horizontal, 20).disabled(isUploadingMemory)
                 }
             }
             .padding(.bottom, 12)
