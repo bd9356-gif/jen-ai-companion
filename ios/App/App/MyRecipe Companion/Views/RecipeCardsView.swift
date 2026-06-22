@@ -66,6 +66,10 @@ struct RecipeCardsView: View {
                 .resizable().scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: 100)
 
+            Text("Where recipes become memories")
+                .font(.subheadline).foregroundColor(.secondary).italic()
+                .padding(.vertical, 8)
+
             Divider()
 
             // ── Filter + Sort bar ──
