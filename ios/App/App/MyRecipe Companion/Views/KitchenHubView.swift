@@ -95,33 +95,33 @@ struct KitchenHubView: View {
                             .padding(.horizontal, 14)
 
                             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
-                                Button {
-                                    if sizeClass == .regular { onSidebarSelect?(3) }
-                                    else { onTabSelect?(3) }
-                                } label: {
-                                    HubCard(iconName: "chef-icon", title: "Chef Jennifer", description: "Learn and Practice", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
-
-                                Button {
-                                    if sizeClass == .regular { onSidebarSelect?(3) }
-                                    else { onTabSelect?(3) }
-                                } label: {
-                                    HubCard(iconName: "class-videos", title: "Class Videos", description: "Watch and Learn", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
-
-                                Button {
-                                    if sizeClass == .regular { onSidebarSelect?(3) }
-                                    else { onTabSelect?(3) }
-                                } label: {
-                                    HubCard(iconName: "library", title: "Library", description: "Techniques & guides", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
-
-                                Button {
-                                    if sizeClass == .regular { onSidebarSelect?(3) }
-                                    else { onTabSelect?(3) }
-                                } label: {
-                                    HubCard(iconName: "my-notebook", title: "My Notebook", description: "Your saved lessons", accentColor: blue, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                if sizeClass == .regular {
+                                    Button { onSidebarSelect?(3) } label: {
+                                        HubCard(iconName: "chef-icon", title: "Chef Jennifer", description: "Learn and Practice", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                    Button { onSidebarSelect?(3) } label: {
+                                        HubCard(iconName: "class-videos", title: "Class Videos", description: "Watch and Learn", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                    Button { onSidebarSelect?(3) } label: {
+                                        HubCard(iconName: "library", title: "Library", description: "Techniques & guides", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                    Button { onSidebarSelect?(3) } label: {
+                                        HubCard(iconName: "my-notebook", title: "My Notebook", description: "Your saved lessons", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                } else {
+                                    NavigationLink(destination: ClassroomView(startingMode: .learn).environmentObject(authManager)) {
+                                        HubCard(iconName: "chef-icon", title: "Chef Jennifer", description: "Learn and Practice", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                    NavigationLink(destination: ClassroomView(startingMode: .videos).environmentObject(authManager)) {
+                                        HubCard(iconName: "class-videos", title: "Class Videos", description: "Watch and Learn", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                    NavigationLink(destination: ClassroomView(startingMode: .library).environmentObject(authManager)) {
+                                        HubCard(iconName: "library", title: "Library", description: "Techniques & guides", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                    NavigationLink(destination: ClassroomView(startingMode: .notebook).environmentObject(authManager)) {
+                                        HubCard(iconName: "my-notebook", title: "My Notebook", description: "Your saved lessons", accentColor: blue, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                }
                             }
                             .padding(.horizontal, 14)
                         }
