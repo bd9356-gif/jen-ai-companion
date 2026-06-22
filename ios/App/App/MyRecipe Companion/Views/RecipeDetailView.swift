@@ -207,21 +207,19 @@ struct RecipeDetailView: View {
                             .foregroundColor(isFavorite ? .red : .gray)
                             .font(.system(size: 16))
                     }
-                    Button { printRecipe() } label: {
+                    Button {
+                        if authManager.subscriptionTier == .free { showPaywall = true }
+                        else { printRecipe() }
+                    } label: {
                         Image(systemName: "printer").font(.system(size: 16))
                             .foregroundColor(authManager.subscriptionTier == .free ? .gray : .primary)
                     }
-                    .disabled(authManager.subscriptionTier == .free)
-                    .onTapGesture {
+                    Button {
                         if authManager.subscriptionTier == .free { showPaywall = true }
-                    }
-                    Button { shareRecipe() } label: {
+                        else { shareRecipe() }
+                    } label: {
                         Image(systemName: "square.and.arrow.up").font(.system(size: 16))
                             .foregroundColor(authManager.subscriptionTier == .free ? .gray : .primary)
-                    }
-                    .disabled(authManager.subscriptionTier == .free)
-                    .onTapGesture {
-                        if authManager.subscriptionTier == .free { showPaywall = true }
                     }
                     Button("Edit") { showEdit = true }.font(.system(size: 15))
                 }

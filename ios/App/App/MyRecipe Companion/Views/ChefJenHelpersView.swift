@@ -13,6 +13,19 @@ struct ChefJenHelpersView: View {
     @State private var errorMessage = ""
     @State private var successMessage = ""
     @State private var showPaywall = false
+    @State private var helpersLifetimeCount = 0
+    @State private var helpersMonthlyCount = 0
+
+    let freeHelpersLimit = 5
+    let premiumHelpersLimit = 5
+
+    var atHelpersLimit: Bool {
+        switch authManager.subscriptionTier {
+        case .free: return helpersLifetimeCount >= freeHelpersLimit
+        case .premium: return helpersMonthlyCount >= premiumHelpersLimit
+        case .pro: return false
+        }
+    }
 
     // Polish
     @State private var polishedRecipe: EnhancedRecipe? = nil
@@ -113,7 +126,8 @@ struct ChefJenHelpersView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showPaywall) { PaywallView() }
+            .task { await loadHelpersCounts() }
+            .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         }
     }
 
@@ -301,11 +315,13 @@ struct ChefJenHelpersView: View {
             Text("Generate a beautiful food photo for this recipe using AI.")
                 .font(.subheadline).foregroundColor(.gray)
 
-            // Premium gate indicator
-            if authManager.subscriptionTier == .free {
+            // Helpers gate indicator
+            if atHelpersLimit {
                 HStack(spacing: 8) {
                     Image(systemName: "lock.fill").foregroundColor(.orange).font(.caption)
-                    Text("AI photo generation requires Premium or Pro")
+                    Text(authManager.subscriptionTier == .free
+                         ? "Free uses reached — upgrade to continue"
+                         : "Monthly limit reached — upgrade to Pro")
                         .font(.caption).foregroundColor(.orange)
                     Spacer()
                     Button("Upgrade") { showPaywall = true }
@@ -423,12 +439,41 @@ struct ChefJenHelpersView: View {
     }
 
     // MARK: - Run
+    func loadHelpersCounts() async {
+        guard let user = authManager.user else { return }
+        let month = monthKey()
+        let lifetime: [[String: Int]] = (try? await supabase.from("user_usage")
+            .select("helpers_count").eq("user_id", value: user.id).eq("month", value: "lifetime")
+            .execute().value) ?? []
+        let monthly: [[String: Int]] = (try? await supabase.from("user_usage")
+            .select("helpers_count").eq("user_id", value: user.id).eq("month", value: month)
+            .execute().value) ?? []
+        await MainActor.run {
+            helpersLifetimeCount = lifetime.first?["helpers_count"] ?? 0
+            helpersMonthlyCount = monthly.first?["helpers_count"] ?? 0
+        }
+    }
+
+    func incrementHelpersCount() async {
+        guard let user = authManager.user else { return }
+        if authManager.subscriptionTier == .free {
+            try? await supabase.rpc("increment_helpers_lifetime", params: ["p_user_id": user.id.uuidString]).execute()
+            await MainActor.run { helpersLifetimeCount += 1 }
+        } else if authManager.subscriptionTier == .premium {
+            let month = monthKey()
+            try? await supabase.rpc("increment_helpers_count", params: ["p_user_id": user.id.uuidString, "p_month": month]).execute()
+            await MainActor.run { helpersMonthlyCount += 1 }
+        }
+    }
+
     func runPolish() async {
+        if atHelpersLimit { await MainActor.run { showPaywall = true }; return }
         isLoading = true; errorMessage = ""
         do {
             let data = try await callEnhanceAPI(action: "enhance")
             let result = try JSONDecoder().decode(EnhancedRecipe.self, from: data)
             await MainActor.run { polishedRecipe = result }
+            await incrementHelpersCount()
         } catch {
             await MainActor.run { errorMessage = "Polish failed: \(error.localizedDescription)" }
         }
@@ -436,12 +481,14 @@ struct ChefJenHelpersView: View {
     }
 
     func runResize() async {
+        if atHelpersLimit { await MainActor.run { showPaywall = true }; return }
         guard let servings = Int(targetServings) else { return }
         isLoading = true; errorMessage = ""
         do {
             let data = try await callEnhanceAPI(action: "resize", extraParams: ["servings": servings])
             let result = try JSONDecoder().decode(ResizeResult.self, from: data)
             await MainActor.run { resizedIngredients = result.ingredients }
+            await incrementHelpersCount()
         } catch {
             await MainActor.run { errorMessage = "Resize failed: \(error.localizedDescription)" }
         }
@@ -449,11 +496,13 @@ struct ChefJenHelpersView: View {
     }
 
     func runGenerateInfo() async {
+        if atHelpersLimit { await MainActor.run { showPaywall = true }; return }
         isLoading = true; errorMessage = ""
         do {
             let data = try await callEnhanceAPI(action: "generate_info")
             let result = try JSONDecoder().decode(RecipeInfo.self, from: data)
             await MainActor.run { recipeInfo = result }
+            await incrementHelpersCount()
         } catch {
             await MainActor.run { errorMessage = "Details failed: \(error.localizedDescription)" }
         }
@@ -461,11 +510,13 @@ struct ChefJenHelpersView: View {
     }
 
     func runTransform() async {
+        if atHelpersLimit { await MainActor.run { showPaywall = true }; return }
         isLoading = true; errorMessage = ""
         do {
             let data = try await callEnhanceAPI(action: "transform", extraParams: ["preferences": Array(selectedPrefs)])
             let result = try JSONDecoder().decode(EnhancedRecipe.self, from: data)
             await MainActor.run { transformResult = result }
+            await incrementHelpersCount()
         } catch {
             await MainActor.run { errorMessage = "Adjust failed: \(error.localizedDescription)" }
         }
@@ -557,25 +608,8 @@ struct ChefJenHelpersView: View {
     }
 
     func generatePhoto() async {
-        // Gate to premium+
-        if authManager.subscriptionTier == .free {
-            await MainActor.run { showPaywall = true }
-            return
-        }
+        if atHelpersLimit { await MainActor.run { showPaywall = true }; return }
         guard let user = authManager.user else { return }
-
-        // Check premium monthly limit (5/month)
-        if authManager.subscriptionTier == .premium {
-            let month = monthKey()
-            let usage: [[String: Int]] = (try? await supabase.from("user_usage")
-                .select("photo_count").eq("user_id", value: user.id).eq("month", value: month)
-                .execute().value) ?? []
-            let count = usage.first?["photo_count"] ?? 0
-            if count >= 5 {
-                await MainActor.run { showPaywall = true }
-                return
-            }
-        }
         generatingPhoto = true; errorMessage = ""
         do {
             guard let url = URL(string: "https://recipe.mycompanionapps.com/api/generate-photo") else { return }
@@ -588,11 +622,7 @@ struct ChefJenHelpersView: View {
                 try await supabase.from("personal_recipes").update(["photo_url": photoUrl]).eq("id", value: recipe.id).execute()
                 let updated = withDetails(recipe, photo_url: photoUrl)
                 await MainActor.run { generatedPhotoUrl = photoUrl; onRecipeUpdated?(updated) }
-                // Track usage
-                let month = monthKey()
-                try? await supabase.rpc("increment_photo_count", params: [
-                    "p_user_id": user.id.uuidString, "p_month": month
-                ]).execute()
+                await incrementHelpersCount()
             } else {
                 await MainActor.run { errorMessage = "Photo generation failed. Try again." }
             }

@@ -163,8 +163,8 @@ struct RecipeVaultView: View {
             // ── Free tier vault limit ──
             if !recipeService.isLoading && authManager.subscriptionTier == .free {
                 let count = recipeService.recipes.count
-                let remaining = max(0, 15 - count)
-                if count >= 12 {
+                let remaining = max(0, 10 - count)
+                if count >= 8 {
                     HStack(spacing: 8) {
                         Image(systemName: remaining == 0 ? "lock.fill" : "exclamationmark.triangle")
                             .foregroundColor(remaining == 0 ? .red : .orange).font(.caption)

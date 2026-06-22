@@ -113,7 +113,7 @@ struct PaywallView: View {
                         VStack(spacing: 6) {
                             Text("Always free")
                                 .font(.caption).fontWeight(.semibold).foregroundColor(.secondary)
-                            Text("Recipe Vault (15) • Meal Ideas • Shopping List • Chef TV • 3 imports/month")
+                            Text("Recipe Vault (10) • Meal Ideas • Shopping List • Chef TV • 3 imports/month")
                                 .font(.caption2).foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
                         }
@@ -170,7 +170,7 @@ struct PaywallView: View {
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "books.vertical",
-                    label: "Recipe Vault", free: "15 max", premium: "Unlimited", pro: "Unlimited",
+                    label: "Recipe Vault", free: "10 max", premium: "Unlimited", pro: "Unlimited",
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "archivebox.fill",
@@ -186,7 +186,7 @@ struct PaywallView: View {
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "wand.and.stars",
-                    label: "Kitchen Helpers", free: "1 use", premium: "✓", pro: "✓",
+                    label: "Chef Jen Helpers + Photos", free: "5 uses", premium: "5/mo", pro: "Unlimited",
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "graduationcap.fill",
@@ -199,10 +199,6 @@ struct PaywallView: View {
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "square.and.arrow.up",
                     label: "Social sharing", free: "—", premium: "✓", pro: "✓",
-                    selected: selectedTier)
-                Divider().padding(.leading, 14)
-                FeatureRow(icon: "camera.fill",
-                    label: "AI food photos", free: "—", premium: "—", pro: "✓",
                     selected: selectedTier)
                 Divider().padding(.leading, 14)
                 FeatureRow(icon: "bolt.fill",
