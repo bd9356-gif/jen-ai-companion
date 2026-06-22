@@ -7,6 +7,11 @@ struct ClassroomView: View {
     var startingMode: ClassroomMode = .learn
     @State private var mode: ClassroomMode = .learn
 
+    init(startingMode: ClassroomMode = .learn) {
+        self.startingMode = startingMode
+        _mode = State(initialValue: startingMode)
+    }
+
     enum ClassroomMode: CaseIterable {
         case learn, practice, videos, notebook, library
 

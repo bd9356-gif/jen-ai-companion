@@ -308,9 +308,8 @@ struct RecipeCardDetailView: View {
             }
             .sheet(isPresented: $showMiseEnPlace) { MiseEnPlaceSheetView(recipe: recipe) }
             .sheet(isPresented: $showFullRecipe) {
-                NavigationView {
+                NavigationStack {
                     RecipeDetailView(recipe: recipe).environmentObject(authManager)
-                        .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("Close") { showFullRecipe = false } } }
                 }
             }
             .alert("Edit Caption", isPresented: Binding(get: { editingCaption != nil }, set: { if !$0 { editingCaption = nil } })) {
