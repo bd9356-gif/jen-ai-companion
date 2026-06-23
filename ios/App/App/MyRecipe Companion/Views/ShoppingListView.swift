@@ -167,7 +167,7 @@ struct ShoppingListView: View {
                 .listStyle(.insetGrouped)
             }
         }
-        .navigationBarHidden(true)
+        .navigationBarHidden(sizeClass != .regular)
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
         .sheet(isPresented: $showStoreManager) {

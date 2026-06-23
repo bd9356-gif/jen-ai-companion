@@ -4,6 +4,7 @@ import Supabase
 struct ShareQueueView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var authManager: AuthManager
+    @Environment(\.horizontalSizeClass) var sizeClass
     @State private var recipes: [Recipe] = []
     @State private var isLoading = true
     @State private var showPaywall = false
@@ -113,7 +114,7 @@ struct ShareQueueView: View {
             }
         }
         .ignoresSafeArea(edges: .top)
-        .navigationBarHidden(true)
+        .navigationBarHidden(sizeClass != .regular)
         .task { await loadQueue() }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
     }
