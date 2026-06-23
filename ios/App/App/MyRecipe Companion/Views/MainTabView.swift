@@ -33,6 +33,9 @@ struct MainTabView: View {
             }
             .accentColor(.orange)
             .navigationSplitViewStyle(.balanced)
+            .onChange(of: selectedTab) { _, newTab in
+                if newTab == 4 { sidebarSelection = 4 }
+            }
         } else {
             TabView(selection: $selectedTab) {
                 NavigationView {

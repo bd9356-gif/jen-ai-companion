@@ -23,6 +23,7 @@ struct MoreView: View {
     }
 
     func checkPendingImport() {
+        guard sizeClass != .regular else { return } // iPad uses sidebar, don't auto-open
         let defaults = UserDefaults(suiteName: "group.com.mycompanionapps.recipe")
         if let url = defaults?.string(forKey: "pendingImportURL"), !url.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
