@@ -350,7 +350,7 @@ struct ChefJenHelpersView: View {
                             .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity).padding(.vertical, 14)
-                    .background(authManager.subscriptionTier == .free ? Color.gray.opacity(0.3) : Color.orange)
+                    .background(generatingPhoto ? Color.gray.opacity(0.3) : Color.orange)
                     .foregroundColor(.white).cornerRadius(14)
                 }
                 .disabled(generatingPhoto)
