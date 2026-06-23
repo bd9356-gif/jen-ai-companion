@@ -4,6 +4,7 @@ struct MoreView: View {
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.horizontalSizeClass) var sizeClass
     @State private var showPaywall = false
+    @State private var showProfile = false
     @State private var showImport = false
 
     var body: some View {
@@ -47,8 +48,16 @@ struct MoreView: View {
                 }
 
                 Section {
-                    NavigationLink(destination: ProfileView().environmentObject(authManager)) {
-                        Label("Profile & Subscription", systemImage: "person.circle")
+                    if sizeClass == .regular {
+                        Button {
+                            showProfile = true
+                        } label: {
+                            Label("Profile & Subscription", systemImage: "person.circle")
+                        }
+                    } else {
+                        NavigationLink(destination: ProfileView().environmentObject(authManager)) {
+                            Label("Profile & Subscription", systemImage: "person.circle")
+                        }
                     }
                 }
 
@@ -76,6 +85,11 @@ struct MoreView: View {
             }
             .sheet(isPresented: $showImport) {
                 ImportView().environmentObject(authManager)
+            }
+            .sheet(isPresented: $showProfile) {
+                NavigationView {
+                    ProfileView().environmentObject(authManager)
+                }
             }
         }
     }
