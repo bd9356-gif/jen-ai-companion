@@ -109,13 +109,14 @@ struct ShareQueueView: View {
                     }
                 }
                 .listStyle(.plain)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(sizeClass != .regular)
         .task { await loadQueue() }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
+        .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     func loadQueue() async {
