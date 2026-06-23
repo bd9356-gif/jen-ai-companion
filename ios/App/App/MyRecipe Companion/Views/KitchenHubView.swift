@@ -10,6 +10,9 @@ struct KitchenHubView: View {
     let cardBg = Color(.systemBackground)
     let orange = Color(red: 0.93, green: 0.35, blue: 0.12)
     let blue = Color(red: 0.18, green: 0.42, blue: 0.78)
+    @State private var showMealPlan = false
+    @State private var showShoppingList = false
+    @State private var showSocialShare = false
 
     var body: some View {
         ZStack {
@@ -60,20 +63,38 @@ struct KitchenHubView: View {
                                     KitchenBar(iconName: "recipe-box", title: "Recipe Box", description: "Your keep-forever recipe collection", color: orange, cardBg: cardBg)
                                 }.buttonStyle(.plain)
 
-                                // Meal Ideas — push (not a tab)
-                                NavigationLink(destination: MealPlanView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
-                                    KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "What you're thinking of cooking next", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                // Meal Ideas — sheet on iPad, push on iPhone
+                                if sizeClass == .regular {
+                                    Button { showMealPlan = true } label: {
+                                        KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "What you're thinking of cooking next", color: orange, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                } else {
+                                    NavigationLink(destination: MealPlanView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                        KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "What you're thinking of cooking next", color: orange, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                }
 
-                                // Shopping List — push (not a tab)
-                                NavigationLink(destination: ShoppingListView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
-                                    KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Ingredients, organized", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                // Shopping List — sheet on iPad, push on iPhone
+                                if sizeClass == .regular {
+                                    Button { showShoppingList = true } label: {
+                                        KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Ingredients, organized", color: orange, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                } else {
+                                    NavigationLink(destination: ShoppingListView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                        KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Ingredients, organized", color: orange, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                }
 
-                                // Social Share — push (not a tab)
-                                NavigationLink(destination: ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
-                                    KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Recipes you want to share", color: orange, cardBg: cardBg)
-                                }.buttonStyle(.plain)
+                                // Social Share — sheet on iPad, push on iPhone
+                                if sizeClass == .regular {
+                                    Button { showSocialShare = true } label: {
+                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Recipes you want to share", color: orange, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                } else {
+                                    NavigationLink(destination: ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
+                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Recipes you want to share", color: orange, cardBg: cardBg)
+                                    }.buttonStyle(.plain)
+                                }
                             }
                             .padding(.horizontal, 14)
                         }
@@ -131,6 +152,9 @@ struct KitchenHubView: View {
             }
         }
         .navigationBarHidden(sizeClass != .regular)
+        .sheet(isPresented: $showMealPlan) { MealPlanView().environmentObject(authManager) }
+        .sheet(isPresented: $showShoppingList) { ShoppingListView().environmentObject(authManager) }
+        .sheet(isPresented: $showSocialShare) { ShareQueueView().environmentObject(authManager) }
     }
 }
 
