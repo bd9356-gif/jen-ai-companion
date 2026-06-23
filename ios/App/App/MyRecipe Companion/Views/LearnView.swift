@@ -209,6 +209,7 @@ struct LearnView: View {
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager).environmentObject(authManager) }
         .task { await loadMonthlyCount() }
+        .onChange(of: authManager.subscriptionTier) { _, _ in Task { await loadMonthlyCount() } }
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
     }

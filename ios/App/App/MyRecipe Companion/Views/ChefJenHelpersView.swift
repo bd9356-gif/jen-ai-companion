@@ -127,6 +127,7 @@ struct ChefJenHelpersView: View {
                 }
             }
             .task { await loadHelpersCounts() }
+            .onChange(of: authManager.subscriptionTier) { _, _ in Task { await loadHelpersCounts() } }
             .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         }
     }

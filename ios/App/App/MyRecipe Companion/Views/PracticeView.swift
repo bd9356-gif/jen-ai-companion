@@ -185,6 +185,7 @@ struct PracticeView: View {
         }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .task { await loadCounts() }
+        .onChange(of: authManager.subscriptionTier) { _, _ in Task { await loadCounts() } }
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
