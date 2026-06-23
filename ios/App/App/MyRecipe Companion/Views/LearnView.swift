@@ -157,6 +157,22 @@ struct LearnView: View {
                                 .padding(12).frame(maxWidth: .infinity)
                                 .background(Color.green.opacity(0.08)).cornerRadius(12)
                                 .padding(.horizontal, 4)
+
+                                // Ask another question
+                                Button {
+                                    messages = []
+                                    savedLesson = false
+                                    errorMessage = ""
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "arrow.counterclockwise")
+                                        Text("Ask Another Question")
+                                            .font(.footnote).fontWeight(.semibold)
+                                    }
+                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                    .background(Color(.systemGray6)).foregroundColor(.primary).cornerRadius(12)
+                                }
+                                .padding(.horizontal, 4)
                             } else {
                                 if authManager.subscriptionTier == .free {
                                     Button { showPaywall = true } label: {
@@ -185,6 +201,22 @@ struct LearnView: View {
                                     }
                                     .disabled(isSavingLesson).padding(.horizontal, 4)
                                 }
+
+                                // Ask another question
+                                Button {
+                                    messages = []
+                                    savedLesson = false
+                                    errorMessage = ""
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "arrow.counterclockwise")
+                                        Text("Ask Another Question")
+                                            .font(.footnote).fontWeight(.semibold)
+                                    }
+                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                    .background(Color(.systemGray6)).foregroundColor(.primary).cornerRadius(12)
+                                }
+                                .padding(.horizontal, 4)
                             }
                         }
 
