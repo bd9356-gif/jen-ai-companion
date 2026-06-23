@@ -56,6 +56,8 @@ struct ClassroomView: View {
         }
     }
 
+    @State private var iPadShowLanding: Bool = true
+
     var body: some View {
         VStack(spacing: 0) {
 
@@ -64,58 +66,114 @@ struct ClassroomView: View {
                 .resizable().scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: 100)
 
-            // ── Mode strip ──
-            HStack(spacing: 12) {
-                Image(mode.iconName)
-                    .resizable().scaledToFit()
-                    .frame(width: 56, height: 56)
-                    .cornerRadius(12)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(mode.heroTitle)
-                        .font(.headline).fontWeight(.bold)
-                    Text(mode.tagline)
-                        .font(.caption).foregroundColor(.secondary)
-                }
-                Spacer()
-            }
-            .padding(.horizontal, 16).padding(.vertical, 8)
+            if sizeClass == .regular && iPadShowLanding {
+                // ── iPad Landing Grid ──
+                ScrollView {
+                    VStack(spacing: 20) {
+                        Text("What would you like to do today?")
+                            .font(.headline).foregroundColor(.secondary)
+                            .padding(.top, 8)
 
-            Divider()
-
-            // ── Mode tabs ──
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(ClassroomMode.allCases, id: \.self) { m in
-                        Button { mode = m } label: {
-                            Text(m.label)
-                                .font(.subheadline).fontWeight(.semibold)
-                                .padding(.horizontal, 18).padding(.vertical, 8)
-                                .background(mode == m ? Color.orange : Color(.systemGray5))
-                                .foregroundColor(mode == m ? .white : .primary)
-                                .cornerRadius(20)
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                            ForEach([ClassroomMode.learn, .practice, .videos, .library, .notebook], id: \.self) { m in
+                                Button { mode = m; iPadShowLanding = false } label: {
+                                    VStack(spacing: 12) {
+                                        Image(m.iconName)
+                                            .resizable().scaledToFit()
+                                            .frame(width: 64, height: 64).cornerRadius(14)
+                                        VStack(spacing: 4) {
+                                            Text(m.heroTitle)
+                                                .font(.headline).fontWeight(.bold).foregroundColor(.primary)
+                                            Text(m.tagline)
+                                                .font(.caption).foregroundColor(.secondary)
+                                                .multilineTextAlignment(.center)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(20)
+                                    .background(Color(.systemBackground))
+                                    .cornerRadius(16)
+                                    .overlay(RoundedRectangle(cornerRadius: 16)
+                                        .stroke(Color(.systemGray4), lineWidth: 1))
+                                    .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
                     }
                 }
-                .padding(.horizontal, 16).padding(.vertical, 10)
-            }
 
-            Divider()
+            } else {
+                // ── Mode strip ──
+                HStack(spacing: 12) {
+                    if sizeClass == .regular {
+                        Button { iPadShowLanding = true } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.orange)
+                        }
+                    }
+                    Image(mode.iconName)
+                        .resizable().scaledToFit()
+                        .frame(width: 56, height: 56)
+                        .cornerRadius(12)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(mode.heroTitle)
+                            .font(.headline).fontWeight(.bold)
+                        Text(mode.tagline)
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 16).padding(.vertical, 8)
 
-            // ── Content ──
-            switch mode {
-            case .learn:
-                LearnView().environmentObject(authManager)
-            case .practice:
-                PracticeView().environmentObject(authManager)
-            case .videos:
-                ClassVideosView().environmentObject(authManager)
-            case .notebook:
-                LibraryView().environmentObject(authManager)
-            case .library:
-                LibraryArticlesView().environmentObject(authManager)
+                Divider()
+
+                // ── Mode tabs (iPhone only) ──
+                if sizeClass != .regular {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(ClassroomMode.allCases, id: \.self) { m in
+                                Button { mode = m } label: {
+                                    Text(m.label)
+                                        .font(.subheadline).fontWeight(.semibold)
+                                        .padding(.horizontal, 18).padding(.vertical, 8)
+                                        .background(mode == m ? Color.orange : Color(.systemGray5))
+                                        .foregroundColor(mode == m ? .white : .primary)
+                                        .cornerRadius(20)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16).padding(.vertical, 10)
+                    }
+                    Divider()
+                }
+
+                // ── Content ──
+                switch mode {
+                case .learn:
+                    LearnView().environmentObject(authManager)
+                case .practice:
+                    PracticeView().environmentObject(authManager)
+                case .videos:
+                    ClassVideosView().environmentObject(authManager)
+                case .notebook:
+                    LibraryView().environmentObject(authManager)
+                case .library:
+                    LibraryArticlesView().environmentObject(authManager)
+                }
             }
         }
         .navigationBarHidden(sizeClass != .regular)
-        .onAppear { mode = startingMode }
+        .onAppear {
+            mode = startingMode
+            if sizeClass == .regular && startingMode == .learn {
+                iPadShowLanding = true
+            } else {
+                iPadShowLanding = false
+            }
+        }
     }
 }
