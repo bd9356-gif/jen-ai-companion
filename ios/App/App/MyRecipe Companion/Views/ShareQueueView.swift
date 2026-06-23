@@ -17,7 +17,6 @@ struct ShareQueueView: View {
                 Image("social-share-hero")
                     .resizable().scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: 100)
-                    .padding(.top, 44) // safe area offset
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
