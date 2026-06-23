@@ -28,7 +28,6 @@ struct ShareQueueView: View {
                 .padding(.leading, 12).padding(.bottom, 8)
             }
             .frame(maxWidth: .infinity)
-
             if !recipes.isEmpty {
                 HStack {
                     Text("\(recipes.count) recipe\(recipes.count == 1 ? "" : "s") ready to share")
@@ -110,6 +109,7 @@ struct ShareQueueView: View {
                     }
                 }
                 .listStyle(.plain)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .ignoresSafeArea(edges: .top)
