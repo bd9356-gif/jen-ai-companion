@@ -152,9 +152,9 @@ struct KitchenHubView: View {
             }
         }
         .navigationBarHidden(sizeClass != .regular)
-        .sheet(isPresented: $showMealPlan) { MealPlanView().environmentObject(authManager) }
-        .sheet(isPresented: $showShoppingList) { ShoppingListView().environmentObject(authManager) }
-        .sheet(isPresented: $showSocialShare) { ShareQueueView().environmentObject(authManager) }
+        .fullScreenCover(isPresented: $showMealPlan) { MealPlanView().environmentObject(authManager) }
+        .fullScreenCover(isPresented: $showShoppingList) { ShoppingListView().environmentObject(authManager) }
+        .fullScreenCover(isPresented: $showSocialShare) { ShareQueueView().environmentObject(authManager) }
     }
 }
 
