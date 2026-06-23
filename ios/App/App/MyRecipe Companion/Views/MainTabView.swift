@@ -8,7 +8,7 @@ struct MainTabView: View {
 
     var body: some View {
         if sizeClass == .regular {
-            NavigationSplitView {
+            NavigationSplitView(columnVisibility: .constant(.all)) {
                 List(selection: $sidebarSelection) {
                     Label("Home", systemImage: "house.fill").tag(0)
                     Label("Vault", systemImage: "book.closed.fill").tag(1)
