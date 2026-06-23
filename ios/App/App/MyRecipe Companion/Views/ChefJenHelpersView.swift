@@ -353,7 +353,7 @@ struct ChefJenHelpersView: View {
                     .background(authManager.subscriptionTier == .free ? Color.gray.opacity(0.3) : Color.orange)
                     .foregroundColor(.white).cornerRadius(14)
                 }
-                .disabled(generatingPhoto || authManager.subscriptionTier == .free)
+                .disabled(generatingPhoto)
             } else {
                 Button { dismiss() } label: {
                     Text("Done — Photo Saved").fontWeight(.semibold)

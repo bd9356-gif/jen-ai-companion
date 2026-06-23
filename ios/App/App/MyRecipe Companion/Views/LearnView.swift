@@ -158,20 +158,33 @@ struct LearnView: View {
                                 .background(Color.green.opacity(0.08)).cornerRadius(12)
                                 .padding(.horizontal, 4)
                             } else {
-                                Button { Task { await saveToLearningVault() } } label: {
-                                    HStack(spacing: 6) {
-                                        if isSavingLesson {
-                                            ProgressView().scaleEffect(0.8).tint(.white)
-                                        } else {
-                                            Image(systemName: "books.vertical")
+                                if authManager.subscriptionTier == .free {
+                                    Button { showPaywall = true } label: {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "lock.fill")
+                                            Text("Upgrade to Save to Notebook")
+                                                .font(.footnote).fontWeight(.semibold)
                                         }
-                                        Text(isSavingLesson ? "Saving..." : "Save to My Notebook")
-                                            .font(.footnote).fontWeight(.semibold)
+                                        .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                        .background(Color(.systemGray5)).foregroundColor(.gray).cornerRadius(12)
                                     }
-                                    .frame(maxWidth: .infinity).padding(.vertical, 12)
-                                    .background(Color.blue).foregroundColor(.white).cornerRadius(12)
+                                    .padding(.horizontal, 4)
+                                } else {
+                                    Button { Task { await saveToLearningVault() } } label: {
+                                        HStack(spacing: 6) {
+                                            if isSavingLesson {
+                                                ProgressView().scaleEffect(0.8).tint(.white)
+                                            } else {
+                                                Image(systemName: "books.vertical")
+                                            }
+                                            Text(isSavingLesson ? "Saving..." : "Save to My Notebook")
+                                                .font(.footnote).fontWeight(.semibold)
+                                        }
+                                        .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                        .background(Color.blue).foregroundColor(.white).cornerRadius(12)
+                                    }
+                                    .disabled(isSavingLesson).padding(.horizontal, 4)
                                 }
-                                .disabled(isSavingLesson).padding(.horizontal, 4)
                             }
                         }
 

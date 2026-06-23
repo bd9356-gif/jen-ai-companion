@@ -6,6 +6,7 @@ struct ShareQueueView: View {
     @EnvironmentObject var authManager: AuthManager
     @State private var recipes: [Recipe] = []
     @State private var isLoading = true
+    @State private var showPaywall = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -81,13 +82,17 @@ struct ShareQueueView: View {
                             Spacer()
 
                             HStack(spacing: 8) {
-                                Button { shareRecipe(recipe) } label: {
+                                Button {
+                                    if authManager.subscriptionTier == .free { showPaywall = true }
+                                    else { shareRecipe(recipe) }
+                                } label: {
                                     HStack(spacing: 4) {
-                                        Image(systemName: "square.and.arrow.up").font(.caption)
+                                        Image(systemName: authManager.subscriptionTier == .free ? "lock.fill" : "square.and.arrow.up").font(.caption)
                                         Text("Share").font(.caption).fontWeight(.semibold)
                                     }
                                     .padding(.horizontal, 12).padding(.vertical, 8)
-                                    .background(Color.orange).foregroundColor(.white).cornerRadius(8)
+                                    .background(authManager.subscriptionTier == .free ? Color.gray : Color.orange)
+                                    .foregroundColor(.white).cornerRadius(8)
                                 }
                                 .buttonStyle(.borderless)
 
@@ -110,6 +115,7 @@ struct ShareQueueView: View {
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)
         .task { await loadQueue() }
+        .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
     }
 
     func loadQueue() async {
