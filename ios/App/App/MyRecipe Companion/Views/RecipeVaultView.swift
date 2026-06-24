@@ -275,7 +275,8 @@ struct RecipeGridTile: View {
                     } placeholder: {
                         ZStack { Color.orange.opacity(0.08); ProgressView() }
                     }
-                    .frame(height: 110).clipped()
+                    .frame(maxWidth: .infinity, minHeight: 110, maxHeight: 110)
+                    .clipped()
                 } else {
                     Image("chef-logo")
                         .resizable().scaledToFit()
