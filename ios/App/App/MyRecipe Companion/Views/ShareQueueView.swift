@@ -10,7 +10,6 @@ struct ShareQueueView: View {
     @State private var showPaywall = false
 
     var body: some View {
-        NavigationView {
         VStack(spacing: 0) {
 
             // ── Back + Banner ──
@@ -29,6 +28,7 @@ struct ShareQueueView: View {
                 .padding(.leading, 12).padding(.bottom, 8)
             }
             .frame(maxWidth: .infinity)
+
             if !recipes.isEmpty {
                 HStack {
                     Text("\(recipes.count) recipe\(recipes.count == 1 ? "" : "s") ready to share")
@@ -112,14 +112,11 @@ struct ShareQueueView: View {
                 .listStyle(.plain)
             }
         }
-        .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)
         .task { await loadQueue() }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
-        }
-        .navigationViewStyle(.stack)
     }
 
     func loadQueue() async {
@@ -141,9 +138,7 @@ struct ShareQueueView: View {
 
     func shareRecipe(_ recipe: Recipe) {
         let shareURL = URL(string: "https://recipe.mycompanionapps.com/share/\(recipe.id)")!
-        let title = recipe.title + " — shared from MyRecipe Companion 👩‍🍳"
-        let av = UIActivityViewController(activityItems: [title, shareURL], applicationActivities: nil)
-        av.excludedActivityTypes = [.addToReadingList, .assignToContact, .openInIBooks]
+        let av = UIActivityViewController(activityItems: [shareURL], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
             var topVC = window.rootViewController
