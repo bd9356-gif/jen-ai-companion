@@ -17,17 +17,17 @@ struct KitchenHubView: View {
     var body: some View {
         ZStack {
             cream.ignoresSafeArea(edges: .bottom)
-            ScrollView {
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
 
-                    // ── Hero Header ──
-                    Image("master-header")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: sizeClass == .regular ? 500 : .infinity)
-                        .padding(.vertical, 2)
-                        .background(cream)
+                // ── Hero Header (fixed) ──
+                Image("master-header")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: sizeClass == .regular ? 500 : .infinity)
+                    .padding(.vertical, 2)
+                    .background(cream)
 
+                ScrollView {
                     VStack(spacing: 20) {
 
                         // ── My Kitchen ──
@@ -149,8 +149,11 @@ struct KitchenHubView: View {
                     }
                     .padding(.vertical, 10).padding(.bottom, 20)
                 }
+                // end ScrollView
             }
+            // end outer VStack
         }
+        // end ZStack
         .navigationBarHidden(sizeClass != .regular)
         .fullScreenCover(isPresented: $showMealPlan) {
             NavigationView { MealPlanView().environmentObject(authManager) }
