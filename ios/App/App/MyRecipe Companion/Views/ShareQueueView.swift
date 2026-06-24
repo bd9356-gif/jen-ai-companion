@@ -118,10 +118,8 @@ struct ShareQueueView: View {
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
-        .ignoresSafeArea(edges: .bottom)
         }
         .navigationViewStyle(.stack)
-    }
     }
 
     func loadQueue() async {
