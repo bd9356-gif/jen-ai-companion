@@ -209,7 +209,7 @@ struct RecipeVaultView: View {
                 Spacer()
             } else {
                 ScrollView {
-                    LazyVGrid(columns: columns, spacing: 8) {
+                    LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(filtered) { recipe in
                             if sizeClass == .regular {
                                 NavigationLink {
@@ -230,7 +230,7 @@ struct RecipeVaultView: View {
                             }
                         }
                     }
-                    .padding(8)
+                    .padding(.horizontal, 12).padding(.vertical, 8)
                 }
                 .refreshable {
                     if let user = authManager.user {
@@ -293,7 +293,7 @@ struct RecipeGridTile: View {
             .cornerRadius(10)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(recipe.title).font(.caption2).fontWeight(.semibold).lineLimit(2).foregroundColor(.primary)
+                Text(recipe.title).font(.caption).fontWeight(.semibold).lineLimit(2).foregroundColor(.primary)
                 if let category = recipe.category, !category.isEmpty {
                     Text(category).font(.caption2).foregroundColor(.orange)
                 }
