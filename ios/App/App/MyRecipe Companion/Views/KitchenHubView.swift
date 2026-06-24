@@ -16,7 +16,7 @@ struct KitchenHubView: View {
 
     var body: some View {
         ZStack {
-            cream.ignoresSafeArea()
+            cream.ignoresSafeArea(edges: .bottom)
             ScrollView {
                 VStack(spacing: 0) {
 
