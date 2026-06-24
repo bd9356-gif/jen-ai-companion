@@ -275,12 +275,15 @@ struct RecipeGridTile: View {
                     } placeholder: {
                         ZStack { Color.orange.opacity(0.08); ProgressView() }
                     }
-                    .frame(maxWidth: .infinity, minHeight: 110, maxHeight: 110)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 120)
                     .clipped()
+                    .contentShape(Rectangle())
                 } else {
                     Image("chef-logo")
                         .resizable().scaledToFit()
-                        .frame(height: 110).frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 120)
                         .background(Color(.systemBackground))
                 }
                 if recipe.is_favorite == true {
@@ -290,7 +293,8 @@ struct RecipeGridTile: View {
                         .padding(6)
                 }
             }
-            .cornerRadius(10)
+            .frame(maxWidth: .infinity)
+            .clipped()
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(recipe.title).font(.caption).fontWeight(.semibold).lineLimit(2).foregroundColor(.primary)
@@ -301,7 +305,9 @@ struct RecipeGridTile: View {
             }
             .frame(height: 52).padding(.horizontal, 8).padding(.top, 6)
         }
-        .background(Color(.systemBackground)).cornerRadius(10)
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
+        .clipped()
         .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
