@@ -267,7 +267,7 @@ struct RecipeGridTile: View {
     let recipe: Recipe
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 4) {
             ZStack(alignment: .topTrailing) {
                 Group {
                     if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
