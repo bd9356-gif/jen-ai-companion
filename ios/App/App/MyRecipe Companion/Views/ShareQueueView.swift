@@ -10,6 +10,7 @@ struct ShareQueueView: View {
     @State private var showPaywall = false
 
     var body: some View {
+        NavigationView {
         VStack(spacing: 0) {
 
             // ── Back + Banner ──
@@ -112,11 +113,15 @@ struct ShareQueueView: View {
             }
         }
         .ignoresSafeArea(edges: .top)
-        .navigationBarHidden(sizeClass != .regular)
+        .navigationBarHidden(true)
         .task { await loadQueue() }
         .sheet(isPresented: $showPaywall) { PaywallView().environmentObject(authManager) }
         .frame(maxWidth: sizeClass == .regular ? 700 : .infinity)
         .frame(maxWidth: .infinity)
+        .ignoresSafeArea(edges: .bottom)
+        }
+        .navigationViewStyle(.stack)
+    }
     }
 
     func loadQueue() async {
