@@ -270,33 +270,35 @@ struct RecipeGridTile: View {
         VStack(alignment: .leading, spacing: 0) {
 
             // ── Image ──
-            ZStack(alignment: .topTrailing) {
-                if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
-                    AsyncImage(url: URL(string: photoUrl)) { phase in
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
+            Color.clear
+                .aspectRatio(4/3, contentMode: .fit)
+                .overlay(
+                    Group {
+                        if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
+                            AsyncImage(url: URL(string: photoUrl)) { phase in
+                                if let image = phase.image {
+                                    image.resizable().scaledToFill()
+                                } else {
+                                    ZStack { Color.orange.opacity(0.08); ProgressView() }
+                                }
+                            }
                         } else {
-                            ZStack { Color.orange.opacity(0.08); ProgressView() }
+                            Image("chef-logo")
+                                .resizable().scaledToFit()
+                                .background(Color(.systemBackground))
                         }
                     }
-                } else {
-                    Image("chef-logo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .background(Color(.systemBackground))
+                    .clipped()
+                )
+                .clipped()
+                .overlay(alignment: .topTrailing) {
+                    if recipe.is_favorite == true {
+                        Image(systemName: "heart.fill")
+                            .font(.caption2).foregroundColor(.red)
+                            .padding(5).background(Color.white.opacity(0.9)).clipShape(Circle())
+                            .padding(6)
+                    }
                 }
-                if recipe.is_favorite == true {
-                    Image(systemName: "heart.fill")
-                        .font(.caption2).foregroundColor(.red)
-                        .padding(5).background(Color.white.opacity(0.9)).clipShape(Circle())
-                        .padding(6)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 120)
-            .clipped()
 
             // ── Text ──
             VStack(alignment: .leading, spacing: 3) {
