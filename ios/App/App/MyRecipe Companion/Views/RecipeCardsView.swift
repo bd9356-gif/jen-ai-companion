@@ -221,17 +221,27 @@ struct RecipeCardTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
-                AsyncImage(url: URL(string: photoUrl)) { image in
-                    image.resizable().scaledToFill()
-                } placeholder: { Color.orange.opacity(0.08) }
-                .frame(height: 130).clipped()
-            } else {
-                Image("chef-logo")
-                    .resizable().scaledToFit()
-                    .frame(height: 130).frame(maxWidth: .infinity)
-                    .background(Color(.systemBackground))
-            }
+            Color.clear
+                .aspectRatio(4/3, contentMode: .fit)
+                .overlay(
+                    Group {
+                        if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
+                            AsyncImage(url: URL(string: photoUrl)) { phase in
+                                if let image = phase.image {
+                                    image.resizable().scaledToFill()
+                                } else {
+                                    Color.orange.opacity(0.08)
+                                }
+                            }
+                        } else {
+                            Image("chef-logo")
+                                .resizable().scaledToFit()
+                                .background(Color(.systemBackground))
+                        }
+                    }
+                    .clipped()
+                )
+                .clipped()
             VStack(alignment: .leading, spacing: 4) {
                 Text(recipe.title).font(.caption).fontWeight(.semibold).lineLimit(2).foregroundColor(.primary)
                 if let category = recipe.category, !category.isEmpty {
