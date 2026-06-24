@@ -269,23 +269,24 @@ struct RecipeGridTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topTrailing) {
-                if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
-                    AsyncImage(url: URL(string: photoUrl)) { image in
-                        image.resizable().scaledToFill()
-                    } placeholder: {
-                        ZStack { Color.orange.opacity(0.08); ProgressView() }
+                Group {
+                    if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
+                        AsyncImage(url: URL(string: photoUrl)) { phase in
+                            if let image = phase.image {
+                                image.resizable().scaledToFill()
+                            } else {
+                                ZStack { Color.orange.opacity(0.08); ProgressView() }
+                            }
+                        }
+                    } else {
+                        Image("chef-logo")
+                            .resizable().scaledToFit()
+                            .background(Color(.systemBackground))
                     }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 120)
-                    .clipped()
-                    .contentShape(Rectangle())
-                } else {
-                    Image("chef-logo")
-                        .resizable().scaledToFit()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 120)
-                        .background(Color(.systemBackground))
                 }
+                .frame(maxWidth: .infinity, maxHeight: 120)
+                .clipped()
+
                 if recipe.is_favorite == true {
                     Image(systemName: "heart.fill")
                         .font(.caption2).foregroundColor(.red)
@@ -293,18 +294,23 @@ struct RecipeGridTile: View {
                         .padding(6)
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: 120)
             .clipped()
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(recipe.title).font(.caption).fontWeight(.semibold).lineLimit(2).foregroundColor(.primary)
+                Text(recipe.title)
+                    .font(.caption).fontWeight(.semibold)
+                    .lineLimit(2).foregroundColor(.primary)
                 if let category = recipe.category, !category.isEmpty {
                     Text(category).font(.caption2).foregroundColor(.orange)
                 }
                 Spacer(minLength: 0)
             }
-            .frame(height: 52).padding(.horizontal, 8).padding(.top, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 52)
+            .padding(.horizontal, 8).padding(.top, 6)
         }
+        .frame(maxWidth: .infinity)
         .background(Color(.systemBackground))
         .cornerRadius(10)
         .clipped()
