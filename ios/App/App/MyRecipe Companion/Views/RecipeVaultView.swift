@@ -274,17 +274,17 @@ struct RecipeGridTile: View {
                 if let photoUrl = recipe.photo_url, !photoUrl.isEmpty {
                     AsyncImage(url: URL(string: photoUrl)) { phase in
                         if let image = phase.image {
-                            image.resizable().scaledToFill()
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
                         } else {
                             ZStack { Color.orange.opacity(0.08); ProgressView() }
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 120)
-                    .clipped()
                 } else {
                     Image("chef-logo")
-                        .resizable().scaledToFit()
-                        .frame(maxWidth: .infinity, maxHeight: 120)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
                         .background(Color(.systemBackground))
                 }
                 if recipe.is_favorite == true {
@@ -294,7 +294,8 @@ struct RecipeGridTile: View {
                         .padding(6)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 120)
+            .frame(maxWidth: .infinity)
+            .frame(height: 120)
             .clipped()
 
             // ── Text ──
