@@ -72,13 +72,17 @@ struct RecipeVaultView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // ── Banner + Back ──
+            // ── Banner ──
             ZStack(alignment: .bottomLeading) {
                 Image("recipe-vault-hero")
                     .resizable().scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: 100)
             }
             .frame(maxWidth: .infinity)
+
+            Text("Your Recipe Collection Engine")
+                .font(.subheadline).foregroundColor(.secondary).italic()
+                .padding(.vertical, 6)
 
             // ── Filter + Sort bar ──
             HStack(spacing: 8) {
