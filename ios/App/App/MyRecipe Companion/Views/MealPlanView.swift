@@ -78,6 +78,10 @@ struct MealPlanView: View {
                         }
                         .frame(maxWidth: .infinity)
 
+                        Text("Stop wondering what to cook tonight.")
+                            .font(.subheadline).foregroundColor(.secondary).italic()
+                            .padding(.vertical, 8)
+
                         // ── Action toolbar ──
                         HStack(spacing: 12) {
                             if !selectionOrder.isEmpty {

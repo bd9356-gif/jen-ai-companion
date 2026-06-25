@@ -29,6 +29,10 @@ struct ShareQueueView: View {
             }
             .frame(maxWidth: .infinity)
 
+            Text("Share the recipes people will ask you for.")
+                .font(.subheadline).foregroundColor(.secondary).italic()
+                .padding(.vertical, 8)
+
             if !recipes.isEmpty {
                 HStack {
                     Text("\(recipes.count) recipe\(recipes.count == 1 ? "" : "s") ready to share")

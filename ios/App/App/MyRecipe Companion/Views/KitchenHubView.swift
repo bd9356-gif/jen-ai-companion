@@ -52,7 +52,7 @@ struct KitchenHubView: View {
                                     if sizeClass == .regular { onSidebarSelect?(1) }
                                     else { onTabSelect?(1) }
                                 } label: {
-                                    KitchenBar(iconName: "recipe-vault", title: "Recipe Vault", description: "Where recipes begin their journey", color: orange, cardBg: cardBg)
+                                    KitchenBar(iconName: "recipe-vault", title: "Recipe Vault", description: "Your Recipe Collection Engine", color: orange, cardBg: cardBg)
                                 }.buttonStyle(.plain)
 
                                 // Box — switch tab/sidebar
@@ -60,39 +60,39 @@ struct KitchenHubView: View {
                                     if sizeClass == .regular { onSidebarSelect?(2) }
                                     else { onTabSelect?(2) }
                                 } label: {
-                                    KitchenBar(iconName: "recipe-box", title: "Recipe Box", description: "Your keep-forever recipe collection", color: orange, cardBg: cardBg)
+                                    KitchenBar(iconName: "recipe-box", title: "Recipe Box", description: "Your Recipe Collection Engine", color: orange, cardBg: cardBg)
                                 }.buttonStyle(.plain)
 
                                 // Meal Ideas — sheet on iPad, push on iPhone
                                 if sizeClass == .regular {
                                     Button { showMealPlan = true } label: {
-                                        KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "What you're thinking of cooking next", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "Stop wondering what to cook tonight.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 } else {
                                     NavigationLink(destination: MealPlanView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
-                                        KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "What you're thinking of cooking next", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "meal-ideas", title: "My Meal Ideas", description: "Stop wondering what to cook tonight.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 }
 
                                 // Shopping List — sheet on iPad, push on iPhone
                                 if sizeClass == .regular {
                                     Button { showShoppingList = true } label: {
-                                        KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Ingredients, organized", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Never forget an ingredient again.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 } else {
                                     NavigationLink(destination: ShoppingListView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
-                                        KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Ingredients, organized", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "shopping-list", title: "Shopping List", description: "Never forget an ingredient again.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 }
 
                                 // Social Share — sheet on iPad, push on iPhone
                                 if sizeClass == .regular {
                                     Button { showSocialShare = true } label: {
-                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Recipes you want to share", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Share the recipes people will ask you for.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 } else {
                                     NavigationLink(destination: ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
-                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Recipes you want to share", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Share the recipes people will ask you for.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 }
                             }
@@ -109,7 +109,7 @@ struct KitchenHubView: View {
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text("AI Cooking School")
                                         .font(.headline).fontWeight(.bold).foregroundColor(blue)
-                                    Text("Your personal cooking school")
+                                    Text("Learn. Practice. Master.")
                                         .font(.caption2).foregroundColor(.secondary)
                                 }
                             }
