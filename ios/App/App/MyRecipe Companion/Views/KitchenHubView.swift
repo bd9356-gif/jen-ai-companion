@@ -24,7 +24,7 @@ struct KitchenHubView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: sizeClass == .regular ? 500 : .infinity)
-                    .padding(.vertical, 2)
+                    .frame(maxHeight: 160)
                     .background(cream)
 
                 ScrollView {
