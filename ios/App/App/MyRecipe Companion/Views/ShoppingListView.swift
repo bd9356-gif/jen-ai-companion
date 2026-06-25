@@ -89,7 +89,7 @@ struct ShoppingListView: View {
                         .background(Color(.systemBackground).opacity(0.9))
                         .clipShape(Circle())
                 }
-                .padding(.leading, 12).padding(.bottom, 8)
+                .padding(.leading, 12).padding(.bottom, 16)
             }
             .frame(maxWidth: .infinity)
 
