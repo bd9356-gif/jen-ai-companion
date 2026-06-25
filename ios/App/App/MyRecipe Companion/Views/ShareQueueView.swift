@@ -29,9 +29,6 @@ struct ShareQueueView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Text("Your recipes. Their table.")
-                .font(.subheadline).foregroundColor(.secondary).italic()
-                .padding(.vertical, 8)
 
             if !recipes.isEmpty {
                 HStack {

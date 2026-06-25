@@ -80,9 +80,6 @@ struct RecipeVaultView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Text("Your Recipe Collection Engine")
-                .font(.subheadline).foregroundColor(.secondary).italic()
-                .padding(.vertical, 6)
 
             // ── Filter + Sort bar ──
             HStack(spacing: 8) {

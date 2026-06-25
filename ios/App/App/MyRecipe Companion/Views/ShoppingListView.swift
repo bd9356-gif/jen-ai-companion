@@ -92,9 +92,6 @@ struct ShoppingListView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Text("Never forget an ingredient again.")
-                .font(.subheadline).foregroundColor(.secondary).italic()
-                .padding(.vertical, 8)
 
             // ── Action toolbar ──
             HStack(spacing: 12) {
