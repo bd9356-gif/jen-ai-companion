@@ -60,7 +60,7 @@ struct KitchenHubView: View {
                                     if sizeClass == .regular { onSidebarSelect?(2) }
                                     else { onTabSelect?(2) }
                                 } label: {
-                                    KitchenBar(iconName: "recipe-box", title: "Recipe Box", description: "Your Recipe Collection Engine", color: orange, cardBg: cardBg)
+                                    KitchenBar(iconName: "recipe-box", title: "Recipe Box", description: "Where recipes become memories.", color: orange, cardBg: cardBg)
                                 }.buttonStyle(.plain)
 
                                 // Meal Ideas — sheet on iPad, push on iPhone
