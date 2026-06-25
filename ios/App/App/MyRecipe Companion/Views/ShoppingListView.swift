@@ -80,6 +80,7 @@ struct ShoppingListView: View {
                 Image("shopping-list-hero")
                     .resizable().scaledToFit()
                     .frame(maxWidth: .infinity, maxHeight: 100)
+                    .padding(.top, 8)
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
