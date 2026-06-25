@@ -29,7 +29,7 @@ struct ShareQueueView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Text("Share the recipes people will ask you for.")
+            Text("Your recipes. Their table.")
                 .font(.subheadline).foregroundColor(.secondary).italic()
                 .padding(.vertical, 8)
 

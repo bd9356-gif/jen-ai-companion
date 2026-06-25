@@ -88,11 +88,11 @@ struct KitchenHubView: View {
                                 // Social Share — sheet on iPad, push on iPhone
                                 if sizeClass == .regular {
                                     Button { showSocialShare = true } label: {
-                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Share the recipes people will ask you for.", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Your recipes. Their table.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 } else {
                                     NavigationLink(destination: ShareQueueView().environmentObject(authManager).navigationBarBackButtonHidden(true)) {
-                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Share the recipes people will ask you for.", color: orange, cardBg: cardBg)
+                                        KitchenBar(iconName: "social-share-box", title: "Social Share", description: "Your recipes. Their table.", color: orange, cardBg: cardBg)
                                     }.buttonStyle(.plain)
                                 }
                             }

@@ -64,6 +64,10 @@ struct ClassroomView: View {
                 .resizable().scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: 100)
 
+            Text("Learn. Practice. Master.")
+                .font(.subheadline).foregroundColor(.secondary).italic()
+                .padding(.vertical, 8)
+
             // ── Mode strip ──
             HStack(spacing: 12) {
                 Image(mode.iconName)
