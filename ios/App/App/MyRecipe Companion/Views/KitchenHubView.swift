@@ -23,8 +23,7 @@ struct KitchenHubView: View {
                 Image("master-header")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: sizeClass == .regular ? 500 : .infinity)
-                    .frame(maxHeight: 160)
+                    .frame(maxWidth: .infinity, maxHeight: 200)
                     .background(cream)
 
                 ScrollView {
