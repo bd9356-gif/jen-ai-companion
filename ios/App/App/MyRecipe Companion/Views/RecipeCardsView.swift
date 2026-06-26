@@ -189,6 +189,7 @@ struct RecipeCardsView: View {
             .environmentObject(authManager)
         }
         .task { await loadCards() }
+        .onAppear { Task { await loadCards() } }
     }
 
     func loadCards() async {
