@@ -107,8 +107,8 @@ struct ProfileView: View {
                 Button {
                     Task {
                         do {
-                            let customerInfo = try await Purchases.shared.restorePurchases()
-                            await authManager.updateTier(from: customerInfo)
+                            _ = try await Purchases.shared.restorePurchases()
+                            await authManager.checkSubscription()
                         } catch {
                             print("Restore error:", error)
                         }
