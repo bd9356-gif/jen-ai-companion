@@ -104,7 +104,16 @@ struct ProfileView: View {
             }
 
             Section {
-                Button { Task { await authManager.checkSubscription() } } label: {
+                Button {
+                    Task {
+                        do {
+                            let customerInfo = try await Purchases.shared.restorePurchases()
+                            await authManager.updateTier(from: customerInfo)
+                        } catch {
+                            print("Restore error:", error)
+                        }
+                    }
+                } label: {
                     HStack {
                         Image(systemName: "arrow.clockwise").foregroundColor(.blue)
                         Text("Restore Purchases")
