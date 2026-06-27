@@ -126,6 +126,16 @@ struct ProfileView: View {
                     Label("Delete Account", systemImage: "trash")
                 }
             }
+
+            Section {
+                Button { dismiss() } label: {
+                    HStack {
+                        Image(systemName: "chevron.left").font(.caption)
+                        Text("Back")
+                    }
+                    .foregroundColor(.blue)
+                }
+            }
         }
         }
         .navigationBarHidden(true)
