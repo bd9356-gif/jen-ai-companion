@@ -122,6 +122,18 @@ struct PaywallView: View {
                         .background(Color(.systemGray6))
                         .cornerRadius(10)
 
+                        // ── Legal links ──
+                        HStack(spacing: 16) {
+                            Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Text("•").font(.caption).foregroundColor(.gray)
+                            Link("Privacy Policy", destination: URL(string: "https://mycompanionapps.com/privacy")!)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.bottom, 8)
+
                     }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 40)
