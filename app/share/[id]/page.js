@@ -71,7 +71,7 @@ export default async function SharePage({ params }) {
           <span className="font-bold text-gray-900 text-sm">MyRecipe Companion</span>
         </div>
         <a
-          href="https://recipe.mycompanionapps.com"
+          href="https://apps.apple.com/us/app/myrecipe-ai-cooking-companion/id6772163990"
           className="text-xs font-semibold bg-orange-600 text-white px-3 py-1.5 rounded-lg"
         >
           Get the App
