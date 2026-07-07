@@ -57,28 +57,45 @@ class AuthManager: NSObject, ObservableObject {
             } else {
                 customerInfo = try await Purchases.shared.customerInfo()
             }
-            // Check RevenueCat first
             let rcTier = tierFromCustomerInfo(customerInfo)
-            // If RevenueCat says free, check database as fallback
-            if rcTier == .free, let user = self.user {
-                let rows: [[String: String]] = (try? await supabase.from("user_subscriptions")
-                    .select("tier").eq("user_id", value: user.id).execute().value) ?? []
-                let dbTier = rows.first?["tier"] ?? "free"
-                await MainActor.run {
-                    self.subscriptionTier = self.tierFromString(dbTier)
-                    self.isLoadingSubscription = false
-                }
-            } else {
-                await MainActor.run {
-                    self.subscriptionTier = rcTier
-                    self.isLoadingSubscription = false
-                }
+            let resolvedTier = await resolvedTier(rcTier: rcTier)
+            await MainActor.run {
+                self.subscriptionTier = resolvedTier
+                self.isLoadingSubscription = false
             }
             print("📦 Subscription tier:", self.subscriptionTier)
+            print("🔑 RevenueCat App User ID:", Purchases.shared.appUserID)
+            print("🔑 Supabase user_id:", self.user?.id.uuidString ?? "none")
+            print("🔑 RC entitlements:", customerInfo.entitlements.active.keys)
         } catch {
             print("checkSubscription error:", error)
             await MainActor.run { self.isLoadingSubscription = false }
         }
+    }
+
+    // Read-only: resolves what tier to actually show, using the database
+    // as a fallback when RevenueCat has no entitlement on file. Some users
+    // get Pro/Premium granted directly in our database (web checkout,
+    // TestFlight, manual grants) with no matching RevenueCat purchase —
+    // RevenueCat saying "free" for them doesn't mean they lost access, it
+    // just means RevenueCat never knew about it in the first place. This
+    // never writes anything, so it's safe to call from anywhere.
+    func resolvedTier(rcTier: SubscriptionTier) async -> SubscriptionTier {
+        guard rcTier == .free, let user = self.user else { return rcTier }
+        let row = await fetchSubscriptionRow(userId: user.id.uuidString)
+        return tierFromString(row?.tier ?? "free")
+    }
+
+    struct SubscriptionRow {
+        let tier: String
+        let source: String
+    }
+
+    func fetchSubscriptionRow(userId: String) async -> SubscriptionRow? {
+        let rows: [[String: String]] = (try? await supabase.from("user_subscriptions")
+            .select("tier, source").eq("user_id", value: userId).execute().value) ?? []
+        guard let row = rows.first, let tier = row["tier"] else { return nil }
+        return SubscriptionRow(tier: tier, source: row["source"] ?? "unknown")
     }
 
     func tierFromCustomerInfo(_ customerInfo: CustomerInfo) -> SubscriptionTier {
@@ -95,29 +112,56 @@ class AuthManager: NSObject, ObservableObject {
         }
     }
 
-    @MainActor
+    // Called passively by the RevenueCat delegate whenever it pushes a
+    // customer info update — NOT just after a real purchase.
+    //
+    // Upgrades (RC says Pro/Premium): always safe to sync — a real
+    // purchase is happening, so we mark the row's source as 'revenuecat'
+    // going forward.
+    //
+    // Downgrades (RC says free): only sync this down to the database if
+    // the EXISTING row's source is already 'revenuecat' — meaning this
+    // user's access was itself originally granted by a real purchase, so
+    // RevenueCat genuinely is authoritative for it and a real
+    // cancellation/expiration should take effect. If the existing source
+    // is 'web', 'manual', or 'unknown' (legacy rows before this tracking
+    // existed), we leave the database untouched — RevenueCat has no
+    // visibility into those grants and must never silently erase them.
     func updateTier(from customerInfo: CustomerInfo) {
-        if customerInfo.entitlements["Pro"]?.isActive == true {
-            subscriptionTier = .pro
-        } else if customerInfo.entitlements["Premium"]?.isActive == true {
-            subscriptionTier = .premium
-        } else {
-            subscriptionTier = .free
+        let rcTier = tierFromCustomerInfo(customerInfo)
+        Task {
+            let resolved = await resolvedTier(rcTier: rcTier)
+            await MainActor.run {
+                self.subscriptionTier = resolved
+                print("📦 Subscription tier (from RevenueCat push):", self.subscriptionTier)
+            }
+
+            guard let user = self.user else { return }
+
+            if rcTier != .free {
+                await syncTierToDatabase(tier: rcTier, source: "revenuecat")
+            } else {
+                let existing = await fetchSubscriptionRow(userId: user.id.uuidString)
+                if existing?.source == "revenuecat" {
+                    await syncTierToDatabase(tier: .free, source: "revenuecat")
+                }
+                // else: leave the database as-is, don't touch a
+                // web/manual/unknown-sourced grant based on RC alone.
+            }
         }
-        print("📦 Subscription tier:", subscriptionTier)
-        Task { await syncTierToDatabase() }
     }
 
-    func syncTierToDatabase() async {
+    func syncTierToDatabase(tier: SubscriptionTier? = nil, source: String = "revenuecat") async {
         guard let user = self.user else { return }
+        let resolvedTierValue = tier ?? subscriptionTier
         let tierString: String
-        switch subscriptionTier {
+        switch resolvedTierValue {
         case .pro: tierString = "pro"
         case .premium: tierString = "premium"
         case .free: tierString = "free"
         }
         try? await supabase.from("user_subscriptions")
-            .upsert(["user_id": user.id.uuidString, "tier": tierString], onConflict: "user_id")
+            .upsert(["user_id": user.id.uuidString, "tier": tierString, "source": source], onConflict: "user_id")
             .execute()
     }
 

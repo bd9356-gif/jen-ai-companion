@@ -37,54 +37,6 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity).frame(height: 54)
                         .background(Color.black).foregroundColor(.white).cornerRadius(14)
                     }
-
-                    Button {
-                        Task {
-                            do {
-                                try await supabase.auth.signInWithOAuth(
-                                    provider: .google,
-                                    redirectTo: URL(string: "com.mycompanionapps.recipe://login-callback"),
-                                    queryParams: [(name: "prompt", value: "select_account")]
-                                )
-                                await authManager.checkSession()
-                                await authManager.checkSubscription()
-                            } catch {
-                                print("Google OAuth error:", error)
-                                await MainActor.run { errorMessage = error.localizedDescription }
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "globe")
-                            Text("Sign in with Google").fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity).frame(height: 54)
-                        .background(Color(.systemGray5)).foregroundColor(.primary).cornerRadius(14)
-                    }
-
-                    Button {
-                        Task {
-                            do {
-                                try await supabase.auth.signInWithOAuth(
-                                    provider: .azure,
-                                    redirectTo: URL(string: "com.mycompanionapps.recipe://login-callback"),
-                                    queryParams: [(name: "prompt", value: "select_account")]
-                                )
-                                await authManager.checkSession()
-                                await authManager.checkSubscription()
-                            } catch {
-                                print("Microsoft OAuth error:", error)
-                                await MainActor.run { errorMessage = error.localizedDescription }
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "envelope")
-                            Text("Sign in with Microsoft").fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity).frame(height: 54)
-                        .background(Color.blue).foregroundColor(.white).cornerRadius(14)
-                    }
                 }
                 .padding(.horizontal, 24).padding(.bottom, 40)
                 .frame(maxWidth: sizeClass == .regular ? 480 : .infinity)
