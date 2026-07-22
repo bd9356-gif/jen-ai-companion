@@ -24,6 +24,7 @@ export async function generateMetadata({ params }) {
       description: recipe.description || 'A recipe made with Chef Jen ♥',
       images: recipe.photo_url && recipe.photo_url !== '/chef-jen-update.png' ? [recipe.photo_url] : ['https://recipe.mycompanionapps.com/landing-hero-01.png'],
       type: 'article',
+      siteName: 'MyRecipe Companion',
     },
   }
 }
