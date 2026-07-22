@@ -64,20 +64,6 @@ export default async function SharePage({ params }) {
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between max-w-2xl mx-auto">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">👨‍🍳</span>
-          <span className="font-bold text-gray-900 text-sm">MyRecipe Companion</span>
-        </div>
-        <a
-          href="https://apps.apple.com/us/app/myrecipe-ai-cooking-companion/id6772163990"
-          className="text-xs font-semibold bg-orange-600 text-white px-3 py-1.5 rounded-lg"
-        >
-          Get the App
-        </a>
-      </div>
-
       <main className="max-w-2xl mx-auto px-4 py-6">
         {/* Photo */}
         {recipe.photo_url && (
@@ -156,6 +142,17 @@ export default async function SharePage({ params }) {
             </ol>
           </div>
         )}
+
+        {/* Footer note + CTA */}
+        <div className="mt-6 pt-5 border-t border-gray-200 flex items-center justify-between gap-3">
+          <p className="text-xs text-gray-400">Shared from MyRecipe Companion.</p>
+          <a
+            href="https://mycompanionapps.com/myrecipe"
+            className="shrink-0 text-xs font-semibold text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Learn More
+          </a>
+        </div>
 
       </main>
     </div>
