@@ -201,7 +201,7 @@ export default async function SharePage({ params }) {
         {/* Footer note + CTA */}
         <div className="mt-6 pt-5 border-t border-gray-200 flex items-center justify-between gap-3">
           <p className="text-xs text-gray-400">Shared from MyRecipe Companion.</p>
-          
+          <a
             href="https://mycompanionapps.com/myrecipe"
             className="shrink-0 text-xs font-semibold text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
           >
