@@ -63,8 +63,62 @@ export default async function SharePage({ params }) {
       ? recipe.instructions
       : []
 
+  // Flatten each ingredient into a single plain-text string, regardless of
+  // whether it's stored as a string or a {measure/amount, name} object —
+  // structured data needs consistent plain strings, not mixed shapes.
+  const ingredientStrings = ingredients.map((ing) =>
+    typeof ing === 'string' ? ing : `${ing.measure || ing.amount || ''} ${ing.name || ''}`.trim()
+  )
+
+  // Schema.org Recipe structured data (JSON-LD) — the standard format
+  // Google, Pinterest, and recipe-import tools (including our own app's
+  // URL importer) actually parse. Without this, the page reads fine to a
+  // human but has nothing a machine can reliably extract. Every field
+  // here matches exactly what the import API's parseRecipeSchema()
+  // already knows how to read — prep/cook/total time as ISO 8601
+  // durations, servings as recipeYield, nutrition as a NutritionInformation
+  // block — so a re-import of one of your own shared recipes comes back
+  // fully accurate, not just ingredients/instructions.
+  const toISODuration = (minutes) =>
+    minutes != null && minutes > 0 ? `PT${minutes}M` : undefined
+
+  const recipeSchema = {
+    '@context': 'https://schema.org/',
+    '@type': 'Recipe',
+    name: recipe.title,
+    description: recipe.description || undefined,
+    image: recipe.photo_url ? [recipe.photo_url] : undefined,
+    recipeIngredient: ingredientStrings.length > 0 ? ingredientStrings : undefined,
+    recipeInstructions: instructions.length > 0
+      ? instructions.map((step) => ({ '@type': 'HowToStep', text: step }))
+      : undefined,
+    prepTime: toISODuration(recipe.prep_time_minutes),
+    cookTime: toISODuration(recipe.cook_time_minutes),
+    totalTime: toISODuration(recipe.total_time_minutes),
+    recipeYield: recipe.servings ? `${recipe.servings} servings` : undefined,
+    nutrition: (recipe.calories || recipe.protein_g || recipe.carbs_g || recipe.fat_g) ? {
+      '@type': 'NutritionInformation',
+      calories: recipe.calories ? `${recipe.calories} calories` : undefined,
+      proteinContent: recipe.protein_g ? `${recipe.protein_g}g` : undefined,
+      carbohydrateContent: recipe.carbs_g ? `${recipe.carbs_g}g` : undefined,
+      fatContent: recipe.fat_g ? `${recipe.fat_g}g` : undefined,
+    } : undefined,
+    author: {
+      '@type': 'Organization',
+      name: 'MyRecipe Companion',
+    },
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
+      {/* Structured recipe data for import tools, search engines, and
+          Pinterest-style rich previews — invisible to a human reader,
+          read directly by machines. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(recipeSchema) }}
+      />
+
       <main className="max-w-2xl mx-auto px-4 py-6">
         {/* Photo */}
         {recipe.photo_url && (
@@ -147,7 +201,7 @@ export default async function SharePage({ params }) {
         {/* Footer note + CTA */}
         <div className="mt-6 pt-5 border-t border-gray-200 flex items-center justify-between gap-3">
           <p className="text-xs text-gray-400">Shared from MyRecipe Companion.</p>
-          <a
+          
             href="https://mycompanionapps.com/myrecipe"
             className="shrink-0 text-xs font-semibold text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
           >

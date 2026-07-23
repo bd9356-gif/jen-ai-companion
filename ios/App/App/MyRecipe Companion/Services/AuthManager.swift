@@ -64,9 +64,6 @@ class AuthManager: NSObject, ObservableObject {
                 self.isLoadingSubscription = false
             }
             print("📦 Subscription tier:", self.subscriptionTier)
-            print("🔑 RevenueCat App User ID:", Purchases.shared.appUserID)
-            print("🔑 Supabase user_id:", self.user?.id.uuidString ?? "none")
-            print("🔑 RC entitlements:", customerInfo.entitlements.active.keys)
         } catch {
             print("checkSubscription error:", error)
             await MainActor.run { self.isLoadingSubscription = false }
@@ -160,9 +157,13 @@ class AuthManager: NSObject, ObservableObject {
         case .premium: tierString = "premium"
         case .free: tierString = "free"
         }
-        try? await supabase.from("user_subscriptions")
-            .upsert(["user_id": user.id.uuidString, "tier": tierString, "source": source], onConflict: "user_id")
-            .execute()
+        do {
+            try await supabase.from("user_subscriptions")
+                .upsert(["user_id": user.id.uuidString, "tier": tierString, "source": source], onConflict: "user_id")
+                .execute()
+        } catch {
+            print("❌ syncTierToDatabase failed:", error)
+        }
     }
 
     // MARK: - Session
