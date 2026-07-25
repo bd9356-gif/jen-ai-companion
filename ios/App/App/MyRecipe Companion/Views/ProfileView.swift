@@ -10,9 +10,6 @@ struct ProfileView: View {
     @EnvironmentObject var authManager: AuthManager
     @State private var showPaywall = false
     @State private var showDeleteConfirm = false
-    @State private var isRestoring = false
-    @State private var restoreResultMessage: String? = nil
-    @State private var showRestoreResult = false
 
     var tierName: String {
         switch authManager.subscriptionTier {
@@ -109,34 +106,19 @@ struct ProfileView: View {
             Section {
                 Button {
                     Task {
-                        isRestoring = true
                         do {
-                            let customerInfo = try await Purchases.shared.restorePurchases()
-                            authManager.updateTier(from: customerInfo)
+                            _ = try await Purchases.shared.restorePurchases()
                             await authManager.checkSubscription()
-                            let hasEntitlement = customerInfo.entitlements["Pro"]?.isActive == true
-                                || customerInfo.entitlements["Premium"]?.isActive == true
-                            restoreResultMessage = hasEntitlement
-                                ? "Your subscription has been restored."
-                                : "No active purchases were found for this Apple ID on this device."
                         } catch {
                             print("Restore error:", error)
-                            restoreResultMessage = "Restore failed: \(error.localizedDescription)"
                         }
-                        isRestoring = false
-                        showRestoreResult = true
                     }
                 } label: {
                     HStack {
-                        if isRestoring {
-                            ProgressView().padding(.trailing, 4)
-                        } else {
-                            Image(systemName: "arrow.clockwise").foregroundColor(.blue)
-                        }
-                        Text(isRestoring ? "Restoring..." : "Restore Purchases")
+                        Image(systemName: "arrow.clockwise").foregroundColor(.blue)
+                        Text("Restore Purchases")
                     }
                 }
-                .disabled(isRestoring)
             }
 
             Section {
@@ -169,11 +151,6 @@ struct ProfileView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will permanently delete your account and all data.")
-        }
-        .alert("Restore Purchases", isPresented: $showRestoreResult) {
-            Button("OK") {}
-        } message: {
-            Text(restoreResultMessage ?? "")
         }
     }
 

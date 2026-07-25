@@ -8,7 +8,6 @@ struct PaywallView: View {
     @State private var offerings: Offerings? = nil
     @State private var isLoading = true
     @State private var isPurchasing = false
-    @State private var isRestoring = false
     @State private var selectedTier: String = "premium"
     @State private var errorMessage = ""
 
@@ -104,16 +103,10 @@ struct PaywallView: View {
                             Button {
                                 Task { await restorePurchases() }
                             } label: {
-                                HStack(spacing: 6) {
-                                    if isRestoring {
-                                        ProgressView().scaleEffect(0.7)
-                                    }
-                                    Text(isRestoring ? "Restoring..." : "Restore Purchases")
-                                        .font(.caption).foregroundColor(.gray)
-                                        .underline()
-                                }
+                                Text("Restore Purchases")
+                                    .font(.caption).foregroundColor(.gray)
+                                    .underline()
                             }
-                            .disabled(isRestoring)
                         }
 
                         // ── Free tier reminder ──
@@ -248,13 +241,7 @@ struct PaywallView: View {
         do {
             if let pkg = offerings?.offering(identifier: offeringId)?.availablePackages
                 .first(where: { $0.identifier == packageId }) {
-                let result = try await Purchases.shared.purchase(package: pkg)
-                // Explicitly sync here — don't rely solely on the passive
-                // RevenueCat delegate callback, which doesn't reliably
-                // fire immediately after a purchase completes. This is
-                // the actual purchase event; source is genuinely
-                // 'revenuecat', safe to write directly.
-                authManager.updateTier(from: result.customerInfo)
+                _ = try await Purchases.shared.purchase(package: pkg)
                 await authManager.checkSubscription()
                 dismiss()
             } else {
@@ -267,26 +254,12 @@ struct PaywallView: View {
     }
 
     func restorePurchases() async {
-        isRestoring = true
         do {
-            let customerInfo = try await Purchases.shared.restorePurchases()
-            authManager.updateTier(from: customerInfo)
+            _ = try await Purchases.shared.restorePurchases()
             await authManager.checkSubscription()
-            let hasEntitlement = customerInfo.entitlements["Pro"]?.isActive == true
-                || customerInfo.entitlements["Premium"]?.isActive == true
-            await MainActor.run {
-                isRestoring = false
-                if hasEntitlement {
-                    dismiss()
-                } else {
-                    errorMessage = "No active purchases were found for this Apple ID on this device."
-                }
-            }
+            dismiss()
         } catch {
-            await MainActor.run {
-                isRestoring = false
-                errorMessage = error.localizedDescription
-            }
+            await MainActor.run { errorMessage = error.localizedDescription }
         }
     }
 }

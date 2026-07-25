@@ -507,15 +507,7 @@ struct RecipeDetailView: View {
 
     func shareRecipe() {
         let shareURL = URL(string: "https://recipe.mycompanionapps.com/share/\(recipe.id)")!
-        // The URL is included in the caption text itself, not just passed
-        // as a separate share item. Some platforms (confirmed: Facebook
-        // desktop) render a link-preview image and silently drop the
-        // actual clickable URL, leaving the recipient with a flat picture
-        // and no way back to the real page. Putting the URL directly in
-        // the visible text means it's always there as plain, copyable
-        // text in the caption, regardless of how any given platform
-        // chooses to handle the separate URL item.
-        let items: [Any] = [recipe.title + " — Chef Jen approves ♥\n" + shareURL.absoluteString]
+        let items: [Any] = [recipe.title + " — Chef Jen approves ♥", shareURL]
         let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
