@@ -281,6 +281,13 @@ struct ImportView: View {
 
             statusMessage = "Saving to your vault..."
 
+            // Explicitly refresh the session before writing to the database.
+            // The Supabase token can appear valid on authManager's side while
+            // quietly expired underneath — the RLS policy then sees no auth
+            // and blocks the insert. A refresh here forces a live, valid token
+            // before we ever touch personal_recipes.
+            _ = try? await supabase.auth.refreshSession()
+
             var ingredientsArray: [[String: String]] = []
             if let ingredients = json["ingredients"] as? [[String: Any]] {
                 ingredientsArray = ingredients.compactMap { ing in
