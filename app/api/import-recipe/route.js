@@ -169,7 +169,18 @@ function parseYieldServings(input) {
 // we trust it over the model.
 function parseRecipeSchema(html) {
   const out = {}
-  const scripts = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || []
+  let scripts = html.match(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi) || []
+
+  // Also check for Next.js meta tag rendering of JSON-LD
+  const metaLdMatch = html.match(/<meta[^>]*name=["']script:ld\+json["'][^>]*content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']script:ld\+json["']/i)
+  if (metaLdMatch) {
+    try {
+      const decoded = metaLdMatch[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+      scripts = [`<script type="application/ld+json">${decoded}</script>`, ...scripts]
+    } catch { /* ignore */ }
+  }
+
   for (const script of scripts) {
     if (!script.includes('"Recipe"')) continue
     const json = script.replace(/<script[^>]*>/i, '').replace(/<\/script>/i, '').trim()
@@ -227,18 +238,26 @@ function extractContentFromHtml(html) {
       }
     }
   }
+
+  // Fallback: Next.js metadata API renders JSON-LD as a <meta name="script:ld+json">
+  // tag instead of a proper <script> tag. Extract it from there if present.
+  // This handles our own share pages at recipe.mycompanionapps.com/share/[id].
+  const metaLdMatch = html.match(/<meta[^>]*name=["']script:ld\+json["'][^>]*content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']script:ld\+json["']/i)
+  if (metaLdMatch) {
+    try {
+      const decoded = metaLdMatch[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&')
+      const parsed = JSON.parse(decoded)
+      if (parsed['@type'] === 'Recipe') return JSON.stringify(parsed)
+    } catch { /* fall through to plain text */ }
+  }
+
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    // Bumped 8000 → 18000 (May 2026). Long recipe blogs (Serious Eats,
-    // NYT Cooking) frequently put the headnote / "why it works" prose
-    // BEFORE the ingredient list and nutrition table — at 8k chars
-    // Claude was getting only the prose and hallucinating ingredients
-    // / leaving nutrition null. 18k catches the recipe section on every
-    // long-form blog we've tested without meaningfully bumping cost.
     .substring(0, 18000)
 }
 
