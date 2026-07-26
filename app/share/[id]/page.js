@@ -7,6 +7,30 @@ const supabase = createClient(
 
 export async function generateMetadata({ params }) {
   const { id } = await params
+  const { data: recipe } = await supabase
+    .from('personal_recipes')
+    .select('title, description, photo_url')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .single()
+
+  if (!recipe) return { title: 'Recipe Not Found' }
+
+  return {
+    title: `${recipe.title} — MyRecipe Companion`,
+    description: recipe.description || 'A recipe made with Chef Jen ♥',
+    openGraph: {
+      title: recipe.title,
+      description: recipe.description || 'A recipe made with Chef Jen ♥',
+      images: recipe.photo_url && recipe.photo_url !== '/chef-jen-update.png' ? [recipe.photo_url] : ['https://recipe.mycompanionapps.com/landing-hero-01.png'],
+      type: 'article',
+      siteName: 'MyRecipe Companion',
+    },
+  }
+}
+
+export default async function SharePage({ params }) {
+  const { id } = await params
   const { data: recipe, error: recipeError } = await supabase
     .from('personal_recipes')
     .select('*')
@@ -14,7 +38,18 @@ export async function generateMetadata({ params }) {
     .is('deleted_at', null)
     .single()
 
-  if (!recipe) return { title: 'Recipe Not Found' }
+  console.log('share page - id:', id, 'recipe:', recipe, 'error:', recipeError)
+  if (!recipe) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-5xl mb-4">🍽</p>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Recipe Not Found</h1>
+          <p className="text-gray-500 text-sm">This recipe may have been removed.</p>
+        </div>
+      </div>
+    )
+  }
 
   const ingredients = Array.isArray(recipe.ingredients)
     ? recipe.ingredients
@@ -59,58 +94,12 @@ export async function generateMetadata({ params }) {
     author: { '@type': 'Organization', name: 'MyRecipe Companion' },
   }
 
-  return {
-    title: `${recipe.title} — MyRecipe Companion`,
-    description: recipe.description || 'A recipe made with Chef Jen ♥',
-    openGraph: {
-      title: recipe.title,
-      description: recipe.description || 'A recipe made with Chef Jen ♥',
-      images: recipe.photo_url && recipe.photo_url !== '/chef-jen-update.png' ? [recipe.photo_url] : ['https://recipe.mycompanionapps.com/landing-hero-01.png'],
-      type: 'article',
-      siteName: 'MyRecipe Companion',
-    },
-    other: {
-      'script:ld+json': JSON.stringify(recipeSchema),
-    },
-  }
-}
-
-export default async function SharePage({ params }) {
-  const { id } = await params
-  const { data: recipe, error: recipeError } = await supabase
-    .from('personal_recipes')
-    .select('*')
-    .eq('id', id)
-    .is('deleted_at', null)
-    .single()
-
-  console.log('share page - id:', id, 'recipe:', recipe, 'error:', recipeError)
-  if (!recipe) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <p className="text-5xl mb-4">🍽</p>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Recipe Not Found</h1>
-          <p className="text-gray-500 text-sm">This recipe may have been removed.</p>
-        </div>
-      </div>
-    )
-  }
-
-  const ingredients = Array.isArray(recipe.ingredients)
-    ? recipe.ingredients
-    : typeof recipe.ingredients === 'string'
-      ? recipe.ingredients.split('\n').filter(Boolean)
-      : []
-
-  const instructions = typeof recipe.instructions === 'string'
-    ? recipe.instructions.split('\n').filter(Boolean)
-    : Array.isArray(recipe.instructions)
-      ? recipe.instructions
-      : []
-
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(recipeSchema) }}
+      />
       <main className="max-w-2xl mx-auto px-4 py-6">
         {/* Photo */}
         {recipe.photo_url && (
