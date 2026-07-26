@@ -7,7 +7,7 @@ const supabase = createClient(
 
 export async function generateMetadata({ params }) {
   const { id } = await params
-  const { data: recipe } = await supabase
+  const { data: recipe, error: recipeError } = await supabase
     .from('personal_recipes')
     .select('title, description, photo_url')
     .eq('id', id)
@@ -63,43 +63,8 @@ export default async function SharePage({ params }) {
       ? recipe.instructions
       : []
 
-  const ingredientStrings = ingredients.map((ing) =>
-    typeof ing === 'string' ? ing : `${ing.measure || ing.amount || ''} ${ing.name || ''}`.trim()
-  )
-
-  const toISODuration = (minutes) =>
-    minutes != null && minutes > 0 ? `PT${minutes}M` : undefined
-
-  const recipeSchema = {
-    '@context': 'https://schema.org/',
-    '@type': 'Recipe',
-    name: recipe.title,
-    description: recipe.description || undefined,
-    image: recipe.photo_url ? [recipe.photo_url] : undefined,
-    recipeIngredient: ingredientStrings.length > 0 ? ingredientStrings : undefined,
-    recipeInstructions: instructions.length > 0
-      ? instructions.map((step) => ({ '@type': 'HowToStep', text: step }))
-      : undefined,
-    prepTime: toISODuration(recipe.prep_time_minutes),
-    cookTime: toISODuration(recipe.cook_time_minutes),
-    totalTime: toISODuration(recipe.total_time_minutes),
-    recipeYield: recipe.servings ? `${recipe.servings} servings` : undefined,
-    nutrition: (recipe.calories || recipe.protein_g || recipe.carbs_g || recipe.fat_g) ? {
-      '@type': 'NutritionInformation',
-      calories: recipe.calories ? `${recipe.calories} calories` : undefined,
-      proteinContent: recipe.protein_g ? `${recipe.protein_g}g` : undefined,
-      carbohydrateContent: recipe.carbs_g ? `${recipe.carbs_g}g` : undefined,
-      fatContent: recipe.fat_g ? `${recipe.fat_g}g` : undefined,
-    } : undefined,
-    author: { '@type': 'Organization', name: 'MyRecipe Companion' },
-  }
-
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(recipeSchema) }}
-      />
       <main className="max-w-2xl mx-auto px-4 py-6">
         {/* Photo */}
         {recipe.photo_url && (
