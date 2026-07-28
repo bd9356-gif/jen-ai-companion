@@ -113,12 +113,20 @@ export default async function SharePage({ params }) {
           </div>
         )}
 
-        {/* Title + Chef Jen stamp */}
+        {/* Title + Chef Jen stamp + Learn More */}
         <div className="mb-5">
           <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-2">{recipe.title}</h1>
-          <div className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-full px-3 py-1">
-            <span className="text-sm">👨‍🍳</span>
-            <span className="text-xs font-semibold text-orange-700">Chef Jen approves ♥</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-full px-3 py-1">
+              <span className="text-sm">👨‍🍳</span>
+              <span className="text-xs font-semibold text-orange-700">Chef Jen approves ♥</span>
+            </div>
+            <a
+              href="https://mycompanionapps.com/myrecipe"
+              className="inline-flex items-center text-xs font-semibold text-orange-700 border border-orange-200 bg-orange-50 px-3 py-1 rounded-full hover:bg-orange-100 transition-colors"
+            >
+              Get the App →
+            </a>
           </div>
         </div>
 
@@ -179,15 +187,9 @@ export default async function SharePage({ params }) {
           </div>
         )}
 
-        {/* Footer note + CTA */}
-        <div className="mt-6 pt-5 border-t border-gray-200 flex items-center justify-between gap-3">
-          <p className="text-xs text-gray-400">Shared from MyRecipe Companion.</p>
-          <a
-            href="https://mycompanionapps.com/myrecipe"
-            className="shrink-0 text-xs font-semibold text-gray-500 border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Learn More
-          </a>
+        {/* Footer note */}
+        <div className="mt-6 pt-5 border-t border-gray-200">
+          <p className="text-xs text-gray-400 text-center">Shared from MyRecipe Companion.</p>
         </div>
 
       </main>
