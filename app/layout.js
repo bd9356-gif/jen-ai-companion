@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono, Caveat } from "next/font/google";
+import Script from "next/script";
 import PurchasesProvider from "@/components/PurchasesProvider";
 import "./globals.css";
 
@@ -88,20 +89,26 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="p:domain_verify" content="1849040e58f1fd56cee76fc2e7b37f08" />
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-YWGNHS7MP7"></script>
-        <script dangerouslySetInnerHTML={{ __html: `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-YWGNHS7MP7');
-        `}} />
         <script dangerouslySetInnerHTML={{ __html: `
           window.addEventListener('resize', function() {
             document.body.style.minHeight = window.innerHeight + 'px';
           });
         `}} />
       </head>
-      <body style={{overflowX: 'hidden', width: '100%'}}><PurchasesProvider>{children}
+      <body style={{overflowX: 'hidden', width: '100%'}}>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-YWGNHS7MP7"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-YWGNHS7MP7');
+          `}
+        </Script>
+        <PurchasesProvider>{children}
         <script dangerouslySetInnerHTML={{__html: `if(window.location.search.includes('openExternal=1')){var c=window.location.href.replace('?openExternal=1','').replace('&openExternal=1','');window.open(c,'_blank');}`}} /></PurchasesProvider></body>
     </html>
   );
