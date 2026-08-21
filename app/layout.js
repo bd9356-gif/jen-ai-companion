@@ -88,6 +88,13 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="p:domain_verify" content="1849040e58f1fd56cee76fc2e7b37f08" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-YWGNHS7MP7"></script>
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-YWGNHS7MP7');
+        `}} />
         <script dangerouslySetInnerHTML={{ __html: `
           window.addEventListener('resize', function() {
             document.body.style.minHeight = window.innerHeight + 'px';
