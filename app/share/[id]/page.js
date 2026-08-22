@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { RecipeShareView, LearnMoreButton } from './SharePageEvents'
 
 const supabase = createClient(
   'https://epgtahifcphwjifxmxst.supabase.co',
@@ -115,18 +116,14 @@ export default async function SharePage({ params }) {
 
         {/* Title + Chef Jen stamp + Learn More */}
         <div className="mb-5">
+          <RecipeShareView recipeId={recipe.id} recipeTitle={recipe.title} />
           <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-2">{recipe.title}</h1>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-full px-3 py-1">
               <span className="text-sm">👨‍🍳</span>
               <span className="text-xs font-semibold text-orange-700">Chef Jen approves ♥</span>
             </div>
-            <a
-              href="https://mycompanionapps.com/myrecipe"
-              className="inline-flex items-center text-xs font-semibold text-orange-700 border border-orange-200 bg-orange-50 px-3 py-1 rounded-full hover:bg-orange-100 transition-colors"
-            >
-              Learn More →
-            </a>
+            <LearnMoreButton recipeId={recipe.id} recipeTitle={recipe.title} />
           </div>
         </div>
 
