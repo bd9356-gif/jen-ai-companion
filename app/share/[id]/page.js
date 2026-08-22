@@ -114,17 +114,11 @@ export default async function SharePage({ params }) {
           </div>
         )}
 
-        {/* Title + Chef Jen stamp + Learn More */}
+        {/* Title + CTA */}
         <div className="mb-5">
           <RecipeShareView recipeId={recipe.id} recipeTitle={recipe.title} />
           <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-2">{recipe.title}</h1>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 rounded-full px-3 py-1">
-              <span className="text-sm">👨‍🍳</span>
-              <span className="text-xs font-semibold text-orange-700">Chef Jen approves ♥</span>
-            </div>
-            <LearnMoreButton recipeId={recipe.id} recipeTitle={recipe.title} />
-          </div>
+          <LearnMoreButton recipeId={recipe.id} recipeTitle={recipe.title} />
         </div>
 
         {/* Source credit */}
