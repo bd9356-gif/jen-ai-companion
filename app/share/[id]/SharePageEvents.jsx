@@ -37,7 +37,7 @@ export function LearnMoreButton({ recipeId, recipeTitle }) {
       onClick={handleClick}
       className="inline-flex items-center text-xs font-semibold text-orange-700 border border-orange-200 bg-orange-50 px-3 py-1 rounded-full hover:bg-orange-100 transition-colors"
     >
-      👩‍🍳 See What MyRecipe Companion Can Do →
+      See What MyRecipe Companion Can Do →
     </a>
   )
 }
