@@ -16,7 +16,7 @@ export function RecipeShareView({ recipeId, recipeTitle }) {
 }
 
 export function LearnMoreButton({ recipeId, recipeTitle }) {
-  const destinationUrl = 'https://mycompanionapps.com/myrecipe'
+  const destinationUrl = 'https://mycompanionapps.com/recipes'
 
   function handleClick() {
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
@@ -35,9 +35,9 @@ export function LearnMoreButton({ recipeId, recipeTitle }) {
     <a
       href={destinationUrl}
       onClick={handleClick}
-      className="inline-flex items-center text-xs font-semibold text-orange-700 border border-orange-200 bg-orange-50 px-3 py-1 rounded-full hover:bg-orange-100 transition-colors"
+      className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-orange-600 px-4 py-1.5 rounded-full hover:bg-orange-700 transition-colors shadow-sm"
     >
-      Visit Website
+      👩‍🍳 See More Recipes →
     </a>
   )
 }
