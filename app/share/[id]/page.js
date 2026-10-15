@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { RecipeShareView, LearnMoreButton } from './SharePageEvents'
+import { RecipeShareView, LearnMoreButton, RecipeTips } from './SharePageEvents'
 
 const supabase = createClient(
   'https://epgtahifcphwjifxmxst.supabase.co',
@@ -177,6 +177,9 @@ export default async function SharePage({ params }) {
             </ol>
           </div>
         )}
+
+        {/* Tips: import into a recipe app, join the Facebook group */}
+        <RecipeTips recipeId={recipe.id} />
 
         {/* Footer note */}
         <div className="mt-6 pt-5 border-t border-gray-200">
