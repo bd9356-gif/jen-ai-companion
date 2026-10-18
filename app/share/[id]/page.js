@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { RecipeShareView, LearnMoreButton, RecipeTips } from './SharePageEvents'
+import { RecipeShareView, RecipeTips } from './SharePageEvents'
 
 const supabase = createClient(
   'https://epgtahifcphwjifxmxst.supabase.co',
@@ -118,7 +118,6 @@ export default async function SharePage({ params }) {
         <div className="mb-5">
           <RecipeShareView recipeId={recipe.id} recipeTitle={recipe.title} />
           <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-2">{recipe.title}</h1>
-          <LearnMoreButton recipeId={recipe.id} recipeTitle={recipe.title} />
         </div>
 
         {/* Source credit */}
@@ -178,7 +177,7 @@ export default async function SharePage({ params }) {
           </div>
         )}
 
-        {/* Tips: import into a recipe app, join the Facebook group */}
+        {/* Meet Chef Jen, Facebook group, Recipe Import Tip (same cards as mycompanionapps.com) */}
         <RecipeTips recipeId={recipe.id} />
 
         {/* Footer note */}
