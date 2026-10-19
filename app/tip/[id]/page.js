@@ -14,7 +14,7 @@ const supabase = createClient(
 )
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const OG_IMAGE = 'https://recipe.mycompanionapps.com/chef-jen-update.png'
+const OG_IMAGE = 'https://recipe.mycompanionapps.com/cooking-tip-og.jpg'
 
 async function loadTip(id) {
   if (!UUID_RE.test(id || '')) return null
