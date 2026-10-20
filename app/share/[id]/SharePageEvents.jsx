@@ -42,7 +42,7 @@ export function LearnMoreButton({ recipeId, recipeTitle }) {
   )
 }
 
-const FACEBOOK_GROUP_URL = 'https://www.facebook.com/share/g/19shn7AGTN/?mibextid=wwXIfr'
+const FACEBOOK_GROUP_URL = 'https://www.facebook.com/groups/2143785163199218'
 const FACEBOOK_GROUP_NAME = 'What’s for Dinner? with Chef Jen'
 const MEET_CHEF_JEN_URL = 'https://mycompanionapps.com/meet-chef-jen'
 
