@@ -44,6 +44,17 @@ export function LearnMoreButton({ recipeId, recipeTitle }) {
 
 const FACEBOOK_GROUP_URL = 'https://m.facebook.com/groups/2143785163199218'
 const FACEBOOK_GROUP_NAME = 'What’s for Dinner? with Chef Jen'
+// Inside Facebook's own built-in browser on iPhone, every group link shows "Page not found".
+// There, hand the link to Safari instead (iOS 17+ x-safari-https: scheme); iOS then opens the group.
+const FACEBOOK_GROUP_VIA_SAFARI = 'x-safari-https://www.facebook.com/groups/2143785163199218'
+function openFacebookGroup(e) {
+  if (typeof navigator === 'undefined') return
+  const ua = navigator.userAgent
+  if (/FBAN|FBAV|FB_IAB|FBIOS/.test(ua) && /iPhone|iPad|iPod/.test(ua)) {
+    e.preventDefault()
+    window.location.href = FACEBOOK_GROUP_VIA_SAFARI
+  }
+}
 const MEET_CHEF_JEN_URL = 'https://mycompanionapps.com/meet-chef-jen'
 
 // Promotional cards after the recipe (approved copy — same as the website recipe pages):
@@ -80,7 +91,7 @@ export function RecipeTips({ recipeId }) {
         <p className="text-base font-bold text-gray-900 mb-1">🍳 Come Cook With Us!</p>
         <p className="text-sm text-gray-700 leading-relaxed">
           Enjoyed this recipe? Join{' '}
-          <a href={FACEBOOK_GROUP_URL} onClick={() => track('chef_jen_group_click', { cta_location: 'recipe_tip' })} className="font-semibold text-orange-600 underline">
+          <a href={FACEBOOK_GROUP_URL} onClick={(e) => { track('chef_jen_group_click', { cta_location: 'recipe_tip' }); openFacebookGroup(e) }} className="font-semibold text-orange-600 underline">
             {FACEBOOK_GROUP_NAME}
           </a>{' '}
           on Facebook for more recipes, cooking tips, and dinner ideas.
