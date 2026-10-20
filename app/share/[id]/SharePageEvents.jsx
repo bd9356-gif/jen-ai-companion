@@ -80,7 +80,7 @@ export function RecipeTips({ recipeId }) {
         <p className="text-base font-bold text-gray-900 mb-1">🍳 Come Cook With Us!</p>
         <p className="text-sm text-gray-700 leading-relaxed">
           Enjoyed this recipe? Join{' '}
-          <a href={FACEBOOK_GROUP_URL} target="_blank" rel="noopener noreferrer" onClick={() => track('chef_jen_group_click', { cta_location: 'recipe_tip' })} className="font-semibold text-orange-600 underline">
+          <a href={FACEBOOK_GROUP_URL} onClick={() => track('chef_jen_group_click', { cta_location: 'recipe_tip' })} className="font-semibold text-orange-600 underline">
             {FACEBOOK_GROUP_NAME}
           </a>{' '}
           on Facebook for more recipes, cooking tips, and dinner ideas.
