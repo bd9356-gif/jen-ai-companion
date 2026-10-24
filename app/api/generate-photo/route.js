@@ -17,7 +17,7 @@ export async function POST(req) {
     const prompt = `DSLR food photograph, ${title}, shot on a Canon 5D, 50mm lens, f/1.8 aperture, natural side lighting from a window, plated on a white ceramic dish, garnished and styled by a professional food stylist, warm background, bokeh, photorealistic, no illustration, no cartoon, no drawing, real food photo`
 
     const response = await openai.images.generate({
-      model: 'gpt-image-1',
+      model: 'gpt-image-2.5-flare', // gpt-image-1 was shut down by OpenAI on Oct 23, 2026
       prompt,
       n: 1,
       size: '1024x1024',
