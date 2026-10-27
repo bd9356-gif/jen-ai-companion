@@ -7,8 +7,10 @@ const supabase = createClient(
 )
 
 // Short hash of what the preview card shows, so an edited recipe gets a fresh image URL.
+// CARD_DESIGN matches the website's (lib/recipeCard/layout.ts) — bump both together.
+const CARD_DESIGN = 'b2'
 function cardVersion(...parts) {
-  const str = JSON.stringify(parts)
+  const str = JSON.stringify([CARD_DESIGN, ...parts])
   let h = 0x811c9dc5
   for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) }
   return (h >>> 0).toString(36)
