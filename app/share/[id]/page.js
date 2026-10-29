@@ -7,6 +7,16 @@ const supabase = createClient(
 )
 
 // Short hash of what the preview card shows, so an edited recipe gets a fresh image URL.
+// Tall recipe picture (Facebook photo posts / Pinterest), made by the website.
+// TALL_DESIGN matches the website's (lib/recipeCard/layout.ts) — bump both together.
+const TALL_DESIGN = 't1'
+function tallImageUrl(id, title, photo) {
+  const str = JSON.stringify([TALL_DESIGN, title, photo])
+  let h = 0x811c9dc5
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) }
+  return `https://www.mycompanionapps.com/api/og/recipe/${id}/tall?v=${(h >>> 0).toString(36)}`
+}
+
 // CARD_DESIGN matches the website's (lib/recipeCard/layout.ts) — bump both together.
 const CARD_DESIGN = 'c2'
 function cardVersion(...parts) {
@@ -113,6 +123,10 @@ export default async function SharePage({ params }) {
     author: { '@type': 'Organization', name: 'MyRecipe Companion' },
   }
 
+  // Website's photo fallback matches its own (/og-image.png) when a recipe has no photo.
+  const pinPhoto = recipe.photo_url && recipe.photo_url !== '/chef-jen-update.png' ? recipe.photo_url : '/og-image.png'
+  const pinImage = tallImageUrl(recipe.id, recipe.title || 'Untitled Recipe', pinPhoto)
+
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
       <script
@@ -127,10 +141,15 @@ export default async function SharePage({ params }) {
             <img
               src={recipe.photo_url}
               alt={recipe.title}
+              data-pin-media={pinImage}
+              data-pin-description={recipe.title}
               className="w-full h-full object-cover"
             />
           </div>
         )}
+        {/* Pinterest: the tall recipe picture, offered when someone saves this page. Not shown on the page. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={pinImage} alt={recipe.title} data-pin-description={recipe.title} width={1080} height={1350} loading="lazy" style={{ display: 'none' }} />
 
         {/* Title + CTA */}
         <div className="mb-5">
