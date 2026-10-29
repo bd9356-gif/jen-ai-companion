@@ -126,6 +126,8 @@ export default async function SharePage({ params }) {
   // Website's photo fallback matches its own (/og-image.png) when a recipe has no photo.
   const pinPhoto = recipe.photo_url && recipe.photo_url !== '/chef-jen-update.png' ? recipe.photo_url : '/og-image.png'
   const pinImage = tallImageUrl(recipe.id, recipe.title || 'Untitled Recipe', pinPhoto)
+  // Pinterest fills the Pin's description from this: title, short description, Chef Jen.
+  const pinDescription = `${recipe.title}${recipe.description ? ` — ${recipe.description}` : ''} From Chef Jen’s Kitchen.`.slice(0, 480)
 
   return (
     <div className="min-h-screen bg-[#f5f0e8]">
@@ -142,14 +144,14 @@ export default async function SharePage({ params }) {
               src={recipe.photo_url}
               alt={recipe.title}
               data-pin-media={pinImage}
-              data-pin-description={recipe.title}
+              data-pin-description={pinDescription}
               className="w-full h-full object-cover"
             />
           </div>
         )}
         {/* Pinterest: the tall recipe picture, offered when someone saves this page. Not shown on the page. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={pinImage} alt={recipe.title} data-pin-description={recipe.title} width={1080} height={1350} loading="lazy" style={{ display: 'none' }} />
+        <img src={pinImage} alt={recipe.title} data-pin-description={pinDescription} width={1080} height={1350} loading="lazy" style={{ display: 'none' }} />
 
         {/* Title + CTA */}
         <div className="mb-5">
