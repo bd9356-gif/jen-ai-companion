@@ -131,7 +131,7 @@ export default async function TipSharePage({ params }) {
 
         <div className="bg-white rounded-2xl border border-orange-200 p-5 text-center shadow-sm">
           <p className="text-base font-bold text-gray-900 mb-1">Got a cooking question of your own?</p>
-          <p className="text-sm text-gray-600 mb-4">Ask Chef Jen anything in MyRecipe Companion.</p>
+          <p className="text-sm text-gray-600 mb-4">Have a conversation with Chef Jen in MyRecipe Companion.</p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
             <TipAppButton tipId={tip.id} />
             <TipMoreButton tipId={tip.id} />
