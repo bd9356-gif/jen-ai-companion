@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 
-const APP_STORE_URL = 'https://apps.apple.com/us/app/myrecipe-ai-cooking-companion/id6772163990'
+const MEET_CHEF_JEN_URL = 'https://mycompanionapps.com/meet-chef-jen'
 const TIPS_URL = 'https://mycompanionapps.com/tips'
 
 function track(name, params) {
@@ -23,8 +23,8 @@ export function TipShareView({ tipId, tipTitle }) {
 export function TipAppButton({ tipId }) {
   return (
     <a
-      href={APP_STORE_URL}
-      onClick={() => track('tip_app_click', { tip_id: tipId, destination_url: APP_STORE_URL })}
+      href={MEET_CHEF_JEN_URL}
+      onClick={() => track('meet_chef_jen_click', { tip_id: tipId, source_type: 'tip_share_page', destination_url: MEET_CHEF_JEN_URL })}
       className="inline-flex items-center justify-center gap-1.5 text-sm font-bold text-white bg-orange-600 px-4 py-2 rounded-full hover:bg-orange-700 transition-colors shadow-sm"
     >
       Meet Chef Jen →
