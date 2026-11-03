@@ -52,6 +52,8 @@ export default function ChefPage() {
   const [toast, setToast] = useState(null)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
+  const [servings, setServings] = useState(null)        // Create: chosen servings
+  const [askServings, setAskServings] = useState(false) // nudge when none picked
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -139,6 +141,14 @@ export default function ChefPage() {
   async function sendMessage(text, modeOverride = null) {
     const trimmed = text.trim()
     if (!trimmed || loading) return
+    // Create (Practice) asks for servings first — keep the request in the
+    // box and point at the picker instead of making the recipe.
+    if ((modeOverride || mode) === 'practice' && !servings) {
+      if (modeOverride && modeOverride !== mode) setMode(modeOverride)
+      setInput(trimmed)
+      setAskServings(true)
+      return
+    }
     // Check Chef Jen usage limit
     const monthKey = new Date().toISOString().slice(0, 7)
     const { data: usage } = await supabase.from('user_usage').select('chef_jen_count').eq('user_id', user?.id).eq('month', monthKey).maybeSingle()
@@ -158,7 +168,8 @@ export default function ChefPage() {
     if (modeOverride && modeOverride !== mode) {
       setMode(modeOverride)
     }
-    const userMsg = { role: 'user', content: trimmed, mode: useMode }
+    const finalText = useMode === 'practice' ? withServings(trimmed, servings) : trimmed
+    const userMsg = { role: 'user', content: finalText, mode: useMode }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setInput('')
@@ -169,7 +180,7 @@ export default function ChefPage() {
         // Practice: free-text → recipe JSON. The /api/topchef route appends
         // the JSON-shape instruction onto whatever prompt we pass, so the
         // wrapper here just clarifies "this is a request for a recipe".
-        const wrappedPrompt = `Create a recipe based on this request from a home cook: "${trimmed}". Keep it approachable, delicious, and clear for a home kitchen.`
+        const wrappedPrompt = `Create a recipe based on this request from a home cook: "${finalText}". Keep it approachable, delicious, and clear for a home kitchen.`
         const res = await fetch('/api/topchef', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -197,9 +208,10 @@ export default function ChefPage() {
         setMessages([...newMessages, {
           role: 'assistant',
           mode: 'practice',
-          question: trimmed,
+          question: finalText,
           content: recipe.title || 'Here is a recipe for you.',
           recipe,
+          servings,
         }])
       } else {
         // Teach: chat-style Q&A.
@@ -274,7 +286,8 @@ export default function ChefPage() {
       user_id: user.id, title: r.title, description: r.description||'',
       ingredients: ings, instructions: instructionsToString(r.instructions),
       category: r.cuisine||'', tags: ['chef-jen'], family_notes: '',
-      photo_url: '/chef-jen-update.png', difficulty: r.difficulty||''
+      photo_url: '/chef-jen-update.png', difficulty: r.difficulty||'',
+      servings: msg.servings || null
     })
     if (error) { showToast('Could not save'); return }
     setSavedKeys(prev => new Set([...prev, k]))
@@ -435,6 +448,25 @@ export default function ChefPage() {
               </svg>
             </button>
           </div>
+          {isPractice && (
+            <div className="mt-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className={`text-xs font-semibold mr-1 ${askServings ? 'text-orange-700' : 'text-gray-500'}`}>Servings</span>
+                {SERVING_OPTIONS.map(n => (
+                  <button
+                    key={n}
+                    onClick={() => { setServings(n); setAskServings(false) }}
+                    className={`min-w-[2.25rem] px-2 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                      servings === n ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300'
+                    }`}
+                  >{n}</button>
+                ))}
+              </div>
+              {askServings && (
+                <p className="text-xs text-orange-700 mt-1.5">How many servings? Pick one, then send.</p>
+              )}
+            </div>
+          )}
           <p className="text-xs text-gray-400 mt-2 text-center">
             {isPractice ? '🍳 Recipes save to Chef Jennifer Recipes.' : '📝 Answers save to Learning Vault.'}
           </p>
@@ -552,6 +584,8 @@ export default function ChefPage() {
                             // it before generating. Same as the iPhone app.
                             setMode('practice')
                             setInput(practice)
+                            setServings(servingsFrom(practice))
+                            setAskServings(false)
                             window.scrollTo({ top: 0, behavior: 'smooth' })
                             setTimeout(() => inputRef.current?.focus(), 300)
                           }}
@@ -598,6 +632,20 @@ export default function ChefPage() {
    numbered instructions, and a 🔒 Save to Recipe Vault
    button. Mirrors the visual vocabulary of /chef-recipes.
    ─────────────────────────────────────────────────────────── */
+/* Create (Practice) servings picker — Nov 2026. The cook picks how many
+   servings before a recipe is made; the choice is written into the
+   request ("for 4" is replaced, otherwise "(serves 4)" is added). */
+const SERVING_OPTIONS = [1, 2, 3, 4, 6, 8]
+const SERVES_RE = /\bfor (\d+)\b(?!\s*(?:min|minute|hour|degree|°))/i
+function withServings(text, n) {
+  return SERVES_RE.test(text) ? text.replace(SERVES_RE, `for ${n}`) : `${text} (serves ${n})`
+}
+function servingsFrom(text) {
+  const m = (text || '').match(SERVES_RE)
+  const n = m ? Number(m[1]) : null
+  return SERVING_OPTIONS.includes(n) ? n : null
+}
+
 function RecipeMessage({ msg, saved, onSave }) {
   const r = msg.recipe || {}
   const steps = normalizeInstructionsArray(r.instructions)
@@ -619,6 +667,9 @@ function RecipeMessage({ msg, saved, onSave }) {
               )}
               {r.cuisine && (
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-700 bg-white/80 border border-orange-200 rounded-full px-2 py-0.5">{r.cuisine}</span>
+              )}
+              {msg.servings && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-700 bg-white/80 border border-gray-200 rounded-full px-2 py-0.5">Serves {msg.servings}</span>
               )}
             </div>
             {r.description && (
