@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { modelOptions, replyText } from '@/lib/claude_model'
 import { createClient } from '@supabase/supabase-js'
 import { findCachedRecipe, bumpServeCount } from '@/lib/chef_recipe_cache'
 import { checkRateLimit } from '@/lib/rate_limit'
@@ -78,11 +79,11 @@ Rules: instructions are an ARRAY of strings (not a paragraph, not numbered prefi
         let recipe = null
         try {
             const message = await anthropic.messages.create({
-                model: 'claude-haiku-4-5-20251001',
+                ...modelOptions(),
                 max_tokens: 1500,
                 messages: [{ role: 'user', content: adaptText }],
             })
-            recipe = JSON.parse(message.content[0].text.trim().replace(/```json|```/g, '').trim())
+            recipe = JSON.parse(replyText(message).trim().replace(/```json|```/g, '').trim())
         } catch (e) {
             // Adaptation failed — return the base recipe directly so
             // the user still gets a usable result. Worst-case the
@@ -143,11 +144,11 @@ Rules for description: ONE short sentence only — a single-line tagline for the
 Rules for instructions: return an ARRAY of strings (not one paragraph, not numbered "1." prefixes). Each array item is ONE step — short, clear, complete sentence. Aim for 6–12 steps.`
 
     const message = await anthropic.messages.create({
-          model: 'claude-haiku-4-5-20251001',
+          ...modelOptions(),
           max_tokens: 1500,
           messages: [{ role: 'user', content: freshPrompt }]
     })
-    const recipe = JSON.parse(message.content[0].text.trim().replace(/```json|```/g, '').trim())
+    const recipe = JSON.parse(replyText(message).trim().replace(/```json|```/g, '').trim())
 
     // Refusal short-circuit — same shape the page handles for the
     // adapt path. Don't INSERT into chef_recipes (we don't want

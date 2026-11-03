@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { modelOptions, replyText } from '@/lib/claude_model'
 import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -144,12 +145,12 @@ Respond with ONLY a JSON object with no markdown, no backticks, no explanation:
     }
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5',
+      ...modelOptions(),
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }]
     })
 
-    const text = message.content[0].text.trim()
+    const text = replyText(message).trim()
 
     const clean = text
       .replace(/^```json\s*/i, '')

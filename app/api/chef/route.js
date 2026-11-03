@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { modelOptions, replyText } from '@/lib/claude_model'
 import { checkRateLimit } from '@/lib/rate_limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -140,11 +141,11 @@ STYLE
   const system = libraryBlock ? `${baseSystem}\n${libraryBlock}` : baseSystem
 
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    ...modelOptions(),
     max_tokens: 1024,
     system,
     messages: messages.map(m => ({ role: m.role, content: m.content }))
   })
 
-  return Response.json({ reply: response.content[0].text })
+  return Response.json({ reply: replyText(response) })
 }

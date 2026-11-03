@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { modelOptions, replyText } from '@/lib/claude_model'
 import { YoutubeTranscript } from 'youtube-transcript'
 import { checkRateLimit } from '@/lib/rate_limit'
 
@@ -408,12 +409,12 @@ If no recipe is found, return exactly: {"error": "No recipe found"}`
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      ...modelOptions(),
       max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }]
     })
 
-    const responseText = message.content[0].text.trim()
+    const responseText = replyText(message).trim()
     // Strip any markdown fences the model might still wrap the JSON in.
     const stripped = responseText.replace(/```json|```/g, '').trim()
 
