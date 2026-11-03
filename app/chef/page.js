@@ -51,6 +51,7 @@ export default function ChefPage() {
   const [savedKeys, setSavedKeys] = useState(new Set())
   const [toast, setToast] = useState(null)
   const bottomRef = useRef(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -95,7 +96,7 @@ export default function ChefPage() {
   // The system prompt instructs Claude to end with this exact format when
   // the topic has a natural cooking exercise. We strip the line from the
   // prose body so we can render it as a styled "homework" chip and offer
-  // a `🍳 Cook in Practice →` handoff button below the save button.
+  // a `🍳 Create Recipe →` handoff button (fills in Practice for review) below the save button.
   function parsePractice(content) {
     if (!content) return { prose: '', practice: null }
     const m = content.match(/🎯\s*Practice this:\s*([^\n]+?)\s*$/m)
@@ -414,6 +415,7 @@ export default function ChefPage() {
         >
           <div className="flex gap-2">
             <textarea
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
@@ -497,7 +499,7 @@ export default function ChefPage() {
 
             // Teach-mode prose bubble. Parse out the "🎯 Practice this:" line
             // (when present) and render it as a styled homework chip + a
-            // 🍳 Cook in Practice → handoff button below the save button.
+            // 🍳 Create Recipe → handoff button below the save button.
             // Practice-mode refusals (msg.refusal === true) also fall
             // through to this branch — they render as a plain prose bubble
             // with the 🍳 Practice emoji, no homework chip, no save button.
@@ -511,7 +513,7 @@ export default function ChefPage() {
                     {renderProseWithCitations(prose, msg.library)}
                     {practice && (
                       <div className="mt-3 pt-3 border-t border-gray-300/70">
-                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-orange-700 leading-snug">🎯 Homework — Practice this</p>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wider text-orange-700 leading-snug">🍳 Recipe idea</p>
                         <p className="text-sm text-gray-800 leading-snug mt-1">{practice}</p>
                       </div>
                     )}
@@ -544,10 +546,18 @@ export default function ChefPage() {
                       )}
                       {practice && !loading && (
                         <button
-                          onClick={() => sendMessage(practice, 'practice')}
+                          onClick={() => {
+                            // Talk → Create (Nov 2026): switch to Practice with the
+                            // recipe request filled in so the cook can review or edit
+                            // it before generating. Same as the iPhone app.
+                            setMode('practice')
+                            setInput(practice)
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                            setTimeout(() => inputRef.current?.focus(), 300)
+                          }}
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors"
                         >
-                          🍳 Cook in Practice →
+                          🍳 Create Recipe →
                         </button>
                       )}
                     </div>
