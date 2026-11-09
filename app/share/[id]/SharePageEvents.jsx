@@ -125,9 +125,9 @@ export function HomepageLink({ recipeId }) {
     <a
       href={MYRECIPE_HOME_URL}
       onClick={handleClick}
-      className="block text-sm text-center font-semibold text-orange-700 hover:text-orange-800 underline underline-offset-2 py-1"
+      className="block w-fit mx-auto my-3 px-3 py-3 text-lg text-center font-bold text-[#2C1810] hover:text-[#C8401A] underline underline-offset-4"
     >
-      See what MyRecipe Companion can do for you — More Than Recipes.
+      Explore More Than Recipes →
     </a>
   )
 }
