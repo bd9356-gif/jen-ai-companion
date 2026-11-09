@@ -104,3 +104,30 @@ export function RecipeTips({ recipeId }) {
     </div>
   )
 }
+
+// Footer link to the MyRecipe Companion homepage (the Playbill and six cards), same tab.
+// GA4: myrecipe_homepage_click (source_type recipe_share_page).
+const MYRECIPE_HOME_URL = 'https://mycompanionapps.com/myrecipe'
+export function HomepageLink({ recipeId }) {
+  function handleClick() {
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag('event', 'myrecipe_homepage_click', {
+        source_page: window.location.pathname,
+        source_type: 'recipe_share_page',
+        cta_location: 'share_footer',
+        recipe_id: recipeId,
+        destination_url: MYRECIPE_HOME_URL,
+        transport_type: 'beacon',
+      })
+    }
+  }
+  return (
+    <a
+      href={MYRECIPE_HOME_URL}
+      onClick={handleClick}
+      className="block text-sm text-center font-semibold text-orange-700 hover:text-orange-800 underline underline-offset-2 py-1"
+    >
+      See what MyRecipe Companion can do for you — More Than Recipes.
+    </a>
+  )
+}

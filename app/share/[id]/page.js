@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { RecipeShareView, RecipeTips } from './SharePageEvents'
+import { RecipeShareView, RecipeTips, HomepageLink } from './SharePageEvents'
 
 const supabase = createClient(
   'https://epgtahifcphwjifxmxst.supabase.co',
@@ -221,7 +221,7 @@ export default async function SharePage({ params }) {
 
         {/* Footer note */}
         <div className="mt-6 pt-5 border-t border-gray-200">
-          <p className="text-xs text-gray-400 text-center">Shared from MyRecipe Companion.</p>
+          <HomepageLink recipeId={recipe.id} />
         </div>
 
       </main>
