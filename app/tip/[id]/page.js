@@ -5,7 +5,7 @@
 // app); only the one tip whose id is in the link is shown.
 
 import { createClient } from '@supabase/supabase-js'
-import { TipShareView, TipMoreButton, TipAppButton } from './TipPageEvents'
+import { TipShareView, TipFooter } from './TipPageEvents'
 
 const supabase = createClient(
   'https://epgtahifcphwjifxmxst.supabase.co',
@@ -129,14 +129,8 @@ export default async function TipSharePage({ params }) {
           })}
         </div>
 
-        <div className="bg-white rounded-2xl border border-orange-200 p-5 text-center shadow-sm">
-          <p className="text-base font-bold text-gray-900 mb-1">Got a cooking question of your own?</p>
-          <p className="text-sm text-gray-600 mb-4">Have a conversation with Chef Jen in MyRecipe Companion.</p>
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <TipAppButton tipId={tip.id} />
-            <TipMoreButton tipId={tip.id} />
-          </div>
-        </div>
+        {/* Footer: Explore More Than Recipes, See More Chef Jen Tips */}
+        <TipFooter tipId={tip.id} />
 
         <div className="mt-6 pt-5 border-t border-gray-200">
           <p className="text-xs text-gray-400 text-center">Shared from MyRecipe Companion.</p>
