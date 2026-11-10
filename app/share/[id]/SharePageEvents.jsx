@@ -55,13 +55,16 @@ function openFacebookGroup(e) {
     window.location.href = FACEBOOK_GROUP_VIA_SAFARI
   }
 }
-const MEET_CHEF_JEN_URL = 'https://mycompanionapps.com/meet-chef-jen'
+// Footer after the recipe: three quiet sections, left-aligned, no cards or orange.
+//   1. You're Welcome to Join Us!  → Facebook group     GA4: chef_jen_group_click
+//   2. Explore More Than Recipes → → mycompanionapps.com/myrecipe (same tab)   GA4: myrecipe_homepage_click
+//   3. Recipe Import Tip (informational)
+const MYRECIPE_HOME_URL = 'https://mycompanionapps.com/myrecipe'
+const SAGE = '#5F8A70'
+const SLATE = '#557FA3'
+const CHARCOAL = '#292929'
 
-// Promotional cards after the recipe (approved copy — same as the website recipe pages):
-//   1. ❤️ Meet Chef Jen (primary)       → mycompanionapps.com/meet-chef-jen   GA4: meet_chef_jen_click
-//   2. 🍳 Come Cook With Us! (secondary) → Facebook group                      GA4: chef_jen_group_click
-//   3. 💡 Recipe Import Tip (quiet)
-export function RecipeTips({ recipeId }) {
+export function ShareFooter({ recipeId }) {
   function track(name, params) {
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       window.gtag('event', name, {
@@ -74,60 +77,47 @@ export function RecipeTips({ recipeId }) {
     }
   }
 
+  const heading = 'text-[19px] font-semibold leading-snug mb-1'
+  const body = 'text-[16px] leading-relaxed'
+
   return (
-    <div className="space-y-3 mb-6">
-      <a
-        href={MEET_CHEF_JEN_URL}
-        onClick={() => track('meet_chef_jen_click', {})}
-        className="block rounded-2xl border-2 border-orange-600 bg-orange-50 p-5 shadow-sm hover:bg-orange-100 transition-colors"
-      >
-        <p className="text-xl font-bold text-gray-900 mb-1.5">❤️ Meet Chef Jen</p>
-        <p className="text-[15px] text-gray-700 leading-relaxed">
-          Need dinner inspiration? Have ingredients but no plan? Chef Jen in MyRecipe Companion helps turn what you have into a meal you’ll love.{' '}
-          <span className="font-bold text-orange-600 underline underline-offset-2">Come see what she can do.</span>
-        </p>
-      </a>
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-        <p className="text-base font-bold text-gray-900 mb-1">🍳 Come Cook With Us!</p>
-        <p className="text-sm text-gray-700 leading-relaxed">
-          Enjoyed this recipe? Join{' '}
-          <a href={FACEBOOK_GROUP_URL} onClick={(e) => { track('chef_jen_group_click', { cta_location: 'recipe_tip' }); openFacebookGroup(e) }} className="font-semibold text-orange-600 underline">
+    <footer className="mt-8 px-1 space-y-6 text-left">
+      <section>
+        <h2 className={heading} style={{ color: SAGE }}>You’re Welcome to Join Us!</h2>
+        <p className={body} style={{ color: CHARCOAL }}>
+          Enjoy cooking? Join{' '}
+          <a
+            href={FACEBOOK_GROUP_URL}
+            onClick={(e) => { track('chef_jen_group_click', { cta_location: 'recipe_tip' }); openFacebookGroup(e) }}
+            className="font-semibold underline underline-offset-2"
+            style={{ color: SAGE }}
+          >
             {FACEBOOK_GROUP_NAME}
           </a>{' '}
-          on Facebook for more recipes, cooking tips, and dinner ideas.
+          for recipes, cooking tips, and friendly conversation.
         </p>
-      </div>
-      <p className="px-1 text-xs text-gray-500 leading-relaxed">
-        💡 <strong className="text-gray-600">Recipe Import Tip</strong><br />
-        Want to save this recipe? Copy its link and paste it into your favorite recipe app that supports recipe links.
-      </p>
-    </div>
-  )
-}
+      </section>
 
-// Footer link to the MyRecipe Companion homepage (the Playbill and six cards), same tab.
-// GA4: myrecipe_homepage_click (source_type recipe_share_page).
-const MYRECIPE_HOME_URL = 'https://mycompanionapps.com/myrecipe'
-export function HomepageLink({ recipeId }) {
-  function handleClick() {
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      window.gtag('event', 'myrecipe_homepage_click', {
-        source_page: window.location.pathname,
-        source_type: 'recipe_share_page',
-        cta_location: 'share_footer',
-        recipe_id: recipeId,
-        destination_url: MYRECIPE_HOME_URL,
-        transport_type: 'beacon',
-      })
-    }
-  }
-  return (
-    <a
-      href={MYRECIPE_HOME_URL}
-      onClick={handleClick}
-      className="block w-fit mx-auto my-3 px-3 py-3 text-lg text-center font-bold text-[#2C1810] hover:text-[#C8401A] underline underline-offset-4"
-    >
-      Explore More Than Recipes →
-    </a>
+      <section>
+        <h2 className={heading}>
+          <a
+            href={MYRECIPE_HOME_URL}
+            onClick={() => track('myrecipe_homepage_click', { cta_location: 'share_footer', destination_url: MYRECIPE_HOME_URL })}
+            className="underline underline-offset-4"
+            style={{ color: SLATE }}
+          >
+            Explore More Than Recipes →
+          </a>
+        </h2>
+        <p className={body} style={{ color: CHARCOAL }}>See what MyRecipe Companion can do for you.</p>
+      </section>
+
+      <section>
+        <h2 className={heading + ' text-gray-700'}>💡 Recipe Import Tip</h2>
+        <p className={body + ' text-gray-600'}>
+          Want to save this recipe? Copy its link and paste it into your favorite recipe app that supports recipe links.
+        </p>
+      </section>
+    </footer>
   )
 }
