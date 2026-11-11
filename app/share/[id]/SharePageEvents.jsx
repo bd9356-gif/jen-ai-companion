@@ -56,8 +56,8 @@ function openFacebookGroup(e) {
   }
 }
 // Footer after the recipe: three quiet sections, left-aligned, no cards or orange.
-//   1. You're Welcome to Join Us!  → Facebook group     GA4: chef_jen_group_click
-//   2. Explore More Than Recipes → → mycompanionapps.com/myrecipe (same tab)   GA4: myrecipe_homepage_click
+//   1. Find Your Next Dinner Idea → → mycompanionapps.com/myrecipe (same tab)   GA4: myrecipe_homepage_click
+//   2. You're Welcome to Join Us!  → Facebook group (new tab)   GA4: chef_jen_group_click
 //   3. Recipe Import Tip (informational)
 const MYRECIPE_HOME_URL = 'https://mycompanionapps.com/myrecipe'
 const SAGE = '#5F8A70'
@@ -83,11 +83,27 @@ export function ShareFooter({ recipeId }) {
   return (
     <footer className="mt-8 px-1 space-y-6 text-left">
       <section>
+        <h2 className={heading}>
+          <a
+            href={MYRECIPE_HOME_URL}
+            onClick={() => track('myrecipe_homepage_click', { cta_location: 'share_footer', destination_url: MYRECIPE_HOME_URL })}
+            className="underline underline-offset-4"
+            style={{ color: SLATE }}
+          >
+            🍽️ Find Your Next Dinner&nbsp;Idea&nbsp;→
+          </a>
+        </h2>
+        <p className={body} style={{ color: CHARCOAL }}>What’s for dinner tonight?</p>
+      </section>
+
+      <section>
         <h2 className={heading} style={{ color: SAGE }}>You’re Welcome to Join Us!</h2>
         <p className={body} style={{ color: CHARCOAL }}>
           Enjoy cooking? Join{' '}
           <a
             href={FACEBOOK_GROUP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={(e) => { track('chef_jen_group_click', { cta_location: 'recipe_tip' }); openFacebookGroup(e) }}
             className="font-semibold underline underline-offset-2"
             style={{ color: SAGE }}
@@ -96,20 +112,6 @@ export function ShareFooter({ recipeId }) {
           </a>{' '}
           for recipes, cooking tips, and friendly conversation.
         </p>
-      </section>
-
-      <section>
-        <h2 className={heading}>
-          <a
-            href={MYRECIPE_HOME_URL}
-            onClick={() => track('myrecipe_homepage_click', { cta_location: 'share_footer', destination_url: MYRECIPE_HOME_URL })}
-            className="underline underline-offset-4"
-            style={{ color: SLATE }}
-          >
-            Explore More Than Recipes →
-          </a>
-        </h2>
-        <p className={body} style={{ color: CHARCOAL }}>See what MyRecipe Companion can do for you.</p>
       </section>
 
       <section>
