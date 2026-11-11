@@ -63,7 +63,7 @@ export function TipFooter({ tipId }) {
             className={heading}
             style={{ color: '#262626' }}
           >
-            👥 Join What’s for Dinner? with&nbsp;Chef&nbsp;Jen&nbsp;→
+            👥 Join Chef Jen’s Cooking&nbsp;Group&nbsp;→
           </a>
           <p className={body} style={{ color: '#292929' }}>Join the conversation.</p>
         </section>
