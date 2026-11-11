@@ -44,13 +44,13 @@ export function TipFooter({ tipId }) {
       <div className="space-y-6">
         <section>
           <a href={TIPS_URL} onClick={() => t('learn_more_click', { destination_url: TIPS_URL })} className={heading} style={{ color: '#5F8A70' }}>
-            👩‍🍳 More Chef Jen Kitchen Tips →
+            👩‍🍳 More Chef Jen Kitchen&nbsp;Tips&nbsp;→
           </a>
           <p className={body} style={{ color: '#292929' }}>Cooking made easier.</p>
         </section>
         <section>
           <a href={MYRECIPE_HOME_URL} onClick={() => t('myrecipe_homepage_click', { cta_location: 'tip_footer_dinner_idea', destination_url: MYRECIPE_HOME_URL })} className={heading} style={{ color: '#557FA3' }}>
-            🍽️ Find Your Next Dinner Idea →
+            🍽️ Find Your Next Dinner&nbsp;Idea&nbsp;→
           </a>
           <p className={body} style={{ color: '#292929' }}>What’s for dinner tonight?</p>
         </section>
@@ -63,7 +63,7 @@ export function TipFooter({ tipId }) {
             className={heading}
             style={{ color: '#262626' }}
           >
-            👥 Join What’s for Dinner? with Chef Jen →
+            👥 Join What’s for Dinner? with&nbsp;Chef&nbsp;Jen&nbsp;→
           </a>
           <p className={body} style={{ color: '#292929' }}>Join the conversation.</p>
         </section>
