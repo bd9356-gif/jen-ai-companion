@@ -3,6 +3,19 @@ import { useEffect } from 'react'
 
 const MYRECIPE_HOME_URL = 'https://mycompanionapps.com/myrecipe'
 const TIPS_URL = 'https://mycompanionapps.com/tips'
+const RECIPES_URL = 'https://mycompanionapps.com/recipes'
+const FACEBOOK_GROUP_SHARE_URL = 'https://www.facebook.com/share/g/19wjF8WYr7/?mibextid=wwXIfr'
+// Inside Facebook's own built-in browser on iPhone, group links show "Page not found".
+// There, hand the link to Safari instead (same fix as the shared-recipe page).
+const FACEBOOK_GROUP_VIA_SAFARI = 'x-safari-https://www.facebook.com/groups/2143785163199218'
+function openFacebookGroup(e) {
+  if (typeof navigator === 'undefined') return
+  const ua = navigator.userAgent
+  if (/FBAN|FBAV|FB_IAB|FBIOS/.test(ua) && /iPhone|iPad|iPod/.test(ua)) {
+    e.preventDefault()
+    window.location.href = FACEBOOK_GROUP_VIA_SAFARI
+  }
+}
 
 function track(name, params) {
   if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
@@ -20,39 +33,54 @@ export function TipShareView({ tipId, tipTitle }) {
   return null
 }
 
-// Footer after the tip: two quiet, left-aligned invitations (same style as the shared-recipe footer).
-//   1. Explore More Than Recipes →  → mycompanionapps.com/myrecipe (same tab)   GA4: myrecipe_homepage_click
-//   2. 👩‍🍳 See More Chef Jen Tips → → mycompanionapps.com/tips                  GA4: learn_more_click (unchanged)
+// Footer after the tip: three helpful next steps, then a quieter More Than Recipes invitation.
+// Left-aligned, no boxes (same style as the shared-recipe footer and the website tip pages).
+// GA4: learn_more_click, recipe_collection_click, chef_jen_group_click, myrecipe_homepage_click.
 export function TipFooter({ tipId }) {
-  const heading = 'text-[19px] font-semibold leading-snug mb-1'
-  const body = 'text-[16px] leading-relaxed'
+  const heading = 'text-[19px] font-semibold leading-snug underline underline-offset-4'
+  const body = 'text-[16px] leading-relaxed mt-1'
+  const t = (name, params) => track(name, { tip_id: tipId, source_type: 'tip_share_page', cta_location: 'tip_footer', ...params })
   return (
-    <footer className="mt-8 px-1 space-y-6 text-left">
-      <section>
-        <h2 className={heading}>
-          <a
-            href={MYRECIPE_HOME_URL}
-            onClick={() => track('myrecipe_homepage_click', { tip_id: tipId, source_type: 'tip_share_page', cta_location: 'tip_footer', destination_url: MYRECIPE_HOME_URL })}
-            className="underline underline-offset-4"
-            style={{ color: '#5F8A70' }}
-          >
-            Explore More Than Recipes →
+    <footer className="mt-8 px-1 text-left">
+      <div className="space-y-6">
+        <section>
+          <a href={TIPS_URL} onClick={() => t('learn_more_click', { destination_url: TIPS_URL })} className={heading} style={{ color: '#5F8A70' }}>
+            👩‍🍳 More Chef Jen Kitchen Tips →
           </a>
-        </h2>
-        <p className={body} style={{ color: '#292929' }}>See what MyRecipe Companion can do for you.</p>
-      </section>
-      <section>
-        <h2 className={heading}>
-          <a
-            href={TIPS_URL}
-            onClick={() => track('learn_more_click', { tip_id: tipId, destination_url: TIPS_URL })}
-            className="underline underline-offset-4"
-            style={{ color: '#557FA3' }}
-          >
-            👩‍🍳 See More Chef Jen Tips →
+          <p className={body} style={{ color: '#292929' }}>Cooking made easier.</p>
+        </section>
+        <section>
+          <a href={RECIPES_URL} onClick={() => t('recipe_collection_click', { destination_url: RECIPES_URL })} className={heading} style={{ color: '#557FA3' }}>
+            🍽️ Find Your Next Dinner Idea →
           </a>
-        </h2>
-        <p className={body} style={{ color: '#292929' }}>Explore more cooking tips, helpful ideas, and everyday kitchen advice.</p>
+          <p className={body} style={{ color: '#292929' }}>What’s for dinner tonight?</p>
+        </section>
+        <section>
+          <a
+            href={FACEBOOK_GROUP_SHARE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => { t('chef_jen_group_click', {}); openFacebookGroup(e) }}
+            className={heading}
+            style={{ color: '#262626' }}
+          >
+            👥 Join What’s for Dinner? with Chef Jen →
+          </a>
+          <p className={body} style={{ color: '#292929' }}>Join the conversation.</p>
+        </section>
+      </div>
+
+      {/* Quieter secondary invitation, set apart from the three links above */}
+      <section className="mt-11">
+        <a
+          href={MYRECIPE_HOME_URL}
+          onClick={() => t('myrecipe_homepage_click', { destination_url: MYRECIPE_HOME_URL })}
+          className="text-[16px] font-semibold underline underline-offset-[3px]"
+          style={{ color: '#5C5C5C' }}
+        >
+          Explore More Than Recipes →
+        </a>
+        <p className="text-[15px] leading-relaxed mt-1" style={{ color: '#6B6B6B' }}>See what MyRecipe Companion can do for you.</p>
       </section>
     </footer>
   )
