@@ -93,7 +93,7 @@ export function ShareFooter({ recipeId }) {
             🍽️ Find Your Next Dinner&nbsp;Idea&nbsp;→
           </a>
         </h2>
-        <p className={body} style={{ color: CHARCOAL }}>What’s for dinner tonight?</p>
+        <p className={body} style={{ color: CHARCOAL }}>Or make any recipe your own, just the way you like it.</p>
       </section>
 
       <section>
