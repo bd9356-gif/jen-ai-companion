@@ -52,7 +52,7 @@ export function TipFooter({ tipId }) {
           <a href={MYRECIPE_HOME_URL} onClick={() => t('myrecipe_homepage_click', { cta_location: 'tip_footer_dinner_idea', destination_url: MYRECIPE_HOME_URL })} className={heading} style={{ color: '#557FA3' }}>
             🍽️ Find Your Next Dinner&nbsp;Idea&nbsp;→
           </a>
-          <p className={body} style={{ color: '#292929' }}>What’s for dinner tonight?</p>
+          <p className={body} style={{ color: '#292929' }}>Or get help with any cooking question, just by asking.</p>
         </section>
         <section>
           <a
