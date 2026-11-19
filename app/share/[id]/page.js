@@ -9,7 +9,7 @@ const supabase = createClient(
 // Short hash of what the preview card shows, so an edited recipe gets a fresh image URL.
 // Tall recipe picture (Facebook photo posts / Pinterest), made by the website.
 // TALL_DESIGN matches the website's (lib/recipeCard/layout.ts) — bump both together.
-const TALL_DESIGN = 't1'
+const TALL_DESIGN = 't2'
 function tallImageUrl(id, title, photo) {
   const str = JSON.stringify([TALL_DESIGN, title, photo])
   let h = 0x811c9dc5
@@ -18,7 +18,7 @@ function tallImageUrl(id, title, photo) {
 }
 
 // CARD_DESIGN matches the website's (lib/recipeCard/layout.ts) — bump both together.
-const CARD_DESIGN = 'c2'
+const CARD_DESIGN = 'c3'
 function cardVersion(...parts) {
   const str = JSON.stringify([CARD_DESIGN, ...parts])
   let h = 0x811c9dc5

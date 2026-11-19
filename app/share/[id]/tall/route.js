@@ -8,7 +8,7 @@ const supabase = createClient(
   'https://epgtahifcphwjifxmxst.supabase.co',
   'sb_publishable_yMgB7J2Z2N6YhD_8llRXKQ_GjiY4qJf'
 )
-const TALL_DESIGN = 't1' // matches app/share/[id]/page.js and the website
+const TALL_DESIGN = 't2' // matches app/share/[id]/page.js and the website
 
 export async function GET(req, { params }) {
   const { id } = await params
