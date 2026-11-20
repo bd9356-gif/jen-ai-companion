@@ -18,7 +18,7 @@ function tallImageUrl(id, title, photo) {
 }
 
 // CARD_DESIGN matches the website's (lib/recipeCard/layout.ts) — bump both together.
-const CARD_DESIGN = 'c3'
+const CARD_DESIGN = 'c4'
 function cardVersion(...parts) {
   const str = JSON.stringify([CARD_DESIGN, ...parts])
   let h = 0x811c9dc5
