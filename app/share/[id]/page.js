@@ -216,7 +216,7 @@ export default async function SharePage({ params }) {
           </div>
         )}
 
-        {/* Footer: group invitation, More Than Recipes, Recipe Import Tip */}
+        {/* Footer: one invitation — More Than Recipes → MyRecipe Companion */}
         <ShareFooter recipeId={recipe.id} />
 
       </main>

@@ -129,7 +129,7 @@ export default async function TipSharePage({ params }) {
           })}
         </div>
 
-        {/* Footer: Explore More Than Recipes, See More Chef Jen Tips */}
+        {/* Footer: one invitation — More Than Recipes → MyRecipe Companion */}
         <TipFooter tipId={tip.id} />
 
         <div className="mt-6 pt-5 border-t border-gray-200">
