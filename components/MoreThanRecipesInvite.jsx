@@ -1,7 +1,7 @@
 'use client'
 
 // One invitation after a shared recipe or Chef Jen tip (Nov 2026): what the visitor came for
-// comes first; then one button (See What MyRecipe Companion Can Do for You →) with one
+// comes first; then one button (See What Chef Jen Can Do for You →) with one
 // supporting line beneath it, one destination — the MyRecipe Companion
 // product page (same tab). Same design and wording on recipe and tip pages.
 // GA4: myrecipe_homepage_click with cta_location more_than_recipes_footer and the page type
@@ -31,10 +31,10 @@ export default function MoreThanRecipesInvite({ sourceType, params = {} }) {
       <a
         href={MYRECIPE_HOME_URL}
         onClick={handleClick}
-        className="inline-flex items-center justify-center max-w-full min-h-[52px] px-6 py-3 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white text-[17px] leading-snug font-bold shadow-md transition-colors"
+        className="inline-flex items-center justify-center max-w-full min-h-[52px] px-5 py-3 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white text-[17px] leading-snug font-bold shadow-md transition-colors"
         style={{ textWrap: 'balance' }}
       >
-        See What MyRecipe Companion Can Do for&nbsp;You&nbsp;→
+        See What Chef Jen Can Do for&nbsp;You&nbsp;→
       </a>
       <p className="text-[16px] text-gray-600 leading-relaxed mt-4 max-w-md mx-auto">
         Your personal cooking companion. Discover how Chef Jen can help you in the&nbsp;kitchen.
